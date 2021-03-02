@@ -34,4 +34,5 @@ const char *about_new =
 	"\n"
 	"*test\n"
 	">quote\n"
+	"Id dolore aperiam voluptatem libero eaque omnis rerum nulla. Ullam sit voluptate accusamus molestiae enim minus. Fugit sequi quam dignissimos. Odio inventore vel sed. Voluptatem aut magni dignissimos."
 	;
