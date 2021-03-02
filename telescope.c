@@ -94,8 +94,7 @@ handle_imsg_got_meta(struct imsg *imsg, size_t datalen)
 static void
 handle_imsg_buf(struct imsg *imsg, size_t datalen)
 {
-        struct tab	*t;
-	struct line	*l;
+	struct tab	*t;
 
 	t = tab_by_id(imsg->hdr.peerid);
 
