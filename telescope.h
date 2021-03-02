@@ -68,7 +68,7 @@ struct page;
 /* typedef void	(*initparserfn)(struct parser*); */
 
 typedef int	(*parsechunkfn)(struct parser*, const char*, size_t);
-typedef void	(*parserfreefn)(struct parser*);
+typedef int	(*parserfreefn)(struct parser*);
 
 typedef void (imsg_handlerfn)(struct imsg*, size_t);
 

@@ -108,8 +108,13 @@ handle_imsg_buf(struct imsg *imsg, size_t datalen)
 static void
 handle_imsg_eof(struct imsg *imsg, size_t datalen)
 {
-	/* printf("===== EOF\n"); */
-	/* event_loopbreak(); */
+	struct tab	*t;
+
+	t = tab_by_id(imsg->hdr.peerid);
+	if (!t->page.free(&t->page))
+		die();
+
+	ui_on_tab_refresh(t);
 }
 
 static void

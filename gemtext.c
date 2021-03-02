@@ -29,7 +29,7 @@
 #include <stdlib.h>
 
 static int	gemtext_parse(struct parser*, const char*, size_t);
-static void	gemtext_free(struct parser*);
+static int	gemtext_free(struct parser*);
 
 static int	parse_text(struct parser*, enum line_type, const char*, size_t);
 static int	parse_link(struct parser*, enum line_type, const char*, size_t);
@@ -399,8 +399,20 @@ gemtext_parse(struct parser *p, const char *buf, size_t size)
 	return set_buf(p, b, len);
 }
 
-static void
+static int
 gemtext_free(struct parser *p)
 {
+	enum line_type	t;
+
+	/* flush the buffer */
+	if (p->len != 0) {
+		t = detect_line_type(p->buf, p->len, p->flags);
+		if (!parsers[t](p, t, p->buf, p->len))
+			return 0;
+		if (p->flags && !emit_line(p, LINE_PRE_END, NULL, NULL))
+			return 0;
+	}
+
 	free(p->buf);
+	return 1;
 }
