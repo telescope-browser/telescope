@@ -354,6 +354,7 @@ set_buf(struct parser *p, const char *buf, size_t len)
 	if ((p->buf = calloc(1, len)) == NULL)
 		return 0;
 	memcpy(p->buf, buf, len);
+	p->len = len;
 	return 1;
 }
 
