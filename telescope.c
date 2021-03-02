@@ -240,7 +240,6 @@ main(void)
 	int		imsg_fds[2];
 
 	signal(SIGCHLD, SIG_IGN);
-	signal(SIGINT, SIG_IGN);
 
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, imsg_fds) == -1)
 		err(1, "socketpair");

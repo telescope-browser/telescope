@@ -240,7 +240,7 @@ ui_init(void)
 	setlocale(LC_ALL, "");
 
 	initscr();
-	cbreak();
+	raw();
 	noecho();
 
 	nonl();
