@@ -178,7 +178,7 @@ wrap_text(const char *prfx1, const char *prfx2, const char *line, const char *br
 		len = endspc - endword;
 		/* line = endspc; */
 		if (off != zero) {
-			if (off + len > COLS)
+			if (off + len >= COLS)
 				emitline(prfx2, zero, &off);
 			else
 				emitstr(&line, len, &off);
