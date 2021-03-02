@@ -36,9 +36,10 @@ enum imsg_type {
 	IMSG_CERT_STATUS,
 	IMSG_GOT_CODE,
 	IMSG_GOT_META,
+	IMSG_PROCEED,
+	IMSG_STOP,
 	IMSG_BUF,
 	IMSG_EOF,
-	IMSG_STOP,
 	IMSG_QUIT,
 };
 
@@ -89,18 +90,26 @@ struct tab {
 	TAILQ_ENTRY(tab)	 tabs;
 	uint32_t		 id;
 	uint32_t		 flags;
+
+	int			 code;
+	char			 meta[GEMINI_URL_LEN];
+	int			 redirect_count;
 };
 
 extern struct event		 imsgev;
-
-/* about.c */
-extern const char	*about_new;
 
 /* gemini.c */
 int		 client_main(struct imsgbuf *b);
 
 /* gemtext.c */
 void		 gemtext_initparser(struct parser*);
+
+/* pages.c */
+extern const char	*about_new;
+
+#define CANNOT_FETCH		0
+#define TOO_MUCH_REDIRECTS	1
+extern const char	*err_pages[70];
 
 /* ui.c */
 int		 ui_init(void);

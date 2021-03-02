@@ -36,3 +36,22 @@ const char *about_new =
 	">quote\n"
 	"Id dolore aperiam voluptatem libero eaque omnis rerum nulla. Ullam sit voluptate accusamus molestiae enim minus. Fugit sequi quam dignissimos. Odio inventore vel sed. Voluptatem aut magni dignissimos."
 	;
+
+const char *err_pages[70] = {
+	[CANNOT_FETCH]		= "# Couldn't load the page\n",
+	[TOO_MUCH_REDIRECTS]	= "# Too much redirects\n",
+
+	[40] = "# Temporary failure\n",
+	[41] = "# Server unavailable\n",
+	[42] = "# CGI error\n",
+	[43] = "# Proxy error\n",
+	[44] = "# Slow down\n",
+	[50] = "# Permanent failure\n",
+	[51] = "# Not found\n",
+	[52] = "# Gone\n",
+	[53] = "# Proxy request refused\n",
+	[59] = "# Bad request\n",
+	[60] = "# Client certificate required\n",
+	[61] = "# Certificate not authorised\n",
+	[62] = "# Certificate not valid\n"
+};

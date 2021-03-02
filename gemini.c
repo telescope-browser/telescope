@@ -63,12 +63,14 @@ static void		 check_special_page(struct req*, const char*);
 
 static void		 handle_get(struct imsg*, size_t);
 static void		 handle_cert_status(struct imsg*, size_t);
+static void		 handle_proceed(struct imsg*, size_t);
 static void		 handle_stop(struct imsg*, size_t);
 static void		 handle_quit(struct imsg*, size_t);
 
 static imsg_handlerfn *handlers[] = {
 	[IMSG_GET] = handle_get,
 	[IMSG_CERT_STATUS] = handle_cert_status,
+	[IMSG_PROCEED] = handle_proceed,
 	[IMSG_STOP] = handle_stop,
 	[IMSG_QUIT] = handle_quit,
 };
@@ -343,7 +345,6 @@ parse_reply(struct req *req)
 	    req->buf, len);
 	imsg_flush(ibuf);
 
-	yield_r(req, copy_body, NULL);
 	return;
 
 err:
@@ -379,27 +380,6 @@ copy_body(int fd, short ev, void *d)
 	}
 }
 
-static int
-serve_special_page(struct req *req, const char *url)
-{
-	int		 code = 20;
-	const char	*meta = "text/gemini";
-
-	if (strcmp(url, "about:new"))
-		return 0;
-
-	imsg_compose(ibuf, IMSG_GOT_CODE, req->id, 0, -1, &code, sizeof(code));
-	imsg_compose(ibuf, IMSG_GOT_META, req->id, 0, -1, meta, strlen(meta)+1);
-	imsg_compose(ibuf, IMSG_BUF, req->id, 0, -1, about_new, strlen(about_new));
-	imsg_compose(ibuf, IMSG_EOF, req->id, 0, -1, NULL, 0);
-	imsg_flush(ibuf);
-
-	/* don't close_page here, since req is not added to requests
-	 * queue */
-	free(req);
-	return 1;
-}
-
 static void
 handle_get(struct imsg *imsg, size_t datalen)
 {
@@ -416,9 +396,6 @@ handle_get(struct imsg *imsg, size_t datalen)
 		die();
 
 	req->id = imsg->hdr.peerid;
-
-	if (serve_special_page(req, data))
-		return;
 
         if (!url_parse(imsg->data, &req->url, &e)) {
 		fprintf(stderr, "failed to parse url: %s\n", e);
@@ -464,6 +441,15 @@ handle_cert_status(struct imsg *imsg, size_t datalen)
 		yield_w(req, write_request, NULL);
 	else
 		close_conn(0, 0, req);
+}
+
+static void
+handle_proceed(struct imsg *imsg, size_t datalen)
+{
+	struct req	*req;
+
+	req = req_by_id(imsg->hdr.peerid);
+	yield_r(req, copy_body, NULL);
 }
 
 static void

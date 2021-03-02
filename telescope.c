@@ -24,6 +24,9 @@ static void	handle_imsg_got_meta(struct imsg*, size_t);
 static void	handle_imsg_buf(struct imsg*, size_t);
 static void	handle_imsg_eof(struct imsg*, size_t);
 
+static void	load_page_from_str(struct tab*, const char*);
+static void	load_url(struct tab*, const char*);
+
 static imsg_handlerfn *handlers[] = {
 	[IMSG_ERR] = handle_imsg_err,
 	[IMSG_CHECK_CERT] = handle_imsg_check_cert,
@@ -72,36 +75,78 @@ handle_imsg_check_cert(struct imsg *imsg, size_t datalen)
 static void
 handle_imsg_got_code(struct imsg *imsg, size_t datalen)
 {
-	int code;
+	const char	*errpage;
+	struct tab	*tab;
 
-	if (sizeof(code) != datalen)
+	tab = tab_by_id(imsg->hdr.peerid);
+
+	if (sizeof(tab->code) != datalen)
 		die();
+	memcpy(&tab->code, imsg->data, sizeof(tab->code));
 
-	memcpy(&code, imsg->data, sizeof(code));
+        if (tab->code < 20) {
+		if (tab->code != 10 && tab->code != 11)
+			tab->code = 10;
+	} else if (tab->code < 30)
+		tab->code = 20;
+	else if (tab->code < 40)
+		tab->code = 30;
+	else if (tab->code < 50)
+		tab->code = 40;
+	else if (tab->code < 60)
+		tab->code = 50;
+	else
+		tab->code = 60;
 
-	/* fprintf(stderr, "got status code: %d\n", code); */
+	if (tab->code != 30)
+		tab->redirect_count = 0;
 }
 
 static void
 handle_imsg_got_meta(struct imsg *imsg, size_t datalen)
 {
-	/* fprintf(stderr, "got meta: "); */
-	/* fflush(stderr); */
-	/* write(2, imsg->data, datalen); */
-	/* fprintf(stderr, "\n"); */
+	struct tab	*tab;
+
+	tab = tab_by_id(imsg->hdr.peerid);
+
+	if (sizeof(tab->meta) <= datalen)
+		die();
+	memcpy(tab->meta, imsg->data, datalen);
+
+	/* TODO: parse the MIME type if it's 20 */
+	gemtext_initparser(&tab->page);
+
+	if (tab->code == 20) {
+		imsg_compose(ibuf, IMSG_PROCEED, tab->id, 0, -1, NULL, 0);
+		imsg_flush(ibuf);
+		return;
+	}
+
+	if (tab->code == 30)
+		die();
+
+	/* 4x, 5x or 6x */
+
+	if (!tab->page.parse(&tab->page, err_pages[tab->code],
+	    strlen(err_pages[tab->code])))
+		die();
+	if (!tab->page.free(&tab->page))
+		die();
+
+	ui_on_tab_refresh(tab);
 }
 
 static void
 handle_imsg_buf(struct imsg *imsg, size_t datalen)
 {
-	struct tab	*t;
+	struct tab	*tab;
 
-	t = tab_by_id(imsg->hdr.peerid);
+	tab = tab_by_id(imsg->hdr.peerid);
 
-	if (!t->page.parse(&t->page, imsg->data, datalen))
+	if (!tab->page.parse(&tab->page, imsg->data, datalen))
 		die();
 
-	ui_on_tab_refresh(t);
+	ui_on_tab_refresh(tab);
 }
 
 static void
@@ -145,12 +190,35 @@ dispatch_imsg(int fd, short ev, void *d)
 	}
 }
 
+static void
+load_page_from_str(struct tab *tab, const char *page)
+{
+	gemtext_initparser(&tab->page);
+	if (!tab->page.parse(&tab->page, about_new, strlen(about_new)))
+		die();
+	if (!tab->page.free(&tab->page))
+		die();
+	ui_on_tab_refresh(tab);
+}
+
+static void
+load_url(struct tab *tab, const char *url)
+{
+	if (!strcmp(url, "about:new")) {
+		load_page_from_str(tab, about_new);
+		return;
+	}
+
+	imsg_compose(ibuf, IMSG_GET, tab->id, 0, -1, url, strlen(url)+1);
+	imsg_flush(ibuf);
+}
+
 void
 new_tab(void)
 {
 	struct tab	*tab;
 	const char	*url = "about:new";
-	/* const char	*url = "gemini://localhost/cgi/slow-out"; */
+	/* const char	*url = "gemini://localhost.it/"; */
 
 	if ((tab = calloc(1, sizeof(*tab))) == NULL)
 		die();
@@ -159,12 +227,10 @@ new_tab(void)
 
 	tab->id = tab_counter++;
 	TAILQ_INIT(&tab->page.head);
-	gemtext_initparser(&tab->page);
-
-	imsg_compose(ibuf, IMSG_GET, tab->id, 0, -1, url, strlen(url)+1);
-	imsg_flush(ibuf);
 
 	ui_on_new_tab(tab);
+
+	load_url(tab, url);
 }
 
 int
