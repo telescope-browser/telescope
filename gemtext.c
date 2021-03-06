@@ -125,21 +125,26 @@ parse_link(struct parser *p, enum line_type t, const char *buf, size_t len)
 	memcpy(u, url_start, buf - url_start);
 
 	if (len == 0)
-		return emit_line(p, t, u, NULL);
+		goto nolabel;
 
-	while (len > 0) {
+	while (len > 0 && isspace(buf[0])) {
 		buf++;
 		len--;
 	}
 
 	if (len == 0)
-		return emit_line(p, t, u, NULL);
+		goto nolabel;
 
 	if ((l = calloc(1, len + 1)) == NULL)
 		return 0;
 
 	memcpy(l, buf, len);
-	return emit_line(p, t, u, l);
+	return emit_line(p, t, l, u);
+
+nolabel:
+	if ((l = strdup(u)) == NULL)
+		return 0;
+	return emit_line(p, t, l, u);
 }
 
 static int
