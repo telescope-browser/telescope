@@ -179,18 +179,28 @@ cmd_next_line(int k)
 	struct tab	*tab;
 
 	tab = current_tab();
-	tab->s->curs_y = MIN(LINES, tab->s->curs_y-1);
+	tab->s->curs_y = MIN(LINES-1, tab->s->curs_y+1);
 	move(tab->s->curs_y, tab->s->curs_x);
 }
 
 static void
 cmd_forward_char(int k)
 {
+	struct tab	*tab;
+
+	tab = current_tab();
+	tab->s->curs_x = MIN(COLS-1, tab->s->curs_x+1);
+	move(tab->s->curs_y, tab->s->curs_x);
 }
 
 static void
 cmd_backward_char(int k)
 {
+	struct tab	*tab;
+
+	tab = current_tab();
+	tab->s->curs_x = MAX(0, tab->s->curs_x-1);
+	move(tab->s->curs_y, tab->s->curs_x);
 }
 
 static void
