@@ -190,7 +190,12 @@ cmd_previous_line(int k)
 	struct tab	*tab;
 
 	tab = current_tab();
-	tab->s->curs_y = MAX(0, tab->s->curs_y-1);
+
+	if (--tab->s->curs_y < 0) {
+		tab->s->curs_y = 0;
+		cmd_scroll_up(k);
+	}
+
 	restore_cursor(tab);
 }
 
@@ -200,7 +205,12 @@ cmd_next_line(int k)
 	struct tab	*tab;
 
 	tab = current_tab();
-	tab->s->curs_y = MIN(LINES-1, tab->s->curs_y+1);
+
+	if (++tab->s->curs_y > body_lines-1) {
+		tab->s->curs_y = body_lines-1;
+		cmd_scroll_down(k);
+	}
+
 	restore_cursor(tab);
 }
 
@@ -210,7 +220,7 @@ cmd_forward_char(int k)
 	struct tab	*tab;
 
 	tab = current_tab();
-	tab->s->curs_x = MIN(COLS-1, tab->s->curs_x+1);
+	tab->s->curs_x = MIN(body_cols-1, tab->s->curs_x+1);
 	restore_cursor(tab);
 }
 
