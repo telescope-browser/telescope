@@ -282,9 +282,10 @@ cmd_unbound(int k)
 		evtimer_del(&clminibufev);
 	evtimer_set(&clminibufev, handle_clear_minibuf, NULL);
 	evtimer_add(&clminibufev, &clminibufev_timer);
+	clminibufev_set = 1;
 
 	werase(minibuf);
-	wprintw(minibuf, "Unknown key %c", k);
+	wprintw(minibuf, "%c is undefined", k);
 	restore_cursor(current_tab());
 }
 
