@@ -88,6 +88,7 @@ static void		 cmd_kill_telescope(int);
 static struct line	*nth_line(struct tab*, size_t);
 static struct tab	*current_tab(void);
 static void		 dispatch_stdio(int, short, void*);
+static void		 handle_clear_minibuf(int, short, void*);
 static void		 handle_resize(int, short, void*);
 static int		 word_bourdaries(const char*, const char*, const char**, const char**);
 static void		 wrap_text(struct tab*, const char*, struct line*);
@@ -105,6 +106,7 @@ static int	 body_lines, body_cols;
 
 static struct event	clminibufev;
 static int		clminibufev_set;
+static struct timeval	clminibufev_timer = { 5, 0 };
 
 struct ui_state {
 	int			curs_x;
@@ -276,6 +278,11 @@ cmd_kill_telescope(int k)
 static void
 cmd_unbound(int k)
 {
+	if (clminibufev_set)
+		evtimer_del(&clminibufev);
+	evtimer_set(&clminibufev, handle_clear_minibuf, NULL);
+	evtimer_add(&clminibufev, &clminibufev_timer);
+
 	werase(minibuf);
 	wprintw(minibuf, "Unknown key %c", k);
 	restore_cursor(current_tab());
@@ -338,6 +345,15 @@ done:
 	wrefresh(modeline);
 	wrefresh(minibuf);
 
+	wrefresh(body);
+}
+
+static void
+handle_clear_minibuf(int fd, short ev, void *d)
+{
+	clminibufev_set = 0;
+	werase(minibuf);
+	wrefresh(minibuf);
 	wrefresh(body);
 }
 
