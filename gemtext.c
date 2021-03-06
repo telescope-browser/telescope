@@ -336,6 +336,8 @@ append(struct parser *p, const char *buf, size_t len)
 	newlen = len + p->len;
 	if ((t = calloc(1, newlen)) == NULL)
 		return 0;
+	memcpy(t, p->buf, p->len);
+	memcpy(t + p->len, buf, len);
 	free(p->buf);
 	p->buf = t;
 	p->len = newlen;
@@ -348,8 +350,10 @@ set_buf(struct parser *p, const char *buf, size_t len)
 	free(p->buf);
 	p->buf = NULL;
 
-	if (len == 0)
+	if (len == 0) {
+		p->len = 0;
 		return 1;
+	}
 
 	if ((p->buf = calloc(1, len)) == NULL)
 		return 0;
