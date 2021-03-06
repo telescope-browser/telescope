@@ -217,8 +217,9 @@ void
 new_tab(void)
 {
 	struct tab	*tab;
-	const char	*url = "about:new";
-	/* const char	*url = "gemini://localhost.it/"; */
+	/* const char	*url = "about:new"; */
+	/* const char	*url = "gemini://localhost.it/scroll.txt"; */
+	const char	*url = "gemini://localhost.it/test.gmi";
 
 	if ((tab = calloc(1, sizeof(*tab))) == NULL)
 		die();

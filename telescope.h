@@ -84,6 +84,8 @@ struct parser {
 	TAILQ_HEAD(, line)	 head;
 };
 
+struct ui_state;
+
 extern TAILQ_HEAD(tabshead, tab) tabshead;
 struct tab {
 	struct parser		 page;
@@ -94,6 +96,8 @@ struct tab {
 	int			 code;
 	char			 meta[GEMINI_URL_LEN];
 	int			 redirect_count;
+
+	struct ui_state		*s;
 };
 
 extern struct event		 imsgev;
@@ -113,7 +117,7 @@ extern const char	*err_pages[70];
 
 /* ui.c */
 int		 ui_init(void);
-void		 ui_on_new_tab(struct tab*);
+int		 ui_on_new_tab(struct tab*);
 void		 ui_on_tab_refresh(struct tab*);
 void		 ui_end(void);
 
