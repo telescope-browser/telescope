@@ -76,6 +76,16 @@ static struct event	stdioev, winchev;
 
 static int		 push_line(struct tab*, const struct line*, const char*, size_t);
 static void		 empty_vlist(struct tab*);
+static void		 restore_cursor(struct tab *);
+static void		 cmd_previous_line(int);
+static void		 cmd_next_line(int);
+static void		 cmd_forward_char(int);
+static void		 cmd_backward_char(int);
+static void		 cmd_redraw(int);
+static void		 cmd_scroll_down(int);
+static void		 cmd_scroll_up(int);
+static void		 cmd_kill_telescope(int);
+static struct line	*nth_line(struct tab*, size_t);
 static struct tab	*current_tab(void);
 static void		 dispatch_stdio(int, short, void*);
 static void		 handle_resize(int, short, void*);
@@ -83,33 +93,53 @@ static int		 word_bourdaries(const char*, const char*, const char**, const char*
 static void		 wrap_text(struct tab*, const char*, struct line*);
 static int		 hardwrap_text(struct tab*, struct line*);
 static int		 wrap_page(struct tab*);
+static void		 print_line(struct line*);
 static void		 redraw_tab(struct tab*);
 
 typedef void (*interactivefn)(int);
 
-static void	cmd_previous_line(int);
-static void	cmd_next_line(int);
-static void	cmd_forward_char(int);
-static void	cmd_backward_char(int);
-static void	cmd_redraw(int);
-static void	cmd_scroll_down(int);
-static void	cmd_scroll_up(int);
-static void	cmd_kill_telescope(int);
-
 static void	cmd_unbound(int);
+
+static WINDOW	*tabline, *body, *modeline, *minibuf;
+static int	 body_lines, body_cols;
+
+static struct event	clminibufev;
+static int		clminibufev_set;
 
 struct ui_state {
 	int			curs_x;
 	int			curs_y;
-	int			line_off;
+	size_t			line_off;
+	size_t			line_max;
 
 	TAILQ_HEAD(, line)	head;
+};
+
+struct binding {
+	int		key;
+	interactivefn	fn;
+} bindings[] = {
+	{ CTRL('p'),	cmd_previous_line, },
+	{ CTRL('n'),	cmd_next_line, },
+	{ CTRL('f'),	cmd_forward_char, },
+	{ CTRL('b'),	cmd_backward_char, },
+
+	{ CTRL('L'),	cmd_redraw, },
+
+	{ 'J',		cmd_scroll_down, },
+	{ 'K',		cmd_scroll_up, },
+
+	{ 'q',		cmd_kill_telescope, },
+
+	{ 0,		NULL, },
 };
 
 static int
 push_line(struct tab *tab, const struct line *l, const char *buf, size_t len)
 {
 	struct line *vl;
+
+	tab->s->line_max++;
 
 	if ((vl = calloc(1, sizeof(*vl))) == NULL)
 		return 0;
@@ -136,6 +166,8 @@ empty_vlist(struct tab *tab)
 {
 	struct line *l, *t;
 
+	tab->s->line_max = 0;
+
 	TAILQ_FOREACH_SAFE(l, &tab->s->head, lines, t) {
 		TAILQ_REMOVE(&tab->s->head, l, lines);
 		free(l->line);
@@ -144,24 +176,11 @@ empty_vlist(struct tab *tab)
 	}
 }
 
-struct binding {
-	int		key;
-	interactivefn	fn;
-} bindings[] = {
-	{ CTRL('p'),	cmd_previous_line, },
-	{ CTRL('n'),	cmd_next_line, },
-	{ CTRL('f'),	cmd_forward_char, },
-	{ CTRL('b'),	cmd_backward_char, },
-
-	{ CTRL('L'),	cmd_redraw, },
-
-	{ 'J',		cmd_scroll_down, },
-	{ 'K',		cmd_scroll_up, },
-
-	{ 'q',		cmd_kill_telescope, },
-
-	{ 0,		NULL, },
-};
+static void
+restore_cursor(struct tab *tab)
+{
+	wmove(body, tab->s->curs_y, tab->s->curs_x);
+}
 
 static void
 cmd_previous_line(int k)
@@ -170,7 +189,7 @@ cmd_previous_line(int k)
 
 	tab = current_tab();
 	tab->s->curs_y = MAX(0, tab->s->curs_y-1);
-	move(tab->s->curs_y, tab->s->curs_x);
+	restore_cursor(tab);
 }
 
 static void
@@ -180,7 +199,7 @@ cmd_next_line(int k)
 
 	tab = current_tab();
 	tab->s->curs_y = MIN(LINES-1, tab->s->curs_y+1);
-	move(tab->s->curs_y, tab->s->curs_x);
+	restore_cursor(tab);
 }
 
 static void
@@ -190,7 +209,7 @@ cmd_forward_char(int k)
 
 	tab = current_tab();
 	tab->s->curs_x = MIN(COLS-1, tab->s->curs_x+1);
-	move(tab->s->curs_y, tab->s->curs_x);
+	restore_cursor(tab);
 }
 
 static void
@@ -200,7 +219,7 @@ cmd_backward_char(int k)
 
 	tab = current_tab();
 	tab->s->curs_x = MAX(0, tab->s->curs_x-1);
-	move(tab->s->curs_y, tab->s->curs_x);
+	restore_cursor(tab);
 }
 
 static void
@@ -211,15 +230,42 @@ cmd_redraw(int k)
 }
 
 static void
-cmd_scroll_down(int k)
+cmd_scroll_up(int k)
 {
-	wscrl(stdscr, -1);
+	struct tab	*tab;
+	struct line	*l;
+
+	tab = current_tab();
+	if (tab->s->line_off == 0)
+		return;
+
+	l = nth_line(tab, --tab->s->line_off);
+	wscrl(body, -1);
+	wmove(body, 0, 0);
+	print_line(l);
 }
 
 static void
-cmd_scroll_up(int k)
+cmd_scroll_down(int k)
 {
-	wscrl(stdscr, 1);
+	struct tab	*tab;
+	struct line	*l;
+	size_t		 n;
+
+	tab = current_tab();
+
+	if (tab->s->line_max == 0 || tab->s->line_off == tab->s->line_max-1)
+		return;
+
+	tab->s->line_off++;
+	wscrl(body, 1);
+
+	if (tab->s->line_max - tab->s->line_off < body_lines)
+		return;
+
+	l = nth_line(tab, tab->s->line_off + body_lines-1);
+	wmove(body, body_lines-1, 0);
+	print_line(l);
 }
 
 static void
@@ -231,7 +277,26 @@ cmd_kill_telescope(int k)
 static void
 cmd_unbound(int k)
 {
-	/* TODO: flash a message */
+	wclear(minibuf);
+	wprintw(minibuf, "Unknown key %c", k);
+	restore_cursor(current_tab());
+}
+
+static struct line *
+nth_line(struct tab *tab, size_t n)
+{
+	struct line	*l;
+	size_t		 i;
+
+	i = 0;
+	TAILQ_FOREACH(l, &tab->s->head, lines) {
+		if (i == n)
+			return l;
+		i++;
+	}
+
+	/* unreachable */
+	abort();
 }
 
 static struct tab *
@@ -254,7 +319,7 @@ dispatch_stdio(int fd, short ev, void *d)
 	struct binding	*b;
 	int		 k;
 
-	k = getch();
+	k = wgetch(body);
 
 	if (k == ERR)
 		return;
@@ -269,7 +334,12 @@ dispatch_stdio(int fd, short ev, void *d)
 	cmd_unbound(k);
 
 done:
-	refresh();
+	restore_cursor(current_tab());
+	wrefresh(tabline);
+	wrefresh(modeline);
+	wrefresh(minibuf);
+
+	wrefresh(body);
 }
 
 static void
@@ -280,6 +350,20 @@ handle_resize(int sig, short ev, void *d)
 	endwin();
 	refresh();
 	clear();
+
+	/* move and resize the windows, in reverse order! */
+
+	mvwin(minibuf, LINES-2, 0);
+	wresize(minibuf, 1, COLS);
+
+	mvwin(modeline, LINES-2, 0);
+	wresize(modeline, 1, COLS);
+
+	wresize(body, LINES-3, COLS);
+	body_lines = LINES-3;
+	body_cols = COLS-1;
+
+	wresize(tabline, 1, COLS);
 
 	tab = current_tab();
 
@@ -361,13 +445,13 @@ wrap_text(struct tab *tab, const char *prfx, struct line *l)
 
 	while (word_boundaries(line, " \t-", &endword, &endspc)) {
 		len = endword - line;
-		if (off + len >= COLS) {
+		if (off + len >= body_cols) {
 			emitline(tab, zero, &off, l, &linestart);
-			while (len >= COLS) {
+			while (len >= body_cols) {
 				/* hard wrap */
 				emitline(tab, zero, &off, l, &linestart);
-				len -= COLS-1;
-				line += COLS-1;
+				len -= body_cols-1;
+				line += body_cols-1;
 			}
 
 			if (len != 0)
@@ -379,7 +463,7 @@ wrap_text(struct tab *tab, const char *prfx, struct line *l)
 		len = endspc - endword;
 		/* line = endspc; */
 		if (off != zero) {
-			if (off + len >= COLS) {
+			if (off + len >= body_cols) {
 				emitline(tab, zero, &off, l, &linestart);
 				linestart = endspc;
 			} else
@@ -461,49 +545,87 @@ print_line(struct line *l)
 	case LINE_TEXT:
 		break;
 	case LINE_LINK:
-		printw("=> ");
+		wprintw(body, "=> ");
 		break;
 	case LINE_TITLE_1:
-		printw("# ");
+		wprintw(body, "# ");
 		break;
 	case LINE_TITLE_2:
-		printw("## ");
+		wprintw(body, "## ");
 		break;
 	case LINE_TITLE_3:
-		printw("### ");
+		wprintw(body, "### ");
 		break;
 	case LINE_ITEM:
-		printw("* ");
+		wprintw(body, "* ");
 		break;
 	case LINE_QUOTE:
-		printw("> ");
+		wprintw(body, "> ");
 		break;
 	case LINE_PRE_START:
 	case LINE_PRE_END:
-		printw("```");
+		wprintw(body, "```");
 		break;
 	case LINE_PRE_CONTENT:
 		break;
 	}
 
         if (l->line != NULL)
-		printw("%s", l->line);
-	printw("\n");
+		wprintw(body, "%s", l->line);
+}
+
+static void
+redraw_modeline(struct tab *tab)
+{
+	int		 x, y, max_x, max_y;
+	const char	*url = "TODO:url";
+	const char	*mode = "text/gemini-mode";
+
+	wclear(modeline);
+	wattron(modeline, A_REVERSE);
+	wmove(modeline, 0, 0);
+
+	wprintw(modeline, "-- %s %s ", mode, url);
+	getyx(modeline, y, x);
+	getmaxyx(modeline, max_y, max_x);
+
+	(void)y;
+	(void)max_y;
+
+	for (; x < max_x; ++x)
+		waddstr(modeline, "-");
 }
 
 static void
 redraw_tab(struct tab *tab)
 {
 	struct line	*l;
+	int		 line;
 
-	erase();
+	werase(body);
 
-	TAILQ_FOREACH(l, &tab->s->head, lines) {
+	tab->s->line_off = MIN(tab->s->line_max, tab->s->line_off);
+	if (TAILQ_EMPTY(&tab->s->head))
+		return;
+
+	line = 0;
+	l = nth_line(tab, tab->s->line_off);
+	for (; l != NULL; l = TAILQ_NEXT(l, lines)) {
+		wmove(body, line, 0);
 		print_line(l);
+		line++;
+		if (line == body_lines)
+			break;
 	}
 
-	move(tab->s->curs_y, tab->s->curs_x);
-	refresh();
+	redraw_modeline(tab);
+
+	restore_cursor(tab);
+	wrefresh(tabline);
+	wrefresh(modeline);
+	wrefresh(minibuf);
+
+	wrefresh(body);
 }
 
 int
@@ -519,12 +641,24 @@ ui_init(void)
 	intrflush(stdscr, FALSE);
 	keypad(stdscr, TRUE);
 
-	scrollok(stdscr, TRUE);
+	if ((tabline = newwin(1, COLS, 0, 0)) == NULL)
+		return 0;
+	if ((body = newwin(LINES - 3, COLS, 1, 0)) == NULL)
+		return 0;
+	if ((modeline = newwin(1, COLS, LINES-2, 0)) == NULL)
+		return 0;
+	if ((minibuf = newwin(1, COLS, LINES-1, 0)) == NULL)
+		return 0;
+
+	body_lines = LINES-3;
+	body_cols = COLS;
+
+	scrollok(body, TRUE);
 
 	/* non-blocking input */
-	timeout(0);
+	wtimeout(body, 0);
 
-	mvprintw(0, 0, "");
+	mvwprintw(body, 0, 0, "");
 
 	event_set(&stdioev, 0, EV_READ | EV_PERSIST, dispatch_stdio, NULL);
 	event_add(&stdioev, NULL);
@@ -553,7 +687,7 @@ ui_on_new_tab(struct tab *tab)
 	/* TODO: redraw the tab list */
 	/* TODO: switch to the new tab */
 
-	move(0, 0);
+	wmove(body, 0, 0);
 
 	return 1;
 }
@@ -573,4 +707,3 @@ ui_end(void)
 {
 	endwin();
 }
-
