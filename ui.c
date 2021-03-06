@@ -387,7 +387,7 @@ handle_resize(int sig, short ev, void *d)
 
 	wresize(body, LINES-3, COLS);
 	body_lines = LINES-3;
-	body_cols = COLS-1;
+	body_cols = COLS;
 
 	wresize(tabline, 1, COLS);
 
@@ -567,37 +567,51 @@ wrap_page(struct tab *tab)
 static inline void
 print_line(struct line *l)
 {
+	const char *text = l->line;
+
+	if (text == NULL)
+		text = "";
+
 	switch (l->type) {
 	case LINE_TEXT:
+		wprintw(body, "%s", text);
 		break;
 	case LINE_LINK:
-		wprintw(body, "=> ");
-		break;
+		wattron(body, A_UNDERLINE);
+		wprintw(body, "=> %s", text);
+		wattroff(body, A_UNDERLINE);
+		return;
 	case LINE_TITLE_1:
-		wprintw(body, "# ");
-		break;
+		wattron(body, A_BOLD);
+		wprintw(body, "# %s", text);
+		wattroff(body, A_BOLD);
+		return;
 	case LINE_TITLE_2:
-		wprintw(body, "## ");
-		break;
+		wattron(body, A_BOLD);
+		wprintw(body, "## %s", text);
+		wattroff(body, A_BOLD);
+		return;
 	case LINE_TITLE_3:
-		wprintw(body, "### ");
-		break;
+		wattron(body, A_BOLD);
+		wprintw(body, "### %s", text);
+		wattroff(body, A_BOLD);
+		return;
 	case LINE_ITEM:
-		wprintw(body, "* ");
-		break;
+		wprintw(body, "* %s", text);
+		return;
 	case LINE_QUOTE:
-		wprintw(body, "> ");
-		break;
+		wattron(body, A_DIM);
+		wprintw(body, "> %s", text);
+		wattroff(body, A_DIM);
+		return;
 	case LINE_PRE_START:
 	case LINE_PRE_END:
 		wprintw(body, "```");
-		break;
+		return;
 	case LINE_PRE_CONTENT:
-		break;
+		wprintw(body, "%s", text);
+		return;
 	}
-
-        if (l->line != NULL)
-		wprintw(body, "%s", l->line);
 }
 
 static void
