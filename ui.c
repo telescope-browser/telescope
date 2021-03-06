@@ -225,8 +225,7 @@ cmd_backward_char(int k)
 static void
 cmd_redraw(int k)
 {
-	clear();
-	redraw_tab(current_tab());
+	handle_resize(0, 0, NULL);
 }
 
 static void
@@ -277,7 +276,7 @@ cmd_kill_telescope(int k)
 static void
 cmd_unbound(int k)
 {
-	wclear(minibuf);
+	werase(minibuf);
 	wprintw(minibuf, "Unknown key %c", k);
 	restore_cursor(current_tab());
 }
@@ -353,7 +352,7 @@ handle_resize(int sig, short ev, void *d)
 
 	/* move and resize the windows, in reverse order! */
 
-	mvwin(minibuf, LINES-2, 0);
+	mvwin(minibuf, LINES-1, 0);
 	wresize(minibuf, 1, COLS);
 
 	mvwin(modeline, LINES-2, 0);
