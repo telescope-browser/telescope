@@ -62,6 +62,7 @@
 #include <event.h>
 #include <locale.h>
 #include <signal.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -96,6 +97,7 @@ static int		 hardwrap_text(struct tab*, struct line*);
 static int		 wrap_page(struct tab*);
 static void		 print_line(struct line*);
 static void		 redraw_tab(struct tab*);
+static void		 message(const char*, ...) __attribute__((format(printf, 1, 2)));
 
 typedef void (*interactivefn)(int);
 
@@ -288,15 +290,7 @@ cmd_kill_telescope(int k)
 static void
 cmd_unbound(int k)
 {
-	if (clminibufev_set)
-		evtimer_del(&clminibufev);
-	evtimer_set(&clminibufev, handle_clear_minibuf, NULL);
-	evtimer_add(&clminibufev, &clminibufev_timer);
-	clminibufev_set = 1;
-
-	werase(minibuf);
-	wprintw(minibuf, "%c is undefined", k);
-	restore_cursor(current_tab());
+	message("%c is undefined", k);
 }
 
 static struct line *
@@ -666,6 +660,28 @@ redraw_tab(struct tab *tab)
 	wrefresh(minibuf);
 
 	wrefresh(body);
+}
+
+static void
+message(const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+
+	if (clminibufev_set)
+		evtimer_del(&clminibufev);
+	evtimer_set(&clminibufev, handle_clear_minibuf, NULL);
+	evtimer_add(&clminibufev, &clminibufev_timer);
+	clminibufev_set = 1;
+
+	werase(minibuf);
+	vw_printw(minibuf, fmt, ap);
+
+	wrefresh(minibuf);
+	wrefresh(body);
+
+	va_end(ap);
 }
 
 int
