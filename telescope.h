@@ -115,9 +115,11 @@ extern const char	*about_new;
 #define TOO_MUCH_REDIRECTS	1
 extern const char	*err_pages[70];
 
+/* telescope.c */
+void		 load_url(struct tab*, const char*);
+
 /* ui.c */
 int		 ui_init(void);
-int		 ui_on_new_tab(struct tab*);
 void		 ui_on_tab_refresh(struct tab*);
 void		 ui_end(void);
 

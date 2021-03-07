@@ -98,6 +98,7 @@ static int		 wrap_page(struct tab*);
 static void		 print_line(struct line*);
 static void		 redraw_tab(struct tab*);
 static void		 message(const char*, ...) __attribute__((format(printf, 1, 2)));
+static void		 new_tab(void);
 
 typedef void (*interactivefn)(int);
 
@@ -109,6 +110,8 @@ static int	 body_lines, body_cols;
 static struct event	clminibufev;
 static int		clminibufev_set;
 static struct timeval	clminibufev_timer = { 5, 0 };
+
+static uint32_t		 tab_counter;
 
 struct ui_state {
 	int			curs_x;
@@ -687,6 +690,38 @@ message(const char *fmt, ...)
 	va_end(ap);
 }
 
+static void
+new_tab(void)
+{
+	struct tab	*tab, *t;
+	const char	*url = "about:new";
+
+	if ((tab = calloc(1, sizeof(*tab))) == NULL)
+		goto err;
+
+	if ((tab->s = calloc(1, sizeof(*t->s))) == NULL)
+		goto err;
+
+	TAILQ_INIT(&tab->s->head);
+	TAILQ_FOREACH(t, &tabshead, tabs) {
+		t->flags &= ~TAB_CURRENT;
+	}
+
+	tab->id = tab_counter++;
+	tab->flags = TAB_CURRENT;
+
+	if (TAILQ_EMPTY(&tabshead))
+		TAILQ_INSERT_HEAD(&tabshead, tab, tabs);
+	else
+		TAILQ_INSERT_TAIL(&tabshead, tab, tabs);
+
+	load_url(tab, url);
+	return;
+
+err:
+	event_loopbreak();
+}
+
 int
 ui_init(void)
 {
@@ -725,28 +760,7 @@ ui_init(void)
 	signal_set(&winchev, SIGWINCH, handle_resize, NULL);
 	signal_add(&winchev, NULL);
 
-	return 1;
-}
-
-int
-ui_on_new_tab(struct tab *tab)
-{
-	struct tab	*t;
-
-	if ((tab->s = calloc(1, sizeof(*t->s))) == NULL)
-		return 0;
-
-	TAILQ_INIT(&tab->s->head);
-
-	TAILQ_FOREACH(t, &tabshead, tabs) {
-		t->flags &= ~TAB_CURRENT;
-	}
-	tab->flags = TAB_CURRENT;
-
-	/* TODO: redraw the tab list */
-	/* TODO: switch to the new tab */
-
-	wmove(body, 0, 0);
+	new_tab();
 
 	return 1;
 }

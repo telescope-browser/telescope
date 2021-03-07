@@ -15,7 +15,6 @@ struct event		 imsgev;
 struct tabshead		 tabshead;
 
 static struct imsgbuf	*ibuf;
-static uint32_t		 tab_counter;
 
 static void	handle_imsg_err(struct imsg*, size_t);
 static void	handle_imsg_check_cert(struct imsg*, size_t);
@@ -25,7 +24,6 @@ static void	handle_imsg_buf(struct imsg*, size_t);
 static void	handle_imsg_eof(struct imsg*, size_t);
 
 static void	load_page_from_str(struct tab*, const char*);
-static void	load_url(struct tab*, const char*);
 
 static imsg_handlerfn *handlers[] = {
 	[IMSG_ERR] = handle_imsg_err,
@@ -201,7 +199,7 @@ load_page_from_str(struct tab *tab, const char *page)
 	ui_on_tab_refresh(tab);
 }
 
-static void
+void
 load_url(struct tab *tab, const char *url)
 {
 	if (!strcmp(url, "about:new")) {
@@ -211,27 +209,6 @@ load_url(struct tab *tab, const char *url)
 
 	imsg_compose(ibuf, IMSG_GET, tab->id, 0, -1, url, strlen(url)+1);
 	imsg_flush(ibuf);
-}
-
-void
-new_tab(void)
-{
-	struct tab	*tab;
-	/* const char	*url = "about:new"; */
-	/* const char	*url = "gemini://localhost.it/scroll.txt"; */
-	const char	*url = "gemini://localhost.it/test.gmi";
-
-	if ((tab = calloc(1, sizeof(*tab))) == NULL)
-		die();
-
-	TAILQ_INSERT_HEAD(&tabshead, tab, tabs);
-
-	tab->id = tab_counter++;
-	TAILQ_INIT(&tab->page.head);
-
-	ui_on_new_tab(tab);
-
-	load_url(tab, url);
 }
 
 int
@@ -268,8 +245,6 @@ main(void)
 	event_add(&imsgev, NULL);
 
 	ui_init();
-
-	new_tab();
 
 	event_dispatch();
 
