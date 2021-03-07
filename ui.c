@@ -513,6 +513,9 @@ hardwrap_text(struct tab *tab, struct line *l)
 			return 0;
 	}
 
+	if (len != 0)
+		return emitline(tab, 0, &len, l, &linestart);
+
 	return 1;
 }
 
