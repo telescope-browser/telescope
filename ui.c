@@ -86,6 +86,8 @@ static void		 cmd_redraw(int);
 static void		 cmd_scroll_down(int);
 static void		 cmd_scroll_up(int);
 static void		 cmd_kill_telescope(int);
+static void		 cmd_push_button(int);
+static void		 cmd_unbound(int);
 static struct line	*nth_line(struct tab*, size_t);
 static struct tab	*current_tab(void);
 static void		 dispatch_stdio(int, short, void*);
@@ -137,6 +139,7 @@ struct binding {
 	{ 'K',		cmd_scroll_up, },
 
 	{ 'q',		cmd_kill_telescope, },
+	{ CTRL('m'),	cmd_push_button, },
 
 	{ 0,		NULL, },
 };
@@ -288,6 +291,22 @@ static void
 cmd_kill_telescope(int k)
 {
 	event_loopbreak();
+}
+
+static void
+cmd_push_button(int k)
+{
+	struct tab	*tab;
+	struct line	*l;
+	size_t		 nth;
+
+	tab = current_tab();
+
+	nth = tab->s->line_off + tab->s->curs_y;
+	if (nth > tab->s->line_max)
+		return;
+	l = nth_line(tab, nth);
+	message("Enter on line: \"%s\"", l->line ? l->line : "");
 }
 
 static void
