@@ -123,16 +123,14 @@ struct ui_state {
 };
 
 struct key {
-#define CTRLFLG	0x1
-#define METAFLG 0x2
-	int	flags;
+	int	meta;
 	int	key;
 };
 
 #define KEY(n)		((struct key){0, n})
 #define CKEY(n)		((struct key){0, (n) & 0x1F})
-#define MKEY(n)		((struct key){METAFLG, n})
-#define CMKEY(n)	((struct key){METAFLG, (n) & 0x1F})
+#define MKEY(n)		((struct key){1, n})
+#define CMKEY(n)	((struct key){1, (n) & 0x1F})
 
 struct binding {
 	struct key	key;
@@ -301,7 +299,7 @@ static void
 cmd_unbound(struct key k)
 {
 	message("%s%c is undefined",
-	    (k.flags & METAFLG) ? "M-" : "",
+	    k.meta ? "M-" : "",
 	    k.key);
 }
 
@@ -343,8 +341,6 @@ dispatch_stdio(int fd, short ev, void *d)
 	struct key	 key;
 	int		 k, j;
 
-	key.flags = 0;
-
 	k = wgetch(body);
 
 	if (k == ERR)
@@ -356,14 +352,15 @@ dispatch_stdio(int fd, short ev, void *d)
 		j = wgetch(body);
 		if (j != ERR) {
 			k = j;
-			key.flags = METAFLG;
+			key.meta = 1;
 		}
-	}
+	} else
+		key.meta = 0;
 
 	key.key = k;
 
 	for (b = bindings; b->fn != NULL; ++b) {
-		if (key.flags == b->key.flags &&
+		if (key.meta == b->key.meta &&
 		    key.key == b->key.key) {
 			b->fn(current_tab());
 			goto done;
