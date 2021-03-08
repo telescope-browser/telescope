@@ -78,15 +78,15 @@ static struct event	stdioev, winchev;
 static int		 push_line(struct tab*, const struct line*, const char*, size_t);
 static void		 empty_vlist(struct tab*);
 static void		 restore_cursor(struct tab *);
-static void		 cmd_previous_line(int);
-static void		 cmd_next_line(int);
-static void		 cmd_forward_char(int);
-static void		 cmd_backward_char(int);
-static void		 cmd_redraw(int);
-static void		 cmd_scroll_down(int);
-static void		 cmd_scroll_up(int);
-static void		 cmd_kill_telescope(int);
-static void		 cmd_push_button(int);
+static void		 cmd_previous_line(struct tab*);
+static void		 cmd_next_line(struct tab*);
+static void		 cmd_forward_char(struct tab*);
+static void		 cmd_backward_char(struct tab*);
+static void		 cmd_redraw(struct tab*);
+static void		 cmd_scroll_down(struct tab*);
+static void		 cmd_scroll_up(struct tab*);
+static void		 cmd_kill_telescope(struct tab*);
+static void		 cmd_push_button(struct tab*);
 static void		 cmd_unbound(struct key);
 static struct line	*nth_line(struct tab*, size_t);
 static struct tab	*current_tab(void);
@@ -102,7 +102,7 @@ static void		 redraw_tab(struct tab*);
 static void		 message(const char*, ...) __attribute__((format(printf, 1, 2)));
 static void		 new_tab(void);
 
-typedef void (*interactivefn)(int);
+typedef void (*interactivefn)(struct tab*);
 
 static WINDOW	*tabline, *body, *modeline, *minibuf;
 static int	 body_lines, body_cols;
@@ -203,68 +203,52 @@ restore_cursor(struct tab *tab)
 }
 
 static void
-cmd_previous_line(int k)
+cmd_previous_line(struct tab *tab)
 {
-	struct tab	*tab;
-
-	tab = current_tab();
-
 	if (--tab->s->curs_y < 0) {
 		tab->s->curs_y = 0;
-		cmd_scroll_up(k);
+		cmd_scroll_up(tab);
 	}
 
 	restore_cursor(tab);
 }
 
 static void
-cmd_next_line(int k)
+cmd_next_line(struct tab *tab)
 {
-	struct tab	*tab;
-
-	tab = current_tab();
-
 	if (++tab->s->curs_y > body_lines-1) {
 		tab->s->curs_y = body_lines-1;
-		cmd_scroll_down(k);
+		cmd_scroll_down(tab);
 	}
 
 	restore_cursor(tab);
 }
 
 static void
-cmd_forward_char(int k)
+cmd_forward_char(struct tab *tab)
 {
-	struct tab	*tab;
-
-	tab = current_tab();
 	tab->s->curs_x = MIN(body_cols-1, tab->s->curs_x+1);
 	restore_cursor(tab);
 }
 
 static void
-cmd_backward_char(int k)
+cmd_backward_char(struct tab *tab)
 {
-	struct tab	*tab;
-
-	tab = current_tab();
 	tab->s->curs_x = MAX(0, tab->s->curs_x-1);
 	restore_cursor(tab);
 }
 
 static void
-cmd_redraw(int k)
+cmd_redraw(struct tab *tab)
 {
 	handle_resize(0, 0, NULL);
 }
 
 static void
-cmd_scroll_up(int k)
+cmd_scroll_up(struct tab *tab)
 {
-	struct tab	*tab;
 	struct line	*l;
 
-	tab = current_tab();
 	if (tab->s->line_off == 0)
 		return;
 
@@ -275,13 +259,10 @@ cmd_scroll_up(int k)
 }
 
 static void
-cmd_scroll_down(int k)
+cmd_scroll_down(struct tab *tab)
 {
-	struct tab	*tab;
 	struct line	*l;
 	size_t		 n;
-
-	tab = current_tab();
 
 	if (tab->s->line_max == 0 || tab->s->line_off == tab->s->line_max-1)
 		return;
@@ -298,19 +279,16 @@ cmd_scroll_down(int k)
 }
 
 static void
-cmd_kill_telescope(int k)
+cmd_kill_telescope(struct tab *tab)
 {
 	event_loopbreak();
 }
 
 static void
-cmd_push_button(int k)
+cmd_push_button(struct tab *tab)
 {
-	struct tab	*tab;
 	struct line	*l;
 	size_t		 nth;
-
-	tab = current_tab();
 
 	nth = tab->s->line_off + tab->s->curs_y;
 	if (nth > tab->s->line_max)
@@ -387,7 +365,7 @@ dispatch_stdio(int fd, short ev, void *d)
 	for (b = bindings; b->fn != NULL; ++b) {
 		if (key.flags == b->key.flags &&
 		    key.key == b->key.key) {
-			b->fn(k);
+			b->fn(current_tab());
 			goto done;
 		}
 	}
