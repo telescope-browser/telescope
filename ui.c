@@ -68,10 +68,10 @@
 
 #define TAB_CURRENT	0x1
 
-#define CTRL(x)		((x)&0x1F)
-
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
+
+struct key;
 
 static struct event	stdioev, winchev;
 
@@ -87,7 +87,7 @@ static void		 cmd_scroll_down(int);
 static void		 cmd_scroll_up(int);
 static void		 cmd_kill_telescope(int);
 static void		 cmd_push_button(int);
-static void		 cmd_unbound(int);
+static void		 cmd_unbound(struct key);
 static struct line	*nth_line(struct tab*, size_t);
 static struct tab	*current_tab(void);
 static void		 dispatch_stdio(int, short, void*);
@@ -103,8 +103,6 @@ static void		 message(const char*, ...) __attribute__((format(printf, 1, 2)));
 static void		 new_tab(void);
 
 typedef void (*interactivefn)(int);
-
-static void	cmd_unbound(int);
 
 static WINDOW	*tabline, *body, *modeline, *minibuf;
 static int	 body_lines, body_cols;
@@ -124,24 +122,36 @@ struct ui_state {
 	TAILQ_HEAD(, line)	head;
 };
 
+struct key {
+#define CTRLFLG	0x1
+#define METAFLG 0x2
+	int	flags;
+	int	key;
+};
+
+#define KEY(n)		((struct key){0, n})
+#define CKEY(n)		((struct key){0, (n) & 0x1F})
+#define MKEY(n)		((struct key){METAFLG, n})
+#define CMKEY(n)	((struct key){METAFLG, (n) & 0x1F})
+
 struct binding {
-	int		key;
+	struct key	key;
 	interactivefn	fn;
 } bindings[] = {
-	{ CTRL('p'),	cmd_previous_line, },
-	{ CTRL('n'),	cmd_next_line, },
-	{ CTRL('f'),	cmd_forward_char, },
-	{ CTRL('b'),	cmd_backward_char, },
+	{ CKEY('p'),	cmd_previous_line, },
+	{ CKEY('n'),	cmd_next_line, },
+	{ CKEY('f'),	cmd_forward_char, },
+	{ CKEY('b'),	cmd_backward_char, },
 
-	{ CTRL('L'),	cmd_redraw, },
+	{ CKEY('L'),	cmd_redraw, },
 
-	{ 'J',		cmd_scroll_down, },
-	{ 'K',		cmd_scroll_up, },
+	{ KEY('J'),	cmd_scroll_down, },
+	{ KEY('K'),	cmd_scroll_up, },
 
-	{ 'q',		cmd_kill_telescope, },
-	{ CTRL('m'),	cmd_push_button, },
+	{ KEY('q'),	cmd_kill_telescope, },
+	{ CKEY('m'),	cmd_push_button, },
 
-	{ 0,		NULL, },
+	{ {0, 0},	NULL, },
 };
 
 static int
@@ -310,9 +320,11 @@ cmd_push_button(int k)
 }
 
 static void
-cmd_unbound(int k)
+cmd_unbound(struct key k)
 {
-	message("%c is undefined", k);
+	message("%s%c is undefined",
+	    (k.flags & METAFLG) ? "M-" : "",
+	    k.key);
 }
 
 static struct line *
@@ -350,21 +362,37 @@ static void
 dispatch_stdio(int fd, short ev, void *d)
 {
 	struct binding	*b;
-	int		 k;
+	struct key	 key;
+	int		 k, j;
+
+	key.flags = 0;
 
 	k = wgetch(body);
 
 	if (k == ERR)
 		return;
 
+	/* look for a M-key */
+	if (k == 27) {
+		wtimeout(body, 0); /* TODO: make escape-time customizable */
+		j = wgetch(body);
+		if (j != ERR) {
+			k = j;
+			key.flags = METAFLG;
+		}
+	}
+
+	key.key = k;
+
 	for (b = bindings; b->fn != NULL; ++b) {
-		if (k == b->key) {
+		if (key.flags == b->key.flags &&
+		    key.key == b->key.key) {
 			b->fn(k);
 			goto done;
 		}
 	}
 
-	cmd_unbound(k);
+	cmd_unbound(key);
 
 done:
 	restore_cursor(current_tab());
