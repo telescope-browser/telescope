@@ -25,8 +25,16 @@
 	"                                           |__|\n"		\
 	"```\n"
 
+#define CIRCUMLUNAR_SPACE "gemini://gemini.circumlunar.space"
+
 const char *about_new =
 	ASCII_ART
+	"\n"
+	"=> " CIRCUMLUNAR_SPACE "/docs		Gemini documentation\n"
+	"=> " CIRCUMLUNAR_SPACE "/software	Gemini software\n"
+	"\n"
+	"=> gemini://gus.guru/			Gemini Universal Search engine\n"
+	"=> gemini://houston.coder.town/	Houston search engine\n"
 	"\n"
 	"Version: " VERSION "\n"
 	"Bug reports to: " PACKAGE_BUGREPORT "\n"
