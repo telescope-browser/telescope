@@ -353,6 +353,8 @@ dispatch_stdio(int fd, short ev, void *d)
 		if (j != ERR) {
 			k = j;
 			key.meta = 1;
+		} else {
+			key.meta = 0;
 		}
 	} else
 		key.meta = 0;
