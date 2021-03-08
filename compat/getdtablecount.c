@@ -14,32 +14,13 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "telescope.h"
+/* XXX: on linux it's possible to glob("/proc/$pid/fd/ *") to know the
+ * dtablecount. */
 
-#include <fcntl.h>
-#include <stdlib.h>
+#include "../config.h"
 
 int
-mark_nonblock(int fd)
+getdtablecount(void)
 {
-	int flags;
-
-	if ((flags = fcntl(fd, F_GETFL)) == -1)
-                return 0;
-	if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1)
-                return 0;
-	return 1;
-}
-
-char *
-telescope_strnchr(char *b, char d, size_t len)
-{
-	size_t i;
-
-	for (i = 0; i < len; ++i) {
-		if (b[i] == d)
-			return &b[i];
-	}
-
-	return NULL;
+	return 0;
 }

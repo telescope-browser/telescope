@@ -14,32 +14,26 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "telescope.h"
+#include "../config.h"
 
-#include <fcntl.h>
-#include <stdlib.h>
+#ifdef HAVE_PROGRAM_INVOCATION_SHORT_NAME
 
-int
-mark_nonblock(int fd)
+#include <errno.h>
+
+extern char *program_invocation_short_name;
+
+const char *
+getprogname(void)
 {
-	int flags;
-
-	if ((flags = fcntl(fd, F_GETFL)) == -1)
-                return 0;
-	if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1)
-                return 0;
-	return 1;
+	return program_invocation_short_name;
 }
 
-char *
-telescope_strnchr(char *b, char d, size_t len)
+#else
+
+const char *
+getprogname(void)
 {
-	size_t i;
-
-	for (i = 0; i < len; ++i) {
-		if (b[i] == d)
-			return &b[i];
-	}
-
-	return NULL;
+	return "gmid";
 }
+
+#endif

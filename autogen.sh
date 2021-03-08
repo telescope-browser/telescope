@@ -1,3 +1,3 @@
 #!/bin/sh
 
-exec autoreconf --install
+exec autoreconf -vfi

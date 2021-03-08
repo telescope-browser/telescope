@@ -17,15 +17,10 @@
 #ifndef TELESCOPE_H
 #define TELESCOPE_H
 
-#include <config.h>
-#include <url.h>
+#include "config.h"
+#include "compat.h"
 
-/* TODO: move in config.h */
-#include <sys/queue.h>
-#include <sys/types.h>
-#include <sys/uio.h>
-#include <stdint.h>
-#include <imsg.h>
+#include "url.h"
 
 #define GEMINI_URL_LEN 1024
 

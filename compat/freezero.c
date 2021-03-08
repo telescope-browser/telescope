@@ -14,32 +14,17 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "telescope.h"
-
-#include <fcntl.h>
 #include <stdlib.h>
+#include <string.h>
 
-int
-mark_nonblock(int fd)
+#include "compat.h"
+
+void
+freezero(void *ptr, size_t len)
 {
-	int flags;
+	if (ptr == NULL)
+		return;
 
-	if ((flags = fcntl(fd, F_GETFL)) == -1)
-                return 0;
-	if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1)
-                return 0;
-	return 1;
-}
-
-char *
-telescope_strnchr(char *b, char d, size_t len)
-{
-	size_t i;
-
-	for (i = 0; i < len; ++i) {
-		if (b[i] == d)
-			return &b[i];
-	}
-
-	return NULL;
+	memset(ptr, 0, len);
+	free(ptr);
 }
