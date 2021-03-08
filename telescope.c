@@ -157,6 +157,7 @@ handle_imsg_eof(struct imsg *imsg, size_t datalen)
 		die();
 
 	ui_on_tab_refresh(t);
+	ui_on_tab_loaded(t);
 }
 
 static void
@@ -197,11 +198,14 @@ load_page_from_str(struct tab *tab, const char *page)
 	if (!tab->page.free(&tab->page))
 		die();
 	ui_on_tab_refresh(tab);
+	ui_on_tab_loaded(tab);
 }
 
 void
 load_url(struct tab *tab, const char *url)
 {
+	strlcpy(tab->url, url, sizeof(tab->url));
+
 	if (!strcmp(url, "about:new")) {
 		load_page_from_str(tab, about_new);
 		return;

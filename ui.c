@@ -98,8 +98,13 @@ static void		 wrap_text(struct tab*, const char*, struct line*);
 static int		 hardwrap_text(struct tab*, struct line*);
 static int		 wrap_page(struct tab*);
 static void		 print_line(struct line*);
+static void		 redraw_tabline(void);
+static void		 redraw_modeline(struct tab*);
 static void		 redraw_tab(struct tab*);
 static void		 message(const char*, ...) __attribute__((format(printf, 1, 2)));
+static void		 start_loading_anim(struct tab*);
+static void		 update_loading_anim(int, short, void*);
+static void		 stop_loading_anim(struct tab*);
 static void		 new_tab(void);
 
 typedef void (*interactivefn)(struct tab*);
@@ -110,6 +115,7 @@ static int	 body_lines, body_cols;
 static struct event	clminibufev;
 static int		clminibufev_set;
 static struct timeval	clminibufev_timer = { 5, 0 };
+static struct timeval	loadingev_timer = { 0, 250000 };
 
 static uint32_t		 tab_counter;
 
@@ -118,6 +124,10 @@ struct ui_state {
 	int			curs_y;
 	size_t			line_off;
 	size_t			line_max;
+
+	short			loading_anim;
+	short			loading_anim_step;
+	struct event		loadingev;
 
 	TAILQ_HEAD(, line)	head;
 };
@@ -639,17 +649,26 @@ print_line(struct line *l)
 }
 
 static void
+redraw_tabline(void)
+{
+	wclear(tabline);
+	wbkgd(tabline, A_REVERSE);
+	mvwprintw(tabline, 0, 0, "TODO: tabs here");
+}
+
+static void
 redraw_modeline(struct tab *tab)
 {
 	int		 x, y, max_x, max_y;
-	const char	*url = "TODO:url";
 	const char	*mode = "text/gemini-mode";
+	const char	*spin = "-\\|/";
 
 	wclear(modeline);
 	wattron(modeline, A_REVERSE);
 	wmove(modeline, 0, 0);
 
-	wprintw(modeline, "-- %s %s ", mode, url);
+	wprintw(modeline, "-%c %s %s ",
+	    spin[tab->s->loading_anim_step], mode, tab->url);
 	getyx(modeline, y, x);
 	getmaxyx(modeline, max_y, max_x);
 
@@ -682,6 +701,7 @@ redraw_tab(struct tab *tab)
 			break;
 	}
 
+	redraw_tabline();
 	redraw_modeline(tab);
 
 	restore_cursor(tab);
@@ -715,6 +735,48 @@ message(const char *fmt, ...)
 }
 
 static void
+start_loading_anim(struct tab *tab)
+{
+	if (tab->s->loading_anim)
+		return;
+	tab->s->loading_anim = 1;
+	evtimer_set(&tab->s->loadingev, update_loading_anim, tab);
+	evtimer_add(&tab->s->loadingev, &loadingev_timer);
+}
+
+static void
+update_loading_anim(int fd, short ev, void *d)
+{
+	struct tab	*tab = d;
+
+	tab->s->loading_anim_step = (tab->s->loading_anim_step+1)%4;
+
+	redraw_modeline(tab);
+	wrefresh(modeline);
+	wrefresh(body);
+
+	evtimer_add(&tab->s->loadingev, &loadingev_timer);
+}
+
+static void
+stop_loading_anim(struct tab *tab)
+{
+	if (!tab->s->loading_anim)
+		return;
+	evtimer_del(&tab->s->loadingev);
+	tab->s->loading_anim = 0;
+	tab->s->loading_anim_step = 0;
+}
+
+static void
+ui_load_url_in_tab(struct tab *tab, const char *url)
+{
+	message("Loading %s...", url);
+	start_loading_anim(tab);
+	load_url(tab, url);
+}
+
+static void
 new_tab(void)
 {
 	struct tab	*tab, *t;
@@ -739,7 +801,7 @@ new_tab(void)
 	else
 		TAILQ_INSERT_TAIL(&tabshead, tab, tabs);
 
-	load_url(tab, url);
+	ui_load_url_in_tab(tab, url);
 	return;
 
 err:
@@ -787,6 +849,13 @@ ui_init(void)
 	new_tab();
 
 	return 1;
+}
+
+void
+ui_on_tab_loaded(struct tab *tab)
+{
+	stop_loading_anim(tab);
+	message("Loaded %s", tab->url);
 }
 
 void

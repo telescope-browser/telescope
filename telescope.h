@@ -93,6 +93,8 @@ struct tab {
 	uint32_t		 id;
 	uint32_t		 flags;
 
+	char			 url[GEMINI_URL_LEN];
+
 	int			 code;
 	char			 meta[GEMINI_URL_LEN];
 	int			 redirect_count;
@@ -120,6 +122,7 @@ void		 load_url(struct tab*, const char*);
 
 /* ui.c */
 int		 ui_init(void);
+void		 ui_on_tab_loaded(struct tab*);
 void		 ui_on_tab_refresh(struct tab*);
 void		 ui_end(void);
 
