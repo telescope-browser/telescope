@@ -14,6 +14,12 @@
 struct event		 imsgev;
 struct tabshead		 tabshead;
 
+struct proto protos[] = {
+	{ "gemini:",	load_gemini_url },
+	{ "about:",	load_about_url },
+	{ NULL, NULL },
+};
+
 static struct imsgbuf	*ibuf;
 
 static void	handle_imsg_err(struct imsg*, size_t);
@@ -65,7 +71,7 @@ handle_imsg_err(struct imsg *imsg, size_t datalen)
 	page[datalen-1] = '\0';
 
 	if (asprintf(&page, "# Error loading %s\n\n> %s\n",
-	    tab->url, page) == -1)
+	    tab->urlstr, page) == -1)
 		die();
 	load_page_from_str(tab, page);
 	free(page);
@@ -218,47 +224,65 @@ load_page_from_str(struct tab *tab, const char *page)
 }
 
 void
-load_url(struct tab *tab, const char *url)
+load_about_url(struct tab *tab, const char *url)
 {
-	/* TODO: parsing the url here is a bit ugly.  maybe store it
-	 * in the struct tab? */
-	struct url	 u;
-	const char	*err;
-	char		*page;
+	char *m;
 
-	if (!strcmp(url, "about:new")) {
-		strlcpy(tab->url, url, sizeof(tab->url));
+	memset(tab->urlstr, 0, sizeof(tab->urlstr));
+	memset(&tab->url, 0, sizeof(tab->url));
+
+	m = strchr(url, ':');
+	strlcpy(tab->url.scheme, "about", sizeof(tab->url.scheme));
+	strlcpy(tab->url.path, m+1, sizeof(tab->url.path));
+
+	if (!strcmp(url, "about:new"))
 		load_page_from_str(tab, about_new);
-		return;
-	}
+	else
+		load_page_from_str(tab, "# not found\n");
+}
 
-	if (has_prefix(tab->url, "about:")) {
-		strlcpy(tab->url, url, sizeof(tab->url));
+void
+load_gemini_url(struct tab *tab, const char *url)
+{
+	const char	*err;
+	char		*p;
+
+	if (has_prefix(url, "gemini:")) {
+		if (!url_parse(url, &tab->url, &err))
+			goto err;
 	} else {
-		if (!url_parse(tab->url, &u, &err))
+		if (!url_resolve_from(&tab->url, url, &err))
 			goto err;
-
-		if (!url_resolve_from(&u, url, &err))
-			goto err;
-
-		/* TODO: this is nowhere good enough */
-		strlcpy(tab->url, u.scheme, sizeof(tab->url));
-		strlcat(tab->url, "://", sizeof(tab->url));
-		strlcat(tab->url, u.host, sizeof(tab->url));
-		strlcat(tab->url, "/", sizeof(tab->url));
-		strlcat(tab->url, u.path, sizeof(tab->url));
 	}
 
-	imsg_compose(ibuf, IMSG_GET, tab->id, 0, -1, url, strlen(url)+1);
+	url_unparse(&tab->url, tab->urlstr, sizeof(tab->urlstr));
+	imsg_compose(ibuf, IMSG_GET, tab->id, 0, -1,
+	    tab->urlstr, strlen(tab->urlstr)+1);
 	imsg_flush(ibuf);
 	return;
 
 err:
-	if (asprintf(&page, "# error resolving %s from %s\n\n> %s\n",
-	    url, tab->url, err) == -1)
+	if (asprintf(&p, "#error loading %s\n>%s\n",
+	    url, err) == -1)
 		die();
-	load_page_from_str(tab, page);
-	free(page);
+	strlcpy(tab->urlstr, url, sizeof(tab->urlstr));
+	load_page_from_str(tab, p);
+	free(p);
+}
+
+void
+load_url(struct tab *tab, const char *url)
+{
+	struct proto *p;
+
+	for (p = protos; p->schema != NULL; ++p) {
+		if (has_prefix(url, p->schema)) {
+			p->loadfn(tab, url);
+			return;
+		}
+	}
+
+	protos[0].loadfn(tab, url);
 }
 
 int

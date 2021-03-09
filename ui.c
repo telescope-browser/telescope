@@ -675,7 +675,7 @@ redraw_modeline(struct tab *tab)
 	wmove(modeline, 0, 0);
 
 	wprintw(modeline, "-%c %s %s ",
-	    spin[tab->s->loading_anim_step], mode, tab->url);
+	    spin[tab->s->loading_anim_step], mode, tab->urlstr);
 	getyx(modeline, y, x);
 	getmaxyx(modeline, max_y, max_x);
 
@@ -871,7 +871,7 @@ void
 ui_on_tab_loaded(struct tab *tab)
 {
 	stop_loading_anim(tab);
-	message("Loaded %s", tab->url);
+	message("Loaded %s", tab->urlstr);
 }
 
 void

@@ -15,6 +15,7 @@
  */
 
 #include <netdb.h>
+#include <stddef.h>
 
 #define GEMINI_URL_LEN 1024
 
@@ -30,3 +31,4 @@ struct url {
 
 int		 url_parse(const char*, struct url*, const char**);
 int		 url_resolve_from(struct url*, const char*, const char**);
+void		 url_unparse(struct url*, char*, size_t);

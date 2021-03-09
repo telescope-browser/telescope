@@ -88,7 +88,8 @@ struct tab {
 	uint32_t		 id;
 	uint32_t		 flags;
 
-	char			 url[GEMINI_URL_LEN];
+	char			 urlstr[GEMINI_URL_LEN];
+	struct url		 url;
 
 	int			 code;
 	char			 meta[GEMINI_URL_LEN];
@@ -96,6 +97,19 @@ struct tab {
 
 	struct ui_state		*s;
 };
+
+struct proto {
+	const char	*schema;
+
+	/* should load the given url in the tab.  Optionally, it may
+	 * consider the given url as relative to the one already
+	 * present in tab.  It must set tab->urlstr to a serialized
+	 * human-friendly URL. */
+	void		 (*loadfn)(struct tab*, const char*);
+};
+
+/* the first is also the fallback one */
+extern struct proto protos[];
 
 extern struct event		 imsgev;
 
@@ -113,6 +127,8 @@ extern const char	*about_new;
 extern const char	*err_pages[70];
 
 /* telescope.c */
+void		 load_about_url(struct tab*, const char*);
+void		 load_gemini_url(struct tab*, const char*);
 void		 load_url(struct tab*, const char*);
 
 /* ui.c */

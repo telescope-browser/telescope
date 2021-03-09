@@ -482,3 +482,23 @@ url_resolve_from(struct url *url, const char *str, const char **err)
 	strlcat(url->path, str, sizeof(url->path));
 	return 1;
 }
+
+void
+url_unparse(struct url *url, char *buf, size_t len)
+{
+	strlcpy(buf, url->scheme, len);
+	strlcat(buf, "://", len);
+	strlcat(buf, url->host, len);
+
+	if (*url->path == '\0' && *url->query == '\0')
+		return;
+
+	strlcat(buf, "/", len);
+
+	if (*url->path != '\0')
+		strlcat(buf, url->path, len);
+	if (*url->query != '?') {
+		strlcat(buf, "?", len);
+		strlcat(buf, url->query, len);
+	}
+}
