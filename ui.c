@@ -88,8 +88,10 @@ static void		 cmd_next_line(struct tab*);
 static void		 cmd_forward_char(struct tab*);
 static void		 cmd_backward_char(struct tab*);
 static void		 cmd_redraw(struct tab*);
-static void		 cmd_scroll_down(struct tab*);
+static void		 cmd_scroll_line_down(struct tab*);
+static void		 cmd_scroll_line_up(struct tab*);
 static void		 cmd_scroll_up(struct tab*);
+static void		 cmd_scroll_down(struct tab*);
 static void		 cmd_kill_telescope(struct tab*);
 static void		 cmd_push_button(struct tab*);
 static struct line	*nth_line(struct tab*, size_t);
@@ -158,6 +160,8 @@ kbd(const char *key)
 		{ "<down>",	KEY_DOWN },
 		{ "<left>",	KEY_LEFT },
 		{ "<right>",	KEY_RIGHT },
+		{ "<prior>",	KEY_PPAGE },
+		{ "<next>",	KEY_NPAGE },
 		/* ... */
 		{ "space",	' ' },
 		{ "spc",	' ' },
@@ -245,7 +249,6 @@ load_default_keys(void)
 	global_set_key("C-f",		cmd_forward_char);
 	global_set_key("C-b",		cmd_backward_char);
 
-	/* tmp */
 	global_set_key("M-v",		cmd_scroll_up);
 	global_set_key("C-v",		cmd_scroll_down);
 
@@ -257,8 +260,8 @@ load_default_keys(void)
 	global_set_key("l",		cmd_forward_char);
 	global_set_key("h",		cmd_backward_char);
 
-	global_set_key("K",		cmd_scroll_up);
-	global_set_key("J",		cmd_scroll_down);
+	global_set_key("K",		cmd_scroll_line_up);
+	global_set_key("J",		cmd_scroll_line_down);
 
 	/* tmp */
 	global_set_key("q",		cmd_kill_telescope);
@@ -268,6 +271,8 @@ load_default_keys(void)
 	global_set_key("<down>",	cmd_next_line);
 	global_set_key("<right>",	cmd_forward_char);
 	global_set_key("<left>",	cmd_backward_char);
+	global_set_key("<prior>",	cmd_scroll_up);
+	global_set_key("<next>",	cmd_scroll_down);
 
 	/* "ncurses standard" */
 	global_set_key("C-l",		cmd_redraw);
@@ -329,7 +334,7 @@ cmd_previous_line(struct tab *tab)
 {
 	if (--tab->s->curs_y < 0) {
 		tab->s->curs_y = 0;
-		cmd_scroll_up(tab);
+		cmd_scroll_line_up(tab);
 	}
 
 	restore_cursor(tab);
@@ -340,7 +345,7 @@ cmd_next_line(struct tab *tab)
 {
 	if (++tab->s->curs_y > body_lines-1) {
 		tab->s->curs_y = body_lines-1;
-		cmd_scroll_down(tab);
+		cmd_scroll_line_down(tab);
 	}
 
 	restore_cursor(tab);
@@ -367,7 +372,7 @@ cmd_redraw(struct tab *tab)
 }
 
 static void
-cmd_scroll_up(struct tab *tab)
+cmd_scroll_line_up(struct tab *tab)
 {
 	struct line	*l;
 
@@ -381,7 +386,7 @@ cmd_scroll_up(struct tab *tab)
 }
 
 static void
-cmd_scroll_down(struct tab *tab)
+cmd_scroll_line_down(struct tab *tab)
 {
 	struct line	*l;
 	size_t		 n;
@@ -398,6 +403,29 @@ cmd_scroll_down(struct tab *tab)
 	l = nth_line(tab, tab->s->line_off + body_lines-1);
 	wmove(body, body_lines-1, 0);
 	print_line(l);
+}
+
+static void
+cmd_scroll_up(struct tab *tab)
+{
+	size_t off;
+
+	off = body_lines+1;
+
+	for (; off > 0; --off)
+		cmd_scroll_line_up(tab);
+}
+
+static void
+cmd_scroll_down(struct tab *tab)
+{
+	ssize_t off;
+
+	off = tab->s->line_off + body_lines;
+	off = MIN(tab->s->line_max, off);
+
+	for (; off >= 0; --off)
+		cmd_scroll_line_down(tab);
 }
 
 static void
