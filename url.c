@@ -434,3 +434,51 @@ url_parse(const char *data, struct url *url, const char **err)
 
 	return 1;
 }
+
+int
+url_resolve_from(struct url *url, const char *str, const char **err)
+{
+	char *marker, *query, *hash, *i;
+
+	marker = strstr(str, "://");
+	query = strchr(str, '?');
+	hash = strchr(str, '#');
+
+	/* full URL */
+	if (marker != NULL
+	    && (query == NULL || marker < query)
+	    && (hash == NULL || marker < hash))
+		return url_parse(str, url, err);
+
+	/* TODO: reuse more of the above */
+
+	/* absolute url */
+	if (*str == '/') {
+		strlcpy(url->path, str, sizeof(url->path));
+
+                if ((hash = strchr(url->path, '#')) != NULL) {
+			*hash = '\0';
+			hash++;
+			strlcpy(url->fragment, hash,
+			    sizeof(url->fragment));
+		}
+
+		if ((query = strchr(url->path, '?')) != NULL) {
+			*query = '\0';
+			query++;
+			strlcpy(url->query, query,
+			    sizeof(url->query));
+		}
+		return 1;
+	}
+
+	/* local url */
+	for (i = strchr(url->path, '\0'); i >= url->path; --i) {
+		if (*i == '/')
+			break;
+	}
+
+	*i = '\0';
+	strlcat(url->path, str, sizeof(url->path));
+	return 1;
+}
