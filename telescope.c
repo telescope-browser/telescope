@@ -56,9 +56,19 @@ tab_by_id(uint32_t id)
 static void
 handle_imsg_err(struct imsg *imsg, size_t datalen)
 {
-	/* write(2, imsg->data, datalen); */
-	/* fprintf(stderr, "\nEOF\n"); */
-	/* event_loopbreak(); */
+	struct tab	*tab;
+	char		*page;
+
+	tab = tab_by_id(imsg->hdr.peerid);
+
+	page = imsg->data;
+	page[datalen-1] = '\0';
+
+	if (asprintf(&page, "# Error loading %s\n\n> %s\n",
+	    tab->url, page) == -1)
+		die();
+	load_page_from_str(tab, page);
+	free(page);
 }
 
 static void
@@ -111,27 +121,33 @@ handle_imsg_got_meta(struct imsg *imsg, size_t datalen)
 		die();
 	memcpy(tab->meta, imsg->data, datalen);
 
-	/* TODO: parse the MIME type if it's 20 */
-	gemtext_initparser(&tab->page);
+	if (tab->code != 30)
+		tab->redirect_count = 0;
 
 	if (tab->code == 20) {
+		/* TODO: parse the MIME type */
+		gemtext_initparser(&tab->page);
 		imsg_compose(ibuf, IMSG_PROCEED, tab->id, 0, -1, NULL, 0);
 		imsg_flush(ibuf);
 		return;
 	}
 
-	if (tab->code == 30)
-		die();
+	if (tab->code == 30) {
+		tab->redirect_count++;
+
+		/* TODO: make customizable? */
+		if (tab->redirect_count > 5) {
+			load_page_from_str(tab,
+			    err_pages[TOO_MUCH_REDIRECTS]);
+			return;
+		}
+
+		load_url(tab, tab->meta);
+		return;
+	}
 
 	/* 4x, 5x or 6x */
-
-	if (!tab->page.parse(&tab->page, err_pages[tab->code],
-	    strlen(err_pages[tab->code])))
-		die();
-	if (!tab->page.free(&tab->page))
-		die();
-
-	ui_on_tab_refresh(tab);
+	load_page_from_str(tab, err_pages[tab->code]);
 }
 
 static void
@@ -193,7 +209,7 @@ static void
 load_page_from_str(struct tab *tab, const char *page)
 {
 	gemtext_initparser(&tab->page);
-	if (!tab->page.parse(&tab->page, about_new, strlen(about_new)))
+	if (!tab->page.parse(&tab->page, page, strlen(page)))
 		die();
 	if (!tab->page.free(&tab->page))
 		die();
@@ -204,15 +220,45 @@ load_page_from_str(struct tab *tab, const char *page)
 void
 load_url(struct tab *tab, const char *url)
 {
-	strlcpy(tab->url, url, sizeof(tab->url));
+	/* TODO: parsing the url here is a bit ugly.  maybe store it
+	 * in the struct tab? */
+	struct url	 u;
+	const char	*err;
+	char		*page;
 
 	if (!strcmp(url, "about:new")) {
+		strlcpy(tab->url, url, sizeof(tab->url));
 		load_page_from_str(tab, about_new);
 		return;
 	}
 
+	if (has_prefix(tab->url, "about:")) {
+		strlcpy(tab->url, url, sizeof(tab->url));
+	} else {
+		if (!url_parse(tab->url, &u, &err))
+			goto err;
+
+		if (!url_resolve_from(&u, url, &err))
+			goto err;
+
+		/* TODO: this is nowhere good enough */
+		strlcpy(tab->url, u.scheme, sizeof(tab->url));
+		strlcat(tab->url, "://", sizeof(tab->url));
+		strlcat(tab->url, u.host, sizeof(tab->url));
+		strlcat(tab->url, "/", sizeof(tab->url));
+		strlcat(tab->url, u.path, sizeof(tab->url));
+	}
+
 	imsg_compose(ibuf, IMSG_GET, tab->id, 0, -1, url, strlen(url)+1);
 	imsg_flush(ibuf);
+	return;
+
+err:
+	if (asprintf(&page, "# error resolving %s from %s\n\n> %s\n",
+	    url, tab->url, err) == -1)
+		die();
+	load_page_from_str(tab, page);
+	free(page);
 }
 
 int
