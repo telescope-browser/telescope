@@ -83,6 +83,7 @@ static void		 load_default_keys(void);
 static int		 push_line(struct tab*, const struct line*, const char*, size_t);
 static void		 empty_vlist(struct tab*);
 static void		 restore_cursor(struct tab *);
+
 static void		 cmd_previous_line(struct tab*);
 static void		 cmd_next_line(struct tab*);
 static void		 cmd_forward_char(struct tab*);
@@ -94,6 +95,17 @@ static void		 cmd_scroll_up(struct tab*);
 static void		 cmd_scroll_down(struct tab*);
 static void		 cmd_kill_telescope(struct tab*);
 static void		 cmd_push_button(struct tab*);
+static void		 cmd_execute_extended_command(struct tab*);
+
+static void		 global_key_unbound(void);
+
+static void		 cmd_mini_del(struct tab*);
+static void		 cmd_mini_forward_char(struct tab*);
+static void		 cmd_mini_backward_char(struct tab*);
+static void		 cmd_mini_move_end_of_line(struct tab*);
+static void		 cmd_mini_move_beginning_of_line(struct tab*);
+static void		 eecmd_self_insert(void);
+
 static struct line	*nth_line(struct tab*, size_t);
 static struct tab	*current_tab(void);
 static void		 dispatch_stdio(int, short, void*);
@@ -106,13 +118,18 @@ static int		 wrap_page(struct tab*);
 static void		 print_line(struct line*);
 static void		 redraw_tabline(void);
 static void		 redraw_modeline(struct tab*);
+static void		 redraw_minibuffer(void);
 static void		 redraw_tab(struct tab*);
 static void		 message(const char*, ...) __attribute__((format(printf, 1, 2)));
 static void		 start_loading_anim(struct tab*);
 static void		 update_loading_anim(int, short, void*);
 static void		 stop_loading_anim(struct tab*);
 static void		 load_url_in_tab(struct tab*, const char*);
+static void		 enter_minibuffer(struct kmap*);
+static void		 exit_minibuffer(struct tab*);
 static void		 new_tab(void);
+
+static struct { int meta, key; } thiskey;
 
 static WINDOW	*tabline, *body, *modeline, *minibuf;
 static int	 body_lines, body_cols;
@@ -139,7 +156,19 @@ struct ui_state {
 
 #define CTRL(n)	((n)&0x1F)
 
-static TAILQ_HEAD(kmap, keymap) global_map, *current_map;
+struct kmap {
+	TAILQ_HEAD(map, keymap)	m;
+	void			(*unhandled_input)(void);
+};
+
+struct kmap global_map,
+	eecmd_map,
+	yornp_map,
+	yesornop_map,
+	cmplread_map,
+	*current_map,
+	*base_map;
+
 struct keymap {
 	int			 meta;
 	int			 key;
@@ -148,6 +177,14 @@ struct keymap {
 
 	TAILQ_ENTRY(keymap)	 keymaps;
 };
+
+static int	in_minibuffer;
+
+static struct {
+	char	 buf[1024];
+	size_t	 off, len;
+	char	 prompt[16];
+} ministate;
 
 static int
 kbd(const char *key)
@@ -162,7 +199,11 @@ kbd(const char *key)
 		{ "<right>",	KEY_RIGHT },
 		{ "<prior>",	KEY_PPAGE },
 		{ "<next>",	KEY_NPAGE },
+		{ "<home>",	KEY_HOME },
+		{ "<end>",	KEY_END },
 		/* ... */
+		{ "del",	KEY_BACKSPACE },
+		{ "esc",	27 },
 		{ "space",	' ' },
 		{ "spc",	' ' },
 		{ "enter",	CTRL('m') },
@@ -203,7 +244,7 @@ again:
 	while (*key != '\0' && isspace(*key))
 		++key;
 
-	TAILQ_FOREACH(entry, map, keymaps) {
+	TAILQ_FOREACH(entry, &map->m, keymaps) {
 		if (entry->meta == meta && entry->key == k) {
 			if (*key == '\0') {
 				entry->fn = fn;
@@ -219,12 +260,12 @@ again:
 
 	entry->meta = meta;
 	entry->key = k;
-	TAILQ_INIT(&entry->map);
+	TAILQ_INIT(&entry->map.m);
 
-	if (TAILQ_EMPTY(map))
-		TAILQ_INSERT_HEAD(map, entry, keymaps);
+	if (TAILQ_EMPTY(&map->m))
+		TAILQ_INSERT_HEAD(&map->m, entry, keymaps);
 	else
-		TAILQ_INSERT_TAIL(map, entry, keymaps);
+		TAILQ_INSERT_TAIL(&map->m, entry, keymaps);
 
         if (*key != '\0') {
 		map = &entry->map;
@@ -240,9 +281,17 @@ global_set_key(const char *key, void (*fn)(struct tab*))
 	kmap_define_key(&global_map, key, fn);
 }
 
+static inline void
+eecmd_set_key(const char *key, void (*fn)(struct tab*))
+{
+	kmap_define_key(&eecmd_map, key, fn);
+}
+
 static void
 load_default_keys(void)
 {
+	/* === global map === */
+
 	/* emacs */
 	global_set_key("C-p",		cmd_previous_line);
 	global_set_key("C-n",		cmd_next_line);
@@ -253,6 +302,8 @@ load_default_keys(void)
 	global_set_key("C-v",		cmd_scroll_down);
 
 	global_set_key("C-x C-c",	cmd_kill_telescope);
+
+	global_set_key("M-x",		cmd_execute_extended_command);
 
 	/* vi/vi-like */
 	global_set_key("k",		cmd_previous_line);
@@ -265,6 +316,8 @@ load_default_keys(void)
 
 	/* tmp */
 	global_set_key("q",		cmd_kill_telescope);
+
+	global_set_key(":",		cmd_execute_extended_command);
 
 	/* cua */
 	global_set_key("<up>",		cmd_previous_line);
@@ -279,6 +332,18 @@ load_default_keys(void)
 
 	/* global */
 	global_set_key("C-m",		cmd_push_button);
+
+	/* === eecmd map === */
+	eecmd_set_key("C-g",		exit_minibuffer);
+	eecmd_set_key("esc",		exit_minibuffer);
+	eecmd_set_key("del",		cmd_mini_del);
+
+	eecmd_set_key("C-f",		cmd_mini_forward_char);
+	eecmd_set_key("C-b",		cmd_mini_backward_char);
+	eecmd_set_key("C-e",		cmd_mini_move_end_of_line);
+	eecmd_set_key("C-a",		cmd_mini_move_beginning_of_line);
+	eecmd_set_key("<end>",		cmd_mini_move_end_of_line);
+	eecmd_set_key("<home>",		cmd_mini_move_beginning_of_line);
 }
 
 static int
@@ -450,6 +515,94 @@ cmd_push_button(struct tab *tab)
 	load_url_in_tab(tab, l->alt);
 }
 
+static void
+cmd_execute_extended_command(struct tab *tab)
+{
+	size_t	 len;
+
+	enter_minibuffer(&eecmd_map);
+
+	len = sizeof(ministate.prompt);
+	strlcpy(ministate.prompt, "", len);
+
+	if (thiskey.meta)
+		strlcat(ministate.prompt, "M-", len);
+
+	strlcat(ministate.prompt, keyname(thiskey.key), len);
+	strlcat(ministate.prompt, " ", len);
+}
+
+static void
+global_key_unbound(void)
+{
+	message("%s%c is undefined",
+	    thiskey.meta ? "M-" : "",
+	    thiskey.key);
+}
+
+static void
+cmd_mini_del(struct tab *tab)
+{
+	if (ministate.len == 0 || ministate.off == 0)
+		return;
+
+	memmove(&ministate.buf[ministate.off-1],
+	    &ministate.buf[ministate.off],
+	    ministate.len - ministate.off + 1);
+	ministate.off--;
+	ministate.len--;
+}
+
+static void
+cmd_mini_forward_char(struct tab *tab)
+{
+	if (ministate.off == ministate.len)
+		return;
+	ministate.off++;
+}
+
+static void
+cmd_mini_backward_char(struct tab *tab)
+{
+	if (ministate.off == 0)
+		return;
+	ministate.off--;
+}
+
+static void
+cmd_mini_move_end_of_line(struct tab *tab)
+{
+	ministate.off = ministate.len;
+}
+
+static void
+cmd_mini_move_beginning_of_line(struct tab *tab)
+{
+	ministate.off = 0;
+}
+
+static void
+eecmd_self_insert(void)
+{
+	if (thiskey.meta || isspace(thiskey.key) ||
+	    !isgraph(thiskey.key)) {
+		global_key_unbound();
+		return;
+	}
+
+	if (ministate.len == sizeof(ministate.buf))
+		return;
+
+	/* TODO: utf8 handling! */
+
+	memmove(&ministate.buf[ministate.off+1],
+	    &ministate.buf[ministate.off],
+	    ministate.len - ministate.off + 1);
+	ministate.buf[ministate.off] = thiskey.key;
+	ministate.off++;
+	ministate.len++;
+}
+
 static struct line *
 nth_line(struct tab *tab, size_t n)
 {
@@ -485,45 +638,49 @@ static void
 dispatch_stdio(int fd, short ev, void *d)
 {
 	struct keymap	*k;
-	int		 meta, key;
 
-	key = wgetch(body);
-	if (key == ERR)
+	thiskey.key = wgetch(body);
+	if (thiskey.key == ERR)
 		return;
-	if (key == 27) {
+	if (thiskey.key == 27) {
 		/* TODO: make escape-time customizable */
 
-		meta = 1;
-		key = wgetch(body);
-		if (key == ERR)
-			key = 27;
+		thiskey.meta = 1;
+		thiskey.key = wgetch(body);
+		if (thiskey.key == ERR)
+			thiskey.key = 27;
 	} else
-		meta = 0;
+		thiskey.meta = 0;
 
-	TAILQ_FOREACH(k, current_map, keymaps) {
-		if (k->meta == meta && k->key == key) {
+	TAILQ_FOREACH(k, &current_map->m, keymaps) {
+		if (k->meta == thiskey.meta &&
+		    k->key == thiskey.key) {
 			if (k->fn == NULL)
 				current_map = &k->map;
 			else {
-				current_map = &global_map;
+				current_map = base_map;
 				k->fn(current_tab());
 			}
 			goto done;
 		}
 	}
 
-	current_map = &global_map;
-
-	message("%s%c is undefined",
-	    meta ? "M-" : "", key);
+	current_map->unhandled_input();
+	current_map = base_map;
 
 done:
+	redraw_minibuffer();
 	restore_cursor(current_tab());
 	wrefresh(tabline);
 	wrefresh(modeline);
-	wrefresh(minibuf);
 
-	wrefresh(body);
+	if (in_minibuffer) {
+		wrefresh(body);
+		wrefresh(minibuf);
+	} else {
+		wrefresh(minibuf);
+		wrefresh(body);
+	}
 }
 
 static void
@@ -816,6 +973,21 @@ redraw_modeline(struct tab *tab)
 }
 
 static void
+redraw_minibuffer(void)
+{
+	size_t off;
+
+	wclear(minibuf);
+	if (!in_minibuffer)
+		return;
+
+	off = strlen(ministate.prompt);
+	mvwprintw(minibuf, 0, 0, "%s%s", ministate.prompt,
+	    ministate.buf);
+	wmove(minibuf, 0, off + ministate.off);
+}
+
+static void
 redraw_tab(struct tab *tab)
 {
 	struct line	*l;
@@ -839,19 +1011,28 @@ redraw_tab(struct tab *tab)
 
 	redraw_tabline();
 	redraw_modeline(tab);
+	redraw_minibuffer();
 
 	restore_cursor(tab);
 	wrefresh(tabline);
 	wrefresh(modeline);
-	wrefresh(minibuf);
 
-	wrefresh(body);
+	if (in_minibuffer) {
+		wrefresh(body);
+		wrefresh(minibuf);
+	} else {
+		wrefresh(minibuf);
+		wrefresh(body);
+	}
 }
 
 static void
 message(const char *fmt, ...)
 {
 	va_list ap;
+
+	if (in_minibuffer)
+		return;
 
 	va_start(ap, fmt);
 
@@ -889,7 +1070,10 @@ update_loading_anim(int fd, short ev, void *d)
 
 	redraw_modeline(tab);
 	wrefresh(modeline);
+
 	wrefresh(body);
+	if (in_minibuffer)
+		wrefresh(minibuf);
 
 	evtimer_add(&tab->s->loadingev, &loadingev_timer);
 }
@@ -904,8 +1088,11 @@ stop_loading_anim(struct tab *tab)
 	tab->s->loading_anim_step = 0;
 
 	redraw_modeline(tab);
+
 	wrefresh(modeline);
 	wrefresh(body);
+	if (in_minibuffer)
+		wrefresh(minibuf);
 }
 
 static void
@@ -919,6 +1106,33 @@ load_url_in_tab(struct tab *tab, const char *url)
 	tab->s->curs_x = 0;
 	tab->s->curs_y = 0;
 	redraw_tab(tab);
+}
+
+static void
+enter_minibuffer(struct kmap *map)
+{
+	if (clminibufev_set) {
+		clminibufev_set = 0;
+		evtimer_del(&clminibufev);
+	}
+
+	in_minibuffer = 1;
+	base_map = map;
+	current_map = map;
+
+	memset(ministate.buf, 0, sizeof(ministate.buf));
+        ministate.off = 0;
+	strlcpy(ministate.buf, "", sizeof(ministate.prompt));
+}
+
+static void
+exit_minibuffer(struct tab *tab)
+{
+	wclear(minibuf);
+
+	in_minibuffer = 0;
+	base_map = &global_map;
+	current_map = &global_map;
 }
 
 static void
@@ -958,7 +1172,17 @@ ui_init(void)
 {
 	setlocale(LC_ALL, "");
 
-	TAILQ_INIT(&global_map);
+	TAILQ_INIT(&global_map.m);
+	global_map.unhandled_input = global_key_unbound;
+
+	TAILQ_INIT(&eecmd_map.m);
+	eecmd_map.unhandled_input = eecmd_self_insert;
+
+	TAILQ_INIT(&yornp_map.m);
+	TAILQ_INIT(&yesornop_map.m);
+	TAILQ_INIT(&cmplread_map.m);
+
+	base_map = &global_map;
 	current_map = &global_map;
 	load_default_keys();
 
