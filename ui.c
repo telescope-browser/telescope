@@ -105,6 +105,7 @@ static void		 message(const char*, ...) __attribute__((format(printf, 1, 2)));
 static void		 start_loading_anim(struct tab*);
 static void		 update_loading_anim(int, short, void*);
 static void		 stop_loading_anim(struct tab*);
+static void		 load_url_in_tab(struct tab*, const char*);
 static void		 new_tab(void);
 
 typedef void (*interactivefn)(struct tab*);
@@ -150,6 +151,9 @@ struct binding {
 	{ CKEY('n'),	cmd_next_line, },
 	{ CKEY('f'),	cmd_forward_char, },
 	{ CKEY('b'),	cmd_backward_char, },
+
+	{ {0,KEY_UP},	cmd_previous_line, },
+	{ {0,KEY_DOWN},	cmd_next_line, },
 
 	{ CKEY('L'),	cmd_redraw, },
 
@@ -302,7 +306,10 @@ cmd_push_button(struct tab *tab)
 	if (nth > tab->s->line_max)
 		return;
 	l = nth_line(tab, nth);
-	message("Enter on line: \"%s\"", l->line ? l->line : "");
+	if (l->type != LINE_LINK)
+		return;
+
+	load_url_in_tab(tab, l->alt);
 }
 
 static void
@@ -766,14 +773,23 @@ stop_loading_anim(struct tab *tab)
 	evtimer_del(&tab->s->loadingev);
 	tab->s->loading_anim = 0;
 	tab->s->loading_anim_step = 0;
+
+	redraw_modeline(tab);
+	wrefresh(modeline);
+	wrefresh(body);
 }
 
 static void
-ui_load_url_in_tab(struct tab *tab, const char *url)
+load_url_in_tab(struct tab *tab, const char *url)
 {
+	empty_vlist(tab);
 	message("Loading %s...", url);
 	start_loading_anim(tab);
 	load_url(tab, url);
+
+	tab->s->curs_x = 0;
+	tab->s->curs_y = 0;
+	redraw_tab(tab);
 }
 
 static void
@@ -801,7 +817,7 @@ new_tab(void)
 	else
 		TAILQ_INSERT_TAIL(&tabshead, tab, tabs);
 
-	ui_load_url_in_tab(tab, url);
+	load_url_in_tab(tab, url);
 	return;
 
 err:
@@ -819,7 +835,6 @@ ui_init(void)
 
 	nonl();
 	intrflush(stdscr, FALSE);
-	keypad(stdscr, TRUE);
 
 	if ((tabline = newwin(1, COLS, 0, 0)) == NULL)
 		return 0;
@@ -833,6 +848,7 @@ ui_init(void)
 	body_lines = LINES-3;
 	body_cols = COLS;
 
+	keypad(body, TRUE);
 	scrollok(body, TRUE);
 
 	/* non-blocking input */
