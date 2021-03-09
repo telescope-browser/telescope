@@ -43,3 +43,14 @@ telescope_strnchr(char *b, char d, size_t len)
 
 	return NULL;
 }
+
+int
+has_prefix(const char *str, const char *prfx)
+{
+	size_t i;
+
+	for (i = 0; str[i] != '\0' && prfx[i] != '\0'; ++i)
+		if (str[i] != prfx[i])
+			return 0;
+	return prfx[i] == '\0';
+}
