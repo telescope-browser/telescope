@@ -58,6 +58,7 @@
 
 #include <telescope.h>
 
+#include <ctype.h>
 #include <curses.h>
 #include <event.h>
 #include <locale.h>
@@ -65,16 +66,20 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #define TAB_CURRENT	0x1
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 
-struct key;
+struct kmap;
 
 static struct event	stdioev, winchev;
 
+static int		 kbd(const char*);
+static void		 kmap_define_key(struct kmap*, const char*, void(*)(struct tab*));
+static void		 load_default_keys(void);
 static int		 push_line(struct tab*, const struct line*, const char*, size_t);
 static void		 empty_vlist(struct tab*);
 static void		 restore_cursor(struct tab *);
@@ -87,7 +92,6 @@ static void		 cmd_scroll_down(struct tab*);
 static void		 cmd_scroll_up(struct tab*);
 static void		 cmd_kill_telescope(struct tab*);
 static void		 cmd_push_button(struct tab*);
-static void		 cmd_unbound(struct key);
 static struct line	*nth_line(struct tab*, size_t);
 static struct tab	*current_tab(void);
 static void		 dispatch_stdio(int, short, void*);
@@ -107,8 +111,6 @@ static void		 update_loading_anim(int, short, void*);
 static void		 stop_loading_anim(struct tab*);
 static void		 load_url_in_tab(struct tab*, const char*);
 static void		 new_tab(void);
-
-typedef void (*interactivefn)(struct tab*);
 
 static WINDOW	*tabline, *body, *modeline, *minibuf;
 static int	 body_lines, body_cols;
@@ -133,38 +135,146 @@ struct ui_state {
 	TAILQ_HEAD(, line)	head;
 };
 
-struct key {
-	int	meta;
-	int	key;
+#define CTRL(n)	((n)&0x1F)
+
+static TAILQ_HEAD(kmap, keymap) global_map, *current_map;
+struct keymap {
+	int			 meta;
+	int			 key;
+	struct kmap		 map;
+	void			(*fn)(struct tab*);
+
+	TAILQ_ENTRY(keymap)	 keymaps;
 };
 
-#define KEY(n)		((struct key){0, n})
-#define CKEY(n)		((struct key){0, (n) & 0x1F})
-#define MKEY(n)		((struct key){1, n})
-#define CMKEY(n)	((struct key){1, (n) & 0x1F})
+static int
+kbd(const char *key)
+{
+	struct table {
+		char	*p;
+		int	 k;
+	} table[] = {
+		{ "<up>",	KEY_UP },
+		{ "<down>",	KEY_DOWN },
+		{ "<left>",	KEY_LEFT },
+		{ "<right>",	KEY_RIGHT },
+		/* ... */
+		{ "space",	' ' },
+		{ "spc",	' ' },
+		{ "enter",	CTRL('m') },
+		{ "tab",	CTRL('i') },
+		/* ... */
+		{ NULL, 0 },
+	}, *t;
 
-struct binding {
-	struct key	key;
-	interactivefn	fn;
-} bindings[] = {
-	{ CKEY('p'),	cmd_previous_line, },
-	{ CKEY('n'),	cmd_next_line, },
-	{ CKEY('f'),	cmd_forward_char, },
-	{ CKEY('b'),	cmd_backward_char, },
+	for (t = table; t->p != NULL; ++t) {
+		if (has_prefix(key, t->p))
+			return t->k;
+	}
 
-	{ {0,KEY_UP},	cmd_previous_line, },
-	{ {0,KEY_DOWN},	cmd_next_line, },
+        return *key;
+}
 
-	{ CKEY('L'),	cmd_redraw, },
+static void
+kmap_define_key(struct kmap *map, const char *key, void (*fn)(struct tab*))
+{
+	int ctrl, meta, k;
+	struct keymap	*entry;
 
-	{ KEY('J'),	cmd_scroll_down, },
-	{ KEY('K'),	cmd_scroll_up, },
+again:
+	if ((ctrl = has_prefix(key, "C-")))
+		key += 2;
+	if ((meta = has_prefix(key, "M-")))
+		key += 2;
+	if (*key == '\0')
+		_exit(1);
+	k = kbd(key);
 
-	{ KEY('q'),	cmd_kill_telescope, },
-	{ CKEY('m'),	cmd_push_button, },
+	if (ctrl)
+		k = CTRL(k);
 
-	{ {0, 0},	NULL, },
-};
+	/* skip key & spaces */
+	while (*key != '\0' && !isspace(*key))
+		++key;
+	while (*key != '\0' && isspace(*key))
+		++key;
+
+	TAILQ_FOREACH(entry, map, keymaps) {
+		if (entry->meta == meta && entry->key == k) {
+			if (*key == '\0') {
+				entry->fn = fn;
+				return;
+			}
+			map = &entry->map;
+			goto again;
+		}
+	}
+
+	if ((entry = calloc(1, sizeof(*entry))) == NULL)
+		abort();
+
+	entry->meta = meta;
+	entry->key = k;
+	TAILQ_INIT(&entry->map);
+
+	if (TAILQ_EMPTY(map))
+		TAILQ_INSERT_HEAD(map, entry, keymaps);
+	else
+		TAILQ_INSERT_TAIL(map, entry, keymaps);
+
+        if (*key != '\0') {
+		map = &entry->map;
+		goto again;
+	}
+
+	entry->fn = fn;
+}
+
+static inline void
+global_set_key(const char *key, void (*fn)(struct tab*))
+{
+	kmap_define_key(&global_map, key, fn);
+}
+
+static void
+load_default_keys(void)
+{
+	/* emacs */
+	global_set_key("C-p",		cmd_previous_line);
+	global_set_key("C-n",		cmd_next_line);
+	global_set_key("C-f",		cmd_forward_char);
+	global_set_key("C-b",		cmd_backward_char);
+
+	/* tmp */
+	global_set_key("M-v",		cmd_scroll_up);
+	global_set_key("C-v",		cmd_scroll_down);
+
+	global_set_key("C-x C-c",	cmd_kill_telescope);
+
+	/* vi/vi-like */
+	global_set_key("k",		cmd_previous_line);
+	global_set_key("j",		cmd_next_line);
+	global_set_key("l",		cmd_forward_char);
+	global_set_key("h",		cmd_backward_char);
+
+	global_set_key("K",		cmd_scroll_up);
+	global_set_key("J",		cmd_scroll_down);
+
+	/* tmp */
+	global_set_key("q",		cmd_kill_telescope);
+
+	/* cua */
+	global_set_key("<up>",		cmd_previous_line);
+	global_set_key("<down>",	cmd_next_line);
+	global_set_key("<right>",	cmd_forward_char);
+	global_set_key("<left>",	cmd_backward_char);
+
+	/* "ncurses standard" */
+	global_set_key("C-l",		cmd_redraw);
+
+	/* global */
+	global_set_key("C-m",		cmd_push_button);
+}
 
 static int
 push_line(struct tab *tab, const struct line *l, const char *buf, size_t len)
@@ -312,14 +422,6 @@ cmd_push_button(struct tab *tab)
 	load_url_in_tab(tab, l->alt);
 }
 
-static void
-cmd_unbound(struct key k)
-{
-	message("%s%c is undefined",
-	    k.meta ? "M-" : "",
-	    k.key);
-}
-
 static struct line *
 nth_line(struct tab *tab, size_t n)
 {
@@ -354,39 +456,38 @@ current_tab(void)
 static void
 dispatch_stdio(int fd, short ev, void *d)
 {
-	struct binding	*b;
-	struct key	 key;
-	int		 k, j;
+	struct keymap	*k;
+	int		 meta, key;
 
-	k = wgetch(body);
-
-	if (k == ERR)
+	key = wgetch(body);
+	if (key == ERR)
 		return;
+	if (key == 27) {
+		/* TODO: make escape-time customizable */
 
-	/* look for a M-key */
-	if (k == 27) {
-		wtimeout(body, 0); /* TODO: make escape-time customizable */
-		j = wgetch(body);
-		if (j != ERR) {
-			k = j;
-			key.meta = 1;
-		} else {
-			key.meta = 0;
-		}
+		meta = 1;
+		key = wgetch(body);
+		if (key == ERR)
+			key = 27;
 	} else
-		key.meta = 0;
+		meta = 0;
 
-	key.key = k;
-
-	for (b = bindings; b->fn != NULL; ++b) {
-		if (key.meta == b->key.meta &&
-		    key.key == b->key.key) {
-			b->fn(current_tab());
+	TAILQ_FOREACH(k, current_map, keymaps) {
+		if (k->meta == meta && k->key == key) {
+			if (k->fn == NULL)
+				current_map = &k->map;
+			else {
+				current_map = &global_map;
+				k->fn(current_tab());
+			}
 			goto done;
 		}
 	}
 
-	cmd_unbound(key);
+	current_map = &global_map;
+
+	message("%s%c is undefined",
+	    meta ? "M-" : "", key);
 
 done:
 	restore_cursor(current_tab());
@@ -828,6 +929,10 @@ int
 ui_init(void)
 {
 	setlocale(LC_ALL, "");
+
+	TAILQ_INIT(&global_map);
+	current_map = &global_map;
+	load_default_keys();
 
 	initscr();
 	raw();
