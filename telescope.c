@@ -235,6 +235,8 @@ load_about_url(struct tab *tab, const char *url)
 	strlcpy(tab->url.scheme, "about", sizeof(tab->url.scheme));
 	strlcpy(tab->url.path, m+1, sizeof(tab->url.path));
 
+	strlcpy(tab->urlstr, url, sizeof(tab->urlstr));
+
 	if (!strcmp(url, "about:new"))
 		load_page_from_str(tab, about_new);
 	else
