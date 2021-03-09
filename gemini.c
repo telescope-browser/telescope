@@ -67,6 +67,9 @@ static void		 handle_proceed(struct imsg*, size_t);
 static void		 handle_stop(struct imsg*, size_t);
 static void		 handle_quit(struct imsg*, size_t);
 
+/* TODO: making this customizable */
+struct timeval timeout_for_handshake = { 5, 0 };
+
 static imsg_handlerfn *handlers[] = {
 	[IMSG_GET] = handle_get,
 	[IMSG_CERT_STATUS] = handle_cert_status,
@@ -222,6 +225,11 @@ do_handshake(int fd, short ev, void *d)
 	struct req	*req = d;
 	const char	*hash;
 
+	if (ev == EV_TIMEOUT) {
+		close_with_err(req, "Timeout loading page");
+		return;
+	}
+
 	switch (tls_handshake(req->ctx)) {
 	case TLS_WANT_POLLIN:
 		yield_r(req, do_handshake, NULL);
@@ -345,6 +353,9 @@ parse_reply(struct req *req)
 	    req->buf, len);
 	imsg_flush(ibuf);
 
+	if (code != 20)
+		close_conn(0, 0, req);
+
 	return;
 
 err:
@@ -417,7 +428,7 @@ handle_get(struct imsg *imsg, size_t datalen)
 	}
 
 	TAILQ_INSERT_HEAD(&reqhead, req, reqs);
-	yield_w(req, do_handshake, NULL);
+	yield_w(req, do_handshake, &timeout_for_handshake);
 	return;
 
 err:
@@ -478,15 +489,15 @@ dispatch_imsg(int fd, short ev, void *d)
 	if ((n = imsg_read(ibuf)) == -1) {
 		if (errno == EAGAIN || errno == EWOULDBLOCK)
 			return;
-		die();
+		_exit(1);
 	}
 
 	if (n == 0)
-		die();
+		_exit(1);
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			die();
+			_exit(1);
 		if (n == 0)
 			return;
 		datalen = imsg.hdr.len - IMSG_HEADER_SIZE;
