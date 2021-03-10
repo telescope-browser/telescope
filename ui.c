@@ -161,6 +161,30 @@ struct ui_state {
 
 #define CTRL(n)	((n)&0x1F)
 
+struct keytable {
+	char	*p;
+	int	 k;
+} keytable[] = {
+	{ "<up>",	KEY_UP },
+	{ "<down>",	KEY_DOWN },
+	{ "<left>",	KEY_LEFT },
+	{ "<right>",	KEY_RIGHT },
+	{ "<prior>",	KEY_PPAGE },
+	{ "<next>",	KEY_NPAGE },
+	{ "<home>",	KEY_HOME },
+	{ "<end>",	KEY_END },
+	/* ... */
+	{ "del",	KEY_BACKSPACE },
+	{ "esc",	27 },
+	{ "space",	' ' },
+	{ "spc",	' ' },
+	{ "enter",	CTRL('m') },
+	{ "ret",	CTRL('m' )},
+	{ "tab",	CTRL('i') },
+	/* ... */
+	{ NULL, 0 },
+};
+
 struct kmap {
 	TAILQ_HEAD(map, keymap)	m;
 	void			(*unhandled_input)(void);
@@ -195,36 +219,27 @@ static struct {
 static int
 kbd(const char *key)
 {
-	struct table {
-		char	*p;
-		int	 k;
-	} table[] = {
-		{ "<up>",	KEY_UP },
-		{ "<down>",	KEY_DOWN },
-		{ "<left>",	KEY_LEFT },
-		{ "<right>",	KEY_RIGHT },
-		{ "<prior>",	KEY_PPAGE },
-		{ "<next>",	KEY_NPAGE },
-		{ "<home>",	KEY_HOME },
-		{ "<end>",	KEY_END },
-		/* ... */
-		{ "del",	KEY_BACKSPACE },
-		{ "esc",	27 },
-		{ "space",	' ' },
-		{ "spc",	' ' },
-		{ "enter",	CTRL('m') },
-		{ "ret",	CTRL('m' )},
-		{ "tab",	CTRL('i') },
-		/* ... */
-		{ NULL, 0 },
-	}, *t;
+	struct keytable *t;
 
-	for (t = table; t->p != NULL; ++t) {
+	for (t = keytable; t->p != NULL; ++t) {
 		if (has_prefix(key, t->p))
 			return t->k;
 	}
 
         return *key;
+}
+
+static const char *
+unkbd(int k)
+{
+	struct keytable *t;
+
+	for (t = keytable; t->p != NULL; ++t) {
+		if (k == t->k)
+			return t->p;
+	}
+
+	return NULL;
 }
 
 static void
@@ -544,9 +559,19 @@ cmd_execute_extended_command(struct tab *tab)
 static void
 global_key_unbound(void)
 {
-	message("%s%c is undefined",
+	const char *keyname;
+	char tmp[2] = {0, 0};
+
+	if ((keyname = unkbd(thiskey.key)) == NULL) {
+		message("%s%c is undefined",
+		    thiskey.meta ? "M-" : "",
+		    thiskey.key);
+		return;
+	}
+
+	message("%s%s is undefined",
 	    thiskey.meta ? "M-" : "",
-	    thiskey.key);
+	    keyname);
 }
 
 static void
