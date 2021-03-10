@@ -130,6 +130,7 @@ extern const char	*err_pages[70];
 void		 load_about_url(struct tab*, const char*);
 void		 load_gemini_url(struct tab*, const char*);
 void		 load_url(struct tab*, const char*);
+void		 stop_tab(struct tab*);
 
 /* ui.c */
 int		 ui_init(void);

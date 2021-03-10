@@ -287,6 +287,13 @@ load_url(struct tab *tab, const char *url)
 	protos[0].loadfn(tab, url);
 }
 
+void
+stop_tab(struct tab *tab)
+{
+	imsg_compose(ibuf, IMSG_STOP, tab->id, 0, -1, NULL, 0);
+	imsg_flush(ibuf);
+}
+
 int
 main(void)
 {
