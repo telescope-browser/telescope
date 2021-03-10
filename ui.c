@@ -183,6 +183,8 @@ struct keymap {
 static int	in_minibuffer;
 
 static struct {
+	char	*curmesg;
+
 	char	 buf[1024];
 	size_t	 off, len;
 	char	 prompt[16];
@@ -722,9 +724,18 @@ static void
 handle_clear_minibuf(int fd, short ev, void *d)
 {
 	clminibufev_set = 0;
-	werase(minibuf);
-	wrefresh(minibuf);
-	wrefresh(body);
+
+	free(ministate.curmesg);
+	ministate.curmesg = NULL;
+
+	redraw_minibuffer();
+	if (in_minibuffer) {
+		wrefresh(body);
+		wrefresh(minibuf);
+	} else {
+		wrefresh(minibuf);
+		wrefresh(body);
+	}
 }
 
 static void
@@ -1010,16 +1021,30 @@ redraw_modeline(struct tab *tab)
 static void
 redraw_minibuffer(void)
 {
-	size_t off;
+	size_t skip = 0, off = 0;
 
 	wclear(minibuf);
 	if (!in_minibuffer)
-		return;
+		goto message;
 
 	off = strlen(ministate.prompt);
+
+	while (ministate.off - skip > COLS / 2) {
+		skip += MIN(ministate.off/4, 1);
+	}
+
 	mvwprintw(minibuf, 0, 0, "%s%s", ministate.prompt,
-	    ministate.buf);
-	wmove(minibuf, 0, off + ministate.off);
+	    ministate.buf + skip);
+
+message:
+	if (ministate.curmesg != NULL) {
+		if (in_minibuffer)
+			wprintw(minibuf, "  [%s]", ministate.curmesg);
+		else
+			wprintw(minibuf, "%s", ministate.curmesg);
+	}
+
+	wmove(minibuf, 0, off + ministate.off - skip);
 }
 
 static void
@@ -1066,24 +1091,27 @@ message(const char *fmt, ...)
 {
 	va_list ap;
 
-	if (in_minibuffer)
-		return;
-
-	va_start(ap, fmt);
-
 	if (clminibufev_set)
 		evtimer_del(&clminibufev);
 	evtimer_set(&clminibufev, handle_clear_minibuf, NULL);
 	evtimer_add(&clminibufev, &clminibufev_timer);
 	clminibufev_set = 1;
 
-	werase(minibuf);
-	vw_printw(minibuf, fmt, ap);
-
-	wrefresh(minibuf);
-	wrefresh(body);
-
+	va_start(ap, fmt);
+	/* TODO: what to do if the allocation fails here? */
+	if (vasprintf(&ministate.curmesg, fmt, ap) == -1)
+		ministate.curmesg = NULL;
 	va_end(ap);
+
+	redraw_minibuffer();
+
+	if (in_minibuffer) {
+		wrefresh(body);
+		wrefresh(minibuf);
+	} else {
+		wrefresh(minibuf);
+		wrefresh(body);
+	}
 }
 
 static void
@@ -1147,11 +1175,6 @@ static void
 enter_minibuffer(void (*self_insert_fn)(void), void (*donefn)(void),
     void (*abortfn)(void))
 {
-	if (clminibufev_set) {
-		clminibufev_set = 0;
-		evtimer_del(&clminibufev);
-	}
-
 	in_minibuffer = 1;
 	base_map = &minibuffer_map;
 	current_map = &minibuffer_map;
