@@ -52,6 +52,7 @@ static int 		 conn_towards(struct url*, char**);
 
 static void		 close_with_err(struct req*, const char *err);
 static struct req	*req_by_id(uint32_t);
+static struct req	*req_by_id_try(uint32_t);
 
 static void		 do_handshake(int, short, void*);
 static void		 write_request(int, short, void*);
@@ -179,12 +180,22 @@ req_by_id(uint32_t id)
 {
 	struct req *r;
 
+	if ((r = req_by_id_try(id)) == NULL)
+		die();
+	return r;
+}
+
+static struct req *
+req_by_id_try(uint32_t id)
+{
+	struct req *r;
+
 	TAILQ_FOREACH(r, &reqhead, reqs) {
 		if (r->id == id)
 			return r;
 	}
 
-	die();
+	return NULL;
 }
 
 static void
@@ -468,7 +479,8 @@ handle_stop(struct imsg *imsg, size_t datalen)
 {
 	struct req	*req;
 
-	req = req_by_id(imsg->hdr.peerid);
+	if ((req = req_by_id_try(imsg->hdr.peerid)) == NULL)
+		return;
 	close_conn(0, 0, req);
 }
 
