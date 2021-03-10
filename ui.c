@@ -105,7 +105,11 @@ static void		 cmd_mini_backward_char(struct tab*);
 static void		 cmd_mini_move_end_of_line(struct tab*);
 static void		 cmd_mini_move_beginning_of_line(struct tab*);
 static void		 cmd_mini_kill_line(struct tab*);
+static void		 cmd_mini_abort();
+static void		 cmd_mini_complete_and_exit();
+
 static void		 eecmd_self_insert(void);
+static void		 eecmd_select(void);
 
 static struct line	*nth_line(struct tab*, size_t);
 static struct tab	*current_tab(void);
@@ -126,8 +130,8 @@ static void		 start_loading_anim(struct tab*);
 static void		 update_loading_anim(int, short, void*);
 static void		 stop_loading_anim(struct tab*);
 static void		 load_url_in_tab(struct tab*, const char*);
-static void		 enter_minibuffer(void(*)(void));
-static void		 exit_minibuffer(struct tab*);
+static void		 enter_minibuffer(void(*)(void), void(*)(void), void(*)(void));
+static void		 exit_minibuffer(void);
 static void		 new_tab(void);
 
 static struct { int meta, key; } thiskey;
@@ -182,6 +186,8 @@ static struct {
 	char	 buf[1024];
 	size_t	 off, len;
 	char	 prompt[16];
+	void	 (*donefn)(void);
+	void	 (*abortfn)(void);
 } ministate;
 
 static int
@@ -205,6 +211,7 @@ kbd(const char *key)
 		{ "space",	' ' },
 		{ "spc",	' ' },
 		{ "enter",	CTRL('m') },
+		{ "ret",	CTRL('m' )},
 		{ "tab",	CTRL('i') },
 		/* ... */
 		{ NULL, 0 },
@@ -332,8 +339,9 @@ load_default_keys(void)
 	global_set_key("C-m",		cmd_push_button);
 
 	/* === minibuffer map === */
-	minibuffer_set_key("C-g",		exit_minibuffer);
-	minibuffer_set_key("esc",		exit_minibuffer);
+	minibuffer_set_key("ret",		cmd_mini_complete_and_exit);
+	minibuffer_set_key("C-g",		cmd_mini_abort);
+	minibuffer_set_key("esc",		cmd_mini_abort);
 	minibuffer_set_key("del",		cmd_mini_del);
 
 	minibuffer_set_key("C-f",		cmd_mini_forward_char);
@@ -519,7 +527,7 @@ cmd_execute_extended_command(struct tab *tab)
 {
 	size_t	 len;
 
-	enter_minibuffer(eecmd_self_insert);
+	enter_minibuffer(eecmd_self_insert, eecmd_select, exit_minibuffer);
 
 	len = sizeof(ministate.prompt);
 	strlcpy(ministate.prompt, "", len);
@@ -590,6 +598,18 @@ cmd_mini_kill_line(struct tab *tab)
 }
 
 static void
+cmd_mini_abort(struct tab *tab)
+{
+        ministate.abortfn();
+}
+
+static void
+cmd_mini_complete_and_exit(struct tab *tab)
+{
+	ministate.donefn();
+}
+
+static void
 eecmd_self_insert(void)
 {
 	if (thiskey.meta || isspace(thiskey.key) ||
@@ -609,6 +629,13 @@ eecmd_self_insert(void)
 	ministate.buf[ministate.off] = thiskey.key;
 	ministate.off++;
 	ministate.len++;
+}
+
+static void
+eecmd_select(void)
+{
+	exit_minibuffer();
+	message("TODO: try to execute %s", ministate.buf);
 }
 
 static struct line *
@@ -1117,7 +1144,8 @@ load_url_in_tab(struct tab *tab, const char *url)
 }
 
 static void
-enter_minibuffer(void (*self_insert_fn)(void))
+enter_minibuffer(void (*self_insert_fn)(void), void (*donefn)(void),
+    void (*abortfn)(void))
 {
 	if (clminibufev_set) {
 		clminibufev_set = 0;
@@ -1129,13 +1157,16 @@ enter_minibuffer(void (*self_insert_fn)(void))
 	current_map = &minibuffer_map;
 
 	base_map->unhandled_input = self_insert_fn;
+
+	ministate.donefn = donefn;
+	ministate.abortfn = abortfn;
 	memset(ministate.buf, 0, sizeof(ministate.buf));
         ministate.off = 0;
 	strlcpy(ministate.buf, "", sizeof(ministate.prompt));
 }
 
 static void
-exit_minibuffer(struct tab *tab)
+exit_minibuffer(void)
 {
 	wclear(minibuf);
 
