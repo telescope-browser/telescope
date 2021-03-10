@@ -209,7 +209,7 @@ static int	in_minibuffer;
 static struct {
 	char	*curmesg;
 
-	char	 buf[1024];
+	char	 buf[1025];
 	size_t	 off, len;
 	char	 prompt[16];
 	void	 (*donefn)(void);
@@ -645,7 +645,7 @@ eecmd_self_insert(void)
 		return;
 	}
 
-	if (ministate.len == sizeof(ministate.buf))
+	if (ministate.len == sizeof(ministate.buf) -1)
 		return;
 
 	/* TODO: utf8 handling! */
