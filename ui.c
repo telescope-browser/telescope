@@ -104,6 +104,7 @@ static void		 cmd_mini_forward_char(struct tab*);
 static void		 cmd_mini_backward_char(struct tab*);
 static void		 cmd_mini_move_end_of_line(struct tab*);
 static void		 cmd_mini_move_beginning_of_line(struct tab*);
+static void		 cmd_mini_kill_line(struct tab*);
 static void		 eecmd_self_insert(void);
 
 static struct line	*nth_line(struct tab*, size_t);
@@ -125,7 +126,7 @@ static void		 start_loading_anim(struct tab*);
 static void		 update_loading_anim(int, short, void*);
 static void		 stop_loading_anim(struct tab*);
 static void		 load_url_in_tab(struct tab*, const char*);
-static void		 enter_minibuffer(struct kmap*);
+static void		 enter_minibuffer(void(*)(void));
 static void		 exit_minibuffer(struct tab*);
 static void		 new_tab(void);
 
@@ -162,10 +163,7 @@ struct kmap {
 };
 
 struct kmap global_map,
-	eecmd_map,
-	yornp_map,
-	yesornop_map,
-	cmplread_map,
+	minibuffer_map,
 	*current_map,
 	*base_map;
 
@@ -282,9 +280,9 @@ global_set_key(const char *key, void (*fn)(struct tab*))
 }
 
 static inline void
-eecmd_set_key(const char *key, void (*fn)(struct tab*))
+minibuffer_set_key(const char *key, void (*fn)(struct tab*))
 {
-	kmap_define_key(&eecmd_map, key, fn);
+	kmap_define_key(&minibuffer_map, key, fn);
 }
 
 static void
@@ -333,17 +331,18 @@ load_default_keys(void)
 	/* global */
 	global_set_key("C-m",		cmd_push_button);
 
-	/* === eecmd map === */
-	eecmd_set_key("C-g",		exit_minibuffer);
-	eecmd_set_key("esc",		exit_minibuffer);
-	eecmd_set_key("del",		cmd_mini_del);
+	/* === minibuffer map === */
+	minibuffer_set_key("C-g",		exit_minibuffer);
+	minibuffer_set_key("esc",		exit_minibuffer);
+	minibuffer_set_key("del",		cmd_mini_del);
 
-	eecmd_set_key("C-f",		cmd_mini_forward_char);
-	eecmd_set_key("C-b",		cmd_mini_backward_char);
-	eecmd_set_key("C-e",		cmd_mini_move_end_of_line);
-	eecmd_set_key("C-a",		cmd_mini_move_beginning_of_line);
-	eecmd_set_key("<end>",		cmd_mini_move_end_of_line);
-	eecmd_set_key("<home>",		cmd_mini_move_beginning_of_line);
+	minibuffer_set_key("C-f",		cmd_mini_forward_char);
+	minibuffer_set_key("C-b",		cmd_mini_backward_char);
+	minibuffer_set_key("C-e",		cmd_mini_move_end_of_line);
+	minibuffer_set_key("C-a",		cmd_mini_move_beginning_of_line);
+	minibuffer_set_key("<end>",		cmd_mini_move_end_of_line);
+	minibuffer_set_key("<home>",		cmd_mini_move_beginning_of_line);
+	minibuffer_set_key("C-k",		cmd_mini_kill_line);
 }
 
 static int
@@ -520,7 +519,7 @@ cmd_execute_extended_command(struct tab *tab)
 {
 	size_t	 len;
 
-	enter_minibuffer(&eecmd_map);
+	enter_minibuffer(eecmd_self_insert);
 
 	len = sizeof(ministate.prompt);
 	strlcpy(ministate.prompt, "", len);
@@ -579,6 +578,15 @@ static void
 cmd_mini_move_beginning_of_line(struct tab *tab)
 {
 	ministate.off = 0;
+}
+
+static void
+cmd_mini_kill_line(struct tab *tab)
+{
+        if (ministate.off == ministate.len)
+		return;
+	ministate.buf[ministate.off] = '\0';
+	ministate.len -= ministate.off;
 }
 
 static void
@@ -1109,7 +1117,7 @@ load_url_in_tab(struct tab *tab, const char *url)
 }
 
 static void
-enter_minibuffer(struct kmap *map)
+enter_minibuffer(void (*self_insert_fn)(void))
 {
 	if (clminibufev_set) {
 		clminibufev_set = 0;
@@ -1117,9 +1125,10 @@ enter_minibuffer(struct kmap *map)
 	}
 
 	in_minibuffer = 1;
-	base_map = map;
-	current_map = map;
+	base_map = &minibuffer_map;
+	current_map = &minibuffer_map;
 
+	base_map->unhandled_input = self_insert_fn;
 	memset(ministate.buf, 0, sizeof(ministate.buf));
         ministate.off = 0;
 	strlcpy(ministate.buf, "", sizeof(ministate.prompt));
@@ -1175,12 +1184,7 @@ ui_init(void)
 	TAILQ_INIT(&global_map.m);
 	global_map.unhandled_input = global_key_unbound;
 
-	TAILQ_INIT(&eecmd_map.m);
-	eecmd_map.unhandled_input = eecmd_self_insert;
-
-	TAILQ_INIT(&yornp_map.m);
-	TAILQ_INIT(&yesornop_map.m);
-	TAILQ_INIT(&cmplread_map.m);
+	TAILQ_INIT(&minibuffer_map.m);
 
 	base_map = &global_map;
 	current_map = &global_map;
