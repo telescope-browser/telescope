@@ -96,6 +96,10 @@ static void		 cmd_scroll_down(struct tab*);
 static void		 cmd_kill_telescope(struct tab*);
 static void		 cmd_push_button(struct tab*);
 static void		 cmd_execute_extended_command(struct tab*);
+static void		 cmd_tab_close(struct tab*);
+static void		 cmd_tab_new(struct tab*);
+static void		 cmd_tab_next(struct tab*);
+static void		 cmd_tab_previous(struct tab*);
 
 static void		 global_key_unbound(void);
 
@@ -158,6 +162,8 @@ struct ui_state {
 
 	TAILQ_HEAD(, line)	head;
 };
+
+static char	keybuf[64];
 
 #define CTRL(n)	((n)&0x1F)
 
@@ -326,6 +332,11 @@ load_default_keys(void)
 	global_set_key("C-x C-c",	cmd_kill_telescope);
 
 	global_set_key("M-x",		cmd_execute_extended_command);
+
+	global_set_key("C-x t 0",	cmd_tab_close);
+	global_set_key("C-x t 2",	cmd_tab_new);
+	global_set_key("C-x t o",	cmd_tab_next);
+	global_set_key("C-x t O",	cmd_tab_previous);
 
 	/* vi/vi-like */
 	global_set_key("k",		cmd_previous_line);
@@ -557,21 +568,61 @@ cmd_execute_extended_command(struct tab *tab)
 }
 
 static void
-global_key_unbound(void)
+cmd_tab_close(struct tab *tab)
 {
-	const char *keyname;
-	char tmp[2] = {0, 0};
+	struct tab *t;
 
-	if ((keyname = unkbd(thiskey.key)) == NULL) {
-		message("%s%c is undefined",
-		    thiskey.meta ? "M-" : "",
-		    thiskey.key);
+	if (TAILQ_PREV(tab, tabshead, tabs) == NULL &&
+	    TAILQ_NEXT(tab, tabs) == NULL) {
+		message("Can't close the only tab.");
 		return;
 	}
 
-	message("%s%s is undefined",
-	    thiskey.meta ? "M-" : "",
-	    keyname);
+	stop_tab(tab);
+
+	t = TAILQ_PREV(tab, tabshead, tabs);
+	t->flags |= TAB_CURRENT;
+
+	TAILQ_REMOVE(&tabshead, tab, tabs);
+
+	free(tab->s);
+	free(tab);
+}
+
+static void
+cmd_tab_new(struct tab *tab)
+{
+	new_tab();
+}
+
+static void
+cmd_tab_next(struct tab *tab)
+{
+	struct tab *t;
+
+	tab->flags &= ~TAB_CURRENT;
+
+	if ((t = TAILQ_NEXT(tab, tabs)) == NULL)
+		t = TAILQ_FIRST(&tabshead);
+	t->flags |= TAB_CURRENT;
+}
+
+static void
+cmd_tab_previous(struct tab *tab)
+{
+	struct tab *t;
+
+	tab->flags &= ~TAB_CURRENT;
+
+	if ((t = TAILQ_PREV(tab, tabshead, tabs)) == NULL)
+		t = TAILQ_LAST(&tabshead, tabshead);
+	t->flags |= TAB_CURRENT;
+}
+
+static void
+global_key_unbound(void)
+{
+	message("%s is undefined", keybuf);
 }
 
 static void
@@ -700,6 +751,8 @@ static void
 dispatch_stdio(int fd, short ev, void *d)
 {
 	struct keymap	*k;
+	const char	*keyname;
+	char		 tmp[2] = {0};
 
 	thiskey.key = wgetch(body);
 	if (thiskey.key == ERR)
@@ -714,6 +767,17 @@ dispatch_stdio(int fd, short ev, void *d)
 	} else
 		thiskey.meta = 0;
 
+	if (keybuf[0] != '\0')
+		strlcat(keybuf, " ", sizeof(keybuf));
+	if (thiskey.meta)
+		strlcat(keybuf, "M-", sizeof(keybuf));
+	if ((keyname = unkbd(thiskey.key)) != NULL)
+		strlcat(keybuf, keyname, sizeof(keybuf));
+	else {
+		tmp[0] = thiskey.key;
+		strlcat(keybuf, tmp, sizeof(keybuf));
+	}
+
 	TAILQ_FOREACH(k, &current_map->m, keymaps) {
 		if (k->meta == thiskey.meta &&
 		    k->key == thiskey.key) {
@@ -721,16 +785,24 @@ dispatch_stdio(int fd, short ev, void *d)
 				current_map = &k->map;
 			else {
 				current_map = base_map;
+				strlcpy(keybuf, "", sizeof(keybuf));
 				k->fn(current_tab());
 			}
 			goto done;
 		}
 	}
 
-	current_map->unhandled_input();
+	if (current_map->unhandled_input != NULL)
+		current_map->unhandled_input();
+	else {
+		global_key_unbound();
+	}
+
+	strlcpy(keybuf, "", sizeof(keybuf));
 	current_map = base_map;
 
 done:
+	redraw_tabline();
 	redraw_minibuffer();
 	restore_cursor(current_tab());
 	wrefresh(tabline);
@@ -1015,9 +1087,28 @@ print_line(struct line *l)
 static void
 redraw_tabline(void)
 {
+	struct tab	*tab;
+	int		 current;
+
 	wclear(tabline);
 	wbkgd(tabline, A_REVERSE);
-	mvwprintw(tabline, 0, 0, "TODO: tabs here");
+
+	wprintw(tabline, " ");
+	TAILQ_FOREACH(tab, &tabshead, tabs) {
+		current = tab->flags & TAB_CURRENT;
+		if (current) {
+			wattroff(tabline, A_REVERSE);
+			wattron(tabline, A_STANDOUT);
+		}
+
+		wprintw(tabline, " %d:todo title ",
+		    tab->id);
+
+		if (current) {
+			wattron(tabline, A_REVERSE);
+			wattroff(tabline, A_STANDOUT);
+		}
+	}
 }
 
 static void
