@@ -407,6 +407,7 @@ handle_get(struct imsg *imsg, size_t datalen)
 		die();
 
 	req->id = imsg->hdr.peerid;
+	TAILQ_INSERT_HEAD(&reqhead, req, reqs);
 
         if (!url_parse(imsg->data, &req->url, &e)) {
 		fprintf(stderr, "failed to parse url: %s\n", e);
@@ -427,7 +428,6 @@ handle_get(struct imsg *imsg, size_t datalen)
 		goto err;
 	}
 
-	TAILQ_INSERT_HEAD(&reqhead, req, reqs);
 	yield_w(req, do_handshake, &timeout_for_handshake);
 	return;
 
