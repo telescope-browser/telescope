@@ -1096,18 +1096,8 @@ redraw_tabline(void)
 	wprintw(tabline, " ");
 	TAILQ_FOREACH(tab, &tabshead, tabs) {
 		current = tab->flags & TAB_CURRENT;
-		if (current) {
-			wattroff(tabline, A_REVERSE);
-			wattron(tabline, A_STANDOUT);
-		}
-
-		wprintw(tabline, " %d:todo title ",
-		    tab->id);
-
-		if (current) {
-			wattron(tabline, A_REVERSE);
-			wattroff(tabline, A_STANDOUT);
-		}
+		wprintw(tabline, " %s%d:todo title ",
+		    current ? "*" : "", tab->id);
 	}
 }
 
