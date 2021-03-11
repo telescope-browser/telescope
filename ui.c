@@ -1192,31 +1192,20 @@ static int
 wrap_page(struct tab *tab)
 {
 	struct line	*l;
+	const char	*prfx = line_prefixes[l->type].prfx1;
 
 	empty_vlist(tab);
 
 	TAILQ_FOREACH(l, &tab->page.head, lines) {
 		switch (l->type) {
 		case LINE_TEXT:
-			wrap_text(tab, "", l);
-			break;
 		case LINE_LINK:
-			wrap_text(tab, "=> ", l);
-			break;
 		case LINE_TITLE_1:
-			wrap_text(tab, "# ", l);
-			break;
 		case LINE_TITLE_2:
-			wrap_text(tab, "## ", l);
-			break;
 		case LINE_TITLE_3:
-			wrap_text(tab, "### ", l);
-			break;
 		case LINE_ITEM:
-			wrap_text(tab, "* ", l);
-			break;
 		case LINE_QUOTE:
-			wrap_text(tab, "> ", l);
+			wrap_text(tab, prfx1, l);
 			break;
 		case LINE_PRE_START:
 		case LINE_PRE_END:
