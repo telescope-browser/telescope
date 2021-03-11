@@ -100,6 +100,8 @@ static void		 cmd_tab_close(struct tab*);
 static void		 cmd_tab_new(struct tab*);
 static void		 cmd_tab_next(struct tab*);
 static void		 cmd_tab_previous(struct tab*);
+static void		 cmd_load_url(struct tab*);
+static void		 cmd_load_current_url(struct tab*);
 
 static void		 global_key_unbound(void);
 
@@ -112,8 +114,14 @@ static void		 cmd_mini_kill_line(struct tab*);
 static void		 cmd_mini_abort();
 static void		 cmd_mini_complete_and_exit();
 
+static void		 minibuffer_self_insert(void);
 static void		 eecmd_self_insert(void);
 static void		 eecmd_select(void);
+static void		 ir_self_insert(void);
+static void		 ir_select(void);
+static void		 lu_self_insert(void);
+static void		 lu_select(void);
+
 
 static struct line	*nth_line(struct tab*, size_t);
 static struct tab	*current_tab(void);
@@ -136,6 +144,7 @@ static void		 stop_loading_anim(struct tab*);
 static void		 load_url_in_tab(struct tab*, const char*);
 static void		 enter_minibuffer(void(*)(void), void(*)(void), void(*)(void));
 static void		 exit_minibuffer(void);
+static void		 switch_to_tab(struct tab*);
 static void		 new_tab(void);
 
 static struct { int meta, key; } thiskey;
@@ -217,7 +226,7 @@ static struct {
 
 	char	 buf[1025];
 	size_t	 off, len;
-	char	 prompt[16];
+	char	 prompt[32];
 	void	 (*donefn)(void);
 	void	 (*abortfn)(void);
 } ministate;
@@ -332,6 +341,8 @@ load_default_keys(void)
 	global_set_key("C-x C-c",	cmd_kill_telescope);
 
 	global_set_key("M-x",		cmd_execute_extended_command);
+	global_set_key("C-x C-f",	cmd_load_url);
+	global_set_key("C-x M-f",	cmd_load_current_url);
 
 	global_set_key("C-x t 0",	cmd_tab_close);
 	global_set_key("C-x t 2",	cmd_tab_new);
@@ -620,6 +631,23 @@ cmd_tab_previous(struct tab *tab)
 }
 
 static void
+cmd_load_url(struct tab *tab)
+{
+	enter_minibuffer(lu_self_insert, lu_select, exit_minibuffer);
+	strlcpy(ministate.prompt, "Load URL: ", sizeof(ministate.prompt));
+}
+
+static void
+cmd_load_current_url(struct tab *tab)
+{
+	enter_minibuffer(lu_self_insert, lu_select, exit_minibuffer);
+	strlcpy(ministate.prompt, "Load URL: ", sizeof(ministate.prompt));
+	strlcpy(ministate.buf, tab->urlstr, sizeof(ministate.buf));
+	ministate.off = strlen(tab->urlstr);
+	ministate.len = ministate.off;
+}
+
+static void
 global_key_unbound(void)
 {
 	message("%s is undefined", keybuf);
@@ -688,14 +716,8 @@ cmd_mini_complete_and_exit(struct tab *tab)
 }
 
 static void
-eecmd_self_insert(void)
+minibuffer_self_insert(void)
 {
-	if (thiskey.meta || isspace(thiskey.key) ||
-	    !isgraph(thiskey.key)) {
-		global_key_unbound();
-		return;
-	}
-
 	if (ministate.len == sizeof(ministate.buf) -1)
 		return;
 
@@ -710,10 +732,65 @@ eecmd_self_insert(void)
 }
 
 static void
+eecmd_self_insert(void)
+{
+	if (thiskey.meta || isspace(thiskey.key) ||
+	    !isgraph(thiskey.key)) {
+		global_key_unbound();
+		return;
+	}
+
+	minibuffer_self_insert();
+}
+
+static void
 eecmd_select(void)
 {
 	exit_minibuffer();
 	message("TODO: try to execute %s", ministate.buf);
+}
+
+static void
+ir_self_insert(void)
+{
+	minibuffer_self_insert();
+}
+
+static void
+ir_select(void)
+{
+	char		 buf[1025] = {0};
+	struct url	 url;
+	struct tab	*tab;
+
+	tab = current_tab();
+
+	exit_minibuffer();
+
+	/* a bit ugly but... */
+	memcpy(&url, &tab->url, sizeof(tab->url));
+	url_set_query(&url, ministate.buf);
+	url_unparse(&url, buf, sizeof(buf));
+	load_url_in_tab(tab, buf);
+}
+
+static void
+lu_self_insert(void)
+{
+	if (thiskey.meta || isspace(thiskey.key) ||
+	    !isgraph(thiskey.key)) {
+		global_key_unbound();
+		return;
+	}
+
+	minibuffer_self_insert();
+}
+
+static void
+lu_select(void)
+{
+	exit_minibuffer();
+	load_url_in_tab(current_tab(), ministate.buf);
 }
 
 static struct line *
@@ -1326,6 +1403,18 @@ exit_minibuffer(void)
 }
 
 static void
+switch_to_tab(struct tab *tab)
+{
+	struct tab	*t;
+
+	TAILQ_FOREACH(t, &tabshead, tabs) {
+		t->flags &= ~TAB_CURRENT;
+	}
+
+	tab->flags |= TAB_CURRENT;
+}
+
+static void
 new_tab(void)
 {
 	struct tab	*tab, *t;
@@ -1338,12 +1427,9 @@ new_tab(void)
 		goto err;
 
 	TAILQ_INIT(&tab->s->head);
-	TAILQ_FOREACH(t, &tabshead, tabs) {
-		t->flags &= ~TAB_CURRENT;
-	}
 
 	tab->id = tab_counter++;
-	tab->flags = TAB_CURRENT;
+	switch_to_tab(tab);
 
 	if (TAILQ_EMPTY(&tabshead))
 		TAILQ_INSERT_HEAD(&tabshead, tab, tabs);
@@ -1423,6 +1509,18 @@ ui_on_tab_refresh(struct tab *tab)
 		return;
 
 	wrap_page(tab);
+	redraw_tab(tab);
+}
+
+void
+ui_require_input(struct tab *tab, int hide)
+{
+	/* TODO: hard-switching to another tab is ugly */
+	switch_to_tab(tab);
+
+	enter_minibuffer(ir_self_insert, ir_select, exit_minibuffer);
+	strlcpy(ministate.prompt, "Input required: ",
+	    sizeof(ministate.prompt));
 	redraw_tab(tab);
 }
 

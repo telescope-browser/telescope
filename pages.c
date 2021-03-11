@@ -45,10 +45,14 @@ const char *about_new =
 	"Id dolore aperiam voluptatem libero eaque omnis rerum nulla. Ullam sit voluptate accusamus molestiae enim minus. Fugit sequi quam dignissimos. Odio inventore vel sed. Voluptatem aut magni dignissimos."
 	;
 
+/* XXX: keep in sync with telescope.c:/^normalize_code/ */
 const char *err_pages[70] = {
 	[CANNOT_FETCH]		= "# Couldn't load the page\n",
 	[TOO_MUCH_REDIRECTS]	= "# Too much redirects\n",
+	[MALFORMED_RESPONSE]	= "# Got a malformed response\n",
 
+	[10] = "# Input required\n",
+	[11] = "# Input required\n",
 	[40] = "# Temporary failure\n",
 	[41] = "# Server unavailable\n",
 	[42] = "# CGI error\n",

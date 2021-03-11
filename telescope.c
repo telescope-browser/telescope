@@ -86,33 +86,48 @@ handle_imsg_check_cert(struct imsg *imsg, size_t datalen)
 	imsg_flush(ibuf);
 }
 
+static inline int
+normalize_code(int n)
+{
+	if (n < 20) {
+		if (n == 10 || n == 11)
+			return n;
+		return 10;
+	} else if (n < 30) {
+		return 20;
+	} else if (n < 40) {
+		if (n == 30 || n == 31)
+			return n;
+		return 30;
+	} else if (n < 50) {
+		if (n <= 44)
+			return n;
+		return 40;
+	} else if (n < 60) {
+		if (n <= 53 || n == 59)
+			return n;
+		return 50;
+	} else if (n < 70) {
+		if (n <= 62)
+			return n;
+		return 60;
+	} else
+		return MALFORMED_RESPONSE;
+}
+
 static void
 handle_imsg_got_code(struct imsg *imsg, size_t datalen)
 {
-	const char	*errpage;
 	struct tab	*tab;
 
 	tab = tab_by_id(imsg->hdr.peerid);
 
 	if (sizeof(tab->code) != datalen)
 		die();
+
 	memcpy(&tab->code, imsg->data, sizeof(tab->code));
-
-        if (tab->code < 20) {
-		if (tab->code != 10 && tab->code != 11)
-			tab->code = 10;
-	} else if (tab->code < 30)
-		tab->code = 20;
-	else if (tab->code < 40)
-		tab->code = 30;
-	else if (tab->code < 50)
-		tab->code = 40;
-	else if (tab->code < 60)
-		tab->code = 50;
-	else
-		tab->code = 60;
-
-	if (tab->code != 30)
+	tab->code = normalize_code(tab->code);
+	if (tab->code != 30 && tab->code != 31)
 		tab->redirect_count = 0;
 }
 
@@ -125,35 +140,31 @@ handle_imsg_got_meta(struct imsg *imsg, size_t datalen)
 
 	if (sizeof(tab->meta) <= datalen)
 		die();
+
 	memcpy(tab->meta, imsg->data, datalen);
 
-	if (tab->code != 30)
-		tab->redirect_count = 0;
-
-	if (tab->code == 20) {
-		/* TODO: parse the MIME type */
+	if (tab->code < 10) {	/* internal errors */
+		load_page_from_str(tab, err_pages[tab->code]);
+	} else if (tab->code < 20) {	/* 1x */
+		load_page_from_str(tab, err_pages[tab->code]);
+		ui_require_input(tab, tab->code == 11);
+	} else if (tab->code == 20) {
+		/* TODO: parse mime type */
 		gemtext_initparser(&tab->page);
 		imsg_compose(ibuf, IMSG_PROCEED, tab->id, 0, -1, NULL, 0);
 		imsg_flush(ibuf);
-		return;
-	}
-
-	if (tab->code == 30) {
+	} else if (tab->code < 40) { /* 3x */
 		tab->redirect_count++;
 
 		/* TODO: make customizable? */
 		if (tab->redirect_count > 5) {
 			load_page_from_str(tab,
 			    err_pages[TOO_MUCH_REDIRECTS]);
-			return;
-		}
-
-		load_url(tab, tab->meta);
-		return;
+		} else
+			load_url(tab, tab->meta);
+	} else { /* 4x, 5x & 6x */
+		load_page_from_str(tab, err_pages[tab->code]);
 	}
-
-	/* 4x, 5x or 6x */
-	load_page_from_str(tab, err_pages[tab->code]);
 }
 
 static void

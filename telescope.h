@@ -124,6 +124,7 @@ extern const char	*about_new;
 
 #define CANNOT_FETCH		0
 #define TOO_MUCH_REDIRECTS	1
+#define MALFORMED_RESPONSE	2
 extern const char	*err_pages[70];
 
 /* telescope.c */
@@ -136,6 +137,7 @@ void		 stop_tab(struct tab*);
 int		 ui_init(void);
 void		 ui_on_tab_loaded(struct tab*);
 void		 ui_on_tab_refresh(struct tab*);
+void		 ui_require_input(struct tab*, int);
 void		 ui_end(void);
 
 /* util.c */

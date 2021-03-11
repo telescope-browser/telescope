@@ -31,4 +31,5 @@ struct url {
 
 int		 url_parse(const char*, struct url*, const char**);
 int		 url_resolve_from(struct url*, const char*, const char**);
+int		 url_set_query(struct url*, const char*);
 void		 url_unparse(struct url*, char*, size_t);

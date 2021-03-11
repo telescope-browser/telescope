@@ -483,6 +483,14 @@ url_resolve_from(struct url *url, const char *str, const char **err)
 	return 1;
 }
 
+int
+url_set_query(struct url *url, const char *query)
+{
+	/* TODO: pct-encode! */
+	memcpy(&url->query, query, strlen(query)+1);
+	return 1;
+}
+
 void
 url_unparse(struct url *url, char *buf, size_t len)
 {
@@ -497,7 +505,7 @@ url_unparse(struct url *url, char *buf, size_t len)
 
 	if (*url->path != '\0')
 		strlcat(buf, url->path, len);
-	if (*url->query != '?') {
+	if (*url->query != '\0') {
 		strlcat(buf, "?", len);
 		strlcat(buf, url->query, len);
 	}
