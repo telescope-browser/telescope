@@ -99,6 +99,7 @@ static void		 cmd_beginning_of_buffer(struct tab*);
 static void		 cmd_end_of_buffer(struct tab*);
 static void		 cmd_kill_telescope(struct tab*);
 static void		 cmd_push_button(struct tab*);
+static void		 cmd_clear_minibuf(struct tab*);
 static void		 cmd_execute_extended_command(struct tab*);
 static void		 cmd_tab_close(struct tab*);
 static void		 cmd_tab_new(struct tab*);
@@ -346,6 +347,8 @@ load_default_keys(void)
 
 	global_set_key("C-x C-c",	cmd_kill_telescope);
 
+	global_set_key("C-g",		cmd_clear_minibuf);
+
 	global_set_key("M-x",		cmd_execute_extended_command);
 	global_set_key("C-x C-f",	cmd_load_url);
 	global_set_key("C-x M-f",	cmd_load_current_url);
@@ -374,6 +377,8 @@ load_default_keys(void)
 
 	/* tmp */
 	global_set_key("q",		cmd_kill_telescope);
+
+	global_set_key("esc",		cmd_clear_minibuf);
 
 	global_set_key(":",		cmd_execute_extended_command);
 
@@ -530,6 +535,9 @@ cmd_move_end_of_line(struct tab *tab)
 	case LINE_QUOTE:
 	case LINE_ITEM:
 		tab->s->curs_x += 2;
+		break;
+	default:
+		break;
 	}
 
 end:
@@ -641,6 +649,12 @@ cmd_push_button(struct tab *tab)
 		return;
 
 	load_url_in_tab(tab, l->alt);
+}
+
+static void
+cmd_clear_minibuf(struct tab *tab)
+{
+	handle_clear_minibuf(0, 0, NULL);
 }
 
 static void
