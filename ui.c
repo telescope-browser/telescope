@@ -936,8 +936,10 @@ dispatch_stdio(int fd, short ev, void *d)
 
 		thiskey.meta = 1;
 		thiskey.key = wgetch(body);
-		if (thiskey.key == ERR)
+		if (thiskey.key == ERR || thiskey.key == 27) {
+			thiskey.meta = 0;
 			thiskey.key = 27;
+		}
 	} else
 		thiskey.meta = 0;
 
