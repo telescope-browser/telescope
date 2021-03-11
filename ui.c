@@ -454,6 +454,9 @@ cmd_previous_line(struct tab *tab)
 static void
 cmd_next_line(struct tab *tab)
 {
+	if (tab->s->line_off + tab->s->curs_y >= tab->s->line_max)
+		return;
+
 	if (++tab->s->curs_y > body_lines-1) {
 		tab->s->curs_y = body_lines-1;
 		cmd_scroll_line_down(tab);
