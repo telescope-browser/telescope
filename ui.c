@@ -74,6 +74,7 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 
 struct kmap;
+struct minibuf_histhead;
 
 static struct event	stdioev, winchev;
 
@@ -116,9 +117,13 @@ static void		 cmd_mini_backward_char(struct tab*);
 static void		 cmd_mini_move_end_of_line(struct tab*);
 static void		 cmd_mini_move_beginning_of_line(struct tab*);
 static void		 cmd_mini_kill_line(struct tab*);
-static void		 cmd_mini_abort();
-static void		 cmd_mini_complete_and_exit();
+static void		 cmd_mini_abort(struct tab*);
+static void		 cmd_mini_complete_and_exit(struct tab*);
+static void		 cmd_mini_previous_history_element(struct tab*);
+static void		 cmd_mini_next_history_element(struct tab*);
 
+static void		 minibuffer_hist_save_entry(void);
+static void		 minibuffer_taint_hist(void);
 static void		 minibuffer_self_insert(void);
 static void		 eecmd_self_insert(void);
 static void		 eecmd_select(void);
@@ -147,7 +152,7 @@ static void		 start_loading_anim(struct tab*);
 static void		 update_loading_anim(int, short, void*);
 static void		 stop_loading_anim(struct tab*);
 static void		 load_url_in_tab(struct tab*, const char*);
-static void		 enter_minibuffer(void(*)(void), void(*)(void), void(*)(void));
+static void		 enter_minibuffer(void(*)(void), void(*)(void), void(*)(void), struct minibuf_histhead*);
 static void		 exit_minibuffer(void);
 static void		 switch_to_tab(struct tab*);
 static void		 new_tab(void);
@@ -224,6 +229,20 @@ struct keymap {
 	TAILQ_ENTRY(keymap)	 keymaps;
 };
 
+/* TODO: limit to a maximum number of entries */
+struct minibuf_histhead {
+	TAILQ_HEAD(mhisthead, minibuf_hist)	head;
+	size_t					len;
+};
+struct minibuf_hist {
+	char				h[1025];
+	TAILQ_ENTRY(minibuf_hist)	entries;
+};
+
+static struct minibuf_histhead eecmd_history,
+	ir_history,
+	lu_history;
+
 static int	in_minibuffer;
 
 static struct {
@@ -234,6 +253,10 @@ static struct {
 	char	 prompt[32];
 	void	 (*donefn)(void);
 	void	 (*abortfn)(void);
+
+	struct minibuf_histhead	*history;
+	struct minibuf_hist	*hist_cur;
+	size_t			 hist_off;
 } ministate;
 
 struct lineprefix {
@@ -440,6 +463,11 @@ load_default_keys(void)
 	minibuffer_set_key("<end>",		cmd_mini_move_end_of_line);
 	minibuffer_set_key("<home>",		cmd_mini_move_beginning_of_line);
 	minibuffer_set_key("C-k",		cmd_mini_kill_line);
+
+	minibuffer_set_key("M-p",		cmd_mini_previous_history_element);
+	minibuffer_set_key("M-n",		cmd_mini_next_history_element);
+	minibuffer_set_key("<up>",		cmd_mini_previous_history_element);
+	minibuffer_set_key("<down>",		cmd_mini_next_history_element);
 }
 
 static int
@@ -680,7 +708,8 @@ cmd_execute_extended_command(struct tab *tab)
 {
 	size_t	 len;
 
-	enter_minibuffer(eecmd_self_insert, eecmd_select, exit_minibuffer);
+	enter_minibuffer(eecmd_self_insert, eecmd_select, exit_minibuffer,
+	    &eecmd_history);
 
 	len = sizeof(ministate.prompt);
 	strlcpy(ministate.prompt, "", len);
@@ -747,14 +776,16 @@ cmd_tab_previous(struct tab *tab)
 static void
 cmd_load_url(struct tab *tab)
 {
-	enter_minibuffer(lu_self_insert, lu_select, exit_minibuffer);
+	enter_minibuffer(lu_self_insert, lu_select, exit_minibuffer,
+	    &lu_history);
 	strlcpy(ministate.prompt, "Load URL: ", sizeof(ministate.prompt));
 }
 
 static void
 cmd_load_current_url(struct tab *tab)
 {
-	enter_minibuffer(lu_self_insert, lu_select, exit_minibuffer);
+	enter_minibuffer(lu_self_insert, lu_select, exit_minibuffer,
+	    &lu_history);
 	strlcpy(ministate.prompt, "Load URL: ", sizeof(ministate.prompt));
 	strlcpy(ministate.buf, tab->urlstr, sizeof(ministate.buf));
 	ministate.off = strlen(tab->urlstr);
@@ -826,12 +857,98 @@ cmd_mini_abort(struct tab *tab)
 static void
 cmd_mini_complete_and_exit(struct tab *tab)
 {
+	minibuffer_taint_hist();
 	ministate.donefn();
+}
+
+static void
+cmd_mini_previous_history_element(struct tab *tab)
+{
+	if (ministate.history == NULL) {
+		message("No history");
+		return;
+	}
+
+	if (ministate.hist_cur == NULL ||
+	    (ministate.hist_cur = TAILQ_PREV(ministate.hist_cur, mhisthead, entries)) == NULL) {
+		ministate.hist_cur = TAILQ_LAST(&ministate.history->head, mhisthead);
+		ministate.hist_off = ministate.history->len - 1;
+		if (ministate.hist_cur == NULL)
+			message("No prev item");
+	} else {
+		ministate.hist_off--;
+	}
+
+	if (ministate.hist_cur != NULL) {
+		ministate.off = 0;
+		ministate.len = strlen(ministate.hist_cur->h);
+	}
+}
+
+static void
+cmd_mini_next_history_element(struct tab *tab)
+{
+	if (ministate.history == NULL) {
+		message("No history");
+		return;
+	}
+
+	if (ministate.hist_cur == NULL ||
+	    (ministate.hist_cur = TAILQ_NEXT(ministate.hist_cur, entries)) == NULL) {
+		ministate.hist_cur = TAILQ_FIRST(&ministate.history->head);
+		ministate.hist_off = 0;
+		if (ministate.hist_cur == NULL)
+			message("No next item");
+	} else {
+		ministate.hist_off++;
+	}
+
+	if (ministate.hist_cur != NULL) {
+		ministate.off = 0;
+		ministate.len = strlen(ministate.hist_cur->h);
+	}
+}
+
+static void
+minibuffer_hist_save_entry(void)
+{
+	struct minibuf_hist	*hist;
+
+	if (ministate.history == NULL)
+		return;
+
+	if ((hist = calloc(1, sizeof(*hist))) == NULL)
+		abort();
+
+	strlcpy(hist->h, ministate.buf, sizeof(hist->h));
+
+	if (TAILQ_EMPTY(&ministate.history->head))
+		TAILQ_INSERT_HEAD(&ministate.history->head, hist, entries);
+	else
+		TAILQ_INSERT_TAIL(&ministate.history->head, hist, entries);
+	ministate.history->len++;
+}
+
+/*
+ * taint the minibuffer cache: if we're currently showing a history
+ * element, copy that to the current buf and reset the "history
+ * navigation" thing.
+ */
+static void
+minibuffer_taint_hist(void)
+{
+	if (ministate.hist_cur == NULL)
+		return;
+
+	strlcpy(ministate.buf, ministate.hist_cur->h, sizeof(ministate.buf));
+	ministate.hist_cur = NULL;
 }
 
 static void
 minibuffer_self_insert(void)
 {
+	minibuffer_taint_hist();
+
 	if (ministate.len == sizeof(ministate.buf) -1)
 		return;
 
@@ -861,6 +978,7 @@ static void
 eecmd_select(void)
 {
 	exit_minibuffer();
+	minibuffer_hist_save_entry();
 	message("TODO: try to execute %s", ministate.buf);
 }
 
@@ -880,6 +998,7 @@ ir_select(void)
 	tab = current_tab();
 
 	exit_minibuffer();
+	minibuffer_hist_save_entry();
 
 	/* a bit ugly but... */
 	memcpy(&url, &tab->url, sizeof(tab->url));
@@ -904,6 +1023,7 @@ static void
 lu_select(void)
 {
 	exit_minibuffer();
+	minibuffer_hist_save_entry();
 	load_url_in_tab(current_tab(), ministate.buf);
 }
 
@@ -1305,22 +1425,28 @@ redraw_modeline(struct tab *tab)
 static void
 redraw_minibuffer(void)
 {
-	size_t skip = 0, off = 0;
+	size_t skip = 0, off_x = 0, off_y = 0;
 
 	wclear(minibuf);
-	if (!in_minibuffer)
-		goto message;
+	if (in_minibuffer) {
+		mvwprintw(minibuf, 0, 0, "%s", ministate.prompt);
+		if (ministate.hist_cur != NULL)
+			wprintw(minibuf, "(%zu/%zu) ",
+			    ministate.hist_off + 1,
+			    ministate.history->len);
 
-	off = strlen(ministate.prompt);
+		getyx(minibuf, off_y, off_x);
 
-	while (ministate.off - skip > COLS / 2) {
-		skip += MIN(ministate.off/4, 1);
+		while (ministate.off - skip > COLS / 2) {
+			skip += MIN(ministate.off/4, 1);
+		}
+
+		if (ministate.hist_cur != NULL)
+			wprintw(minibuf, "%s", ministate.hist_cur->h + skip);
+		else
+			wprintw(minibuf, "%s", ministate.buf + skip);
 	}
 
-	mvwprintw(minibuf, 0, 0, "%s%s", ministate.prompt,
-	    ministate.buf + skip);
-
-message:
 	if (ministate.curmesg != NULL) {
 		if (in_minibuffer)
 			wprintw(minibuf, "  [%s]", ministate.curmesg);
@@ -1328,7 +1454,7 @@ message:
 			wprintw(minibuf, "%s", ministate.curmesg);
 	}
 
-	wmove(minibuf, 0, off + ministate.off - skip);
+	wmove(minibuf, 0, off_x + ministate.off - skip);
 }
 
 static void
@@ -1462,7 +1588,7 @@ load_url_in_tab(struct tab *tab, const char *url)
 
 static void
 enter_minibuffer(void (*self_insert_fn)(void), void (*donefn)(void),
-    void (*abortfn)(void))
+    void (*abortfn)(void), struct minibuf_histhead *hist)
 {
 	in_minibuffer = 1;
 	base_map = &minibuffer_map;
@@ -1475,6 +1601,10 @@ enter_minibuffer(void (*self_insert_fn)(void), void (*donefn)(void),
 	memset(ministate.buf, 0, sizeof(ministate.buf));
         ministate.off = 0;
 	strlcpy(ministate.buf, "", sizeof(ministate.prompt));
+
+	ministate.history = hist;
+	ministate.hist_cur = NULL;
+	ministate.hist_off = 0;
 }
 
 static void
@@ -1537,6 +1667,10 @@ ui_init(void)
 	global_map.unhandled_input = global_key_unbound;
 
 	TAILQ_INIT(&minibuffer_map.m);
+
+	TAILQ_INIT(&eecmd_history.head);
+	TAILQ_INIT(&ir_history.head);
+	TAILQ_INIT(&lu_history.head);
 
 	base_map = &global_map;
 	current_map = &global_map;
@@ -1603,7 +1737,8 @@ ui_require_input(struct tab *tab, int hide)
 	/* TODO: hard-switching to another tab is ugly */
 	switch_to_tab(tab);
 
-	enter_minibuffer(ir_self_insert, ir_select, exit_minibuffer);
+	enter_minibuffer(ir_self_insert, ir_select, exit_minibuffer,
+	    &ir_history);
 	strlcpy(ministate.prompt, "Input required: ",
 	    sizeof(ministate.prompt));
 	redraw_tab(tab);
