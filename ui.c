@@ -93,6 +93,8 @@ static void		 cmd_scroll_line_down(struct tab*);
 static void		 cmd_scroll_line_up(struct tab*);
 static void		 cmd_scroll_up(struct tab*);
 static void		 cmd_scroll_down(struct tab*);
+static void		 cmd_beginning_of_buffer(struct tab*);
+static void		 cmd_end_of_buffer(struct tab*);
 static void		 cmd_kill_telescope(struct tab*);
 static void		 cmd_push_button(struct tab*);
 static void		 cmd_execute_extended_command(struct tab*);
@@ -122,7 +124,6 @@ static void		 ir_select(void);
 static void		 lu_self_insert(void);
 static void		 lu_select(void);
 
-
 static struct line	*nth_line(struct tab*, size_t);
 static struct tab	*current_tab(void);
 static void		 dispatch_stdio(int, short, void*);
@@ -134,6 +135,7 @@ static int		 hardwrap_text(struct tab*, struct line*);
 static int		 wrap_page(struct tab*);
 static void		 print_line(struct line*);
 static void		 redraw_tabline(void);
+static void		 redraw_body(struct tab*);
 static void		 redraw_modeline(struct tab*);
 static void		 redraw_minibuffer(void);
 static void		 redraw_tab(struct tab*);
@@ -349,6 +351,9 @@ load_default_keys(void)
 	global_set_key("C-x t o",	cmd_tab_next);
 	global_set_key("C-x t O",	cmd_tab_previous);
 
+	global_set_key("M-<",		cmd_beginning_of_buffer);
+	global_set_key("M->",		cmd_end_of_buffer);
+
 	/* vi/vi-like */
 	global_set_key("k",		cmd_previous_line);
 	global_set_key("j",		cmd_next_line);
@@ -357,6 +362,9 @@ load_default_keys(void)
 
 	global_set_key("K",		cmd_scroll_line_up);
 	global_set_key("J",		cmd_scroll_line_down);
+
+	global_set_key("g g",		cmd_beginning_of_buffer);
+	global_set_key("G",		cmd_end_of_buffer);
 
 	/* tmp */
 	global_set_key("q",		cmd_kill_telescope);
@@ -540,6 +548,28 @@ cmd_scroll_down(struct tab *tab)
 
 	for (; off >= 0; --off)
 		cmd_scroll_line_down(tab);
+}
+
+static void
+cmd_beginning_of_buffer(struct tab *tab)
+{
+	tab->s->line_off = 0;
+	tab->s->curs_y = 0;
+	redraw_body(tab);
+}
+
+static void
+cmd_end_of_buffer(struct tab *tab)
+{
+	ssize_t off;
+
+	off = tab->s->line_max - body_lines;
+	off = MAX(0, off);
+
+	tab->s->line_off = off;
+	tab->s->curs_y = MIN(body_lines, tab->s->line_max);
+
+	redraw_body(tab);
 }
 
 static void
@@ -1257,6 +1287,27 @@ message:
 static void
 redraw_tab(struct tab *tab)
 {
+	redraw_tabline();
+	redraw_body(tab);
+	redraw_modeline(tab);
+	redraw_minibuffer();
+
+	restore_cursor(tab);
+	wrefresh(tabline);
+	wrefresh(modeline);
+
+	if (in_minibuffer) {
+		wrefresh(body);
+		wrefresh(minibuf);
+	} else {
+		wrefresh(minibuf);
+		wrefresh(body);
+	}
+}
+
+static void
+redraw_body(struct tab *tab)
+{
 	struct line	*l;
 	int		 line;
 
@@ -1274,22 +1325,6 @@ redraw_tab(struct tab *tab)
 		line++;
 		if (line == body_lines)
 			break;
-	}
-
-	redraw_tabline();
-	redraw_modeline(tab);
-	redraw_minibuffer();
-
-	restore_cursor(tab);
-	wrefresh(tabline);
-	wrefresh(modeline);
-
-	if (in_minibuffer) {
-		wrefresh(body);
-		wrefresh(minibuf);
-	} else {
-		wrefresh(minibuf);
-		wrefresh(body);
 	}
 }
 
