@@ -1116,21 +1116,7 @@ dispatch_stdio(int fd, short ev, void *d)
 	current_map = base_map;
 
 done:
-	tab = current_tab();
-	redraw_tabline();
-	redraw_modeline(tab);
-	redraw_minibuffer();
-	restore_cursor(tab);
-	wrefresh(tabline);
-	wrefresh(modeline);
-
-	if (in_minibuffer) {
-		wrefresh(body);
-		wrefresh(minibuf);
-	} else {
-		wrefresh(minibuf);
-		wrefresh(body);
-	}
+	redraw_tab(current_tab());
 }
 
 static void
