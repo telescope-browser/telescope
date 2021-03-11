@@ -750,6 +750,7 @@ current_tab(void)
 static void
 dispatch_stdio(int fd, short ev, void *d)
 {
+	struct tab	*tab;
 	struct keymap	*k;
 	const char	*keyname;
 	char		 tmp[2] = {0};
@@ -802,9 +803,11 @@ dispatch_stdio(int fd, short ev, void *d)
 	current_map = base_map;
 
 done:
+	tab = current_tab();
 	redraw_tabline();
+	redraw_modeline(tab);
 	redraw_minibuffer();
-	restore_cursor(current_tab());
+	restore_cursor(tab);
 	wrefresh(tabline);
 	wrefresh(modeline);
 
@@ -1104,6 +1107,7 @@ redraw_tabline(void)
 static void
 redraw_modeline(struct tab *tab)
 {
+	double		 pct;
 	int		 x, y, max_x, max_y;
 	const char	*mode = "text/gemini-mode";
 	const char	*spin = "-\\|/";
@@ -1112,8 +1116,25 @@ redraw_modeline(struct tab *tab)
 	wattron(modeline, A_REVERSE);
 	wmove(modeline, 0, 0);
 
-	wprintw(modeline, "-%c %s %s ",
-	    spin[tab->s->loading_anim_step], mode, tab->urlstr);
+	wprintw(modeline, "-%c %s ",
+	    spin[tab->s->loading_anim_step], mode);
+
+	pct = (tab->s->line_off + tab->s->curs_y) * 100.0 / tab->s->line_max;
+
+	if (tab->s->line_max <= body_lines)
+                wprintw(modeline, "All ");
+	else if (tab->s->line_off == 0)
+                wprintw(modeline, "Top ");
+	else if (tab->s->line_off + body_lines >= tab->s->line_max)
+		wprintw(modeline, "Bottom ");
+	else
+		wprintw(modeline, "%.0f%% ", pct);
+
+	wprintw(modeline, "%d/%d %s ",
+	    tab->s->line_off + tab->s->curs_y,
+	    tab->s->line_max,
+	    tab->urlstr);
+
 	getyx(modeline, y, x);
 	getmaxyx(modeline, max_y, max_x);
 
