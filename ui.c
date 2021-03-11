@@ -88,6 +88,8 @@ static void		 cmd_previous_line(struct tab*);
 static void		 cmd_next_line(struct tab*);
 static void		 cmd_forward_char(struct tab*);
 static void		 cmd_backward_char(struct tab*);
+static void		 cmd_move_beginning_of_line(struct tab*);
+static void		 cmd_move_end_of_line(struct tab*);
 static void		 cmd_redraw(struct tab*);
 static void		 cmd_scroll_line_down(struct tab*);
 static void		 cmd_scroll_line_up(struct tab*);
@@ -336,6 +338,8 @@ load_default_keys(void)
 	global_set_key("C-n",		cmd_next_line);
 	global_set_key("C-f",		cmd_forward_char);
 	global_set_key("C-b",		cmd_backward_char);
+	global_set_key("C-a",		cmd_move_beginning_of_line);
+	global_set_key("C-e",		cmd_move_end_of_line);
 
 	global_set_key("M-v",		cmd_scroll_up);
 	global_set_key("C-v",		cmd_scroll_down);
@@ -359,6 +363,8 @@ load_default_keys(void)
 	global_set_key("j",		cmd_next_line);
 	global_set_key("l",		cmd_forward_char);
 	global_set_key("h",		cmd_backward_char);
+	global_set_key("^",		cmd_move_beginning_of_line);
+	global_set_key("$",		cmd_move_end_of_line);
 
 	global_set_key("K",		cmd_scroll_line_up);
 	global_set_key("J",		cmd_scroll_line_down);
@@ -484,6 +490,49 @@ static void
 cmd_backward_char(struct tab *tab)
 {
 	tab->s->curs_x = MAX(0, tab->s->curs_x-1);
+	restore_cursor(tab);
+}
+
+static void
+cmd_move_beginning_of_line(struct tab *tab)
+{
+	tab->s->curs_x = 0;
+	restore_cursor(tab);
+}
+
+static void
+cmd_move_end_of_line(struct tab *tab)
+{
+	struct line	*line;
+	size_t		 off;
+
+	off = tab->s->line_off + tab->s->curs_y;
+	if (off >= tab->s->line_max) {
+		tab->s->curs_x = 0;
+		goto end;
+	}
+
+	line = nth_line(tab, off);
+	if (line->line != NULL)
+		tab->s->curs_x = strlen(line->line);
+	else
+		tab->s->curs_x = 0;
+
+	/* TODO: don't hardcode these numbers here. */
+	switch (line->type) {
+	case LINE_PRE_START:
+	case LINE_PRE_END:
+		tab->s->curs_x += 3;
+		break;
+	case LINE_LINK:
+		tab->s->curs_x += 3;
+		break;
+	case LINE_QUOTE:
+	case LINE_ITEM:
+		tab->s->curs_x += 2;
+	}
+
+end:
 	restore_cursor(tab);
 }
 
@@ -1209,8 +1258,15 @@ redraw_tabline(void)
 	wprintw(tabline, " ");
 	TAILQ_FOREACH(tab, &tabshead, tabs) {
 		current = tab->flags & TAB_CURRENT;
-		wprintw(tabline, " %s%d:todo title ",
-		    current ? "*" : "", tab->id);
+
+		if (current)
+			wattron(tabline, A_UNDERLINE);
+
+		wprintw(tabline, "%s%d:todo title ",
+		    current ? "*" : " ", tab->id);
+
+		if (current)
+			wattroff(tabline, A_UNDERLINE);
 	}
 }
 
