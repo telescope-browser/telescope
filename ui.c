@@ -1192,11 +1192,12 @@ static int
 wrap_page(struct tab *tab)
 {
 	struct line	*l;
-	const char	*prfx = line_prefixes[l->type].prfx1;
+	const char	*prfx;
 
 	empty_vlist(tab);
 
 	TAILQ_FOREACH(l, &tab->page.head, lines) {
+		prfx = line_prefixes[l->type].prfx1;
 		switch (l->type) {
 		case LINE_TEXT:
 		case LINE_LINK:
@@ -1205,7 +1206,7 @@ wrap_page(struct tab *tab)
 		case LINE_TITLE_3:
 		case LINE_ITEM:
 		case LINE_QUOTE:
-			wrap_text(tab, prfx1, l);
+			wrap_text(tab, prfx, l);
 			break;
 		case LINE_PRE_START:
 		case LINE_PRE_END:
