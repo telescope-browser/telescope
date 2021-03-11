@@ -236,6 +236,22 @@ static struct {
 	void	 (*abortfn)(void);
 } ministate;
 
+struct lineprefix {
+	const char	*prfx1;
+	const char	*prfx2;
+} line_prefixes[] = {
+	[LINE_TEXT] =		{ "",		"" },
+	[LINE_LINK] =		{ "=> ",	"   " },
+	[LINE_TITLE_1] =	{ "# ",		"  " },
+	[LINE_TITLE_2] =	{ "## ",	"   " },
+	[LINE_TITLE_3] =	{ "### ",	"    " },
+	[LINE_ITEM] =		{ "* ",		"  " },
+	[LINE_QUOTE] =		{ "> ",		"> " },
+	[LINE_PRE_START] =	{ "```",	"```" },
+	[LINE_PRE_CONTENT] =	{ "",		"" },
+	[LINE_PRE_END] =	{ "```",	"```" },
+};
+
 static int
 kbd(const char *key)
 {
@@ -510,6 +526,7 @@ cmd_move_end_of_line(struct tab *tab)
 {
 	struct line	*line;
 	size_t		 off;
+	const char	*prfx;
 
 	off = tab->s->line_off + tab->s->curs_y;
 	if (off >= tab->s->line_max) {
@@ -523,22 +540,8 @@ cmd_move_end_of_line(struct tab *tab)
 	else
 		tab->s->curs_x = 0;
 
-	/* TODO: don't hardcode these numbers here. */
-	switch (line->type) {
-	case LINE_PRE_START:
-	case LINE_PRE_END:
-		tab->s->curs_x += 3;
-		break;
-	case LINE_LINK:
-		tab->s->curs_x += 3;
-		break;
-	case LINE_QUOTE:
-	case LINE_ITEM:
-		tab->s->curs_x += 2;
-		break;
-	default:
-		break;
-	}
+	prfx = line_prefixes[line->type].prfx1;
+	tab->s->curs_x += strlen(prfx);
 
 end:
 	restore_cursor(tab);
@@ -1216,48 +1219,49 @@ static inline void
 print_line(struct line *l)
 {
 	const char *text = l->line;
+	const char *prfx = line_prefixes[l->type].prfx1;
 
 	if (text == NULL)
 		text = "";
 
 	switch (l->type) {
 	case LINE_TEXT:
-		wprintw(body, "%s", text);
+		wprintw(body, "%s%s", prfx, text);
 		break;
 	case LINE_LINK:
 		wattron(body, A_UNDERLINE);
-		wprintw(body, "=> %s", text);
+		wprintw(body, "%s%s", prfx, text);
 		wattroff(body, A_UNDERLINE);
 		return;
 	case LINE_TITLE_1:
 		wattron(body, A_BOLD);
-		wprintw(body, "# %s", text);
+		wprintw(body, "%s%s", prfx, text);
 		wattroff(body, A_BOLD);
 		return;
 	case LINE_TITLE_2:
 		wattron(body, A_BOLD);
-		wprintw(body, "## %s", text);
+		wprintw(body, "%s%s", prfx, text);
 		wattroff(body, A_BOLD);
 		return;
 	case LINE_TITLE_3:
 		wattron(body, A_BOLD);
-		wprintw(body, "### %s", text);
+		wprintw(body, "%s%s", prfx, text);
 		wattroff(body, A_BOLD);
 		return;
 	case LINE_ITEM:
-		wprintw(body, "* %s", text);
+		wprintw(body, "%s%s", prfx, text);
 		return;
 	case LINE_QUOTE:
 		wattron(body, A_DIM);
-		wprintw(body, "> %s", text);
+		wprintw(body, "%s%s", prfx, text);
 		wattroff(body, A_DIM);
 		return;
 	case LINE_PRE_START:
 	case LINE_PRE_END:
-		wprintw(body, "```");
+		wprintw(body, "%s%s", prfx, text);
 		return;
 	case LINE_PRE_CONTENT:
-		wprintw(body, "%s", text);
+		wprintw(body, "%s%s", prfx, text);
 		return;
 	}
 }
