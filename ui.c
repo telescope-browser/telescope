@@ -252,6 +252,21 @@ struct lineprefix {
 	[LINE_PRE_END] =	{ "```",	"```" },
 };
 
+struct line_face {
+	int prop;
+} line_faces[] = {
+	[LINE_TEXT] =		{ 0 },
+	[LINE_LINK] =		{ A_UNDERLINE },
+	[LINE_TITLE_1] =	{ A_BOLD },
+	[LINE_TITLE_2] =	{ A_BOLD },
+	[LINE_TITLE_3] =	{ A_BOLD },
+	[LINE_ITEM] =		{ 0 },
+	[LINE_QUOTE] =		{ A_DIM },
+	[LINE_PRE_START] =	{ 0 },
+	[LINE_PRE_CONTENT] =	{ 0 },
+	[LINE_PRE_END] =	{ 0 },
+};
+
 static int
 kbd(const char *key)
 {
@@ -1220,50 +1235,16 @@ print_line(struct line *l)
 {
 	const char *text = l->line;
 	const char *prfx = line_prefixes[l->type].prfx1;
+	int face = line_faces[l->type].prop;
 
 	if (text == NULL)
 		text = "";
 
-	switch (l->type) {
-	case LINE_TEXT:
-		wprintw(body, "%s%s", prfx, text);
-		break;
-	case LINE_LINK:
-		wattron(body, A_UNDERLINE);
-		wprintw(body, "%s%s", prfx, text);
-		wattroff(body, A_UNDERLINE);
-		return;
-	case LINE_TITLE_1:
-		wattron(body, A_BOLD);
-		wprintw(body, "%s%s", prfx, text);
-		wattroff(body, A_BOLD);
-		return;
-	case LINE_TITLE_2:
-		wattron(body, A_BOLD);
-		wprintw(body, "%s%s", prfx, text);
-		wattroff(body, A_BOLD);
-		return;
-	case LINE_TITLE_3:
-		wattron(body, A_BOLD);
-		wprintw(body, "%s%s", prfx, text);
-		wattroff(body, A_BOLD);
-		return;
-	case LINE_ITEM:
-		wprintw(body, "%s%s", prfx, text);
-		return;
-	case LINE_QUOTE:
-		wattron(body, A_DIM);
-		wprintw(body, "%s%s", prfx, text);
-		wattroff(body, A_DIM);
-		return;
-	case LINE_PRE_START:
-	case LINE_PRE_END:
-		wprintw(body, "%s%s", prfx, text);
-		return;
-	case LINE_PRE_CONTENT:
-		wprintw(body, "%s%s", prfx, text);
-		return;
-	}
+	if (face != 0)
+		wattron(body, face);
+	wprintw(body, "%s%s", prfx, text);
+	if (face != 0)
+		wattroff(body, face);
 }
 
 static void
