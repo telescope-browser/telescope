@@ -1545,6 +1545,8 @@ message(const char *fmt, ...)
 	evtimer_add(&clminibufev, &clminibufev_timer);
 	clminibufev_set = 1;
 
+	free(ministate.curmesg);
+
 	va_start(ap, fmt);
 	/* TODO: what to do if the allocation fails here? */
 	if (vasprintf(&ministate.curmesg, fmt, ap) == -1)
