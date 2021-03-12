@@ -805,6 +805,8 @@ global_key_unbound(void)
 static void
 cmd_mini_delete_char(struct tab *tab)
 {
+	minibuffer_taint_hist();
+
 	if (ministate.len == 0 || ministate.off == ministate.len)
 		return;
 
@@ -817,6 +819,8 @@ cmd_mini_delete_char(struct tab *tab)
 static void
 cmd_mini_delete_backward_char(struct tab *tab)
 {
+	minibuffer_taint_hist();
+
 	if (ministate.len == 0 || ministate.off == 0)
 		return;
 
@@ -858,6 +862,8 @@ cmd_mini_move_beginning_of_line(struct tab *tab)
 static void
 cmd_mini_kill_line(struct tab *tab)
 {
+	minibuffer_taint_hist();
+
         if (ministate.off == ministate.len)
 		return;
 	ministate.buf[ministate.off] = '\0';
