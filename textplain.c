@@ -65,41 +65,6 @@ textplain_initparser(struct parser *p)
 	emit_line(p, LINE_PRE_START, NULL, 0);
 }
 
-static inline int
-append(struct parser *p, const char *buf, size_t len)
-{
-	size_t newlen;
-	char *t;
-
-	newlen = len + p->len;
-	if ((t = calloc(1, newlen)) == NULL)
-		return 0;
-	memcpy(t, p->buf, p->len);
-	memcpy(t + p->len, buf, len);
-	free(p->buf);
-	p->buf = t;
-	p->len = newlen;
-	return 1;
-}
-
-static inline int
-set_buf(struct parser *p, const char *buf, size_t len)
-{
-	free(p->buf);
-	p->buf = NULL;
-
-	if (len == 0) {
-		p->len = 0;
-		return 1;
-	}
-
-	if ((p->buf = calloc(1, len)) == NULL)
-		return 0;
-	memcpy(p->buf, buf, len);
-	p->len = len;
-	return 1;
-}
-
 static int
 textplain_parse(struct parser *p, const char *buf, size_t size)
 {
@@ -111,7 +76,7 @@ textplain_parse(struct parser *p, const char *buf, size_t size)
 		b = buf;
 		len = size;
 	} else {
-		if (!append(p, buf, size))
+		if (!parser_append(p, buf, size))
 			return 0;
 		b = p->buf;
 		len = p->len;
@@ -136,7 +101,7 @@ textplain_parse(struct parser *p, const char *buf, size_t size)
 		}
 	}
 
-	return set_buf(p, b, len);
+	return parser_set_buf(p, b, len);
 }
 
 static int

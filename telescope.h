@@ -129,6 +129,10 @@ extern const char	*about_new;
 #define UNKNOWN_TYPE_OR_CSET	3
 extern const char	*err_pages[70];
 
+/* parser.c */
+int		 parser_append(struct parser*, const char*, size_t);
+int		 parser_set_buf(struct parser*, const char*, size_t);
+
 /* telescope.c */
 void		 load_about_url(struct tab*, const char*);
 void		 load_gemini_url(struct tab*, const char*);

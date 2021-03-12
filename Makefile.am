@@ -6,6 +6,7 @@ telescope_SOURCES =	compat.h	\
 			gemtext.c	\
 			mime.c		\
 			pages.c		\
+			parser.c	\
 			telescope.c	\
 			telescope.h	\
 			textplain.c	\
