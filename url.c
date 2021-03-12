@@ -478,7 +478,10 @@ url_resolve_from(struct url *url, const char *str, const char **err)
 			break;
 	}
 
+	if (*i == '/')
+		i++;
 	*i = '\0';
+
 	strlcat(url->path, str, sizeof(url->path));
 	return 1;
 }
