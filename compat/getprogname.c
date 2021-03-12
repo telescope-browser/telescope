@@ -14,7 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "../config.h"
+#include "compat.h"
 
 #ifdef HAVE_PROGRAM_INVOCATION_SHORT_NAME
 

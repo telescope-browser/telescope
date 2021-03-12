@@ -1,6 +1,6 @@
 AC_INIT([telescope], [0.1], [telescope@omarpolo.com], [telescope], [gemini://telescope.omarpolo.com])
 AC_CONFIG_LIBOBJ_DIR(compat)
-AM_INIT_AUTOMAKE([-Wall foreign])
+AM_INIT_AUTOMAKE([-Wall foreign subdir-objects])
 AC_PROG_CC
 
 PKG_PROG_PKG_CONFIG
@@ -12,6 +12,7 @@ AC_REPLACE_FUNCS([
 	getdtablecount \
 	getdtablesize \
 	getprogname \
+	recallocarray \
 	strlcat \
 	strlcpy \
 	strtonum \

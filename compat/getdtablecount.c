@@ -17,7 +17,7 @@
 /* XXX: on linux it's possible to glob("/proc/$pid/fd/ *") to know the
  * dtablecount. */
 
-#include "../config.h"
+#include "compat.h"
 
 int
 getdtablecount(void)

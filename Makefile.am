@@ -15,4 +15,6 @@ telescope_SOURCES =	compat.h	\
 			url.h		\
 			util.c
 
+LDADD = $(LIBOBJS)
+
 dist_doc_DATA =		README.md

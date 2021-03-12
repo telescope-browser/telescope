@@ -17,6 +17,8 @@
 #ifndef COMPAT_H
 #define COMPAT_H
 
+#include "config.h"
+
 #include <sys/types.h>
 #include <sys/uio.h>
 
@@ -57,6 +59,14 @@ int		 getdtablecount(void);
 
 #ifndef HAVE_GETDTABLESIZE
 int		 getdtablesize(void);
+#endif
+
+#ifndef HAVE_GETPROGNAME
+const char	*getprogname(void);
+#endif
+
+#ifndef HAVE_RECALLOCARRAY
+void		*recallocarray(void*, size_t, size_t, size_t);
 #endif
 
 #ifndef HAVE_STRLCPY

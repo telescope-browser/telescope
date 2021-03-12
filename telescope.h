@@ -17,7 +17,6 @@
 #ifndef TELESCOPE_H
 #define TELESCOPE_H
 
-#include "config.h"
 #include "compat.h"
 
 #include "url.h"
