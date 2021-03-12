@@ -60,6 +60,7 @@ gemtext_initparser(struct parser *p)
 {
 	memset(p, 0, sizeof(*p));
 
+	p->name = "text/gemini";
 	p->parse = &gemtext_parse;
 	p->free  = &gemtext_free;
 }

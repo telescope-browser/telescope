@@ -1375,14 +1375,14 @@ redraw_modeline(struct tab *tab)
 {
 	double		 pct;
 	int		 x, y, max_x, max_y;
-	const char	*mode = "text/gemini-mode";
+	const char	*mode = tab->page.name;
 	const char	*spin = "-\\|/";
 
 	wclear(modeline);
 	wattron(modeline, A_REVERSE);
 	wmove(modeline, 0, 0);
 
-	wprintw(modeline, "-%c %s ",
+	wprintw(modeline, "-%c %s-mode ",
 	    spin[tab->s->loading_anim_step], mode);
 
 	pct = (tab->s->line_off + tab->s->curs_y) * 100.0 / tab->s->line_max;

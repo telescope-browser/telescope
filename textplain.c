@@ -58,6 +58,7 @@ textplain_initparser(struct parser *p)
 {
 	memset(p, 0, sizeof(*p));
 
+	p->name = "text/plain";
 	p->parse = &textplain_parse;
 	p->free = &textplain_free;
 

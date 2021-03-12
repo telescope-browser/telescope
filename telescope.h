@@ -69,6 +69,7 @@ typedef int	(*parserfreefn)(struct parser*);
 typedef void (imsg_handlerfn)(struct imsg*, size_t);
 
 struct parser {
+	const char	*name;
 	char		*buf;
 	size_t		 len;
 	size_t		 cap;
