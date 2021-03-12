@@ -1,5 +1,6 @@
 TAGS
 .deps
+compat/.deps
 Makefile
 Makefile.in
 aclocal.m4
