@@ -651,12 +651,11 @@ cmd_scroll_up(struct tab *tab)
 static void
 cmd_scroll_down(struct tab *tab)
 {
-	ssize_t off;
+	size_t off;
 
-	off = tab->s->line_off + body_lines;
-	off = MIN(tab->s->line_max, off);
+	off = body_lines+1;
 
-	for (; off >= 0; --off)
+	for (; off > 0; --off)
 		cmd_scroll_line_down(tab);
 }
 
