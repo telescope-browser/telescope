@@ -81,7 +81,7 @@ static struct event	stdioev, winchev;
 static int		 kbd(const char*);
 static void		 kmap_define_key(struct kmap*, const char*, void(*)(struct tab*));
 static void		 load_default_keys(void);
-static int		 push_line(struct tab*, const struct line*, const char*, size_t);
+static int		 push_line(struct tab*, const struct line*, const char*, size_t, int);
 static void		 empty_vlist(struct tab*);
 static void		 restore_cursor(struct tab *);
 
@@ -477,7 +477,7 @@ load_default_keys(void)
 }
 
 static int
-push_line(struct tab *tab, const struct line *l, const char *buf, size_t len)
+push_line(struct tab *tab, const struct line *l, const char *buf, size_t len, int cont)
 {
 	struct line *vl;
 
@@ -495,6 +495,7 @@ push_line(struct tab *tab, const struct line *l, const char *buf, size_t len)
 	if (len != 0)
 		memcpy(vl->line, buf, len);
 	vl->alt = l->alt;
+	vl->flags = cont;
 
 	if (TAILQ_EMPTY(&tab->s->head))
 		TAILQ_INSERT_HEAD(&tab->s->head, vl, lines);
@@ -1244,10 +1245,12 @@ word_boundaries(const char *s, const char *sep, const char **endword, const char
 
 static inline int
 emitline(struct tab *tab, size_t zero, size_t *off, const struct line *l,
-    const char **line)
+    const char **line, int *cont)
 {
-	if (!push_line(tab, l, *line, *off - zero))
+	if (!push_line(tab, l, *line, *off - zero, *cont))
 		return 0;
+	if (!*cont)
+		*cont = 1;
 	*line += *off - zero;
 	*off = zero;
 	return 1;
@@ -1275,6 +1278,7 @@ static void
 wrap_text(struct tab *tab, const char *prfx, struct line *l)
 {
 	size_t		 zero, off, len, split;
+	int		 cont = 0;
 	const char	*endword, *endspc, *line, *linestart;
 
 	zero = strlen(prfx);
@@ -1285,10 +1289,10 @@ wrap_text(struct tab *tab, const char *prfx, struct line *l)
 	while (word_boundaries(line, " \t-", &endword, &endspc)) {
 		len = endword - line;
 		if (off + len >= body_cols) {
-			emitline(tab, zero, &off, l, &linestart);
+			emitline(tab, zero, &off, l, &linestart, &cont);
 			while (len >= body_cols) {
 				/* hard wrap */
-				emitline(tab, zero, &off, l, &linestart);
+				emitline(tab, zero, &off, l, &linestart, &cont);
 				len -= body_cols-1;
 				line += body_cols-1;
 			}
@@ -1303,7 +1307,7 @@ wrap_text(struct tab *tab, const char *prfx, struct line *l)
 		/* line = endspc; */
 		if (off != zero) {
 			if (off + len >= body_cols) {
-				emitline(tab, zero, &off, l, &linestart);
+				emitline(tab, zero, &off, l, &linestart, &cont);
 				linestart = endspc;
 			} else
 				off += len;
@@ -1312,17 +1316,18 @@ wrap_text(struct tab *tab, const char *prfx, struct line *l)
 		line = endspc;
 	}
 
-	emitline(tab, zero, &off, l, &linestart);
+	emitline(tab, zero, &off, l, &linestart, &cont);
 }
 
 static int
 hardwrap_text(struct tab *tab, struct line *l)
 {
 	size_t		 off, len;
+	int		 cont;
 	const char	*linestart;
 
 	if (l->line == NULL)
-		return emitline(tab, 0, &off, l, &linestart);
+		return emitline(tab, 0, &off, l, &linestart, &cont);
 
         len = strlen(l->line);
 	off = 0;
@@ -1331,12 +1336,12 @@ hardwrap_text(struct tab *tab, struct line *l)
 	while (len >= COLS) {
 		len -= COLS-1;
 		off = COLS-1;
-		if (!emitline(tab, 0, &off, l, &linestart))
+		if (!emitline(tab, 0, &off, l, &linestart, &cont))
 			return 0;
 	}
 
 	if (len != 0)
-		return emitline(tab, 0, &len, l, &linestart);
+		return emitline(tab, 0, &len, l, &linestart, &cont);
 
 	return 1;
 }
@@ -1363,7 +1368,7 @@ wrap_page(struct tab *tab)
 			break;
 		case LINE_PRE_START:
 		case LINE_PRE_END:
-                        push_line(tab, l, NULL, 0);
+                        push_line(tab, l, NULL, 0, 0);
 			break;
 		case LINE_PRE_CONTENT:
                         hardwrap_text(tab, l);
@@ -1377,8 +1382,13 @@ static inline void
 print_line(struct line *l)
 {
 	const char *text = l->line;
-	const char *prfx = line_prefixes[l->type].prfx1;
+	const char *prfx;
 	int face = line_faces[l->type].prop;
+
+	if (!l->flags)
+		prfx = line_prefixes[l->type].prfx1;
+	else
+		prfx = line_prefixes[l->type].prfx2;
 
 	if (text == NULL)
 		text = "";
