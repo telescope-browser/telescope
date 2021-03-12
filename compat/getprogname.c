@@ -33,7 +33,7 @@ getprogname(void)
 const char *
 getprogname(void)
 {
-	return "gmid";
+	return "telescope";
 }
 
 #endif
