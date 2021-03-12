@@ -456,7 +456,7 @@ url_resolve_from(struct url *url, const char *str, const char **err)
 	if (*str == '/') {
 		strlcpy(url->path, str, sizeof(url->path));
 
-                if ((hash = strchr(url->path, '#')) != NULL) {
+		if ((hash = strchr(url->path, '#')) != NULL) {
 			*hash = '\0';
 			hash++;
 			strlcpy(url->fragment, hash,
