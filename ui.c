@@ -100,6 +100,7 @@ static void		 cmd_beginning_of_buffer(struct tab*);
 static void		 cmd_end_of_buffer(struct tab*);
 static void		 cmd_kill_telescope(struct tab*);
 static void		 cmd_push_button(struct tab*);
+static void		 cmd_push_button_new_tab(struct tab*);
 static void		 cmd_clear_minibuf(struct tab*);
 static void		 cmd_execute_extended_command(struct tab*);
 static void		 cmd_tab_close(struct tab*);
@@ -156,7 +157,7 @@ static void		 load_url_in_tab(struct tab*, const char*);
 static void		 enter_minibuffer(void(*)(void), void(*)(void), void(*)(void), struct minibuf_histhead*);
 static void		 exit_minibuffer(void);
 static void		 switch_to_tab(struct tab*);
-static void		 new_tab(void);
+static struct tab	*new_tab(void);
 
 static struct { int meta, key; } thiskey;
 
@@ -450,6 +451,7 @@ load_default_keys(void)
 
 	/* global */
 	global_set_key("C-m",		cmd_push_button);
+	global_set_key("M-enter",	cmd_push_button_new_tab);
 
 	/* === minibuffer map === */
 	minibuffer_set_key("ret",		cmd_mini_complete_and_exit);
@@ -699,6 +701,26 @@ cmd_push_button(struct tab *tab)
 		return;
 
 	load_url_in_tab(tab, l->alt);
+}
+
+static void
+cmd_push_button_new_tab(struct tab *tab)
+{
+	struct tab	*t;
+	struct line	*l;
+	size_t		 nth;
+
+	nth = tab->s->line_off + tab->s->curs_y;
+	if (nth > tab->s->line_max)
+		return;
+	l = nth_line(tab, nth);
+	if (l->type != LINE_LINK)
+		return;
+
+	t = new_tab();
+	memcpy(&t->url, &tab->url, sizeof(tab->url));
+	memcpy(&t->urlstr, &tab->urlstr, sizeof(tab->urlstr));
+	load_url_in_tab(t, l->alt);
 }
 
 static void
@@ -1641,7 +1663,7 @@ switch_to_tab(struct tab *tab)
 	tab->flags |= TAB_CURRENT;
 }
 
-static void
+static struct tab *
 new_tab(void)
 {
 	struct tab	*tab, *t;
@@ -1664,10 +1686,11 @@ new_tab(void)
 		TAILQ_INSERT_TAIL(&tabshead, tab, tabs);
 
 	load_url_in_tab(tab, url);
-	return;
+	return tab;
 
 err:
 	event_loopbreak();
+	return NULL;
 }
 
 int
