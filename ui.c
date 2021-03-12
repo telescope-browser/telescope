@@ -460,6 +460,8 @@ load_default_keys(void)
 
 	minibuffer_set_key("C-f",		cmd_mini_forward_char);
 	minibuffer_set_key("C-b",		cmd_mini_backward_char);
+	minibuffer_set_key("<right>",		cmd_mini_forward_char);
+	minibuffer_set_key("<left>",		cmd_mini_backward_char);
 	minibuffer_set_key("C-e",		cmd_mini_move_end_of_line);
 	minibuffer_set_key("C-a",		cmd_mini_move_beginning_of_line);
 	minibuffer_set_key("<end>",		cmd_mini_move_end_of_line);
