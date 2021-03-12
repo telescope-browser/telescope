@@ -134,6 +134,9 @@ void		 load_gemini_url(struct tab*, const char*);
 void		 load_url(struct tab*, const char*);
 void		 stop_tab(struct tab*);
 
+/* textplain.c */
+void		 textplain_initparser(struct parser*);
+
 /* ui.c */
 int		 ui_init(void);
 void		 ui_on_tab_loaded(struct tab*);

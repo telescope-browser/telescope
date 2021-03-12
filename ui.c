@@ -1277,6 +1277,9 @@ hardwrap_text(struct tab *tab, struct line *l)
 	size_t		 off, len;
 	const char	*linestart;
 
+	if (l->line == NULL)
+		return emitline(tab, 0, &off, l, &linestart);
+
         len = strlen(l->line);
 	off = 0;
 	linestart = l->line;

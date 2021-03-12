@@ -26,8 +26,8 @@ static struct parser_table {
 	const char	*mediatype;
 	void		(*parserinit)(struct parser*);
 } ptable[] = {
-	{ "text/gemini", gemtext_initparser },
-	/* { "text\n/ *", textplain_initparser } */
+	{ "text/gemini",	gemtext_initparser },
+	{ "text/*",		textplain_initparser },
 	{ NULL, NULL}
 };
 

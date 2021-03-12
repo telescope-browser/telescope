@@ -8,6 +8,7 @@ telescope_SOURCES =	compat.h	\
 			pages.c		\
 			telescope.c	\
 			telescope.h	\
+			textplain.c	\
 			ui.c		\
 			url.c		\
 			url.h		\
