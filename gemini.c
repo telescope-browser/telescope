@@ -534,6 +534,8 @@ client_main(struct imsgbuf *b)
 	event_set(&imsgev, ibuf->fd, EV_READ | EV_PERSIST, dispatch_imsg, ibuf);
 	event_add(&imsgev, NULL);
 
+	sandbox_network_process();
+
 	event_dispatch();
 	return 0;
 }

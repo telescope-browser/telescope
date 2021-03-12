@@ -7,6 +7,7 @@ telescope_SOURCES =	compat.h	\
 			mime.c		\
 			pages.c		\
 			parser.c	\
+			sandbox.c	\
 			telescope.c	\
 			telescope.h	\
 			textplain.c	\

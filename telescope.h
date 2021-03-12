@@ -54,6 +54,7 @@ struct line {
 	enum line_type		 type;
 	char			*line;
 	char			*alt;
+	int			 flags;
 	TAILQ_ENTRY(line)	 lines;
 };
 
@@ -131,6 +132,9 @@ extern const char	*err_pages[70];
 /* parser.c */
 int		 parser_append(struct parser*, const char*, size_t);
 int		 parser_set_buf(struct parser*, const char*, size_t);
+
+/* sandbox.c */
+void		 sandbox_network_process(void);
 
 /* telescope.c */
 void		 load_about_url(struct tab*, const char*);
