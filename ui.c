@@ -1603,6 +1603,7 @@ enter_minibuffer(void (*self_insert_fn)(void), void (*donefn)(void),
 	ministate.abortfn = abortfn;
 	memset(ministate.buf, 0, sizeof(ministate.buf));
         ministate.off = 0;
+	ministate.len = 0;
 	strlcpy(ministate.buf, "", sizeof(ministate.prompt));
 
 	ministate.history = hist;
