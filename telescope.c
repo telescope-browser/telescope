@@ -14,7 +14,8 @@
 struct event		 imsgev;
 struct tabshead		 tabshead;
 
-struct proto protos[] = {
+/* the first is also the fallback one */
+static struct proto protos[] = {
 	{ "gemini:",	load_gemini_url },
 	{ "about:",	load_about_url },
 	{ NULL, NULL },
@@ -149,10 +150,12 @@ handle_imsg_got_meta(struct imsg *imsg, size_t datalen)
 		load_page_from_str(tab, err_pages[tab->code]);
 		ui_require_input(tab, tab->code == 11);
 	} else if (tab->code == 20) {
-		/* TODO: parse mime type */
-		gemtext_initparser(&tab->page);
-		imsg_compose(ibuf, IMSG_PROCEED, tab->id, 0, -1, NULL, 0);
-		imsg_flush(ibuf);
+		if (setup_parser_for(tab)) {
+			imsg_compose(ibuf, IMSG_PROCEED, tab->id, 0, -1, NULL, 0);
+			imsg_flush(ibuf);
+		} else {
+			load_page_from_str(tab, err_pages[UNKNOWN_TYPE_OR_CSET]);
+		}
 	} else if (tab->code < 40) { /* 3x */
 		tab->redirect_count++;
 

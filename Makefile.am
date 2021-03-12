@@ -4,6 +4,7 @@ telescope_SOURCES =	compat.h	\
 			compat/*.[ch]	\
 			gemini.c	\
 			gemtext.c	\
+			mime.c		\
 			pages.c		\
 			telescope.c	\
 			telescope.h	\

@@ -108,9 +108,6 @@ struct proto {
 	void		 (*loadfn)(struct tab*, const char*);
 };
 
-/* the first is also the fallback one */
-extern struct proto protos[];
-
 extern struct event		 imsgev;
 
 /* gemini.c */
@@ -119,12 +116,16 @@ int		 client_main(struct imsgbuf *b);
 /* gemtext.c */
 void		 gemtext_initparser(struct parser*);
 
+/* mime.c */
+int		 setup_parser_for(struct tab*);
+
 /* pages.c */
 extern const char	*about_new;
 
 #define CANNOT_FETCH		0
 #define TOO_MUCH_REDIRECTS	1
 #define MALFORMED_RESPONSE	2
+#define UNKNOWN_TYPE_OR_CSET	3
 extern const char	*err_pages[70];
 
 /* telescope.c */

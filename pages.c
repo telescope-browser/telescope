@@ -50,6 +50,7 @@ const char *err_pages[70] = {
 	[CANNOT_FETCH]		= "# Couldn't load the page\n",
 	[TOO_MUCH_REDIRECTS]	= "# Too much redirects\n",
 	[MALFORMED_RESPONSE]	= "# Got a malformed response\n",
+	[UNKNOWN_TYPE_OR_CSET]	= "# Unsupported type or charset\n",
 
 	[10] = "# Input required\n",
 	[11] = "# Input required\n",
