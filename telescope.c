@@ -21,7 +21,7 @@ static struct proto protos[] = {
 	{ NULL, NULL },
 };
 
-static struct imsgbuf	*ibuf;
+static struct imsgbuf	*netibuf;
 
 static void	handle_imsg_err(struct imsg*, size_t);
 static void	handle_imsg_check_cert(struct imsg*, size_t);
@@ -83,8 +83,8 @@ handle_imsg_check_cert(struct imsg *imsg, size_t datalen)
 {
 	int	tofu_res = 1;
 
-	imsg_compose(ibuf, IMSG_CERT_STATUS, imsg->hdr.peerid, 0, -1, &tofu_res, sizeof(tofu_res));
-	imsg_flush(ibuf);
+	imsg_compose(netibuf, IMSG_CERT_STATUS, imsg->hdr.peerid, 0, -1, &tofu_res, sizeof(tofu_res));
+	imsg_flush(netibuf);
 }
 
 static inline int
@@ -151,8 +151,8 @@ handle_imsg_got_meta(struct imsg *imsg, size_t datalen)
 		ui_require_input(tab, tab->code == 11);
 	} else if (tab->code == 20) {
 		if (setup_parser_for(tab)) {
-			imsg_compose(ibuf, IMSG_PROCEED, tab->id, 0, -1, NULL, 0);
-			imsg_flush(ibuf);
+			imsg_compose(netibuf, IMSG_PROCEED, tab->id, 0, -1, NULL, 0);
+			imsg_flush(netibuf);
 		} else {
 			load_page_from_str(tab, err_pages[UNKNOWN_TYPE_OR_CSET]);
 		}
@@ -203,7 +203,7 @@ dispatch_imsg(int fd, short ev, void *d)
 	size_t		datalen;
 	ssize_t		n;
 
-	if ((n = imsg_read(ibuf)) == -1) {
+	if ((n = imsg_read(netibuf)) == -1) {
 		if (errno == EAGAIN || errno == EWOULDBLOCK)
 			return;
 		die();
@@ -215,7 +215,7 @@ dispatch_imsg(int fd, short ev, void *d)
 	}
 
 	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
+		if ((n = imsg_get(netibuf, &imsg)) == -1)
 			die();
 		if (n == 0)
 			return;
@@ -272,9 +272,9 @@ load_gemini_url(struct tab *tab, const char *url)
 	}
 
 	url_unparse(&tab->url, tab->urlstr, sizeof(tab->urlstr));
-	imsg_compose(ibuf, IMSG_GET, tab->id, 0, -1,
+	imsg_compose(netibuf, IMSG_GET, tab->id, 0, -1,
 	    tab->urlstr, strlen(tab->urlstr)+1);
-	imsg_flush(ibuf);
+	imsg_flush(netibuf);
 	return;
 
 err:
@@ -304,8 +304,8 @@ load_url(struct tab *tab, const char *url)
 void
 stop_tab(struct tab *tab)
 {
-	imsg_compose(ibuf, IMSG_STOP, tab->id, 0, -1, NULL, 0);
-	imsg_flush(ibuf);
+	imsg_compose(netibuf, IMSG_STOP, tab->id, 0, -1, NULL, 0);
+	imsg_flush(netibuf);
 }
 
 int
@@ -332,21 +332,21 @@ main(void)
 
 	close(imsg_fds[1]);
 	imsg_init(&main_ibuf, imsg_fds[0]);
-	ibuf = &main_ibuf;
+	netibuf = &main_ibuf;
 
 	TAILQ_INIT(&tabshead);
 
 	event_init();
 
-	event_set(&imsgev, ibuf->fd, EV_READ | EV_PERSIST, dispatch_imsg, ibuf);
+	event_set(&imsgev, netibuf->fd, EV_READ | EV_PERSIST, dispatch_imsg, netibuf);
 	event_add(&imsgev, NULL);
 
 	ui_init();
 
 	event_dispatch();
 
-	imsg_compose(ibuf, IMSG_QUIT, 0, 0, -1, NULL, 0);
-	imsg_flush(ibuf);
+	imsg_compose(netibuf, IMSG_QUIT, 0, 0, -1, NULL, 0);
+	imsg_flush(netibuf);
 
 	ui_end();
 
