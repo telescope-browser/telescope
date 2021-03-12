@@ -111,7 +111,8 @@ static void		 cmd_load_current_url(struct tab*);
 
 static void		 global_key_unbound(void);
 
-static void		 cmd_mini_del(struct tab*);
+static void		 cmd_mini_delete_char(struct tab*);
+static void		 cmd_mini_delete_backward_char(struct tab*);
 static void		 cmd_mini_forward_char(struct tab*);
 static void		 cmd_mini_backward_char(struct tab*);
 static void		 cmd_mini_move_end_of_line(struct tab*);
@@ -454,7 +455,8 @@ load_default_keys(void)
 	minibuffer_set_key("ret",		cmd_mini_complete_and_exit);
 	minibuffer_set_key("C-g",		cmd_mini_abort);
 	minibuffer_set_key("esc",		cmd_mini_abort);
-	minibuffer_set_key("del",		cmd_mini_del);
+	minibuffer_set_key("C-d",		cmd_mini_delete_char);
+	minibuffer_set_key("del",		cmd_mini_delete_backward_char);
 
 	minibuffer_set_key("C-f",		cmd_mini_forward_char);
 	minibuffer_set_key("C-b",		cmd_mini_backward_char);
@@ -799,7 +801,19 @@ global_key_unbound(void)
 }
 
 static void
-cmd_mini_del(struct tab *tab)
+cmd_mini_delete_char(struct tab *tab)
+{
+	if (ministate.len == 0 || ministate.off == ministate.len)
+		return;
+
+	memmove(&ministate.buf[ministate.off],
+	    &ministate.buf[ministate.off+1],
+	    ministate.len - ministate.off + 1);
+	ministate.len--;
+}
+
+static void
+cmd_mini_delete_backward_char(struct tab *tab)
 {
 	if (ministate.len == 0 || ministate.off == 0)
 		return;
