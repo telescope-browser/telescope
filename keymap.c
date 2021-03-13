@@ -22,7 +22,7 @@
 
 #define CTRL(n)	((n)&0x1F)
 
-struct keytable {
+static struct keytable {
 	char	*p;
 	int	 k;
 } keytable[] = {
