@@ -366,6 +366,7 @@ parse_reply(struct req *req)
 
 	if (code != 20)
 		close_conn(0, 0, req);
+	advance_buf(req, len+1); /* skip \n too */
 
 	return;
 
@@ -377,29 +378,31 @@ static void
 copy_body(int fd, short ev, void *d)
 {
 	struct req	*req = d;
-	char		 buf[BUFSIZ];
 	ssize_t		 r;
 
-	for (;;) {
-		switch (r = tls_read(req->ctx, buf, sizeof(buf))) {
+	do {
+		if (req->off != 0) {
+			imsg_compose(ibuf, IMSG_BUF, req->id, 0, -1,
+			    req->buf, req->off);
+			imsg_flush(ibuf);
+		}
+
+		switch (r = tls_read(req->ctx, req->buf, sizeof(req->buf))) {
 		case TLS_WANT_POLLIN:
 			yield_r(req, copy_body, NULL);
 			return;
 		case TLS_WANT_POLLOUT:
 			yield_w(req, copy_body, NULL);
 			return;
-		case -1:
 		case 0:
 			imsg_compose(ibuf, IMSG_EOF, req->id, 0, -1, NULL, 0);
 			imsg_flush(ibuf);
 			close_conn(0, 0, req);
 			return;
 		default:
-			imsg_compose(ibuf, IMSG_BUF, req->id, 0, -1, buf, r);
-			imsg_flush(ibuf);
-			break;
+			req->off = r;
 		}
-	}
+	} while(1);
 }
 
 static void
