@@ -13,22 +13,24 @@ browser.
 
 At the moment, telescope is something **a bit more than a working
 demo**.  However, it has already some interesting features, like tabs,
-privsep, input from the minibuffer.
+privsep, input from the minibuffer etc...
 
 There are still various things missing or, if you prefer, various
 things that you can help develop :)
 
- - UTF8 handling: we need to handle non-ASCII correctly in pages and
+ - UTF8 handling: it needs to handle non-ASCII characters in pages and
    in the minibuffer input
  - bookmarks
  - subscriptions
  - tofu
  - client certificates
- - add other GUI: atm we use only ncurses, but telescope shouldn't be
+ - add other GUI: atm it uses only ncurses, but telescope shouldn't be
    restricted to TTYs only!
  - configuration file: even proposals are accepted.  I need a way to
    define bindings, colors etc in a way that will possibly work on
    more than one graphic libraries.
+
+![Telescope new tab](images/about-new.png)
 
 
 ## Building
