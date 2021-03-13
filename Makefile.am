@@ -18,4 +18,4 @@ telescope_SOURCES =	compat.h	\
 
 LDADD = $(LIBOBJS)
 
-dist_doc_DATA =		README.md
+dist_doc_DATA =		README.md LICENSE
