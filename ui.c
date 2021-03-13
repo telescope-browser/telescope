@@ -70,9 +70,6 @@
 
 #define TAB_CURRENT	0x1
 
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
-
 struct minibuf_histhead;
 
 static struct event	stdioev, winchev;
@@ -1284,6 +1281,7 @@ redraw_tabline(void)
 {
 	struct tab	*tab;
 	int		 current;
+	const char	*title;
 
 	werase(tabline);
 	wbkgd(tabline, A_REVERSE);
@@ -1292,11 +1290,14 @@ redraw_tabline(void)
 	TAILQ_FOREACH(tab, &tabshead, tabs) {
 		current = tab->flags & TAB_CURRENT;
 
+		if (*(title = tab->page.title) == '\0')
+			title = tab->urlstr;
+
 		if (current)
 			wattron(tabline, A_UNDERLINE);
 
-		wprintw(tabline, "%s%d:todo title ",
-		    current ? "*" : " ", tab->id);
+		wprintw(tabline, "%s%d: %s",
+		    current ? "*" : " ", tab->id, title);
 
 		if (current)
 			wattroff(tabline, A_UNDERLINE);

@@ -21,6 +21,9 @@
 
 #include "url.h"
 
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+
 #define GEMINI_URL_LEN 1024
 
 enum imsg_type {
@@ -70,6 +73,7 @@ typedef void (imsg_handlerfn)(struct imsg*, size_t);
 
 struct parser {
 	const char	*name;
+	char		 title[32+1];
 	char		*buf;
 	size_t		 len;
 	size_t		 cap;

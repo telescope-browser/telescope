@@ -185,6 +185,9 @@ parse_title(struct parser *p, enum line_type t, const char *buf, size_t len)
 	if (len == 0)
 		return emit_line(p, t, NULL, NULL);
 
+	if (t == LINE_TITLE_1 && *p->title == '\0')
+		strncpy(p->title, buf, MIN(sizeof(p->title)-1, len));
+
 	if ((l = calloc(1, len+1)) == NULL)
 		return 0;
 	memcpy(l, buf, len);
