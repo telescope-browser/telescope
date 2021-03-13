@@ -696,7 +696,7 @@ cmd_push_button(struct tab *tab)
 	size_t		 nth;
 
 	nth = tab->s->line_off + tab->s->curs_y;
-	if (nth > tab->s->line_max)
+	if (nth >= tab->s->line_max)
 		return;
 	l = nth_line(tab, nth);
 	if (l->type != LINE_LINK)
