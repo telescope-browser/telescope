@@ -78,8 +78,6 @@ struct minibuf_histhead;
 
 static struct event	stdioev, winchev;
 
-static int		 kbd(const char*);
-static void		 kmap_define_key(struct kmap*, const char*, void(*)(struct tab*));
 static void		 load_default_keys(void);
 static int		 push_line(struct tab*, const struct line*, const char*, size_t, int);
 static void		 empty_vlist(struct tab*);
@@ -186,50 +184,10 @@ struct ui_state {
 
 static char	keybuf[64];
 
-#define CTRL(n)	((n)&0x1F)
-
-struct keytable {
-	char	*p;
-	int	 k;
-} keytable[] = {
-	{ "<up>",	KEY_UP },
-	{ "<down>",	KEY_DOWN },
-	{ "<left>",	KEY_LEFT },
-	{ "<right>",	KEY_RIGHT },
-	{ "<prior>",	KEY_PPAGE },
-	{ "<next>",	KEY_NPAGE },
-	{ "<home>",	KEY_HOME },
-	{ "<end>",	KEY_END },
-	/* ... */
-	{ "del",	KEY_BACKSPACE },
-	{ "esc",	27 },
-	{ "space",	' ' },
-	{ "spc",	' ' },
-	{ "enter",	CTRL('m') },
-	{ "ret",	CTRL('m' )},
-	{ "tab",	CTRL('i') },
-	/* ... */
-	{ NULL, 0 },
-};
-
-struct kmap {
-	TAILQ_HEAD(map, keymap)	m;
-	void			(*unhandled_input)(void);
-};
-
 struct kmap global_map,
 	minibuffer_map,
 	*current_map,
 	*base_map;
-
-struct keymap {
-	int			 meta;
-	int			 key;
-	struct kmap		 map;
-	void			(*fn)(struct tab*);
-
-	TAILQ_ENTRY(keymap)	 keymaps;
-};
 
 /* TODO: limit to a maximum number of entries */
 struct minibuf_histhead {
@@ -292,97 +250,18 @@ struct line_face {
 	[LINE_PRE_END] =	{ 0 },
 };
 
-static int
-kbd(const char *key)
-{
-	struct keytable *t;
-
-	for (t = keytable; t->p != NULL; ++t) {
-		if (has_prefix(key, t->p))
-			return t->k;
-	}
-
-        return *key;
-}
-
-static const char *
-unkbd(int k)
-{
-	struct keytable *t;
-
-	for (t = keytable; t->p != NULL; ++t) {
-		if (k == t->k)
-			return t->p;
-	}
-
-	return NULL;
-}
-
-static void
-kmap_define_key(struct kmap *map, const char *key, void (*fn)(struct tab*))
-{
-	int ctrl, meta, k;
-	struct keymap	*entry;
-
-again:
-	if ((ctrl = has_prefix(key, "C-")))
-		key += 2;
-	if ((meta = has_prefix(key, "M-")))
-		key += 2;
-	if (*key == '\0')
-		_exit(1);
-	k = kbd(key);
-
-	if (ctrl)
-		k = CTRL(k);
-
-	/* skip key & spaces */
-	while (*key != '\0' && !isspace(*key))
-		++key;
-	while (*key != '\0' && isspace(*key))
-		++key;
-
-	TAILQ_FOREACH(entry, &map->m, keymaps) {
-		if (entry->meta == meta && entry->key == k) {
-			if (*key == '\0') {
-				entry->fn = fn;
-				return;
-			}
-			map = &entry->map;
-			goto again;
-		}
-	}
-
-	if ((entry = calloc(1, sizeof(*entry))) == NULL)
-		abort();
-
-	entry->meta = meta;
-	entry->key = k;
-	TAILQ_INIT(&entry->map.m);
-
-	if (TAILQ_EMPTY(&map->m))
-		TAILQ_INSERT_HEAD(&map->m, entry, keymaps);
-	else
-		TAILQ_INSERT_TAIL(&map->m, entry, keymaps);
-
-        if (*key != '\0') {
-		map = &entry->map;
-		goto again;
-	}
-
-	entry->fn = fn;
-}
-
 static inline void
 global_set_key(const char *key, void (*fn)(struct tab*))
 {
-	kmap_define_key(&global_map, key, fn);
+	if (!kmap_define_key(&global_map, key, fn))
+		_exit(1);
 }
 
 static inline void
 minibuffer_set_key(const char *key, void (*fn)(struct tab*))
 {
-	kmap_define_key(&minibuffer_map, key, fn);
+	if (!kmap_define_key(&minibuffer_map, key, fn))
+		_exit(1);
 }
 
 static void

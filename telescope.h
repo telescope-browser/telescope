@@ -109,6 +109,20 @@ struct proto {
 	void		 (*loadfn)(struct tab*, const char*);
 };
 
+struct kmap {
+	TAILQ_HEAD(map, keymap)	m;
+	void			(*unhandled_input)(void);
+};
+
+struct keymap {
+	int			 meta;
+	int			 key;
+	struct kmap		 map;
+	void			(*fn)(struct tab*);
+
+	TAILQ_ENTRY(keymap)	 keymaps;
+};
+
 extern struct event		 imsgev;
 
 /* gemini.c */
@@ -116,6 +130,11 @@ int		 client_main(struct imsgbuf *b);
 
 /* gemtext.c */
 void		 gemtext_initparser(struct parser*);
+
+/* keymap.c */
+int		 kbd(const char*);
+const char	*unkbd(int);
+int		 kmap_define_key(struct kmap*, const char*, void(*)(struct tab*));
 
 /* mime.c */
 int		 setup_parser_for(struct tab*);
