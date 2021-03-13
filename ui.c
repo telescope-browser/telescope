@@ -1501,7 +1501,8 @@ redraw_minibuffer(void)
 	if (!in_minibuffer && ministate.curmesg == NULL)
 		wprintw(minibuf, "%s", keybuf);
 
-	wmove(minibuf, 0, off_x + ministate.off - skip);
+	if (in_minibuffer)
+		wmove(minibuf, 0, off_x + ministate.off - skip);
 }
 
 static void
