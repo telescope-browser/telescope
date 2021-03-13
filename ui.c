@@ -400,6 +400,8 @@ load_default_keys(void)
 
 	global_set_key("M-v",		cmd_scroll_up);
 	global_set_key("C-v",		cmd_scroll_down);
+	global_set_key("M-space",	cmd_scroll_up);
+	global_set_key("space",		cmd_scroll_down);
 
 	global_set_key("C-x C-c",	cmd_kill_telescope);
 
