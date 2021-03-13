@@ -19,7 +19,10 @@
 
 #ifdef __OpenBSD__
 
+# include <err.h>
 # include <stddef.h>
+# include <unistd.h>
+
 void
 sandbox_network_process(void)
 {
