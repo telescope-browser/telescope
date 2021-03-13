@@ -70,8 +70,6 @@
 
 #define TAB_CURRENT	0x1
 
-struct minibuf_histhead;
-
 static struct event	stdioev, winchev;
 
 static void		 load_default_keys(void);
@@ -148,7 +146,7 @@ static void		 start_loading_anim(struct tab*);
 static void		 update_loading_anim(int, short, void*);
 static void		 stop_loading_anim(struct tab*);
 static void		 load_url_in_tab(struct tab*, const char*);
-static void		 enter_minibuffer(void(*)(void), void(*)(void), void(*)(void), struct minibuf_histhead*);
+static void		 enter_minibuffer(void(*)(void), void(*)(void), void(*)(void), struct histhead*);
 static void		 exit_minibuffer(void);
 static void		 switch_to_tab(struct tab*);
 static struct tab	*new_tab(void);
@@ -185,17 +183,7 @@ struct kmap global_map,
 	*current_map,
 	*base_map;
 
-/* TODO: limit to a maximum number of entries */
-struct minibuf_histhead {
-	TAILQ_HEAD(mhisthead, minibuf_hist)	head;
-	size_t					len;
-};
-struct minibuf_hist {
-	char				h[1025];
-	TAILQ_ENTRY(minibuf_hist)	entries;
-};
-
-static struct minibuf_histhead eecmd_history,
+static struct histhead eecmd_history,
 	ir_history,
 	lu_history;
 
@@ -210,8 +198,8 @@ static struct {
 	void	 (*donefn)(void);
 	void	 (*abortfn)(void);
 
-	struct minibuf_histhead	*history;
-	struct minibuf_hist	*hist_cur;
+	struct histhead	*history;
+	struct hist	*hist_cur;
 	size_t			 hist_off;
 } ministate;
 
@@ -833,7 +821,7 @@ cmd_mini_next_history_element(struct tab *tab)
 static void
 minibuffer_hist_save_entry(void)
 {
-	struct minibuf_hist	*hist;
+	struct hist	*hist;
 
 	if (ministate.history == NULL)
 		return;
@@ -1517,7 +1505,7 @@ load_url_in_tab(struct tab *tab, const char *url)
 
 static void
 enter_minibuffer(void (*self_insert_fn)(void), void (*donefn)(void),
-    void (*abortfn)(void), struct minibuf_histhead *hist)
+    void (*abortfn)(void), struct histhead *hist)
 {
 	in_minibuffer = 1;
 	base_map = &minibuffer_map;

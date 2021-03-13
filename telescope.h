@@ -84,6 +84,15 @@ struct parser {
 	TAILQ_HEAD(, line)	 head;
 };
 
+struct histhead {
+	TAILQ_HEAD(mhisthead, hist)	head;
+	size_t				len;
+};
+struct hist {
+	char			h[1025];
+	TAILQ_ENTRY(hist)	entries;
+};
+
 struct ui_state;
 
 extern TAILQ_HEAD(tabshead, tab) tabshead;
