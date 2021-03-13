@@ -23,14 +23,17 @@ static struct proto protos[] = {
 
 static struct imsgbuf	*netibuf;
 
-static void	handle_imsg_err(struct imsg*, size_t);
-static void	handle_imsg_check_cert(struct imsg*, size_t);
-static void	handle_imsg_got_code(struct imsg*, size_t);
-static void	handle_imsg_got_meta(struct imsg*, size_t);
-static void	handle_imsg_buf(struct imsg*, size_t);
-static void	handle_imsg_eof(struct imsg*, size_t);
-
-static void	load_page_from_str(struct tab*, const char*);
+static void		 die(void) __attribute__((__noreturn__));
+static struct tab	*tab_by_id(uint32_t);
+static void		 handle_imsg_err(struct imsg*, size_t);
+static void		 handle_imsg_check_cert(struct imsg*, size_t);
+static void		 handle_imsg_got_code(struct imsg*, size_t);
+static void		 handle_imsg_got_meta(struct imsg*, size_t);
+static void		 handle_imsg_buf(struct imsg*, size_t);
+static void		 handle_imsg_eof(struct imsg*, size_t);
+static void		 dispatch_imsg(int, short, void*);
+static void		 load_page_from_str(struct tab*, const char*);
+static void		 do_load_url(struct tab*, const char*);
 
 static imsg_handlerfn *handlers[] = {
 	[IMSG_ERR] = handle_imsg_err,
@@ -72,7 +75,7 @@ handle_imsg_err(struct imsg *imsg, size_t datalen)
 	page[datalen-1] = '\0';
 
 	if (asprintf(&page, "# Error loading %s\n\n> %s\n",
-	    tab->urlstr, page) == -1)
+	    tab->hist_cur->h, page) == -1)
 		die();
 	load_page_from_str(tab, page);
 	free(page);
@@ -164,7 +167,7 @@ handle_imsg_got_meta(struct imsg *imsg, size_t datalen)
 			load_page_from_str(tab,
 			    err_pages[TOO_MUCH_REDIRECTS]);
 		} else
-			load_url(tab, tab->meta);
+			do_load_url(tab, tab->meta);
 	} else { /* 4x, 5x & 6x */
 		load_page_from_str(tab, err_pages[tab->code]);
 	}
@@ -240,16 +243,18 @@ load_page_from_str(struct tab *tab, const char *page)
 void
 load_about_url(struct tab *tab, const char *url)
 {
-	char *m;
+	char	*m;
+	size_t	 len;
 
-	memset(tab->urlstr, 0, sizeof(tab->urlstr));
+
 	memset(&tab->url, 0, sizeof(tab->url));
 
 	m = strchr(url, ':');
 	strlcpy(tab->url.scheme, "about", sizeof(tab->url.scheme));
 	strlcpy(tab->url.path, m+1, sizeof(tab->url.path));
 
-	strlcpy(tab->urlstr, url, sizeof(tab->urlstr));
+	len = sizeof(tab->hist_cur->h)-1;
+	strlcpy(tab->hist_cur->h, url, len);
 
 	if (!strcmp(url, "about:new"))
 		load_page_from_str(tab, about_new);
@@ -262,6 +267,7 @@ load_gemini_url(struct tab *tab, const char *url)
 {
 	const char	*err;
 	char		*p;
+	size_t		 len;
 
 	if (has_prefix(url, "gemini:")) {
 		if (!url_parse(url, &tab->url, &err))
@@ -271,9 +277,10 @@ load_gemini_url(struct tab *tab, const char *url)
 			goto err;
 	}
 
-	url_unparse(&tab->url, tab->urlstr, sizeof(tab->urlstr));
+	len = sizeof(tab->hist_cur->h)-1;
+	url_unparse(&tab->url, tab->hist_cur->h, len);
 	imsg_compose(netibuf, IMSG_GET, tab->id, 0, -1,
-	    tab->urlstr, strlen(tab->urlstr)+1);
+	    tab->hist_cur->h, len+1);
 	imsg_flush(netibuf);
 	return;
 
@@ -281,13 +288,13 @@ err:
 	if (asprintf(&p, "#error loading %s\n>%s\n",
 	    url, err) == -1)
 		die();
-	strlcpy(tab->urlstr, url, sizeof(tab->urlstr));
+	strlcpy(tab->hist_cur->h, url, len);
 	load_page_from_str(tab, p);
 	free(p);
 }
 
-void
-load_url(struct tab *tab, const char *url)
+static void
+do_load_url(struct tab *tab, const char *url)
 {
 	struct proto *p;
 
@@ -299,6 +306,44 @@ load_url(struct tab *tab, const char *url)
 	}
 
 	protos[0].loadfn(tab, url);
+}
+
+void
+load_url(struct tab *tab, const char *url)
+{
+	if (tab->hist_cur != NULL)
+		hist_clear_forward(&tab->hist, TAILQ_NEXT(tab->hist_cur, entries));
+
+	if ((tab->hist_cur = calloc(1, sizeof(*tab->hist_cur))) == NULL) {
+		event_loopbreak();
+		return;
+	}
+	hist_push(&tab->hist, tab->hist_cur);
+	do_load_url(tab, url);
+}
+
+int
+load_previous_page(struct tab *tab)
+{
+	struct hist	*h;
+
+	if ((h = TAILQ_PREV(tab->hist_cur, mhisthead, entries)) == NULL)
+		return 0;
+	tab->hist_cur = h;
+	do_load_url(tab, h->h);
+	return 1;
+}
+
+int
+load_next_page(struct tab *tab)
+{
+	struct hist	*h;
+
+	if ((h = TAILQ_NEXT(tab->hist_cur, entries)) == NULL)
+		return 0;
+	tab->hist_cur = h;
+	do_load_url(tab, h->h);
+	return 1;
 }
 
 void

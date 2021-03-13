@@ -102,8 +102,10 @@ struct tab {
 	uint32_t		 id;
 	uint32_t		 flags;
 
-	char			 urlstr[GEMINI_URL_LEN];
 	struct url		 url;
+	struct histhead		 hist;
+	struct hist		*hist_cur;
+	size_t			 hist_off;
 
 	int			 code;
 	char			 meta[GEMINI_URL_LEN];
@@ -144,6 +146,10 @@ int		 client_main(struct imsgbuf *b);
 /* gemtext.c */
 void		 gemtext_initparser(struct parser*);
 
+/* hist.c */
+void		 hist_clear_forward(struct histhead*, struct hist*);
+void		 hist_push(struct histhead*, struct hist*);
+
 /* keymap.c */
 int		 kbd(const char*);
 const char	*unkbd(int);
@@ -172,6 +178,8 @@ void		 sandbox_network_process(void);
 void		 load_about_url(struct tab*, const char*);
 void		 load_gemini_url(struct tab*, const char*);
 void		 load_url(struct tab*, const char*);
+int		 load_previous_page(struct tab*);
+int		 load_next_page(struct tab*);
 void		 stop_tab(struct tab*);
 
 /* textplain.c */

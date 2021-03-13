@@ -93,6 +93,8 @@ static void		 cmd_end_of_buffer(struct tab*);
 static void		 cmd_kill_telescope(struct tab*);
 static void		 cmd_push_button(struct tab*);
 static void		 cmd_push_button_new_tab(struct tab*);
+static void		 cmd_previous_page(struct tab*);
+static void		 cmd_next_page(struct tab*);
 static void		 cmd_clear_minibuf(struct tab*);
 static void		 cmd_execute_extended_command(struct tab*);
 static void		 cmd_tab_close(struct tab*);
@@ -282,6 +284,9 @@ load_default_keys(void)
 	global_set_key("M-<",		cmd_beginning_of_buffer);
 	global_set_key("M->",		cmd_end_of_buffer);
 
+	global_set_key("C-M-b",		cmd_previous_page);
+	global_set_key("C-M-f",		cmd_next_page);
+
 	/* vi/vi-like */
 	global_set_key("k",		cmd_previous_line);
 	global_set_key("j",		cmd_next_line);
@@ -295,6 +300,9 @@ load_default_keys(void)
 
 	global_set_key("g g",		cmd_beginning_of_buffer);
 	global_set_key("G",		cmd_end_of_buffer);
+
+	global_set_key("H",		cmd_previous_page);
+	global_set_key("L",		cmd_next_page);
 
 	/* tmp */
 	global_set_key("q",		cmd_kill_telescope);
@@ -310,6 +318,9 @@ load_default_keys(void)
 	global_set_key("<left>",	cmd_backward_char);
 	global_set_key("<prior>",	cmd_scroll_up);
 	global_set_key("<next>",	cmd_scroll_down);
+
+	global_set_key("M-<left>",	cmd_previous_page);
+	global_set_key("M-<right>",	cmd_next_page);
 
 	/* "ncurses standard" */
 	global_set_key("C-l",		cmd_redraw);
@@ -584,8 +595,21 @@ cmd_push_button_new_tab(struct tab *tab)
 
 	t = new_tab();
 	memcpy(&t->url, &tab->url, sizeof(tab->url));
-	memcpy(&t->urlstr, &tab->urlstr, sizeof(tab->urlstr));
 	load_url_in_tab(t, l->alt);
+}
+
+static void
+cmd_previous_page(struct tab *tab)
+{
+	if (!load_previous_page(tab))
+		message("No previous page");
+}
+
+static void
+cmd_next_page(struct tab *tab)
+{
+	if (!load_next_page(tab))
+		message("No next page");
 }
 
 static void
@@ -678,8 +702,8 @@ cmd_load_current_url(struct tab *tab)
 	enter_minibuffer(lu_self_insert, lu_select, exit_minibuffer,
 	    &lu_history);
 	strlcpy(ministate.prompt, "Load URL: ", sizeof(ministate.prompt));
-	strlcpy(ministate.buf, tab->urlstr, sizeof(ministate.buf));
-	ministate.off = strlen(tab->urlstr);
+	strlcpy(ministate.buf, tab->hist_cur->h, sizeof(ministate.buf));
+	ministate.off = strlen(tab->hist_cur->h);
 	ministate.len = ministate.off;
 }
 
@@ -1279,7 +1303,7 @@ redraw_tabline(void)
 		current = tab->flags & TAB_CURRENT;
 
 		if (*(title = tab->page.title) == '\0')
-			title = tab->urlstr;
+			title = tab->hist_cur->h;
 
 		if (current)
 			wattron(tabline, A_UNDERLINE);
@@ -1321,7 +1345,7 @@ redraw_modeline(struct tab *tab)
 	wprintw(modeline, "%d/%d %s ",
 	    tab->s->line_off + tab->s->curs_y,
 	    tab->s->line_max,
-	    tab->urlstr);
+	    tab->hist_cur->h);
 
 	getyx(modeline, y, x);
 	getmaxyx(modeline, max_y, max_x);
@@ -1556,6 +1580,8 @@ new_tab(void)
 	if ((tab = calloc(1, sizeof(*tab))) == NULL)
 		goto err;
 
+	TAILQ_INIT(&tab->hist.head);
+
 	if ((tab->s = calloc(1, sizeof(*t->s))) == NULL)
 		goto err;
 
@@ -1637,7 +1663,7 @@ void
 ui_on_tab_loaded(struct tab *tab)
 {
 	stop_loading_anim(tab);
-	message("Loaded %s", tab->urlstr);
+	message("Loaded %s", tab->hist_cur->h);
 }
 
 void
