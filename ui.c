@@ -1407,7 +1407,7 @@ redraw_tabline(void)
 	struct tab	*tab;
 	int		 current;
 
-	wclear(tabline);
+	werase(tabline);
 	wbkgd(tabline, A_REVERSE);
 
 	wprintw(tabline, " ");
@@ -1433,7 +1433,7 @@ redraw_modeline(struct tab *tab)
 	const char	*mode = tab->page.name;
 	const char	*spin = "-\\|/";
 
-	wclear(modeline);
+	werase(modeline);
 	wattron(modeline, A_REVERSE);
 	wmove(modeline, 0, 0);
 
@@ -1471,7 +1471,7 @@ redraw_minibuffer(void)
 {
 	size_t skip = 0, off_x = 0, off_y = 0;
 
-	wclear(minibuf);
+	werase(minibuf);
 	if (in_minibuffer) {
 		mvwprintw(minibuf, 0, 0, "%s", ministate.prompt);
 		if (ministate.hist_cur != NULL)
@@ -1657,7 +1657,7 @@ enter_minibuffer(void (*self_insert_fn)(void), void (*donefn)(void),
 static void
 exit_minibuffer(void)
 {
-	wclear(minibuf);
+	werase(minibuf);
 
 	in_minibuffer = 0;
 	base_map = &global_map;
