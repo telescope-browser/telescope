@@ -27,4 +27,14 @@ sandbox_network_process(void)
 		err(1, "pledge");
 }
 
+#else
+
+#warning "No sandbox for this OS"
+
+void
+sandbox_network_process(void)
+{
+	return;
+}
+
 #endif
