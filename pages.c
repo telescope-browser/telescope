@@ -39,10 +39,6 @@ const char *about_new =
 	"Version: " VERSION "\n"
 	"Bug reports to: " PACKAGE_BUGREPORT "\n"
 	"=> " PACKAGE_URL " Telescope Gemini site: " PACKAGE_URL "\n"
-	"\n"
-	"*test\n"
-	">quote\n"
-	"Id dolore aperiam voluptatem libero eaque omnis rerum nulla. Ullam sit voluptate accusamus molestiae enim minus. Fugit sequi quam dignissimos. Odio inventore vel sed. Voluptatem aut magni dignissimos."
 	;
 
 /* XXX: keep in sync with telescope.c:/^normalize_code/ */
