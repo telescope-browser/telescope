@@ -1498,6 +1498,9 @@ redraw_minibuffer(void)
 			wprintw(minibuf, "%s", ministate.curmesg);
 	}
 
+	if (!in_minibuffer && ministate.curmesg == NULL)
+		wprintw(minibuf, "%s", keybuf);
+
 	wmove(minibuf, 0, off_x + ministate.off - skip);
 }
 
