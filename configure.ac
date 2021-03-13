@@ -12,6 +12,7 @@ AC_REPLACE_FUNCS([
 	getdtablecount \
 	getdtablesize \
 	getprogname \
+	memmem \
 	recallocarray \
 	strlcat \
 	strlcpy \
