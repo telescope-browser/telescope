@@ -535,6 +535,8 @@ cmd_previous_page(struct tab *tab)
 {
 	if (!load_previous_page(tab))
 		message("No previous page");
+	else
+		start_loading_anim(tab);
 }
 
 static void
@@ -542,6 +544,8 @@ cmd_next_page(struct tab *tab)
 {
 	if (!load_next_page(tab))
 		message("No next page");
+	else
+		start_loading_anim(tab);
 }
 
 static void
