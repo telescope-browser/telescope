@@ -61,6 +61,13 @@ struct line {
 	TAILQ_ENTRY(line)	 lines;
 };
 
+struct vline {
+	const struct line	*parent;
+	char			*line;
+	int			 flags;
+	TAILQ_ENTRY(vline)	 vlines;
+};
+
 struct parser;
 struct page;
 

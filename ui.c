@@ -128,7 +128,7 @@ static void		 ir_select(void);
 static void		 lu_self_insert(void);
 static void		 lu_select(void);
 
-static struct line	*nth_line(struct tab*, size_t);
+static struct vline	*nth_line(struct tab*, size_t);
 static struct tab	*current_tab(void);
 static void		 dispatch_stdio(int, short, void*);
 static void		 handle_clear_minibuf(int, short, void*);
@@ -137,7 +137,7 @@ static int		 word_bourdaries(const char*, const char*, const char**, const char*
 static void		 wrap_text(struct tab*, const char*, struct line*);
 static int		 hardwrap_text(struct tab*, struct line*);
 static int		 wrap_page(struct tab*);
-static void		 print_line(struct line*);
+static void		 print_vline(struct vline*);
 static void		 redraw_tabline(void);
 static void		 redraw_body(struct tab*);
 static void		 redraw_modeline(struct tab*);
@@ -175,7 +175,7 @@ struct ui_state {
 	short			loading_anim_step;
 	struct event		loadingev;
 
-	TAILQ_HEAD(, line)	head;
+	TAILQ_HEAD(, vline)	head;
 };
 
 static char	keybuf[64];
@@ -355,7 +355,7 @@ load_default_keys(void)
 static int
 push_line(struct tab *tab, const struct line *l, const char *buf, size_t len, int cont)
 {
-	struct line *vl;
+	struct vline *vl;
 
 	tab->s->line_max++;
 
@@ -367,31 +367,29 @@ push_line(struct tab *tab, const struct line *l, const char *buf, size_t len, in
 		return 0;
 	}
 
-	vl->type = l->type;
+	vl->parent = l;
 	if (len != 0)
 		memcpy(vl->line, buf, len);
-	vl->alt = l->alt;
 	vl->flags = cont;
 
 	if (TAILQ_EMPTY(&tab->s->head))
-		TAILQ_INSERT_HEAD(&tab->s->head, vl, lines);
+		TAILQ_INSERT_HEAD(&tab->s->head, vl, vlines);
 	else
-		TAILQ_INSERT_TAIL(&tab->s->head, vl, lines);
+		TAILQ_INSERT_TAIL(&tab->s->head, vl, vlines);
 	return 1;
 }
 
 static void
 empty_vlist(struct tab *tab)
 {
-	struct line *l, *t;
+	struct vline *vl, *t;
 
 	tab->s->line_max = 0;
 
-	TAILQ_FOREACH_SAFE(l, &tab->s->head, lines, t) {
-		TAILQ_REMOVE(&tab->s->head, l, lines);
-		free(l->line);
-		/* l->alt references the original line! */
-		free(l);
+	TAILQ_FOREACH_SAFE(vl, &tab->s->head, vlines, t) {
+		TAILQ_REMOVE(&tab->s->head, vl, vlines);
+		free(vl->line);
+		free(vl);
 	}
 }
 
@@ -450,7 +448,7 @@ cmd_move_beginning_of_line(struct tab *tab)
 static void
 cmd_move_end_of_line(struct tab *tab)
 {
-	struct line	*line;
+	struct vline	*vl;
 	size_t		 off;
 	const char	*prfx;
 
@@ -460,13 +458,13 @@ cmd_move_end_of_line(struct tab *tab)
 		goto end;
 	}
 
-	line = nth_line(tab, off);
-	if (line->line != NULL)
-		tab->s->curs_x = strlen(line->line);
+	vl = nth_line(tab, off);
+	if (vl->line != NULL)
+		tab->s->curs_x = strlen(vl->line);
 	else
 		tab->s->curs_x = 0;
 
-	prfx = line_prefixes[line->type].prfx1;
+	prfx = line_prefixes[vl->parent->type].prfx1;
 	tab->s->curs_x += strlen(prfx);
 
 end:
@@ -482,21 +480,21 @@ cmd_redraw(struct tab *tab)
 static void
 cmd_scroll_line_up(struct tab *tab)
 {
-	struct line	*l;
+	struct vline	*vl;
 
 	if (tab->s->line_off == 0)
 		return;
 
-	l = nth_line(tab, --tab->s->line_off);
+	vl = nth_line(tab, --tab->s->line_off);
 	wscrl(body, -1);
 	wmove(body, 0, 0);
-	print_line(l);
+	print_vline(vl);
 }
 
 static void
 cmd_scroll_line_down(struct tab *tab)
 {
-	struct line	*l;
+	struct vline	*vl;
 	size_t		 n;
 
 	if (tab->s->line_max == 0 || tab->s->line_off == tab->s->line_max-1)
@@ -508,9 +506,9 @@ cmd_scroll_line_down(struct tab *tab)
 	if (tab->s->line_max - tab->s->line_off < body_lines)
 		return;
 
-	l = nth_line(tab, tab->s->line_off + body_lines-1);
+	vl = nth_line(tab, tab->s->line_off + body_lines-1);
 	wmove(body, body_lines-1, 0);
-	print_line(l);
+	print_vline(vl);
 }
 
 static void
@@ -566,36 +564,36 @@ cmd_kill_telescope(struct tab *tab)
 static void
 cmd_push_button(struct tab *tab)
 {
-	struct line	*l;
+	struct vline	*vl;
 	size_t		 nth;
 
 	nth = tab->s->line_off + tab->s->curs_y;
 	if (nth >= tab->s->line_max)
 		return;
-	l = nth_line(tab, nth);
-	if (l->type != LINE_LINK)
+	vl = nth_line(tab, nth);
+	if (vl->parent->type != LINE_LINK)
 		return;
 
-	load_url_in_tab(tab, l->alt);
+	load_url_in_tab(tab, vl->parent->alt);
 }
 
 static void
 cmd_push_button_new_tab(struct tab *tab)
 {
 	struct tab	*t;
-	struct line	*l;
+	struct vline	*vl;
 	size_t		 nth;
 
 	nth = tab->s->line_off + tab->s->curs_y;
 	if (nth > tab->s->line_max)
 		return;
-	l = nth_line(tab, nth);
-	if (l->type != LINE_LINK)
+	vl = nth_line(tab, nth);
+	if (vl->parent->type != LINE_LINK)
 		return;
 
 	t = new_tab();
 	memcpy(&t->url, &tab->url, sizeof(tab->url));
-	load_url_in_tab(t, l->alt);
+	load_url_in_tab(t, vl->parent->alt);
 }
 
 static void
@@ -960,16 +958,16 @@ lu_select(void)
 	load_url_in_tab(current_tab(), ministate.buf);
 }
 
-static struct line *
+static struct vline *
 nth_line(struct tab *tab, size_t n)
 {
-	struct line	*l;
+	struct vline	*vl;
 	size_t		 i;
 
 	i = 0;
-	TAILQ_FOREACH(l, &tab->s->head, lines) {
+	TAILQ_FOREACH(vl, &tab->s->head, vlines) {
 		if (i == n)
-			return l;
+			return vl;
 		i++;
 	}
 
@@ -1267,16 +1265,16 @@ wrap_page(struct tab *tab)
 }
 
 static inline void
-print_line(struct line *l)
+print_vline(struct vline *vl)
 {
-	const char *text = l->line;
+	const char *text = vl->line;
 	const char *prfx;
-	int face = line_faces[l->type].prop;
+	int face = line_faces[vl->parent->type].prop;
 
-	if (!l->flags)
-		prfx = line_prefixes[l->type].prfx1;
+	if (!vl->flags)
+		prfx = line_prefixes[vl->parent->type].prfx1;
 	else
-		prfx = line_prefixes[l->type].prfx2;
+		prfx = line_prefixes[vl->parent->type].prfx2;
 
 	if (text == NULL)
 		text = "";
@@ -1420,7 +1418,7 @@ redraw_tab(struct tab *tab)
 static void
 redraw_body(struct tab *tab)
 {
-	struct line	*l;
+	struct vline	*vl;
 	int		 line;
 
 	werase(body);
@@ -1430,10 +1428,10 @@ redraw_body(struct tab *tab)
 		return;
 
 	line = 0;
-	l = nth_line(tab, tab->s->line_off);
-	for (; l != NULL; l = TAILQ_NEXT(l, lines)) {
+	vl = nth_line(tab, tab->s->line_off);
+	for (; vl != NULL; vl = TAILQ_NEXT(vl, vlines)) {
 		wmove(body, line, 0);
-		print_line(l);
+		print_vline(vl);
 		line++;
 		if (line == body_lines)
 			break;
