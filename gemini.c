@@ -32,7 +32,6 @@
 #include <assert.h>
 #include <ctype.h>
 #include <errno.h>
-#include <event.h>
 #include <netdb.h>
 #include <stdarg.h>
 #include <stdio.h>

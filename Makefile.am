@@ -16,7 +16,8 @@ telescope_SOURCES =	compat.h	\
 			ui.c		\
 			url.c		\
 			url.h		\
-			util.c
+			util.c		\
+			wrap.c
 
 LDADD = $(LIBOBJS)
 

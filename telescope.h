@@ -19,6 +19,8 @@
 
 #include "compat.h"
 
+#include <event.h>
+
 #include "url.h"
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -100,7 +102,18 @@ struct hist {
 	TAILQ_ENTRY(hist)	entries;
 };
 
-struct ui_state;
+struct ui_state {
+	int			curs_x;
+	int			curs_y;
+	size_t			line_off;
+	size_t			line_max;
+
+	short			loading_anim;
+	short			loading_anim_step;
+	struct event		loadingev;
+
+	TAILQ_HEAD(, vline)	head;
+};
 
 extern TAILQ_HEAD(tabshead, tab) tabshead;
 struct tab {
@@ -118,7 +131,7 @@ struct tab {
 	char			 meta[GEMINI_URL_LEN];
 	int			 redirect_count;
 
-	struct ui_state		*s;
+	struct ui_state		 s;
 };
 
 struct proto {
@@ -203,5 +216,9 @@ void		 ui_end(void);
 int		 mark_nonblock(int);
 char		*telescope_strnchr(char*, char, size_t);
 int		 has_prefix(const char*, const char*);
+
+/* wrap.c */
+void		 wrap_text(struct tab*, const char*, struct line*, size_t);
+int		 hardwrap_text(struct tab*, struct line*, size_t);
 
 #endif /* TELESCOPE_H */

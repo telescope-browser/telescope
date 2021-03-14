@@ -17,28 +17,6 @@
 /*
  * Ncurses UI for telescope.
  *
- *
- * Text wrapping
- * =============
- *
- * There's a simple text wrapping algorithm.
- *
- * 1. if it's a line in a pre-formatted block:
- *    a. hard wrap.
- *    b. repeat
- * 2. there is enough room for the next word?
- *    a. yes: render it
- *    b. no: break the current line.
- *       i.  while there isn't enough space to draw the current
- *           word, hard-wrap it
- *       ii. draw the remainder of the current word (can be the
- *           the entirely)
- * 3. render the spaces after the word
- *    a. but if there is not enough room break the line and
- *       forget them
- * 4. repeat
- *
- *
  * Text scrolling
  * ==============
  *
@@ -73,7 +51,6 @@
 static struct event	stdioev, winchev;
 
 static void		 load_default_keys(void);
-static int		 push_line(struct tab*, const struct line*, const char*, size_t, int);
 static void		 empty_vlist(struct tab*);
 static void		 restore_cursor(struct tab *);
 
@@ -133,9 +110,6 @@ static struct tab	*current_tab(void);
 static void		 dispatch_stdio(int, short, void*);
 static void		 handle_clear_minibuf(int, short, void*);
 static void		 handle_resize(int, short, void*);
-static int		 word_bourdaries(const char*, const char*, const char**, const char**);
-static void		 wrap_text(struct tab*, const char*, struct line*);
-static int		 hardwrap_text(struct tab*, struct line*);
 static int		 wrap_page(struct tab*);
 static void		 print_vline(struct vline*);
 static void		 redraw_tabline(void);
@@ -164,19 +138,6 @@ static struct timeval	clminibufev_timer = { 5, 0 };
 static struct timeval	loadingev_timer = { 0, 250000 };
 
 static uint32_t		 tab_counter;
-
-struct ui_state {
-	int			curs_x;
-	int			curs_y;
-	size_t			line_off;
-	size_t			line_max;
-
-	short			loading_anim;
-	short			loading_anim_step;
-	struct event		loadingev;
-
-	TAILQ_HEAD(, vline)	head;
-};
 
 static char	keybuf[64];
 
@@ -235,6 +196,20 @@ struct line_face {
 	[LINE_PRE_CONTENT] =	{ 0 },
 	[LINE_PRE_END] =	{ 0 },
 };
+
+static void
+empty_vlist(struct tab *tab)
+{
+	struct vline *vl, *t;
+
+	tab->s.line_max = 0;
+
+	TAILQ_FOREACH_SAFE(vl, &tab->s.head, vlines, t) {
+		TAILQ_REMOVE(&tab->s.head, vl, vlines);
+		free(vl->line);
+		free(vl);
+	}
+}
 
 static inline void
 global_set_key(const char *key, void (*fn)(struct tab*))
@@ -352,58 +327,17 @@ load_default_keys(void)
 	minibuffer_set_key("<down>",		cmd_mini_next_history_element);
 }
 
-static int
-push_line(struct tab *tab, const struct line *l, const char *buf, size_t len, int cont)
-{
-	struct vline *vl;
-
-	tab->s->line_max++;
-
-	if ((vl = calloc(1, sizeof(*vl))) == NULL)
-		return 0;
-
-	if (len != 0 && (vl->line = calloc(1, len+1)) == NULL) {
-		free(vl);
-		return 0;
-	}
-
-	vl->parent = l;
-	if (len != 0)
-		memcpy(vl->line, buf, len);
-	vl->flags = cont;
-
-	if (TAILQ_EMPTY(&tab->s->head))
-		TAILQ_INSERT_HEAD(&tab->s->head, vl, vlines);
-	else
-		TAILQ_INSERT_TAIL(&tab->s->head, vl, vlines);
-	return 1;
-}
-
-static void
-empty_vlist(struct tab *tab)
-{
-	struct vline *vl, *t;
-
-	tab->s->line_max = 0;
-
-	TAILQ_FOREACH_SAFE(vl, &tab->s->head, vlines, t) {
-		TAILQ_REMOVE(&tab->s->head, vl, vlines);
-		free(vl->line);
-		free(vl);
-	}
-}
-
 static void
 restore_cursor(struct tab *tab)
 {
-	wmove(body, tab->s->curs_y, tab->s->curs_x);
+	wmove(body, tab->s.curs_y, tab->s.curs_x);
 }
 
 static void
 cmd_previous_line(struct tab *tab)
 {
-	if (--tab->s->curs_y < 0) {
-		tab->s->curs_y = 0;
+	if (--tab->s.curs_y < 0) {
+		tab->s.curs_y = 0;
 		cmd_scroll_line_up(tab);
 	}
 
@@ -413,11 +347,11 @@ cmd_previous_line(struct tab *tab)
 static void
 cmd_next_line(struct tab *tab)
 {
-	if (tab->s->line_off + tab->s->curs_y >= tab->s->line_max)
+	if (tab->s.line_off + tab->s.curs_y >= tab->s.line_max)
 		return;
 
-	if (++tab->s->curs_y > body_lines-1) {
-		tab->s->curs_y = body_lines-1;
+	if (++tab->s.curs_y > body_lines-1) {
+		tab->s.curs_y = body_lines-1;
 		cmd_scroll_line_down(tab);
 	}
 
@@ -427,21 +361,21 @@ cmd_next_line(struct tab *tab)
 static void
 cmd_forward_char(struct tab *tab)
 {
-	tab->s->curs_x = MIN(body_cols-1, tab->s->curs_x+1);
+	tab->s.curs_x = MIN(body_cols-1, tab->s.curs_x+1);
 	restore_cursor(tab);
 }
 
 static void
 cmd_backward_char(struct tab *tab)
 {
-	tab->s->curs_x = MAX(0, tab->s->curs_x-1);
+	tab->s.curs_x = MAX(0, tab->s.curs_x-1);
 	restore_cursor(tab);
 }
 
 static void
 cmd_move_beginning_of_line(struct tab *tab)
 {
-	tab->s->curs_x = 0;
+	tab->s.curs_x = 0;
 	restore_cursor(tab);
 }
 
@@ -452,20 +386,20 @@ cmd_move_end_of_line(struct tab *tab)
 	size_t		 off;
 	const char	*prfx;
 
-	off = tab->s->line_off + tab->s->curs_y;
-	if (off >= tab->s->line_max) {
-		tab->s->curs_x = 0;
+	off = tab->s.line_off + tab->s.curs_y;
+	if (off >= tab->s.line_max) {
+		tab->s.curs_x = 0;
 		goto end;
 	}
 
 	vl = nth_line(tab, off);
 	if (vl->line != NULL)
-		tab->s->curs_x = strlen(vl->line);
+		tab->s.curs_x = strlen(vl->line);
 	else
-		tab->s->curs_x = 0;
+		tab->s.curs_x = 0;
 
 	prfx = line_prefixes[vl->parent->type].prfx1;
-	tab->s->curs_x += strlen(prfx);
+	tab->s.curs_x += strlen(prfx);
 
 end:
 	restore_cursor(tab);
@@ -482,10 +416,10 @@ cmd_scroll_line_up(struct tab *tab)
 {
 	struct vline	*vl;
 
-	if (tab->s->line_off == 0)
+	if (tab->s.line_off == 0)
 		return;
 
-	vl = nth_line(tab, --tab->s->line_off);
+	vl = nth_line(tab, --tab->s.line_off);
 	wscrl(body, -1);
 	wmove(body, 0, 0);
 	print_vline(vl);
@@ -497,16 +431,16 @@ cmd_scroll_line_down(struct tab *tab)
 	struct vline	*vl;
 	size_t		 n;
 
-	if (tab->s->line_max == 0 || tab->s->line_off == tab->s->line_max-1)
+	if (tab->s.line_max == 0 || tab->s.line_off == tab->s.line_max-1)
 		return;
 
-	tab->s->line_off++;
+	tab->s.line_off++;
 	wscrl(body, 1);
 
-	if (tab->s->line_max - tab->s->line_off < body_lines)
+	if (tab->s.line_max - tab->s.line_off < body_lines)
 		return;
 
-	vl = nth_line(tab, tab->s->line_off + body_lines-1);
+	vl = nth_line(tab, tab->s.line_off + body_lines-1);
 	wmove(body, body_lines-1, 0);
 	print_vline(vl);
 }
@@ -536,8 +470,8 @@ cmd_scroll_down(struct tab *tab)
 static void
 cmd_beginning_of_buffer(struct tab *tab)
 {
-	tab->s->line_off = 0;
-	tab->s->curs_y = 0;
+	tab->s.line_off = 0;
+	tab->s.curs_y = 0;
 	redraw_body(tab);
 }
 
@@ -546,11 +480,11 @@ cmd_end_of_buffer(struct tab *tab)
 {
 	ssize_t off;
 
-	off = tab->s->line_max - body_lines;
+	off = tab->s.line_max - body_lines;
 	off = MAX(0, off);
 
-	tab->s->line_off = off;
-	tab->s->curs_y = MIN(body_lines, tab->s->line_max);
+	tab->s.line_off = off;
+	tab->s.curs_y = MIN(body_lines, tab->s.line_max);
 
 	redraw_body(tab);
 }
@@ -567,8 +501,8 @@ cmd_push_button(struct tab *tab)
 	struct vline	*vl;
 	size_t		 nth;
 
-	nth = tab->s->line_off + tab->s->curs_y;
-	if (nth >= tab->s->line_max)
+	nth = tab->s.line_off + tab->s.curs_y;
+	if (nth >= tab->s.line_max)
 		return;
 	vl = nth_line(tab, nth);
 	if (vl->parent->type != LINE_LINK)
@@ -584,8 +518,8 @@ cmd_push_button_new_tab(struct tab *tab)
 	struct vline	*vl;
 	size_t		 nth;
 
-	nth = tab->s->line_off + tab->s->curs_y;
-	if (nth > tab->s->line_max)
+	nth = tab->s.line_off + tab->s.curs_y;
+	if (nth > tab->s.line_max)
 		return;
 	vl = nth_line(tab, nth);
 	if (vl->parent->type != LINE_LINK)
@@ -652,7 +586,6 @@ cmd_tab_close(struct tab *tab)
 
 	TAILQ_REMOVE(&tabshead, tab, tabs);
 
-	free(tab->s);
 	free(tab);
 }
 
@@ -965,7 +898,7 @@ nth_line(struct tab *tab, size_t n)
 	size_t		 i;
 
 	i = 0;
-	TAILQ_FOREACH(vl, &tab->s->head, vlines) {
+	TAILQ_FOREACH(vl, &tab->s.head, vlines) {
 		if (i == n)
 			return vl;
 		i++;
@@ -1097,141 +1030,6 @@ handle_resize(int sig, short ev, void *d)
 	redraw_tab(tab);
 }
 
-/*
- * Helper function for wrap_text.  Find the end of the current word
- * and the end of the separator after the word.
- */
-static int
-word_boundaries(const char *s, const char *sep, const char **endword, const char **endspc)
-{
-	*endword = s;
-	*endword = s;
-
-	if (*s == '\0')
-		return 0;
-
-	/* find the end of the current world */
-	for (; *s != '\0'; ++s) {
-		if (strchr(sep, *s) != NULL)
-			break;
-	}
-
-	*endword = s;
-
-	/* find the end of the separator */
-	for (; *s != '\0'; ++s) {
-		if (strchr(sep, *s) == NULL)
-			break;
-	}
-
-	*endspc = s;
-
-	return 1;
-}
-
-static inline int
-emitline(struct tab *tab, size_t zero, size_t *off, const struct line *l,
-    const char **line, int *cont)
-{
-	if (!push_line(tab, l, *line, *off - zero, *cont))
-		return 0;
-	if (!*cont)
-		*cont = 1;
-	*line += *off - zero;
-	*off = zero;
-	return 1;
-}
-
-static inline void
-emitstr(const char **s, size_t len, size_t *off)
-{
-	size_t i;
-
-	/* printw("%*s", ...) doesn't seem to respect the precision, so... */
-	for (i = 0; i < len; ++i)
-		addch((*s)[i]);
-	*off += len;
-	*s += len;
-}
-
-/*
- * Build a list of visual line by wrapping the given line, assuming
- * that when printed will have a leading prefix prfx.
- *
- * TODO: it considers each byte one cell on the screen!
- */
-static void
-wrap_text(struct tab *tab, const char *prfx, struct line *l)
-{
-	size_t		 zero, off, len, split;
-	int		 cont = 0;
-	const char	*endword, *endspc, *line, *linestart;
-
-	zero = strlen(prfx);
-	off = zero;
-	line = l->line;
-	linestart = l->line;
-
-	while (word_boundaries(line, " \t-", &endword, &endspc)) {
-		len = endword - line;
-		if (off + len >= body_cols) {
-			emitline(tab, zero, &off, l, &linestart, &cont);
-			while (len >= body_cols) {
-				/* hard wrap */
-				emitline(tab, zero, &off, l, &linestart, &cont);
-				len -= body_cols-1;
-				line += body_cols-1;
-			}
-
-			if (len != 0)
-				off += len;
-		} else
-			off += len;
-
-		/* print the spaces iff not at bol */
-		len = endspc - endword;
-		/* line = endspc; */
-		if (off != zero) {
-			if (off + len >= body_cols) {
-				emitline(tab, zero, &off, l, &linestart, &cont);
-				linestart = endspc;
-			} else
-				off += len;
-		}
-
-		line = endspc;
-	}
-
-	emitline(tab, zero, &off, l, &linestart, &cont);
-}
-
-static int
-hardwrap_text(struct tab *tab, struct line *l)
-{
-	size_t		 off, len;
-	int		 cont;
-	const char	*linestart;
-
-	if (l->line == NULL)
-		return emitline(tab, 0, &off, l, &linestart, &cont);
-
-        len = strlen(l->line);
-	off = 0;
-	linestart = l->line;
-
-	while (len >= COLS) {
-		len -= COLS-1;
-		off = COLS-1;
-		if (!emitline(tab, 0, &off, l, &linestart, &cont))
-			return 0;
-	}
-
-	if (len != 0)
-		return emitline(tab, 0, &len, l, &linestart, &cont);
-
-	return 1;
-}
-
 static int
 wrap_page(struct tab *tab)
 {
@@ -1250,14 +1048,13 @@ wrap_page(struct tab *tab)
 		case LINE_TITLE_3:
 		case LINE_ITEM:
 		case LINE_QUOTE:
-			wrap_text(tab, prfx, l);
-			break;
 		case LINE_PRE_START:
 		case LINE_PRE_END:
-                        push_line(tab, l, NULL, 0, 0);
+			wrap_text(tab, prfx, l, body_cols);
+                        /* push_line(tab, l, NULL, 0, 0); */
 			break;
 		case LINE_PRE_CONTENT:
-                        hardwrap_text(tab, l);
+                        hardwrap_text(tab, l, body_cols);
 			break;
 		}
 	}
@@ -1327,22 +1124,22 @@ redraw_modeline(struct tab *tab)
 	wmove(modeline, 0, 0);
 
 	wprintw(modeline, "-%c %s-mode ",
-	    spin[tab->s->loading_anim_step], mode);
+	    spin[tab->s.loading_anim_step], mode);
 
-	pct = (tab->s->line_off + tab->s->curs_y) * 100.0 / tab->s->line_max;
+	pct = (tab->s.line_off + tab->s.curs_y) * 100.0 / tab->s.line_max;
 
-	if (tab->s->line_max <= body_lines)
+	if (tab->s.line_max <= body_lines)
                 wprintw(modeline, "All ");
-	else if (tab->s->line_off == 0)
+	else if (tab->s.line_off == 0)
                 wprintw(modeline, "Top ");
-	else if (tab->s->line_off + body_lines >= tab->s->line_max)
+	else if (tab->s.line_off + body_lines >= tab->s.line_max)
 		wprintw(modeline, "Bottom ");
 	else
 		wprintw(modeline, "%.0f%% ", pct);
 
 	wprintw(modeline, "%d/%d %s ",
-	    tab->s->line_off + tab->s->curs_y,
-	    tab->s->line_max,
+	    tab->s.line_off + tab->s.curs_y,
+	    tab->s.line_max,
 	    tab->hist_cur->h);
 
 	getyx(modeline, y, x);
@@ -1423,12 +1220,12 @@ redraw_body(struct tab *tab)
 
 	werase(body);
 
-	tab->s->line_off = MIN(tab->s->line_max, tab->s->line_off);
-	if (TAILQ_EMPTY(&tab->s->head))
+	tab->s.line_off = MIN(tab->s.line_max-1, tab->s.line_off);
+	if (TAILQ_EMPTY(&tab->s.head))
 		return;
 
 	line = 0;
-	vl = nth_line(tab, tab->s->line_off);
+	vl = nth_line(tab, tab->s.line_off);
 	for (; vl != NULL; vl = TAILQ_NEXT(vl, vlines)) {
 		wmove(body, line, 0);
 		print_vline(vl);
@@ -1471,11 +1268,11 @@ message(const char *fmt, ...)
 static void
 start_loading_anim(struct tab *tab)
 {
-	if (tab->s->loading_anim)
+	if (tab->s.loading_anim)
 		return;
-	tab->s->loading_anim = 1;
-	evtimer_set(&tab->s->loadingev, update_loading_anim, tab);
-	evtimer_add(&tab->s->loadingev, &loadingev_timer);
+	tab->s.loading_anim = 1;
+	evtimer_set(&tab->s.loadingev, update_loading_anim, tab);
+	evtimer_add(&tab->s.loadingev, &loadingev_timer);
 }
 
 static void
@@ -1483,7 +1280,7 @@ update_loading_anim(int fd, short ev, void *d)
 {
 	struct tab	*tab = d;
 
-	tab->s->loading_anim_step = (tab->s->loading_anim_step+1)%4;
+	tab->s.loading_anim_step = (tab->s.loading_anim_step+1)%4;
 
 	redraw_modeline(tab);
 	wrefresh(modeline);
@@ -1492,17 +1289,17 @@ update_loading_anim(int fd, short ev, void *d)
 	if (in_minibuffer)
 		wrefresh(minibuf);
 
-	evtimer_add(&tab->s->loadingev, &loadingev_timer);
+	evtimer_add(&tab->s.loadingev, &loadingev_timer);
 }
 
 static void
 stop_loading_anim(struct tab *tab)
 {
-	if (!tab->s->loading_anim)
+	if (!tab->s.loading_anim)
 		return;
-	evtimer_del(&tab->s->loadingev);
-	tab->s->loading_anim = 0;
-	tab->s->loading_anim_step = 0;
+	evtimer_del(&tab->s.loadingev);
+	tab->s.loading_anim = 0;
+	tab->s.loading_anim_step = 0;
 
 	redraw_modeline(tab);
 
@@ -1520,8 +1317,8 @@ load_url_in_tab(struct tab *tab, const char *url)
 	start_loading_anim(tab);
 	load_url(tab, url);
 
-	tab->s->curs_x = 0;
-	tab->s->curs_y = 0;
+	tab->s.curs_x = 0;
+	tab->s.curs_y = 0;
 	redraw_tab(tab);
 }
 
@@ -1580,10 +1377,7 @@ new_tab(void)
 
 	TAILQ_INIT(&tab->hist.head);
 
-	if ((tab->s = calloc(1, sizeof(*t->s))) == NULL)
-		goto err;
-
-	TAILQ_INIT(&tab->s->head);
+	TAILQ_INIT(&tab->s.head);
 
 	tab->id = tab_counter++;
 	switch_to_tab(tab);
