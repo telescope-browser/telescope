@@ -16,7 +16,6 @@
 
 #include "compat.h"
 
-
 #ifdef __OpenBSD__
 
 # include <err.h>
@@ -27,6 +26,13 @@ void
 sandbox_network_process(void)
 {
 	if (pledge("stdio inet dns", NULL) == -1)
+		err(1, "pledge");
+}
+
+void
+sandbox_ui_process(void)
+{
+	if (pledge("stdio tty", NULL))
 		err(1, "pledge");
 }
 

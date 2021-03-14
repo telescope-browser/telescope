@@ -193,6 +193,7 @@ int		 parser_set_buf(struct parser*, const char*, size_t);
 
 /* sandbox.c */
 void		 sandbox_network_process(void);
+void		 sandbox_ui_process(void);
 
 /* telescope.c */
 void		 load_about_url(struct tab*, const char*);

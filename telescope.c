@@ -374,6 +374,8 @@ main(void)
 		exit(client_main(&network_ibuf));
 	}
 
+	setproctitle("ui");
+
 	close(imsg_fds[1]);
 	imsg_init(&main_ibuf, imsg_fds[0]);
 	netibuf = &main_ibuf;
@@ -386,6 +388,8 @@ main(void)
 	event_add(&imsgev, NULL);
 
 	ui_init();
+
+	sandbox_ui_process();
 
 	event_dispatch();
 
