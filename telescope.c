@@ -10,7 +10,7 @@
 #include <string.h>
 #include <unistd.h>
 
-struct event		 imsgev;
+struct event		 netev, fsev;
 struct tabshead		 tabshead;
 
 /* the first is also the fallback one */
@@ -20,7 +20,7 @@ static struct proto protos[] = {
 	{ NULL, NULL },
 };
 
-static struct imsgbuf	*netibuf;
+static struct imsgbuf	*netibuf, *fsibuf;
 
 static void		 die(void) __attribute__((__noreturn__));
 static struct tab	*tab_by_id(uint32_t);
@@ -201,23 +201,22 @@ handle_imsg_eof(struct imsg *imsg, size_t datalen)
 static void
 dispatch_imsg(int fd, short ev, void *d)
 {
-	struct imsg	imsg;
-	size_t		datalen;
-	ssize_t		n;
+	struct imsgbuf	*ibuf = d;
+	struct imsg	 imsg;
+	size_t		 datalen;
+	ssize_t		 n;
 
-	if ((n = imsg_read(netibuf)) == -1) {
+	if ((n = imsg_read(ibuf)) == -1) {
 		if (errno == EAGAIN || errno == EWOULDBLOCK)
 			return;
 		die();
 	}
 
-	if (n == 0) {
-		fprintf(stderr, "other side is dead\n");
-		exit(0);
-	}
+	if (n == 0)
+		_exit(1);
 
 	for (;;) {
-		if ((n = imsg_get(netibuf, &imsg)) == -1)
+		if ((n = imsg_get(ibuf, &imsg)) == -1)
 			die();
 		if (n == 0)
 			return;
@@ -255,10 +254,11 @@ load_about_url(struct tab *tab, const char *url)
 	len = sizeof(tab->hist_cur->h)-1;
 	strlcpy(tab->hist_cur->h, url, len);
 
-	if (!strcmp(url, "about:new"))
-		load_page_from_str(tab, about_new);
-	else
-		load_page_from_str(tab, "# not found\n");
+	gemtext_initparser(&tab->page);
+
+	imsg_compose(fsibuf, IMSG_GET, tab->id, 0, -1,
+	    tab->hist_cur->h, len+1);
+	imsg_flush(fsibuf);
 }
 
 void
@@ -355,12 +355,15 @@ stop_tab(struct tab *tab)
 int
 main(void)
 {
-	struct imsgbuf	main_ibuf, network_ibuf;
-	int		imsg_fds[2];
+	struct imsgbuf	network_ibuf, fs_ibuf;
+	int		net_fds[2], fs_fds[2];
+	pid_t		pid;
+
+	pid = getpid();
 
 	signal(SIGCHLD, SIG_IGN);
 
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, imsg_fds) == -1)
+	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, fs_fds) == -1)
 		err(1, "socketpair");
 
 	switch (fork()) {
@@ -368,24 +371,46 @@ main(void)
 		err(1, "fork");
 	case 0:
 		/* child */
-		setproctitle("client");
-		close(imsg_fds[0]);
-		imsg_init(&network_ibuf, imsg_fds[1]);
-		exit(client_main(&network_ibuf));
+		setproctitle("(%d) fs", pid);
+		close(fs_fds[0]);
+		imsg_init(&fs_ibuf, fs_fds[1]);
+		exit(fs_main(&fs_ibuf));
+	default:
+		close(fs_fds[1]);
+		imsg_init(&fs_ibuf, fs_fds[0]);
+		fsibuf = &fs_ibuf;
 	}
 
-	setproctitle("ui");
+	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, net_fds) == -1)
+		err(1, "socketpair");
 
-	close(imsg_fds[1]);
-	imsg_init(&main_ibuf, imsg_fds[0]);
-	netibuf = &main_ibuf;
+	switch (fork()) {
+	case -1:
+		err(1, "fork");
+	case 0:
+		/* child */
+		setproctitle("(%d) client", pid);
+		close(net_fds[0]);
+		close(fs_fds[0]);
+		imsg_init(&network_ibuf, net_fds[1]);
+		exit(client_main(&network_ibuf));
+	default:
+		close(net_fds[1]);
+		imsg_init(&network_ibuf, net_fds[0]);
+		netibuf = &network_ibuf;
+	}
+
+	setproctitle("(%d) ui", pid);
 
 	TAILQ_INIT(&tabshead);
 
 	event_init();
 
-	event_set(&imsgev, netibuf->fd, EV_READ | EV_PERSIST, dispatch_imsg, netibuf);
-	event_add(&imsgev, NULL);
+	event_set(&netev, netibuf->fd, EV_READ | EV_PERSIST, dispatch_imsg, netibuf);
+	event_add(&netev, NULL);
+
+	event_set(&fsev, fsibuf->fd, EV_READ | EV_PERSIST, dispatch_imsg, fsibuf);
+	event_add(&fsev, NULL);
 
 	ui_init();
 
@@ -395,6 +420,9 @@ main(void)
 
 	imsg_compose(netibuf, IMSG_QUIT, 0, 0, -1, NULL, 0);
 	imsg_flush(netibuf);
+
+	imsg_compose(fsibuf, IMSG_QUIT, 0, 0, -1, NULL, 0);
+	imsg_flush(fsibuf);
 
 	ui_end();
 

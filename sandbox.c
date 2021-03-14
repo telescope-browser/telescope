@@ -19,7 +19,9 @@
 #ifdef __OpenBSD__
 
 # include <err.h>
-# include <stddef.h>
+# include <limits.h>
+# include <stdlib.h>
+# include <string.h>
 # include <unistd.h>
 
 void
@@ -32,7 +34,29 @@ sandbox_network_process(void)
 void
 sandbox_ui_process(void)
 {
-	if (pledge("stdio tty", NULL))
+	if (pledge("stdio tty", NULL) == -1)
+		err(1, "pledge");
+}
+
+void
+sandbox_fs_process(void)
+{
+	char path[PATH_MAX];
+
+        if (unveil("/tmp", "r") == -1)
+		err(1, "unveil");
+
+	strlcpy(path, getenv("HOME"), sizeof(path));
+	strlcat(path, "/Downloads", sizeof(path));
+	if (unveil(path, "r") == -1)
+		err(1, "unveil");
+
+	strlcpy(path, getenv("HOME"), sizeof(path));
+	strlcat(path, "/.telescope", sizeof(path));
+	if (unveil(path, "r") == -1)
+		err(1, "unveil");
+
+	if (pledge("stdio rpath", NULL) == -1)
 		err(1, "pledge");
 }
 
@@ -42,6 +66,18 @@ sandbox_ui_process(void)
 
 void
 sandbox_network_process(void)
+{
+	return;
+}
+
+void
+sandbox_ui_process(void)
+{
+	return;
+}
+
+void
+sandbox_fs_process(void)
 {
 	return;
 }

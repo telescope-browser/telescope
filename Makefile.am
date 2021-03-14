@@ -2,6 +2,7 @@ bin_PROGRAMS =		telescope
 
 telescope_SOURCES =	compat.h	\
 			compat/*.[ch]	\
+			fs.c		\
 			gemini.c	\
 			gemtext.c	\
 			hist.c		\

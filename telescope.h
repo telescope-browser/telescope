@@ -29,6 +29,7 @@
 #define GEMINI_URL_LEN 1024
 
 enum imsg_type {
+	/* ui <-> client */
 	IMSG_GET,		/* data is URL, peerid the tab id */
 	IMSG_ERR,
 	IMSG_CHECK_CERT,
@@ -158,10 +159,11 @@ struct keymap {
 	TAILQ_ENTRY(keymap)	 keymaps;
 };
 
-extern struct event		 imsgev;
+/* fs.c */
+int		 fs_main(struct imsgbuf*);
 
 /* gemini.c */
-int		 client_main(struct imsgbuf *b);
+int		 client_main(struct imsgbuf*);
 
 /* gemtext.c */
 void		 gemtext_initparser(struct parser*);
@@ -194,6 +196,7 @@ int		 parser_set_buf(struct parser*, const char*, size_t);
 /* sandbox.c */
 void		 sandbox_network_process(void);
 void		 sandbox_ui_process(void);
+void		 sandbox_fs_process(void);
 
 /* telescope.c */
 void		 load_about_url(struct tab*, const char*);

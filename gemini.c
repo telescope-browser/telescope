@@ -40,6 +40,7 @@
 #include <tls.h>
 #include <unistd.h>
 
+static struct event		 imsgev;
 static struct tls_config	*tlsconf;
 static struct imsgbuf		*ibuf;
 
