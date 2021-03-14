@@ -424,7 +424,6 @@ handle_get(struct imsg *imsg, size_t datalen)
 	TAILQ_INSERT_HEAD(&reqhead, req, reqs);
 
         if (!url_parse(imsg->data, &req->url, &e)) {
-		fprintf(stderr, "failed to parse url: %s\n", e);
 		close_with_err(req, e);
 		return;
 	}
