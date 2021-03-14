@@ -12,8 +12,8 @@ just to play with ncurses, libtls, libevent and the macros from
 browser.
 
 At the moment, telescope is something **a bit more than a working
-demo**.  However, it has already some interesting features, like tabs,
-privsep, input from the minibuffer etc...
+demo**.  However, it has already some interesting features, like
+streaming pages, tabs, privsep, input from the minibuffer etc...
 
 There are still various things missing or, if you prefer, various
 things that you can help develop :)
@@ -24,10 +24,10 @@ things that you can help develop :)
  - subscriptions
  - tofu
  - client certificates
- - add other GUI: atm it uses only ncurses, but telescope shouldn't be
-   restricted to TTYs only!
- - configuration file: even proposals are accepted.  I need a way to
-   define bindings, colors etc in a way that will possibly work on
+ - add other GUIs: atm it uses only ncurses, but telescope shouldn't
+   be restricted to TTYs only!
+ - configuration file: even proposals are accepted.  It needs a way to
+   define keybindings, colors etc in a way that will possibly work on
    more than one graphic libraries.
 
 ![Telescope new tab](images/about-new.png)
@@ -38,7 +38,7 @@ things that you can help develop :)
 Telescope depends on ncursesw, libtls (from either LibreSSL or
 libretls), libevent (either v1 or v2).
 
-To build a release tarball just execute:
+To build from a release tarball just execute:
 
 	./configure
 	make
