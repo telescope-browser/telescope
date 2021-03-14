@@ -384,6 +384,7 @@ copy_body(int fd, short ev, void *d)
 			imsg_compose(ibuf, IMSG_BUF, req->id, 0, -1,
 			    req->buf, req->off);
 			imsg_flush(ibuf);
+			req->off = 0;
 		}
 
 		switch (r = tls_read(req->ctx, req->buf, sizeof(req->buf))) {
