@@ -379,7 +379,7 @@ copy_body(int fd, short ev, void *d)
 	struct req	*req = d;
 	ssize_t		 r;
 
-	do {
+	for (;;) {
 		if (req->off != 0) {
 			imsg_compose(ibuf, IMSG_BUF, req->id, 0, -1,
 			    req->buf, req->off);
@@ -401,7 +401,7 @@ copy_body(int fd, short ev, void *d)
 		default:
 			req->off = r;
 		}
-	} while(1);
+	}
 }
 
 static void
@@ -470,10 +470,8 @@ handle_cert_status(struct imsg *imsg, size_t datalen)
 static void
 handle_proceed(struct imsg *imsg, size_t datalen)
 {
-	struct req	*req;
-
-	req = req_by_id(imsg->hdr.peerid);
-	yield_r(req, copy_body, NULL);
+	yield_r(req_by_id(imsg->hdr.peerid),
+	    copy_body, NULL);
 }
 
 static void
