@@ -52,11 +52,11 @@ sandbox_fs_process(void)
 		err(1, "unveil");
 
 	strlcpy(path, getenv("HOME"), sizeof(path));
-	strlcat(path, "/.telescope", sizeof(path));
-	if (unveil(path, "r") == -1)
+	strlcat(path, "/.telescope/", sizeof(path));
+	if (unveil(path, "rwc") == -1)
 		err(1, "unveil");
 
-	if (pledge("stdio rpath", NULL) == -1)
+	if (pledge("stdio rpath wpath cpath", NULL) == -1)
 		err(1, "pledge");
 }
 
