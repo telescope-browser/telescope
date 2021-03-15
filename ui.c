@@ -81,6 +81,7 @@ static void		 cmd_tab_previous(struct tab*);
 static void		 cmd_load_url(struct tab*);
 static void		 cmd_load_current_url(struct tab*);
 static void		 cmd_bookmark_page(struct tab*);
+static void		 cmd_goto_bookmarks(struct tab*);
 
 static void		 global_key_unbound(void);
 
@@ -266,6 +267,7 @@ load_default_keys(void)
 	global_set_key("C-M-f",		cmd_next_page);
 
 	global_set_key("<f7> a",	cmd_bookmark_page);
+	global_set_key("<f7> <f7>",	cmd_goto_bookmarks);
 
 	/* vi/vi-like */
 	global_set_key("k",		cmd_previous_line);
@@ -654,6 +656,12 @@ cmd_bookmark_page(struct tab *tab)
 	strlcpy(ministate.buf, tab->hist_cur->h, sizeof(ministate.buf));
 	ministate.off = strlen(tab->hist_cur->h);
 	ministate.len = ministate.off;
+}
+
+static void
+cmd_goto_bookmarks(struct tab *tab)
+{
+	load_url_in_tab(tab, "about:bookmarks");
 }
 
 static void
