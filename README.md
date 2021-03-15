@@ -6,14 +6,11 @@
                                            |__|
 ```
 
-Telescope is a w3m-like browser for Gemini.  It was written on a whim,
-just to play with ncurses, libtls, libevent and the macros from
-`sys/queue.h`, but I'd like to finish it into a featureful Gemini
-browser.
+Telescope is a w3m-like browser for Gemini.
 
-At the moment, telescope is something **a bit more than a working
-demo**.  However, it has already some interesting features, like
-streaming pages, tabs, privsep, input from the minibuffer etc...
+At the moment, it's something **a bit more than a working demo**.
+However, it has already some interesting features, like streaming
+pages, tabs, privsep, input from the minibuffer etc...
 
 There are still various things missing or, if you prefer, various
 things that you can help develop :)
@@ -33,6 +30,34 @@ things that you can help develop :)
 ![Telescope new tab](images/about-new.png)
 
 
+## Why yet another browser?
+
+One of the great virtues of Gemini is its simplicity.  It means that
+writing browsers or server is easy and thus a plethora of those
+exists.  I myself routinely switch between a couple of them, depending
+on my mood.
+
+More browsers brings more stability as it became more difficult to
+change the protocol, too.
+
+However, Telescope was ultimately written for fun, on a whim, just to
+play with ncurses, libtls, libevent and the macros from `sys/queue.h`,
+but I'd like to finish it into a complete Gemini browser.
+
+
+## Goals
+
+ - Fun: hacking on Telescope should be fun.
+ - Clean: write readable and clean code mostly following the style(9)
+   guideline.  Don't become a kitchen sink.
+ - Secure: write secure code with privilege separation to mitigate the
+   security risks of possible bugs.
+ - Fast: it features a modern, fast, event-based asynchronous I/O
+   model, it shouldn't never lags behind the user input.
+ - Inter-operable: re-use existing conventions to allow
+   inter-operations and easy migrations from/to other clients.
+
+
 ## Building
 
 Telescope depends on ncursesw, libtls (from either LibreSSL or
@@ -45,7 +70,7 @@ To build from a release tarball just execute:
 	sudo make install
 
 If you want to build from the git checkout, something that's
-discouraged for users who don't intend to hack on telescope
+discouraged for users that don't intend to hack on telescope
 
 	./autogen.sh
 	./configure
