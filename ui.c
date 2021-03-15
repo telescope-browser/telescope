@@ -77,6 +77,7 @@ static void		 cmd_next_page(struct tab*);
 static void		 cmd_clear_minibuf(struct tab*);
 static void		 cmd_execute_extended_command(struct tab*);
 static void		 cmd_tab_close(struct tab*);
+static void		 cmd_tab_close_other(struct tab*);
 static void		 cmd_tab_new(struct tab*);
 static void		 cmd_tab_next(struct tab*);
 static void		 cmd_tab_previous(struct tab*);
@@ -258,6 +259,7 @@ load_default_keys(void)
 	global_set_key("C-x M-f",	cmd_load_current_url);
 
 	global_set_key("C-x t 0",	cmd_tab_close);
+	global_set_key("C-x t 1",	cmd_tab_close_other);
 	global_set_key("C-x t 2",	cmd_tab_new);
 	global_set_key("C-x t o",	cmd_tab_next);
 	global_set_key("C-x t O",	cmd_tab_previous);
@@ -601,6 +603,21 @@ cmd_tab_close(struct tab *tab)
 	TAILQ_REMOVE(&tabshead, tab, tabs);
 
 	free(tab);
+}
+
+static void
+cmd_tab_close_other(struct tab *tab)
+{
+	struct tab *t, *i;
+
+	TAILQ_FOREACH_SAFE(t, &tabshead, tabs, i) {
+		if (t->flags & TAB_CURRENT)
+			continue;
+
+		stop_tab(t);
+		TAILQ_REMOVE(&tabshead, t, tabs);
+		free(t);
+	}
 }
 
 static void
