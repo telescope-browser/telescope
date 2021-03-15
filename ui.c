@@ -48,6 +48,8 @@
 
 #define TAB_CURRENT	0x1
 
+#define NEW_TAB_URL	"about:new"
+
 static struct event	stdioev, winchev;
 
 static void		 load_default_keys(void);
@@ -129,7 +131,7 @@ static void		 load_url_in_tab(struct tab*, const char*);
 static void		 enter_minibuffer(void(*)(void), void(*)(void), void(*)(void), struct histhead*);
 static void		 exit_minibuffer(void);
 static void		 switch_to_tab(struct tab*);
-static struct tab	*new_tab(void);
+static struct tab	*new_tab(const char*);
 
 static struct { int meta, key; } thiskey;
 
@@ -525,7 +527,6 @@ cmd_push_button(struct tab *tab)
 static void
 cmd_push_button_new_tab(struct tab *tab)
 {
-	struct tab	*t;
 	struct vline	*vl;
 	size_t		 nth;
 
@@ -536,9 +537,7 @@ cmd_push_button_new_tab(struct tab *tab)
 	if (vl->parent->type != LINE_LINK)
 		return;
 
-	t = new_tab();
-	memcpy(&t->url, &tab->url, sizeof(tab->url));
-	load_url_in_tab(t, vl->parent->alt);
+	new_tab(vl->parent->alt);
 }
 
 static void
@@ -607,7 +606,7 @@ cmd_tab_close(struct tab *tab)
 static void
 cmd_tab_new(struct tab *tab)
 {
-	new_tab();
+	new_tab(NEW_TAB_URL);
 }
 
 static void
@@ -1412,10 +1411,9 @@ switch_to_tab(struct tab *tab)
 }
 
 static struct tab *
-new_tab(void)
+new_tab(const char *url)
 {
 	struct tab	*tab;
-	const char	*url = "about:new";
 
 	if ((tab = calloc(1, sizeof(*tab))) == NULL)
 		goto err;
@@ -1491,7 +1489,7 @@ ui_init(void)
 	signal_set(&winchev, SIGWINCH, handle_resize, NULL);
 	signal_add(&winchev, NULL);
 
-	new_tab();
+	new_tab(NEW_TAB_URL);
 
 	return 1;
 }
