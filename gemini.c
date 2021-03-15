@@ -65,6 +65,7 @@ static void		 handle_cert_status(struct imsg*, size_t);
 static void		 handle_proceed(struct imsg*, size_t);
 static void		 handle_stop(struct imsg*, size_t);
 static void		 handle_quit(struct imsg*, size_t);
+static void		 handle_dispatch_imsg(int, short, void*);
 
 /* TODO: making this customizable */
 struct timeval timeout_for_handshake = { 5, 0 };
@@ -490,31 +491,10 @@ handle_quit(struct imsg *imsg, size_t datalen)
 }
 
 static void
-dispatch_imsg(int fd, short ev, void *d)
+handle_dispatch_imsg(int fd, short ev, void *d)
 {
 	struct imsgbuf	*ibuf = d;
-	struct imsg	 imsg;
-	ssize_t		 n;
-	size_t		 datalen;
-
-	if ((n = imsg_read(ibuf)) == -1) {
-		if (errno == EAGAIN || errno == EWOULDBLOCK)
-			return;
-		_exit(1);
-	}
-
-	if (n == 0)
-		_exit(1);
-
-	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			_exit(1);
-		if (n == 0)
-			return;
-		datalen = imsg.hdr.len - IMSG_HEADER_SIZE;
-		handlers[imsg.hdr.type](&imsg, datalen);
-		imsg_free(&imsg);
-	}
+	dispatch_imsg(ibuf, handlers, sizeof(handlers));
 }
 
 int
@@ -530,7 +510,7 @@ client_main(struct imsgbuf *b)
 
 	event_init();
 
-	event_set(&imsgev, ibuf->fd, EV_READ | EV_PERSIST, dispatch_imsg, ibuf);
+	event_set(&imsgev, ibuf->fd, EV_READ | EV_PERSIST, handle_dispatch_imsg, ibuf);
 	event_add(&imsgev, NULL);
 
 	sandbox_network_process();

@@ -16,8 +16,10 @@
 
 #include "telescope.h"
 
+#include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 int
 mark_nonblock(int fd)
@@ -53,4 +55,34 @@ has_prefix(const char *str, const char *prfx)
 		if (str[i] != prfx[i])
 			return 0;
 	return prfx[i] == '\0';
+}
+
+void
+dispatch_imsg(struct imsgbuf *ibuf, imsg_handlerfn **handlers, size_t size)
+{
+	struct imsg	imsg;
+	size_t		datalen, i;
+	ssize_t		n;
+
+	if ((n = imsg_read(ibuf)) == -1) {
+		if (errno == EAGAIN || errno == EWOULDBLOCK)
+			return;
+                _exit(1);
+	}
+
+	if (n == 0)
+		_exit(1);
+
+	for (;;) {
+		if ((n = imsg_get(ibuf, &imsg)) == -1)
+			_exit(1);
+		if (n == 0)
+			return;
+		datalen = imsg.hdr.len - IMSG_HEADER_SIZE;
+		i = imsg.hdr.type;
+		if (i >= (size / sizeof(imsg_handlerfn*)) || handlers[i] == NULL)
+			abort();
+		handlers[i](&imsg, datalen);
+		imsg_free(&imsg);
+	}
 }

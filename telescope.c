@@ -31,7 +31,7 @@ static void		 handle_imsg_got_meta(struct imsg*, size_t);
 static void		 handle_imsg_buf(struct imsg*, size_t);
 static void		 handle_imsg_eof(struct imsg*, size_t);
 static void		 handle_imsg_bookmark_ok(struct imsg*, size_t);
-static void		 dispatch_imsg(int, short, void*);
+static void		 handle_dispatch_imsg(int, short, void*);
 static void		 load_page_from_str(struct tab*, const char*);
 static void		 do_load_url(struct tab*, const char*);
 
@@ -217,31 +217,10 @@ handle_imsg_bookmark_ok(struct imsg *imsg, size_t datalen)
 }
 
 static void
-dispatch_imsg(int fd, short ev, void *d)
+handle_dispatch_imsg(int fd, short ev, void *d)
 {
 	struct imsgbuf	*ibuf = d;
-	struct imsg	 imsg;
-	size_t		 datalen;
-	ssize_t		 n;
-
-	if ((n = imsg_read(ibuf)) == -1) {
-		if (errno == EAGAIN || errno == EWOULDBLOCK)
-			return;
-		die();
-	}
-
-	if (n == 0)
-		_exit(1);
-
-	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			die();
-		if (n == 0)
-			return;
-		datalen = imsg.hdr.len - IMSG_HEADER_SIZE;
-		handlers[imsg.hdr.type](&imsg, datalen);
-		imsg_free(&imsg);
-	}
+	dispatch_imsg(ibuf, handlers, sizeof(handlers));
 }
 
 static void
@@ -432,10 +411,10 @@ main(void)
 
 	event_init();
 
-	event_set(&netev, netibuf->fd, EV_READ | EV_PERSIST, dispatch_imsg, netibuf);
+	event_set(&netev, netibuf->fd, EV_READ | EV_PERSIST, handle_dispatch_imsg, netibuf);
 	event_add(&netev, NULL);
 
-	event_set(&fsev, fsibuf->fd, EV_READ | EV_PERSIST, dispatch_imsg, fsibuf);
+	event_set(&fsev, fsibuf->fd, EV_READ | EV_PERSIST, handle_dispatch_imsg, fsibuf);
 	event_add(&fsev, NULL);
 
 	ui_init();
