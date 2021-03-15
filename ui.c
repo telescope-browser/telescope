@@ -434,7 +434,6 @@ static void
 cmd_scroll_line_down(struct tab *tab)
 {
 	struct vline	*vl;
-	size_t		 n;
 
 	if (tab->s.line_max == 0 || tab->s.line_off == tab->s.line_max-1)
 		return;
@@ -442,7 +441,7 @@ cmd_scroll_line_down(struct tab *tab)
 	tab->s.line_off++;
 	wscrl(body, 1);
 
-	if (tab->s.line_max - tab->s.line_off < body_lines)
+	if (tab->s.line_max - tab->s.line_off < (size_t)body_lines)
 		return;
 
 	vl = nth_line(tab, tab->s.line_off + body_lines-1);
@@ -489,7 +488,7 @@ cmd_end_of_buffer(struct tab *tab)
 	off = MAX(0, off);
 
 	tab->s.line_off = off;
-	tab->s.curs_y = MIN(body_lines, tab->s.line_max);
+	tab->s.curs_y = MIN((size_t)body_lines, tab->s.line_max);
 
 	redraw_body(tab);
 }
@@ -954,7 +953,6 @@ current_tab(void)
 static void
 dispatch_stdio(int fd, short ev, void *d)
 {
-	struct tab	*tab;
 	struct keymap	*k;
 	const char	*keyname;
 	char		 tmp[2] = {0};
@@ -1090,7 +1088,7 @@ wrap_page(struct tab *tab)
 	return 1;
 }
 
-static inline void
+static void
 print_vline(struct vline *vl)
 {
 	const char *text = vl->line;
@@ -1157,7 +1155,7 @@ redraw_modeline(struct tab *tab)
 
 	pct = (tab->s.line_off + tab->s.curs_y) * 100.0 / tab->s.line_max;
 
-	if (tab->s.line_max <= body_lines)
+	if (tab->s.line_max <= (size_t)body_lines)
                 wprintw(modeline, "All ");
 	else if (tab->s.line_off == 0)
                 wprintw(modeline, "Top ");
@@ -1196,7 +1194,7 @@ redraw_minibuffer(void)
 
 		getyx(minibuf, off_y, off_x);
 
-		while (ministate.off - skip > COLS / 2) {
+		while (ministate.off - skip > (size_t)COLS / 2) {
 			skip += MIN(ministate.off/4, 1);
 		}
 
@@ -1403,7 +1401,7 @@ switch_to_tab(struct tab *tab)
 static struct tab *
 new_tab(void)
 {
-	struct tab	*tab, *t;
+	struct tab	*tab;
 	const char	*url = "about:new";
 
 	if ((tab = calloc(1, sizeof(*tab))) == NULL)

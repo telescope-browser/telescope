@@ -286,6 +286,8 @@ load_gemini_url(struct tab *tab, const char *url)
 	char		*p;
 	size_t		 len;
 
+	len = sizeof(tab->hist_cur->h)-1;
+
 	if (has_prefix(url, "gemini:")) {
 		if (!url_parse(url, &tab->url, &err))
 			goto err;
@@ -294,7 +296,6 @@ load_gemini_url(struct tab *tab, const char *url)
 			goto err;
 	}
 
-	len = sizeof(tab->hist_cur->h)-1;
 	url_unparse(&tab->url, tab->hist_cur->h, len);
 	imsg_compose(netibuf, IMSG_GET, tab->id, 0, -1,
 	    tab->hist_cur->h, len+1);

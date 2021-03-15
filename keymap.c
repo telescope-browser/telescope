@@ -23,8 +23,8 @@
 #define CTRL(n)	((n)&0x1F)
 
 static struct keytable {
-	char	*p;
-	int	 k;
+	const char	*p;
+	int		 k;
 } keytable[] = {
 	{ "<up>",	KEY_UP },
 	{ "<down>",	KEY_DOWN },

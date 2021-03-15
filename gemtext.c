@@ -293,8 +293,6 @@ parse_pre_end(struct parser *p, enum line_type t, const char *buf, size_t len)
 static inline enum line_type
 detect_line_type(const char *buf, size_t len, int in_pre)
 {
-	size_t i;
-
 	if (len == 0)
 		return LINE_TEXT;
 

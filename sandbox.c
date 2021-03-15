@@ -14,7 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "compat.h"
+#include "telescope.h"
 
 #ifdef __OpenBSD__
 

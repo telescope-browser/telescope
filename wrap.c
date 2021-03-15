@@ -123,7 +123,7 @@ emitline(struct tab *tab, size_t zero, size_t *off, const struct line *l,
 void
 wrap_text(struct tab *tab, const char *prfx, struct line *l, size_t width)
 {
-	size_t		 zero, off, len, split;
+	size_t		 zero, off, len;
 	int		 cont = 0;
 	const char	*endword, *endspc, *line, *linestart;
 

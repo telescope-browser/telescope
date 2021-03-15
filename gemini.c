@@ -60,8 +60,6 @@ static void		 read_reply(int, short, void*);
 static void		 parse_reply(struct req*);
 static void		 copy_body(int, short, void*);
 
-static void		 check_special_page(struct req*, const char*);
-
 static void		 handle_get(struct imsg*, size_t);
 static void		 handle_cert_status(struct imsg*, size_t);
 static void		 handle_proceed(struct imsg*, size_t);
