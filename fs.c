@@ -14,6 +14,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+/*
+ * Handles the data in ~/.telescope
+ */
+
 #include "telescope.h"
 
 #include <errno.h>
@@ -27,14 +31,18 @@ static void		 die(void) __attribute__((__noreturn__));
 static void		 serve_bookmarks(uint32_t);
 static void		 handle_get(struct imsg*, size_t);
 static void		 handle_quit(struct imsg*, size_t);
+static void		 handle_bookmark_page(struct imsg*, size_t);
 static void		 dispatch_imsg(int, short, void*);
 
 static struct event		 imsgev;
 static struct imsgbuf		*ibuf;
 
+static char	bookmark_file[PATH_MAX];
+
 static imsg_handlerfn *handlers[] = {
 	[IMSG_GET] = handle_get,
 	[IMSG_QUIT] = handle_quit,
+	[IMSG_BOOKMARK_PAGE] = handle_bookmark_page,
 };
 
 static void __attribute__((__noreturn__))
@@ -47,15 +55,12 @@ static void
 serve_bookmarks(uint32_t peerid)
 {
 	const char	*t;
-	char		 path[PATH_MAX], buf[BUFSIZ];
+	char		 buf[BUFSIZ];
 	size_t		 r;
 	FILE		*f;
 
-	strlcpy(path, getenv("HOME"), sizeof(path));
-	strlcat(path, "/.telescope/bookmarks.gmi", sizeof(path));
-
-	if ((f = fopen(path, "r")) == NULL) {
-		t = "# error\n\nCan't open ~/.telescope/bookmarks.gmi";
+	if ((f = fopen(bookmark_file, "r")) == NULL) {
+		t = "# error\n\nCan't open bookmarks\n";
 		imsg_compose(ibuf, IMSG_BUF, peerid, 0, -1, t, strlen(t));
 		imsg_compose(ibuf, IMSG_EOF, peerid, 0, -1, NULL, 0);
 		imsg_flush(ibuf);
@@ -109,6 +114,30 @@ handle_quit(struct imsg *imsg, size_t datalen)
 }
 
 static void
+handle_bookmark_page(struct imsg *imsg, size_t datalen)
+{
+	char	*data;
+	int	 res;
+	FILE	*f;
+
+	data = imsg->data;
+	if (data[datalen-1] != '\0')
+		die();
+
+	if ((f = fopen(bookmark_file, "a")) == NULL) {
+		res = errno;
+		goto end;
+	}
+	fprintf(f, "=> %s\n", data);
+	fclose(f);
+
+	res = 0;
+end:
+	imsg_compose(ibuf, IMSG_BOOKMARK_OK, 0, 0, -1, &res, sizeof(res));
+	imsg_flush(ibuf);
+}
+
+static void
 dispatch_imsg(int fd, short ev, void *d)
 {
 	struct imsgbuf	*ibuf = d;
@@ -140,6 +169,9 @@ int
 fs_main(struct imsgbuf *b)
 {
 	ibuf = b;
+
+	strlcpy(bookmark_file, getenv("HOME"), sizeof(bookmark_file));
+	strlcat(bookmark_file, "/.telescope/bookmarks.gmi", sizeof(bookmark_file));
 
 	event_init();
 

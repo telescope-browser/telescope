@@ -30,6 +30,7 @@ static void		 handle_imsg_got_code(struct imsg*, size_t);
 static void		 handle_imsg_got_meta(struct imsg*, size_t);
 static void		 handle_imsg_buf(struct imsg*, size_t);
 static void		 handle_imsg_eof(struct imsg*, size_t);
+static void		 handle_imsg_bookmark_ok(struct imsg*, size_t);
 static void		 dispatch_imsg(int, short, void*);
 static void		 load_page_from_str(struct tab*, const char*);
 static void		 do_load_url(struct tab*, const char*);
@@ -41,6 +42,7 @@ static imsg_handlerfn *handlers[] = {
 	[IMSG_GOT_META] = handle_imsg_got_meta,
 	[IMSG_BUF] = handle_imsg_buf,
 	[IMSG_EOF] = handle_imsg_eof,
+	[IMSG_BOOKMARK_OK] = handle_imsg_bookmark_ok,
 };
 
 static void __attribute__((__noreturn__))
@@ -199,6 +201,22 @@ handle_imsg_eof(struct imsg *imsg, size_t datalen)
 }
 
 static void
+handle_imsg_bookmark_ok(struct imsg *imsg, size_t datalen)
+{
+	int res;
+
+	if (datalen != sizeof(res))
+		die();
+
+	memcpy(&res, imsg->data, sizeof(res));
+	if (res == 0)
+		ui_notify("Added to bookmarks!");
+	else
+		ui_notify("Failed to add to bookmarks: %s",
+		    strerror(res));
+}
+
+static void
 dispatch_imsg(int fd, short ev, void *d)
 {
 	struct imsgbuf	*ibuf = d;
@@ -350,6 +368,13 @@ stop_tab(struct tab *tab)
 {
 	imsg_compose(netibuf, IMSG_STOP, tab->id, 0, -1, NULL, 0);
 	imsg_flush(netibuf);
+}
+
+void
+add_to_bookmarks(const char *str)
+{
+	imsg_compose(fsibuf, IMSG_BOOKMARK_PAGE, 0, 0, -1, str, strlen(str)+1);
+	imsg_flush(fsibuf);
 }
 
 int

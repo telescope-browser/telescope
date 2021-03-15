@@ -80,6 +80,7 @@ static void		 cmd_tab_next(struct tab*);
 static void		 cmd_tab_previous(struct tab*);
 static void		 cmd_load_url(struct tab*);
 static void		 cmd_load_current_url(struct tab*);
+static void		 cmd_bookmark_page(struct tab*);
 
 static void		 global_key_unbound(void);
 
@@ -104,6 +105,7 @@ static void		 ir_self_insert(void);
 static void		 ir_select(void);
 static void		 lu_self_insert(void);
 static void		 lu_select(void);
+static void		 bp_select(void);
 
 static struct vline	*nth_line(struct tab*, size_t);
 static struct tab	*current_tab(void);
@@ -117,6 +119,7 @@ static void		 redraw_body(struct tab*);
 static void		 redraw_modeline(struct tab*);
 static void		 redraw_minibuffer(void);
 static void		 redraw_tab(struct tab*);
+static void		 vmessage(const char*, va_list);
 static void		 message(const char*, ...) __attribute__((format(printf, 1, 2)));
 static void		 start_loading_anim(struct tab*);
 static void		 update_loading_anim(int, short, void*);
@@ -261,6 +264,8 @@ load_default_keys(void)
 
 	global_set_key("C-M-b",		cmd_previous_page);
 	global_set_key("C-M-f",		cmd_next_page);
+
+	global_set_key("<f7> a",	cmd_bookmark_page);
 
 	/* vi/vi-like */
 	global_set_key("k",		cmd_previous_line);
@@ -643,6 +648,16 @@ cmd_load_current_url(struct tab *tab)
 }
 
 static void
+cmd_bookmark_page(struct tab *tab)
+{
+	enter_minibuffer(lu_self_insert, bp_select, exit_minibuffer, NULL);
+	strlcpy(ministate.prompt, "Bookmark URL: ", sizeof(ministate.prompt));
+	strlcpy(ministate.buf, tab->hist_cur->h, sizeof(ministate.buf));
+	ministate.off = strlen(tab->hist_cur->h);
+	ministate.len = ministate.off;
+}
+
+static void
 global_key_unbound(void)
 {
 	message("%s is undefined", keybuf);
@@ -893,6 +908,16 @@ lu_select(void)
 	exit_minibuffer();
 	minibuffer_hist_save_entry();
 	load_url_in_tab(current_tab(), ministate.buf);
+}
+
+static void
+bp_select(void)
+{
+	exit_minibuffer();
+	if (*ministate.buf != '\0')
+		add_to_bookmarks(ministate.buf);
+	else
+		message("Abort.");
 }
 
 static struct vline *
@@ -1240,10 +1265,8 @@ redraw_body(struct tab *tab)
 }
 
 static void
-message(const char *fmt, ...)
+vmessage(const char *fmt, va_list ap)
 {
-	va_list ap;
-
 	if (clminibufev_set)
 		evtimer_del(&clminibufev);
 	evtimer_set(&clminibufev, handle_clear_minibuf, NULL);
@@ -1252,14 +1275,11 @@ message(const char *fmt, ...)
 
 	free(ministate.curmesg);
 
-	va_start(ap, fmt);
 	/* TODO: what to do if the allocation fails here? */
 	if (vasprintf(&ministate.curmesg, fmt, ap) == -1)
 		ministate.curmesg = NULL;
-	va_end(ap);
 
 	redraw_minibuffer();
-
 	if (in_minibuffer) {
 		wrefresh(body);
 		wrefresh(minibuf);
@@ -1267,6 +1287,16 @@ message(const char *fmt, ...)
 		wrefresh(minibuf);
 		wrefresh(body);
 	}
+}
+
+static void
+message(const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	vmessage(fmt, ap);
+	va_end(ap);
 }
 
 static void
@@ -1483,6 +1513,16 @@ ui_require_input(struct tab *tab, int hide)
 	strlcpy(ministate.prompt, "Input required: ",
 	    sizeof(ministate.prompt));
 	redraw_tab(tab);
+}
+
+void
+ui_notify(const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	vmessage(fmt, ap);
+	va_end(ap);
 }
 
 void

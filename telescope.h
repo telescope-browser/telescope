@@ -29,7 +29,7 @@
 #define GEMINI_URL_LEN 1024
 
 enum imsg_type {
-	/* ui <-> client */
+	/* ui <-> client/fs */
 	IMSG_GET,		/* data is URL, peerid the tab id */
 	IMSG_ERR,
 	IMSG_CHECK_CERT,
@@ -41,6 +41,10 @@ enum imsg_type {
 	IMSG_BUF,
 	IMSG_EOF,
 	IMSG_QUIT,
+
+	/* ui <-> fs */
+	IMSG_BOOKMARK_PAGE,
+	IMSG_BOOKMARK_OK,
 };
 
 enum line_type {
@@ -205,6 +209,7 @@ void		 load_url(struct tab*, const char*);
 int		 load_previous_page(struct tab*);
 int		 load_next_page(struct tab*);
 void		 stop_tab(struct tab*);
+void		 add_to_bookmarks(const char*);
 
 /* textplain.c */
 void		 textplain_initparser(struct parser*);
@@ -214,6 +219,7 @@ int		 ui_init(void);
 void		 ui_on_tab_loaded(struct tab*);
 void		 ui_on_tab_refresh(struct tab*);
 void		 ui_require_input(struct tab*, int);
+void		 ui_notify(const char*, ...) __attribute__((format(printf, 1, 2)));
 void		 ui_end(void);
 
 /* util.c */
