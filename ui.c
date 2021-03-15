@@ -280,6 +280,11 @@ load_default_keys(void)
 	global_set_key("K",		cmd_scroll_line_up);
 	global_set_key("J",		cmd_scroll_line_down);
 
+	global_set_key("g D",		cmd_tab_close);
+	global_set_key("g N",		cmd_tab_new);
+	global_set_key("g t",		cmd_tab_next);
+	global_set_key("g T",		cmd_tab_previous);
+
 	global_set_key("g g",		cmd_beginning_of_buffer);
 	global_set_key("G",		cmd_end_of_buffer);
 
