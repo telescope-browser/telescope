@@ -140,7 +140,6 @@ static WINDOW	*tabline, *body, *modeline, *minibuf;
 static int	 body_lines, body_cols;
 
 static struct event	clminibufev;
-static int		clminibufev_set;
 static struct timeval	clminibufev_timer = { 5, 0 };
 static struct timeval	loadingev_timer = { 0, 250000 };
 
@@ -1048,8 +1047,6 @@ done:
 static void
 handle_clear_minibuf(int fd, short ev, void *d)
 {
-	clminibufev_set = 0;
-
 	free(ministate.curmesg);
 	ministate.curmesg = NULL;
 
@@ -1350,11 +1347,10 @@ redraw_body(struct tab *tab)
 static void
 vmessage(const char *fmt, va_list ap)
 {
-	if (clminibufev_set)
+	if (evtimer_pending(&clminibufev, NULL))
 		evtimer_del(&clminibufev);
 	evtimer_set(&clminibufev, handle_clear_minibuf, NULL);
 	evtimer_add(&clminibufev, &clminibufev_timer);
-	clminibufev_set = 1;
 
 	free(ministate.curmesg);
 
