@@ -234,6 +234,7 @@ do_handshake(int fd, short ev, void *d)
 {
 	struct req	*req = d;
 	const char	*hash;
+	char		*e;
 
 	if (ev == EV_TIMEOUT) {
 		close_with_err(req, "Timeout loading page");
@@ -250,6 +251,13 @@ do_handshake(int fd, short ev, void *d)
 	}
 
 	hash = tls_peer_cert_hash(req->ctx);
+	if (hash == NULL) {
+		if (asprintf(&e, "handshake failed: %s", tls_error(req->ctx)) == -1)
+			abort();
+		close_with_err(req, e);
+		free(e);
+		return;
+	}
 	imsg_compose(ibuf, IMSG_CHECK_CERT, req->id, 0, -1, hash, strlen(hash)+1);
 	imsg_flush(ibuf);
 }
