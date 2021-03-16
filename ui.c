@@ -1143,16 +1143,41 @@ static void
 redraw_tabline(void)
 {
 	struct tab	*tab;
-	int		 current, x, y;
+	size_t		 toskip;
+	int		 current, x, y, truncated;
 	const char	*title;
 	char		 buf[25];
 
-	werase(tabline);
-
-	wattron(tabline, A_REVERSE);
-
-	wprintw(tabline, " ");
+	toskip = 0;
+	x = 1;
 	TAILQ_FOREACH(tab, &tabshead, tabs) {
+		x += sizeof(buf) + 1;
+		toskip++;
+		if (tab->flags & TAB_CURRENT)
+			break;
+	}
+	if (x < COLS-2)
+		toskip = 0;
+	else
+		toskip--;
+
+	werase(tabline);
+	wattron(tabline, A_REVERSE);
+	wprintw(tabline, toskip == 0 ? " " : "<");
+
+	truncated = 0;
+	TAILQ_FOREACH(tab, &tabshead, tabs) {
+		if (truncated)
+			break;
+		if (toskip != 0) {
+			toskip--;
+			continue;
+		}
+
+		getyx(tabline, y, x);
+		if (x + sizeof(buf)+2 >= (size_t)COLS)
+			truncated = 1;
+
 		current = tab->flags & TAB_CURRENT;
 
 		if (*(title = tab->page.title) == '\0')
@@ -1180,11 +1205,10 @@ redraw_tabline(void)
 			wprintw(tabline, " ");
 	}
 
-	/* non-upcased macro are ugly... */
-	getyx(tabline, y, x);
-
 	for (; x < COLS; ++x)
 		waddch(tabline, ' ');
+	if (truncated)
+		mvwprintw(tabline, 0, COLS-1, ">");
 }
 
 static void
