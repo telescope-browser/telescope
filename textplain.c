@@ -61,8 +61,6 @@ textplain_initparser(struct parser *p)
 	p->name = "text/plain";
 	p->parse = &textplain_parse;
 	p->free = &textplain_free;
-
-	emit_line(p, LINE_PRE_START, NULL, 0);
 }
 
 static int
@@ -107,11 +105,7 @@ textplain_parse(struct parser *p, const char *buf, size_t size)
 static int
 textplain_free(struct parser *p)
 {
-	/* flush the buffer */
-	if (p->len != 0) {
-		if (!emit_line(p, LINE_PRE_CONTENT, p->buf, p->len))
-			return 0;
-	}
-
-	return emit_line(p, LINE_PRE_END, NULL, 0);
+	if (p->len != 0)
+		return emit_line(p, LINE_PRE_CONTENT, p->buf, p->len);
+	return 1;
 }
