@@ -214,6 +214,7 @@ empty_vlist(struct tab *tab)
 {
 	struct vline *vl, *t;
 
+	tab->s.current_line = NULL;
 	tab->s.line_max = 0;
 
 	TAILQ_FOREACH_SAFE(vl, &tab->s.head, vlines, t) {
@@ -351,52 +352,80 @@ load_default_keys(void)
 static void
 restore_cursor(struct tab *tab)
 {
+	struct vline	*vl;
+	const char	*prfx;
+
+	vl =tab->s.current_line;
+	if (vl == NULL || vl->line == NULL)
+		tab->s.curs_x = tab->s.line_x = 0;
+	else
+		tab->s.line_x = MIN(tab->s.line_x, strlen(vl->line));
+
+	if (vl != NULL) {
+		prfx = line_prefixes[vl->parent->type].prfx1;
+		tab->s.curs_x = tab->s.line_x + strlen(prfx);
+	}
+
 	wmove(body, tab->s.curs_y, tab->s.curs_x);
 }
 
 static void
 cmd_previous_line(struct tab *tab)
 {
+	struct vline	*vl;
+
+	if (tab->s.current_line == NULL
+	    || (vl = TAILQ_PREV(tab->s.current_line, vhead, vlines)) == NULL)
+		return;
+
 	if (--tab->s.curs_y < 0) {
 		tab->s.curs_y = 0;
 		cmd_scroll_line_up(tab);
+		return;
 	}
 
+	tab->s.current_line = vl;
 	restore_cursor(tab);
 }
 
 static void
 cmd_next_line(struct tab *tab)
 {
-	if (tab->s.line_off + tab->s.curs_y >= tab->s.line_max)
+	struct vline	*vl;
+
+	if (tab->s.current_line == NULL
+	    || (vl = TAILQ_NEXT(tab->s.current_line, vlines)) == NULL)
 		return;
 
 	if (++tab->s.curs_y > body_lines-1) {
 		tab->s.curs_y = body_lines-1;
 		cmd_scroll_line_down(tab);
+		return;
 	}
 
+	tab->s.current_line = vl;
 	restore_cursor(tab);
 }
 
 static void
 cmd_forward_char(struct tab *tab)
 {
-	tab->s.curs_x = MIN(body_cols-1, tab->s.curs_x+1);
+	tab->s.line_x++;
 	restore_cursor(tab);
 }
 
 static void
 cmd_backward_char(struct tab *tab)
 {
-	tab->s.curs_x = MAX(0, tab->s.curs_x-1);
+	if (tab->s.line_x != 0)
+		tab->s.line_x--;
 	restore_cursor(tab);
 }
 
 static void
 cmd_move_beginning_of_line(struct tab *tab)
 {
-	tab->s.curs_x = 0;
+	tab->s.line_x = 0;
 	restore_cursor(tab);
 }
 
@@ -404,25 +433,11 @@ static void
 cmd_move_end_of_line(struct tab *tab)
 {
 	struct vline	*vl;
-	size_t		 off;
-	const char	*prfx;
 
-	off = tab->s.line_off + tab->s.curs_y;
-	if (off >= tab->s.line_max) {
-		tab->s.curs_x = 0;
-		goto end;
-	}
-
-	vl = nth_line(tab, off);
-	if (vl->line != NULL)
-		tab->s.curs_x = strlen(vl->line);
-	else
-		tab->s.curs_x = 0;
-
-	prfx = line_prefixes[vl->parent->type].prfx1;
-	tab->s.curs_x += strlen(prfx);
-
-end:
+	vl = tab->s.current_line;
+	if (vl->line == NULL)
+		return;
+	tab->s.line_x = body_cols;
 	restore_cursor(tab);
 }
 
@@ -444,6 +459,8 @@ cmd_scroll_line_up(struct tab *tab)
 	wscrl(body, -1);
 	wmove(body, 0, 0);
 	print_vline(vl);
+
+	tab->s.current_line = TAILQ_PREV(tab->s.current_line, vhead, vlines);
 }
 
 static void
@@ -451,8 +468,10 @@ cmd_scroll_line_down(struct tab *tab)
 {
 	struct vline	*vl;
 
-	if (tab->s.line_max == 0 || tab->s.line_off == tab->s.line_max-1)
+	vl = tab->s.current_line;
+	if ((vl = TAILQ_NEXT(vl, vlines)) == NULL)
 		return;
+	tab->s.current_line = vl;
 
 	tab->s.line_off++;
 	wscrl(body, 1);
@@ -490,8 +509,11 @@ cmd_scroll_down(struct tab *tab)
 static void
 cmd_beginning_of_buffer(struct tab *tab)
 {
+	tab->s.current_line = TAILQ_FIRST(&tab->s.head);
 	tab->s.line_off = 0;
 	tab->s.curs_y = 0;
+	tab->s.line_x = 0;
+	restore_cursor(tab);
 	redraw_body(tab);
 }
 
@@ -504,8 +526,11 @@ cmd_end_of_buffer(struct tab *tab)
 	off = MAX(0, off);
 
 	tab->s.line_off = off;
-	tab->s.curs_y = MIN((size_t)body_lines, tab->s.line_max);
+	tab->s.curs_y = MIN((size_t)body_lines, tab->s.line_max-1);
 
+	tab->s.current_line = TAILQ_LAST(&tab->s.head, vhead);
+	tab->s.line_x = body_cols;
+	restore_cursor(tab);
 	redraw_body(tab);
 }
 
@@ -1092,8 +1117,17 @@ handle_resize(int sig, short ev, void *d)
 static int
 wrap_page(struct tab *tab)
 {
-	struct line	*l;
-	const char	*prfx;
+	struct line		*l;
+	const struct line	*orig;
+	const char		*prfx;
+
+	orig = tab->s.current_line == NULL
+		? NULL
+		: tab->s.current_line->parent;
+	tab->s.current_line = NULL;
+
+	tab->s.curs_y = 0;
+	tab->s.line_off = 0;
 
 	empty_vlist(tab);
 
@@ -1110,13 +1144,21 @@ wrap_page(struct tab *tab)
 		case LINE_PRE_START:
 		case LINE_PRE_END:
 			wrap_text(tab, prfx, l, body_cols);
-                        /* push_line(tab, l, NULL, 0, 0); */
 			break;
 		case LINE_PRE_CONTENT:
                         hardwrap_text(tab, l, body_cols);
 			break;
 		}
+
+		if (orig == l && tab->s.current_line == NULL) {
+			tab->s.line_off = tab->s.line_max-1;
+			tab->s.current_line = TAILQ_LAST(&tab->s.head, vhead);
+		}
 	}
+
+        if (tab->s.current_line == NULL)
+		tab->s.current_line = TAILQ_FIRST(&tab->s.head);
+
 	return 1;
 }
 

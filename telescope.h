@@ -108,16 +108,18 @@ struct hist {
 };
 
 struct ui_state {
-	int			curs_x;
-	int			curs_y;
-	size_t			line_off;
-	size_t			line_max;
+	int			 curs_x;
+	int			 curs_y;
+	size_t			 line_off;
+	size_t			 line_max;
+	struct vline		*current_line;
+	size_t			 line_x;
 
-	short			loading_anim;
-	short			loading_anim_step;
-	struct event		loadingev;
+	short			 loading_anim;
+	short			 loading_anim_step;
+	struct event		 loadingev;
 
-	TAILQ_HEAD(, vline)	head;
+	TAILQ_HEAD(vhead, vline)	 head;
 };
 
 extern TAILQ_HEAD(tabshead, tab) tabshead;
