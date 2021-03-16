@@ -50,7 +50,8 @@ static void		 die(void) __attribute__((__noreturn__));
 static char		*xasprintf(const char*, ...);
 static int 		 conn_towards(struct url*, char**);
 
-static void		 close_with_err(struct req*, const char *err);
+static void		 close_with_err(struct req*, const char*);
+static void		 close_with_errf(struct req*, const char*, ...) __attribute__((format(printf, 2, 3)));
 static struct req	*req_by_id(uint32_t);
 static struct req	*req_by_id_try(uint32_t);
 
@@ -230,6 +231,21 @@ close_with_err(struct req *req, const char *err)
 }
 
 static void
+close_with_errf(struct req *req, const char *fmt, ...)
+{
+	va_list	 ap;
+	char	*s;
+
+	va_start(ap, fmt);
+	if (vasprintf(&s, fmt, ap) == -1)
+		abort();
+	va_end(ap);
+
+	close_with_err(req, s);
+	free(s);
+}
+
+static void
 do_handshake(int fd, short ev, void *d)
 {
 	struct req	*req = d;
@@ -252,10 +268,7 @@ do_handshake(int fd, short ev, void *d)
 
 	hash = tls_peer_cert_hash(req->ctx);
 	if (hash == NULL) {
-		if (asprintf(&e, "handshake failed: %s", tls_error(req->ctx)) == -1)
-			abort();
-		close_with_err(req, e);
-		free(e);
+		close_with_errf(req, "handshake failed: %s", tls_error(req->ctx));
 		return;
 	}
 	imsg_compose(ibuf, IMSG_CHECK_CERT, req->id, 0, -1, hash, strlen(hash)+1);
@@ -268,7 +281,7 @@ write_request(int fd, short ev, void *d)
 	struct req	*req = d;
 	ssize_t		 r;
 	size_t		 len;
-	char		 buf[1024], *err;
+	char		 buf[1024];
 
 	strlcpy(buf, "gemini://", sizeof(buf));
 	strlcat(buf, req->url.host, sizeof(buf));
@@ -286,9 +299,7 @@ write_request(int fd, short ev, void *d)
 
 	switch (r = tls_write(req->ctx, buf, len)) {
 	case -1:
-		err = xasprintf("tls_write: %s", tls_error(req->ctx));
-		close_with_err(req, err);
-		free(err);
+		close_with_errf(req, "tls_write: %s", tls_error(req->ctx));
 		break;
 	case TLS_WANT_POLLIN:
 		yield_r(req, write_request, NULL);
@@ -310,16 +321,14 @@ read_reply(int fd, short ev, void *d)
 	struct req	*req = d;
 	size_t		 len;
 	ssize_t		 r;
-	char		*buf, *e;
+	char		*buf;
 
 	buf = req->buf + req->off;
 	len = sizeof(req->buf) - req->off;
 
 	switch (r = tls_read(req->ctx, buf, len)) {
 	case -1:
-		e = xasprintf("tls_read: %s", tls_error(req->ctx));
-		close_with_err(req, e);
-		free(e);
+		close_with_errf(req, "tls_read: %s", tls_error(req->ctx));
 		break;
 	case TLS_WANT_POLLIN:
 		yield_r(req, read_reply, NULL);
