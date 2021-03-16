@@ -340,7 +340,7 @@ read_reply(int fd, short ev, void *d)
 		req->off += r;
 
 		/* TODO: really watch for \r\n not \n alone */
-		if ((e = telescope_strnchr(req->buf, '\n', req->off)) != NULL)
+		if (telescope_strnchr(req->buf, '\n', req->off) != NULL)
 			parse_reply(req);
 		else if (req->off == sizeof(req->buf))
 			close_with_err(req, "invalid response");
