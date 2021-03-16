@@ -54,8 +54,8 @@ but I'd like to finish it into a complete Gemini browser.
    security risks of possible bugs.
  - Fast: it features a modern, fast, event-based asynchronous I/O
    model, it shouldn't never lags behind the user input.
- - Inter-operable: re-use existing conventions to allow
-   inter-operations and easy migrations from/to other clients.
+ - Cooperation: re-use existing conventions to allow inter-operations
+   and easy migrations from/to other clients.
 
 
 ## Building
