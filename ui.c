@@ -72,6 +72,8 @@ static void		 cmd_end_of_buffer(struct tab*);
 static void		 cmd_kill_telescope(struct tab*);
 static void		 cmd_push_button(struct tab*);
 static void		 cmd_push_button_new_tab(struct tab*);
+static void		 cmd_previous_button(struct tab*);
+static void		 cmd_next_button(struct tab*);
 static void		 cmd_previous_page(struct tab*);
 static void		 cmd_next_page(struct tab*);
 static void		 cmd_clear_minibuf(struct tab*);
@@ -325,6 +327,8 @@ load_default_keys(void)
 	/* global */
 	global_set_key("C-m",		cmd_push_button);
 	global_set_key("M-enter",	cmd_push_button_new_tab);
+	global_set_key("M-tab",		cmd_previous_button);
+	global_set_key("tab",		cmd_next_button);
 
 	/* === minibuffer map === */
 	minibuffer_set_key("ret",		cmd_mini_complete_and_exit);
@@ -570,6 +574,32 @@ cmd_push_button_new_tab(struct tab *tab)
 		return;
 
 	new_tab(vl->parent->alt);
+}
+
+static void
+cmd_previous_button(struct tab *tab)
+{
+	do {
+		if (tab->s.current_line == NULL ||
+		    tab->s.current_line == TAILQ_FIRST(&tab->s.head)) {
+			message("No previous link");
+			return;
+		}
+		cmd_previous_line(tab);
+	} while (tab->s.current_line->parent->type != LINE_LINK);
+}
+
+static void
+cmd_next_button(struct tab *tab)
+{
+	do {
+		if (tab->s.current_line == NULL ||
+		    tab->s.current_line == TAILQ_LAST(&tab->s.head, vhead)) {
+			message("No next link");
+			return;
+		}
+		cmd_next_line(tab);
+	} while (tab->s.current_line->parent->type != LINE_LINK);
 }
 
 static void
