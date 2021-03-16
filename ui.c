@@ -1224,7 +1224,8 @@ redraw_modeline(struct tab *tab)
 	wmove(modeline, 0, 0);
 
 	wprintw(modeline, "-%c %s ",
-	    spin[tab->s.loading_anim_step], mode);
+	    spin[tab->s.loading_anim_step],
+	    mode == NULL ? "(none)" : mode);
 
 	pct = (tab->s.line_off + tab->s.curs_y) * 100.0 / tab->s.line_max;
 
