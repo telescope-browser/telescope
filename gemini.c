@@ -161,14 +161,15 @@ try_to_connect(int fd, short ev, void *d)
 	}
 
 	req->fd = socket(req->p->ai_family, req->p->ai_socktype, req->p->ai_protocol);
-	if (req->fd == -1)
+	if (req->fd == -1) {
 		req->p = req->p->ai_next;
-	else {
+		try_to_connect(fd, ev, req);
+	} else {
 		mark_nonblock(req->fd);
 		if (connect(req->fd, req->p->ai_addr, req->p->ai_addrlen) == 0)
 			goto done;
+		yield_w(req, try_to_connect, NULL);
 	}
-	try_to_connect(fd, ev, req);
 	return;
 
 err:
