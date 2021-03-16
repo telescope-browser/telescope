@@ -189,7 +189,7 @@ struct lineprefix {
 	[LINE_PRE_END] =	{ "```",	"```" },
 };
 
-struct line_face {
+static struct line_face {
 	int prop;
 } line_faces[] = {
 	[LINE_TEXT] =		{ 0 },
