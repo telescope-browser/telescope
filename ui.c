@@ -1119,6 +1119,7 @@ wrap_page(struct tab *tab)
 {
 	struct line		*l;
 	const struct line	*orig;
+	struct vline		*vl;
 	const char		*prfx;
 
 	orig = tab->s.current_line == NULL
@@ -1153,6 +1154,14 @@ wrap_page(struct tab *tab)
 		if (orig == l && tab->s.current_line == NULL) {
 			tab->s.line_off = tab->s.line_max-1;
 			tab->s.current_line = TAILQ_LAST(&tab->s.head, vhead);
+
+			while (1) {
+				vl = TAILQ_PREV(tab->s.current_line, vhead, vlines);
+				if (vl == NULL || vl->parent != orig)
+					break;
+				tab->s.current_line = vl;
+				tab->s.line_off--;
+			}
 		}
 	}
 
