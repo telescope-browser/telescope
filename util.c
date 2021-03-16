@@ -33,19 +33,6 @@ mark_nonblock(int fd)
 	return 1;
 }
 
-char *
-telescope_strnchr(char *b, char d, size_t len)
-{
-	size_t i;
-
-	for (i = 0; i < len; ++i) {
-		if (b[i] == d)
-			return &b[i];
-	}
-
-	return NULL;
-}
-
 int
 has_prefix(const char *str, const char *prfx)
 {

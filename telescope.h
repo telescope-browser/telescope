@@ -224,7 +224,6 @@ void		 ui_end(void);
 
 /* util.c */
 int		 mark_nonblock(int);
-char		*telescope_strnchr(char*, char, size_t);
 int		 has_prefix(const char*, const char*);
 void		 dispatch_imsg(struct imsgbuf*, imsg_handlerfn**, size_t);
 

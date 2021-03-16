@@ -83,7 +83,7 @@ textplain_parse(struct parser *p, const char *buf, size_t size)
 	}
 
 	while (len > 0) {
-		if ((e = telescope_strnchr((char*)b, '\n', len)) == NULL)
+		if ((e = memmem((char*)b, len, "\n", 1)) == NULL)
 			break;
 		l = e - b;
 

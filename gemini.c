@@ -250,7 +250,6 @@ do_handshake(int fd, short ev, void *d)
 {
 	struct req	*req = d;
 	const char	*hash;
-	char		*e;
 
 	if (ev == EV_TIMEOUT) {
 		close_with_err(req, "Timeout loading page");
@@ -340,7 +339,7 @@ read_reply(int fd, short ev, void *d)
 		req->off += r;
 
 		/* TODO: really watch for \r\n not \n alone */
-		if (telescope_strnchr(req->buf, '\n', req->off) != NULL)
+		if (memmem(req->buf, req->off, "\r\n", 2) != NULL)
 			parse_reply(req);
 		else if (req->off == sizeof(req->buf))
 			close_with_err(req, "invalid response");
@@ -369,7 +368,7 @@ parse_reply(struct req *req)
 		goto err;
 
 	advance_buf(req, 3);
-	if ((e = telescope_strnchr(req->buf, '\r', req->off)) == NULL)
+	if ((e = memmem(req->buf, req->off, "\r\n", 2)) == NULL)
 		goto err;
 
 	*e = '\0';
