@@ -40,6 +40,10 @@
 #include <tls.h>
 #include <unistd.h>
 
+#if HAVE_ASR_RUN
+# include <asr.h>
+#endif
+
 static struct event		 imsgev;
 static struct tls_config	*tlsconf;
 static struct imsgbuf		*ibuf;
@@ -47,14 +51,22 @@ static struct imsgbuf		*ibuf;
 struct req;
 
 static void		 die(void) __attribute__((__noreturn__));
+
+#if HAVE_ASR_RUN
+static void		 try_to_connect(int, short, void*);
+static void		 query_done(struct asr_result*, void*);
+static void		 async_conn_towards(struct req*);
+#else
 static char		*xasprintf(const char*, ...);
-static int 		 conn_towards(struct url*, char**);
+static int 		 blocking_conn_towards(struct url*, char**);
+#endif
 
 static void		 close_with_err(struct req*, const char*);
 static void		 close_with_errf(struct req*, const char*, ...) __attribute__((format(printf, 2, 3)));
 static struct req	*req_by_id(uint32_t);
 static struct req	*req_by_id_try(uint32_t);
 
+static void		 setup_tls(struct req*);
 static void		 do_handshake(int, short, void*);
 static void		 write_request(int, short, void*);
 static void		 read_reply(int, short, void*);
@@ -91,6 +103,12 @@ struct req {
 	struct tls		*ctx;
 	char			 buf[1024];
 	size_t			 off;
+
+#if HAVE_ASR_RUN
+	struct addrinfo		 hints, *servinfo, *p;
+	struct event_asr	*asrev;
+#endif
+
 	TAILQ_ENTRY(req)	 reqs;
 };
 
@@ -121,6 +139,82 @@ die(void)
 	abort(); 		/* TODO */
 }
 
+#if HAVE_ASR_RUN
+static void
+try_to_connect(int fd, short ev, void *d)
+{
+	struct req	*req = d;
+	int		 error = 0;
+	socklen_t	 len = sizeof(error);
+
+	if (req->p == NULL)
+		goto err;
+
+	if (req->fd != -1) {
+		if (getsockopt(req->fd, SOL_SOCKET, SO_ERROR, &error, &len) == -1)
+			goto err;
+		if (error != 0) {
+                        errno = error;
+                        goto err;
+		}
+		goto done;
+	}
+
+	req->fd = socket(req->p->ai_family, req->p->ai_socktype, req->p->ai_protocol);
+	if (req->fd == -1)
+		req->p = req->p->ai_next;
+	else {
+		mark_nonblock(req->fd);
+		if (connect(req->fd, req->p->ai_addr, req->p->ai_addrlen) == 0)
+			goto done;
+	}
+	try_to_connect(fd, ev, req);
+	return;
+
+err:
+	freeaddrinfo(req->servinfo);
+	close_with_errf(req, "failed to connect to %s",
+	    req->url.host);
+	return;
+
+done:
+	freeaddrinfo(req->servinfo);
+	setup_tls(req);
+}
+
+static void
+query_done(struct asr_result *res, void *d)
+{
+	struct req	*req = d;
+
+	req->asrev = NULL;
+	if (res->ar_gai_errno != 0) {
+		close_with_errf(req, "failed to resolve %s: %s",
+		    req->url.host, gai_strerror(res->ar_gai_errno));
+		return;
+	}
+
+	req->fd = -1;
+	req->servinfo = res->ar_addrinfo;
+	req->p = res->ar_addrinfo;
+	try_to_connect(0, 0, req);
+}
+
+static void
+async_conn_towards(struct req *req)
+{
+	struct asr_query	*q;
+	const char		*proto = "1965";
+
+	if (*req->url.port != '\0')
+		proto = req->url.port;
+
+	req->hints.ai_family = AF_UNSPEC;
+	req->hints.ai_socktype = SOCK_STREAM;
+	q = getaddrinfo_async(req->url.host, proto, &req->hints, NULL);
+	req->asrev = event_asr_run(q, query_done, req);
+}
+#else
 static char *
 xasprintf(const char *fmt, ...)
 {
@@ -136,7 +230,7 @@ xasprintf(const char *fmt, ...)
 }
 
 static int
-conn_towards(struct url *url, char **err)
+blocking_conn_towards(struct url *url, char **err)
 {
 	struct addrinfo	 hints, *servinfo, *p;
 	int		 status, sock;
@@ -174,6 +268,7 @@ conn_towards(struct url *url, char **err)
 	freeaddrinfo(servinfo);
 	return sock;
 }
+#endif
 
 static struct req *
 req_by_id(uint32_t id)
@@ -202,6 +297,11 @@ static void
 close_conn(int fd, short ev, void *d)
 {
 	struct req	*req = d;
+
+#if HAVE_ASR_RUN
+	if (req->asrev != NULL)
+		event_asr_abort(req->asrev);
+#endif
 
 	if (req->ctx != NULL) {
 		switch (tls_close(req->ctx)) {
@@ -243,6 +343,24 @@ close_with_errf(struct req *req, const char *fmt, ...)
 
 	close_with_err(req, s);
 	free(s);
+}
+
+static void
+setup_tls(struct req *req)
+{
+	if ((req->ctx = tls_client()) == NULL) {
+		close_with_errf(req, "tls_client: %s", strerror(errno));
+		return;
+	}
+	if (tls_configure(req->ctx, tlsconf) == -1) {
+		close_with_errf(req, "tls_configure: %s", tls_error(req->ctx));
+		return;
+	}
+	if (tls_connect_socket(req->ctx, req->fd, req->url.host) == -1) {
+		close_with_errf(req, "tls_connect_socket: %s", tls_error(req->ctx));
+		return;
+	}
+	yield_w(req, do_handshake, &timeout_for_handshake);
 }
 
 static void
@@ -426,7 +544,7 @@ handle_get(struct imsg *imsg, size_t datalen)
 {
 	struct req	*req;
 	const char	*e;
-	char		*data, *err = NULL;
+	char		*data;
 
 	data = imsg->data;
 
@@ -444,25 +562,19 @@ handle_get(struct imsg *imsg, size_t datalen)
 		return;
 	}
 
-	if ((req->fd = conn_towards(&req->url, &err)) == -1)
-		goto err;
-	if ((req->ctx = tls_client()) == NULL)
-		goto err;
-	if (tls_configure(req->ctx, tlsconf) == -1) {
-		err = xasprintf("tls_configure: %s", tls_error(req->ctx));
-		goto err;
-	}
-	if (tls_connect_socket(req->ctx, req->fd, req->url.host) == -1) {
-		err = xasprintf("tls_connect_socket: %s", tls_error(req->ctx));
-		goto err;
-	}
+#if HAVE_ASR_RUN
+        async_conn_towards(req);
+#else
+	{
+		char *e = NULL;
 
-	yield_w(req, do_handshake, &timeout_for_handshake);
-	return;
-
-err:
-        close_with_err(req, err);
-	free(err);
+		if ((req->fd = blocking_conn_towards(&req->url, &err)) == -1) {
+			close_with_err(req, err);
+			free(err);
+		}
+		setup_tls(req);
+	}
+#endif
 }
 
 static void

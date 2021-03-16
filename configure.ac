@@ -40,6 +40,8 @@ AC_CHECK_LIB(util, imsg_init, [], [
 	AC_LIBOBJ(imsg-buffer)
 ])
 
+AC_CHECK_FUNCS([asr_run])
+
 # check compiler flags
 AC_DEFUN([CC_ADD_CHECK_FLAGS], [
 	AC_MSG_CHECKING([if $CC supports $1 flag])
