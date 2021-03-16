@@ -1143,11 +1143,13 @@ static void
 redraw_tabline(void)
 {
 	struct tab	*tab;
-	int		 current;
+	int		 current, x, y;
 	const char	*title;
+	char		 buf[25];
 
 	werase(tabline);
-	wbkgd(tabline, A_REVERSE);
+
+	wattron(tabline, A_REVERSE);
 
 	wprintw(tabline, " ");
 	TAILQ_FOREACH(tab, &tabshead, tabs) {
@@ -1156,15 +1158,33 @@ redraw_tabline(void)
 		if (*(title = tab->page.title) == '\0')
 			title = tab->hist_cur->h;
 
-		if (current)
-			wattron(tabline, A_UNDERLINE);
+		strlcpy(buf, " ", sizeof(buf));
+                if (strlcat(buf, title, sizeof(buf)) >= sizeof(buf)) {
+			/* truncation happens */
+			strlcpy(&buf[sizeof(buf)-4], "...", 4);
+		} else {
+			/* pad with spaces */
+			while (strlcat(buf, "    ", sizeof(buf)) < sizeof(buf))
+				/* nop */ ;
+		}
 
-		wprintw(tabline, "%s%d: %s",
-		    current ? "*" : " ", tab->id, title);
+		if (current)
+			wattroff(tabline, A_REVERSE);
+
+		wprintw(tabline, "%s", buf);
 
 		if (current)
-			wattroff(tabline, A_UNDERLINE);
+			wattron(tabline, A_REVERSE);
+
+		if (TAILQ_NEXT(tab, tabs) != NULL)
+			wprintw(tabline, " ");
 	}
+
+	/* non-upcased macro are ugly... */
+	getyx(tabline, y, x);
+
+	for (; x < COLS; ++x)
+		waddch(tabline, ' ');
 }
 
 static void
