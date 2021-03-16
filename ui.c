@@ -1395,12 +1395,13 @@ update_loading_anim(int fd, short ev, void *d)
 
 	tab->s.loading_anim_step = (tab->s.loading_anim_step+1)%4;
 
-	redraw_modeline(tab);
-	wrefresh(modeline);
-
-	wrefresh(body);
-	if (in_minibuffer)
-		wrefresh(minibuf);
+	if (tab->flags & TAB_CURRENT) {
+		redraw_modeline(tab);
+		wrefresh(modeline);
+		wrefresh(body);
+		if (in_minibuffer)
+			wrefresh(minibuf);
+	}
 
 	evtimer_add(&tab->s.loadingev, &loadingev_timer);
 }
