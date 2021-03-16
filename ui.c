@@ -1485,8 +1485,10 @@ new_tab(const char *url)
 {
 	struct tab	*tab;
 
-	if ((tab = calloc(1, sizeof(*tab))) == NULL)
-		goto err;
+	if ((tab = calloc(1, sizeof(*tab))) == NULL) {
+		event_loopbreak();
+		return NULL;
+	}
 
 	TAILQ_INIT(&tab->hist.head);
 
@@ -1502,10 +1504,6 @@ new_tab(const char *url)
 
 	load_url_in_tab(tab, url);
 	return tab;
-
-err:
-	event_loopbreak();
-	return NULL;
 }
 
 int
