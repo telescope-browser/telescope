@@ -204,6 +204,12 @@ static struct line_face {
 	[LINE_PRE_END] =	{ 0 },
 };
 
+static struct tab_face {
+	int background, tab, current_tab;
+} tab_face = {
+	A_REVERSE, A_REVERSE, A_NORMAL
+};
+
 static void
 empty_vlist(struct tab *tab)
 {
@@ -1162,8 +1168,9 @@ redraw_tabline(void)
 		toskip--;
 
 	werase(tabline);
-	wattron(tabline, A_REVERSE);
+	wattron(tabline, tab_face.background);
 	wprintw(tabline, toskip == 0 ? " " : "<");
+	wattroff(tabline, tab_face.background);
 
 	truncated = 0;
 	TAILQ_FOREACH(tab, &tabshead, tabs) {
@@ -1194,17 +1201,21 @@ redraw_tabline(void)
 		}
 
 		if (current)
-			wattroff(tabline, A_REVERSE);
+			wattron(tabline, tab_face.current_tab);
+		else
+			wattron(tabline, tab_face.tab);
 
 		wprintw(tabline, "%s", buf);
-
-		if (current)
-			wattron(tabline, A_REVERSE);
-
 		if (TAILQ_NEXT(tab, tabs) != NULL)
 			wprintw(tabline, " ");
+
+		if (current)
+			wattroff(tabline, tab_face.current_tab);
+		else
+			wattroff(tabline, tab_face.tab);
 	}
 
+	wattron(tabline, tab_face.background);
 	for (; x < COLS; ++x)
 		waddch(tabline, ' ');
 	if (truncated)
