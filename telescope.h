@@ -119,7 +119,7 @@ struct ui_state {
 	short			 loading_anim_step;
 	struct event		 loadingev;
 
-	TAILQ_HEAD(vhead, vline)	 head;
+	TAILQ_HEAD(vhead, vline) head;
 };
 
 /*
