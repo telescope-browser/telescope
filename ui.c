@@ -60,6 +60,8 @@ static void		 cmd_previous_line(struct tab*);
 static void		 cmd_next_line(struct tab*);
 static void		 cmd_forward_char(struct tab*);
 static void		 cmd_backward_char(struct tab*);
+static void		 cmd_backward_paragraph(struct tab*);
+static void		 cmd_forward_paragraph(struct tab*);
 static void		 cmd_move_beginning_of_line(struct tab*);
 static void		 cmd_move_end_of_line(struct tab*);
 static void		 cmd_redraw(struct tab*);
@@ -251,6 +253,8 @@ load_default_keys(void)
 	global_set_key("C-n",		cmd_next_line);
 	global_set_key("C-f",		cmd_forward_char);
 	global_set_key("C-b",		cmd_backward_char);
+	global_set_key("M-{",		cmd_backward_paragraph);
+	global_set_key("M-}",		cmd_forward_paragraph);
 	global_set_key("C-a",		cmd_move_beginning_of_line);
 	global_set_key("C-e",		cmd_move_end_of_line);
 
@@ -287,6 +291,8 @@ load_default_keys(void)
 	global_set_key("j",		cmd_next_line);
 	global_set_key("l",		cmd_forward_char);
 	global_set_key("h",		cmd_backward_char);
+	global_set_key("{",		cmd_backward_paragraph);
+	global_set_key("}",		cmd_forward_paragraph);
 	global_set_key("^",		cmd_move_beginning_of_line);
 	global_set_key("$",		cmd_move_end_of_line);
 
@@ -425,6 +431,34 @@ cmd_backward_char(struct tab *tab)
 	if (tab->s.line_x != 0)
 		tab->s.line_x--;
 	restore_cursor(tab);
+}
+
+static void
+cmd_backward_paragraph(struct tab *tab)
+{
+	do {
+		if (tab->s.current_line == NULL ||
+		    tab->s.current_line == TAILQ_FIRST(&tab->s.head)) {
+			message("No previous paragraph");
+			return;
+		}
+		cmd_previous_line(tab);
+	} while (tab->s.current_line->line != NULL ||
+	    tab->s.current_line->parent->type != LINE_TEXT);
+}
+
+static void
+cmd_forward_paragraph(struct tab *tab)
+{
+	do {
+		if (tab->s.current_line == NULL ||
+		    tab->s.current_line == TAILQ_LAST(&tab->s.head, vhead)) {
+			message("No next paragraph");
+			return;
+		}
+		cmd_next_line(tab);
+	} while (tab->s.current_line->line != NULL ||
+	    tab->s.current_line->parent->type != LINE_TEXT);
 }
 
 static void
