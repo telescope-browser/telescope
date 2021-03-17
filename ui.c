@@ -690,6 +690,9 @@ cmd_tab_close(struct tab *tab)
 		return;
 	}
 
+	if (evtimer_pending(&tab->s.loadingev, NULL))
+		evtimer_del(&tab->s.loadingev);
+
 	stop_tab(tab);
 
 	t = TAILQ_PREV(tab, tabshead, tabs);
