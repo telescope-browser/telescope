@@ -122,6 +122,17 @@ struct ui_state {
 	TAILQ_HEAD(vhead, vline)	 head;
 };
 
+/*
+ * differnt types of trust for a certificate.  Following
+ * gemini://thfr.info/gemini/modified-trust-verify.gmi
+ */
+enum trust_state {
+	TS_UNKNOWN,
+	TS_UNTRUSTED,
+	TS_TRUSTED,
+	TS_VERIFIED,
+};
+
 extern TAILQ_HEAD(tabshead, tab) tabshead;
 struct tab {
 	struct parser		 page;
@@ -129,6 +140,7 @@ struct tab {
 	uint32_t		 id;
 	uint32_t		 flags;
 
+	enum trust_state	 trust;
 	struct url		 url;
 	struct histhead		 hist;
 	struct hist		*hist_cur;

@@ -1338,6 +1338,17 @@ redraw_tabline(void)
 		mvwprintw(tabline, 0, COLS-1, ">");
 }
 
+static inline char
+trust_status_char(enum trust_state ts)
+{
+	switch (ts) {
+	case TS_UNKNOWN:	return 'u';
+	case TS_UNTRUSTED:	return '!';
+	case TS_TRUSTED:	return 'v';
+	case TS_VERIFIED:	return 'V';
+	}
+}
+
 static void
 redraw_modeline(struct tab *tab)
 {
@@ -1350,8 +1361,9 @@ redraw_modeline(struct tab *tab)
 	wattron(modeline, A_REVERSE);
 	wmove(modeline, 0, 0);
 
-	wprintw(modeline, "-%c %s ",
+	wprintw(modeline, "-%c%c %s ",
 	    spin[tab->s.loading_anim_step],
+	    trust_status_char(tab->trust),
 	    mode == NULL ? "(none)" : mode);
 
 	pct = (tab->s.line_off + tab->s.curs_y) * 100.0 / tab->s.line_max;

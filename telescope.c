@@ -85,9 +85,13 @@ handle_imsg_err(struct imsg *imsg, size_t datalen)
 static void
 handle_imsg_check_cert(struct imsg *imsg, size_t datalen)
 {
-	int	tofu_res = 1;
+	int		 tofu_res = 1;
+	struct tab	*tab;
 
-	imsg_compose(netibuf, IMSG_CERT_STATUS, imsg->hdr.peerid, 0, -1, &tofu_res, sizeof(tofu_res));
+	tab = tab_by_id(imsg->hdr.peerid);
+	tab->trust = TS_TRUSTED;
+	imsg_compose(netibuf, IMSG_CERT_STATUS, imsg->hdr.peerid, 0, -1,
+	    &tofu_res, sizeof(tofu_res));
 	imsg_flush(netibuf);
 }
 
@@ -241,6 +245,7 @@ load_about_url(struct tab *tab, const char *url)
 	char	*m;
 	size_t	 len;
 
+	tab->trust = TS_VERIFIED;
 
 	memset(&tab->url, 0, sizeof(tab->url));
 
@@ -294,6 +299,8 @@ static void
 do_load_url(struct tab *tab, const char *url)
 {
 	struct proto *p;
+
+	tab->trust = TS_UNKNOWN;
 
 	for (p = protos; p->schema != NULL; ++p) {
 		if (has_prefix(url, p->schema)) {
