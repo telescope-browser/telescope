@@ -133,6 +133,14 @@ enum trust_state {
 	TS_VERIFIED,
 };
 
+struct tofu_entry {
+	char	domain[GEMINI_URL_LEN];
+	/* enough space for ``PROTO:HASH''.  probably isn't a good
+	 * idea thou. */
+	char	hash[128+1];
+	int	verified;
+};
+
 extern TAILQ_HEAD(tabshead, tab) tabshead;
 struct tab {
 	struct parser		 page;
@@ -185,6 +193,11 @@ int		 client_main(struct imsgbuf*);
 
 /* gemtext.c */
 void		 gemtext_initparser(struct parser*);
+
+/* hash.c */
+void			 telescope_ohash_init(struct ohash*, unsigned int, ptrdiff_t);
+struct tofu_entry	*telescope_lookup_tofu(struct ohash*, const char*);
+void			 telescope_ohash_insert(struct ohash*, struct tofu_entry*);
 
 /* hist.c */
 void		 hist_clear_forward(struct histhead*, struct hist*);

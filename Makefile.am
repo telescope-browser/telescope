@@ -5,6 +5,7 @@ telescope_SOURCES =	compat.h	\
 			fs.c		\
 			gemini.c	\
 			gemtext.c	\
+			hash.c		\
 			hist.c		\
 			keymap.c	\
 			mime.c		\

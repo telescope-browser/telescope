@@ -45,6 +45,8 @@ static imsg_handlerfn *handlers[] = {
 	[IMSG_BOOKMARK_OK] = handle_imsg_bookmark_ok,
 };
 
+static struct ohash	certs;
+
 static void __attribute__((__noreturn__))
 die(void)
 {
@@ -85,11 +87,39 @@ handle_imsg_err(struct imsg *imsg, size_t datalen)
 static void
 handle_imsg_check_cert(struct imsg *imsg, size_t datalen)
 {
-	int		 tofu_res = 1;
-	struct tab	*tab;
+	const char		*hash;
+	int			 tofu_res;
+	struct tofu_entry	*e;
+	struct tab		*tab;
+
+	hash = imsg->data;
+	if (hash[datalen-1] != '\0')
+		abort();
 
 	tab = tab_by_id(imsg->hdr.peerid);
-	tab->trust = TS_TRUSTED;
+
+	if ((e = telescope_lookup_tofu(&certs, tab->url.host)) == NULL) {
+		/* TODO: an update in libressl/libretls changed
+		 * significantly.  Find a better approach at storing
+		 * the certs! */
+		if (datalen > sizeof(e->hash))
+			abort();
+
+		tofu_res = 1;	/* trust on first use */
+		if ((e = calloc(1, sizeof(*e))) == NULL)
+			abort();
+		strlcpy(e->domain, tab->url.host, sizeof(e->domain));
+		strlcpy(e->hash, hash, sizeof(e->hash));
+		telescope_ohash_insert(&certs, e);
+	} else
+		tofu_res = !strcmp(hash, e->hash);
+
+	if (tofu_res)
+		tab->trust = e->verified ? TS_VERIFIED : TS_TRUSTED;
+	else {
+		tab->trust = TS_UNTRUSTED;
+		load_page_from_str(tab, "# Certificate mismatch\n");
+	}
 	imsg_compose(netibuf, IMSG_CERT_STATUS, imsg->hdr.peerid, 0, -1,
 	    &tofu_res, sizeof(tofu_res));
 	imsg_flush(netibuf);
@@ -413,6 +443,8 @@ main(void)
 	}
 
 	setproctitle("(%d) ui", pid);
+
+	telescope_ohash_init(&certs, 5, offsetof(struct tofu_entry, domain));
 
 	TAILQ_INIT(&tabshead);
 
