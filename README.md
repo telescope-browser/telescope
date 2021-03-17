@@ -17,9 +17,8 @@ things that you can help develop :)
 
  - UTF8 handling: it needs to handle non-ASCII characters in pages and
    in the minibuffer input
- - bookmarks
  - subscriptions
- - tofu
+ - tofu oob verification
  - client certificates
  - add other GUIs: atm it uses only ncurses, but telescope shouldn't
    be restricted to TTYs only!
@@ -56,6 +55,27 @@ but I'd like to finish it into a complete Gemini browser.
    model, it shouldn't never lags behind the user input.
  - Cooperation: re-use existing conventions to allow inter-operations
    and easy migrations from/to other clients.
+
+
+## TOFU
+
+Telescope aims to use the "Trust, but Verify (where appropriate)"
+approach outlined here:
+[gemini://thfr.info/gemini/modified-trust-verify.gmi](gemini://thfr.info/gemini/modified-trust-verify.gmi).
+
+The idea is to define three level of verification for a certificate:
+
+ - **untrusted**: the server fingerprint does NOT match the stored
+   value
+ - **trusted**: the server fingerprint matches the stored one
+ - **verified**: the fingerprint matches and has been verified
+   out-of-band by the client.
+
+Most of the time, the `trusted` level is enough, but where is
+appropriate users should be able to verify out-of-band the
+certificate.
+
+At the moment there is no support for oob-verification though.
 
 
 ## Building
