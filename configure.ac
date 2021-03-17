@@ -38,6 +38,7 @@ AC_CHECK_LIB(event, event_init, [], [
 AC_CHECK_LIB(util, imsg_init, [], [
 	AC_LIBOBJ(imsg)
 	AC_LIBOBJ(imsg-buffer)
+	AC_LIBOBJ(ohash)
 ])
 
 AC_CHECK_FUNCS([asr_run])

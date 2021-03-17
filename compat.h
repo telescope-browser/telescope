@@ -23,6 +23,7 @@
 #include <sys/uio.h>
 
 #include <stdarg.h>
+#include <stddef.h>
 #include <stdint.h>
 
 #ifdef HAVE_QUEUE_H
@@ -33,8 +34,10 @@
 
 #ifdef HAVE_LIBUTIL
 # include <imsg.h>
+# include <ohash.h>
 #else
 # include "compat/imsg.h"
+# include "compat/ohash.h"
 #endif
 
 #ifndef HAVE_ASPRINTF
