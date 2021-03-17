@@ -695,12 +695,12 @@ cmd_tab_close(struct tab *tab)
 
 	stop_tab(tab);
 
-	t = TAILQ_PREV(tab, tabshead, tabs);
-	t->flags |= TAB_CURRENT;
-
+	if ((t = TAILQ_PREV(tab, tabshead, tabs)) == NULL)
+		t = TAILQ_NEXT(tab, tabs);
 	TAILQ_REMOVE(&tabshead, tab, tabs);
-
 	free(tab);
+
+	switch_to_tab(t);
 }
 
 static void
