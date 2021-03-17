@@ -15,7 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#incude "compat.h"
+#include "compat.h"
 
 #include <stddef.h>
 #include <stdint.h>
