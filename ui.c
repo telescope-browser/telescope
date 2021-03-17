@@ -58,8 +58,8 @@ static void		 restore_cursor(struct tab *);
 
 static void		 cmd_previous_line(struct tab*);
 static void		 cmd_next_line(struct tab*);
-static void		 cmd_forward_char(struct tab*);
 static void		 cmd_backward_char(struct tab*);
+static void		 cmd_forward_char(struct tab*);
 static void		 cmd_backward_paragraph(struct tab*);
 static void		 cmd_forward_paragraph(struct tab*);
 static void		 cmd_move_beginning_of_line(struct tab*);
@@ -419,17 +419,17 @@ cmd_next_line(struct tab *tab)
 }
 
 static void
-cmd_forward_char(struct tab *tab)
-{
-	tab->s.line_x++;
-	restore_cursor(tab);
-}
-
-static void
 cmd_backward_char(struct tab *tab)
 {
 	if (tab->s.line_x != 0)
 		tab->s.line_x--;
+	restore_cursor(tab);
+}
+
+static void
+cmd_forward_char(struct tab *tab)
+{
+	tab->s.line_x++;
 	restore_cursor(tab);
 }
 
