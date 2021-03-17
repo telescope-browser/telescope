@@ -185,24 +185,25 @@ struct lineprefix {
 	[LINE_TITLE_3] =	{ "### ",	"    " },
 	[LINE_ITEM] =		{ "* ",		"  " },
 	[LINE_QUOTE] =		{ "> ",		"> " },
-	[LINE_PRE_START] =	{ "```",	"```" },
+	[LINE_PRE_START] =	{ "```",	"   " },
 	[LINE_PRE_CONTENT] =	{ "",		"" },
 	[LINE_PRE_END] =	{ "```",	"```" },
 };
 
 static struct line_face {
-	int prop;
+	int prefix_prop;
+	int text_prop;
 } line_faces[] = {
-	[LINE_TEXT] =		{ 0 },
-	[LINE_LINK] =		{ A_UNDERLINE },
-	[LINE_TITLE_1] =	{ A_BOLD },
-	[LINE_TITLE_2] =	{ A_BOLD },
-	[LINE_TITLE_3] =	{ A_BOLD },
-	[LINE_ITEM] =		{ 0 },
-	[LINE_QUOTE] =		{ A_DIM },
-	[LINE_PRE_START] =	{ 0 },
-	[LINE_PRE_CONTENT] =	{ 0 },
-	[LINE_PRE_END] =	{ 0 },
+	[LINE_TEXT] =		{ 0,		0 },
+	[LINE_LINK] =		{ 0,		A_UNDERLINE },
+	[LINE_TITLE_1] =	{ A_BOLD,	A_BOLD },
+	[LINE_TITLE_2] =	{ A_BOLD,	A_BOLD },
+	[LINE_TITLE_3] =	{ A_BOLD,	A_BOLD },
+	[LINE_ITEM] =		{ 0,		0 },
+	[LINE_QUOTE] =		{ 0,		A_DIM },
+	[LINE_PRE_START] =	{ 0,		0 },
+	[LINE_PRE_CONTENT] =	{ 0,		0 },
+	[LINE_PRE_END] =	{ 0,		0 },
 };
 
 static struct tab_face {
@@ -1206,7 +1207,8 @@ print_vline(struct vline *vl)
 {
 	const char *text = vl->line;
 	const char *prfx;
-	int face = line_faces[vl->parent->type].prop;
+	int prefix_face = line_faces[vl->parent->type].prefix_prop;
+	int text_face = line_faces[vl->parent->type].text_prop;
 
 	if (!vl->flags)
 		prfx = line_prefixes[vl->parent->type].prfx1;
@@ -1216,11 +1218,13 @@ print_vline(struct vline *vl)
 	if (text == NULL)
 		text = "";
 
-	if (face != 0)
-		wattron(body, face);
-	wprintw(body, "%s%s", prfx, text);
-	if (face != 0)
-		wattroff(body, face);
+	wattron(body, prefix_face);
+	wprintw(body, "%s", prfx);
+	wattroff(body, prefix_face);
+
+	wattron(body, text_face);
+	wprintw(body, "%s", text);
+	wattroff(body, text_face);
 }
 
 static void
