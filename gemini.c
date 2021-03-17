@@ -567,7 +567,7 @@ handle_get(struct imsg *imsg, size_t datalen)
         async_conn_towards(req);
 #else
 	{
-		char *e = NULL;
+		char *err = NULL;
 
 		if ((req->fd = blocking_conn_towards(&req->url, &err)) == -1) {
 			close_with_err(req, err);
