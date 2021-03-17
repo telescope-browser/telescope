@@ -267,7 +267,7 @@ parse_pre_start(struct parser *p, enum line_type t, const char *buf, size_t len)
 		return 0;
 
 	memcpy(l, buf, len);
-	return emit_line(p, t, NULL, l);
+	return emit_line(p, t, l, NULL);
 }
 
 static int
