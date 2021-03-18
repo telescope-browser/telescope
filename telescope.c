@@ -31,6 +31,7 @@ static void		 handle_imsg_got_meta(struct imsg*, size_t);
 static void		 handle_imsg_buf(struct imsg*, size_t);
 static void		 handle_imsg_eof(struct imsg*, size_t);
 static void		 handle_imsg_bookmark_ok(struct imsg*, size_t);
+static void		 handle_imsg_save_cert_ok(struct imsg*, size_t);
 static void		 handle_dispatch_imsg(int, short, void*);
 static void		 load_page_from_str(struct tab*, const char*);
 static void		 do_load_url(struct tab*, const char*);
@@ -43,6 +44,7 @@ static imsg_handlerfn *handlers[] = {
 	[IMSG_BUF] = handle_imsg_buf,
 	[IMSG_EOF] = handle_imsg_eof,
 	[IMSG_BOOKMARK_OK] = handle_imsg_bookmark_ok,
+	[IMSG_SAVE_CERT_OK] = handle_imsg_save_cert_ok,
 };
 
 static struct ohash	certs;
@@ -111,6 +113,9 @@ handle_imsg_check_cert(struct imsg *imsg, size_t datalen)
 		strlcpy(e->domain, tab->url.host, sizeof(e->domain));
 		strlcpy(e->hash, hash, sizeof(e->hash));
 		telescope_ohash_insert(&certs, e);
+		imsg_compose(fsibuf, IMSG_SAVE_CERT, tab->id, 0, -1,
+		    e, sizeof(*e));
+		imsg_flush(fsibuf);
 	} else
 		tofu_res = !strcmp(hash, e->hash);
 
@@ -247,6 +252,19 @@ handle_imsg_bookmark_ok(struct imsg *imsg, size_t datalen)
 		ui_notify("Added to bookmarks!");
 	else
 		ui_notify("Failed to add to bookmarks: %s",
+		    strerror(res));
+}
+
+static void
+handle_imsg_save_cert_ok(struct imsg *imsg, size_t datalen)
+{
+	int res;
+
+	if (datalen != sizeof(res))
+		die();
+	memcpy(&res, imsg->data, datalen);
+	if (res != 0)
+		ui_notify("Failed to save the cert for: %s",
 		    strerror(res));
 }
 
@@ -405,6 +423,10 @@ main(void)
 
 	signal(SIGCHLD, SIG_IGN);
 
+	/* initialize part of the fs layer.  Before starting the UI
+	 * and dropping the priviledges we need to read some stuff. */
+	fs_init();
+
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, fs_fds) == -1)
 		err(1, "socketpair");
 
@@ -445,6 +467,7 @@ main(void)
 	setproctitle("(%d) ui", pid);
 
 	telescope_ohash_init(&certs, 5, offsetof(struct tofu_entry, domain));
+	load_certs(&certs);
 
 	TAILQ_INIT(&tabshead);
 

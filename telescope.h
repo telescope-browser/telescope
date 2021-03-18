@@ -45,6 +45,8 @@ enum imsg_type {
 	/* ui <-> fs */
 	IMSG_BOOKMARK_PAGE,
 	IMSG_BOOKMARK_OK,
+	IMSG_SAVE_CERT,
+	IMSG_SAVE_CERT_OK,
 };
 
 enum line_type {
@@ -186,7 +188,9 @@ struct keymap {
 };
 
 /* fs.c */
+int		 fs_init(void);
 int		 fs_main(struct imsgbuf*);
+int		 load_certs(struct ohash*);
 
 /* gemini.c */
 int		 client_main(struct imsgbuf*);

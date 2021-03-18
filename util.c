@@ -67,7 +67,7 @@ dispatch_imsg(struct imsgbuf *ibuf, imsg_handlerfn **handlers, size_t size)
 			return;
 		datalen = imsg.hdr.len - IMSG_HEADER_SIZE;
 		i = imsg.hdr.type;
-		if (i >= (size / sizeof(imsg_handlerfn*)) || handlers[i] == NULL)
+		if (i > (size / sizeof(imsg_handlerfn*)) || handlers[i] == NULL)
 			abort();
 		handlers[i](&imsg, datalen);
 		imsg_free(&imsg);
