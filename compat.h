@@ -87,7 +87,7 @@ size_t		 strlcat(char*, const char*, size_t);
 #endif
 
 #ifndef HAVE_STRTONUM
-long long	 strtonum(const char*, long long, long long, const char*);
+long long	 strtonum(const char*, long long, long long, const char**);
 #endif
 
 #ifndef HAVE_SETPROCTITLE
