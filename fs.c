@@ -179,7 +179,11 @@ handle_dispatch_imsg(int fd, short ev, void *d)
 int
 fs_init(void)
 {
-	/* TODO: mkdir(~/.telescope) and touch bookmarks.gmi/known_hosts? */
+	char	dir[PATH_MAX];
+
+	strlcpy(dir, getenv("HOME"), sizeof(dir));
+	strlcat(dir, "/.telescope", sizeof(dir));
+	mkdir(dir, 0700);
 
 	strlcpy(bookmark_file, getenv("HOME"), sizeof(bookmark_file));
 	strlcat(bookmark_file, "/.telescope/bookmarks.gmi", sizeof(bookmark_file));
