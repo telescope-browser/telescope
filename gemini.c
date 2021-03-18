@@ -457,7 +457,6 @@ read_reply(int fd, short ev, void *d)
 	default:
 		req->off += r;
 
-		/* TODO: really watch for \r\n not \n alone */
 		if (memmem(req->buf, req->off, "\r\n", 2) != NULL)
 			parse_reply(req);
 		else if (req->off == sizeof(req->buf))
@@ -500,7 +499,8 @@ parse_reply(struct req *req)
 
 	if (code != 20)
 		close_conn(0, 0, req);
-	advance_buf(req, len+1); /* skip \n too */
+	else
+		advance_buf(req, len+1); /* skip \n too */
 
 	return;
 
@@ -572,6 +572,7 @@ handle_get(struct imsg *imsg, size_t datalen)
 		if ((req->fd = blocking_conn_towards(&req->url, &err)) == -1) {
 			close_with_err(req, err);
 			free(err);
+			return;
 		}
 		setup_tls(req);
 	}
