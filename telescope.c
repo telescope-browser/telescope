@@ -412,7 +412,7 @@ add_to_bookmarks(const char *str)
 }
 
 int
-main(void)
+main(int argc, char **argv)
 {
 	struct imsgbuf	network_ibuf, fs_ibuf;
 	int		net_fds[2], fs_fds[2];
@@ -478,19 +478,17 @@ main(void)
 	event_set(&fsev, fsibuf->fd, EV_READ | EV_PERSIST, handle_dispatch_imsg, fsibuf);
 	event_add(&fsev, NULL);
 
-	ui_init();
-
-	sandbox_ui_process();
-
-	event_dispatch();
+	if (ui_init(argc, argv)) {
+		sandbox_ui_process();
+		event_dispatch();
+		ui_end();
+	}
 
 	imsg_compose(netibuf, IMSG_QUIT, 0, 0, -1, NULL, 0);
 	imsg_flush(netibuf);
 
 	imsg_compose(fsibuf, IMSG_QUIT, 0, 0, -1, NULL, 0);
 	imsg_flush(fsibuf);
-
-	ui_end();
 
 	return 0;
 }

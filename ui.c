@@ -137,6 +137,7 @@ static void		 enter_minibuffer(void(*)(void), void(*)(void), void(*)(void), stru
 static void		 exit_minibuffer(void);
 static void		 switch_to_tab(struct tab*);
 static struct tab	*new_tab(const char*);
+static void		 usage(void);
 
 static struct { int meta, key; } thiskey;
 
@@ -1653,9 +1654,31 @@ new_tab(const char *url)
 	return tab;
 }
 
-int
-ui_init(void)
+static void
+usage(void)
 {
+	fprintf(stderr, "USAGE: %s [url]\n", getprogname());
+}
+
+int
+ui_init(int argc, const char **argv)
+{
+	const char *url = NEW_TAB_URL;
+	int ch;
+
+	while ((ch = getopt(argc, argv, "")) != -1) {
+		switch (ch) {
+		default:
+			usage();
+			return 0;
+		}
+	}
+	argc -= optind;
+	argv += optind;
+
+	if (argc != 0)
+		url = argv[0];
+
 	setlocale(LC_ALL, "");
 
 	TAILQ_INIT(&global_map.m);
@@ -1704,7 +1727,7 @@ ui_init(void)
 	signal_set(&winchev, SIGWINCH, handle_resize, NULL);
 	signal_add(&winchev, NULL);
 
-	new_tab(NEW_TAB_URL);
+	new_tab(url);
 
 	return 1;
 }
