@@ -2,7 +2,6 @@
 
 #include <sys/socket.h>
 
-#include <err.h>
 #include <errno.h>
 #include <signal.h>
 #include <stdio.h>
