@@ -1559,6 +1559,9 @@ stop_loading_anim(struct tab *tab)
 	tab->s.loading_anim = 0;
 	tab->s.loading_anim_step = 0;
 
+	if (!(tab->flags & TAB_CURRENT))
+		return;
+
 	redraw_modeline(tab);
 
 	wrefresh(modeline);
@@ -1711,16 +1714,21 @@ ui_on_tab_loaded(struct tab *tab)
 {
 	stop_loading_anim(tab);
 	message("Loaded %s", tab->hist_cur->h);
+
+	redraw_tabline();
+	wrefresh(tabline);
+	if (in_minibuffer)
+		wrefresh(minibuf);
+	else
+		wrefresh(body);
 }
 
 void
 ui_on_tab_refresh(struct tab *tab)
 {
-	if (!(tab->flags & TAB_CURRENT))
-		return;
-
 	wrap_page(tab);
-	redraw_tab(tab);
+	if (tab->flags & TAB_CURRENT)
+		redraw_tab(tab);
 }
 
 void
