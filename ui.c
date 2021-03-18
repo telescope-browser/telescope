@@ -1399,6 +1399,7 @@ static void
 redraw_minibuffer(void)
 {
 	size_t skip = 0, off_x = 0, off_y = 0;
+	struct tab *tab;
 
 	werase(minibuf);
 	if (in_minibuffer) {
@@ -1429,6 +1430,15 @@ redraw_minibuffer(void)
 
 	if (!in_minibuffer && ministate.curmesg == NULL)
 		wprintw(minibuf, "%s", keybuf);
+
+	/* If nothing else, show the URL at point */
+	if (!in_minibuffer && ministate.curmesg == NULL && *keybuf == '\0') {
+		tab = current_tab();
+		if (tab->s.current_line != NULL &&
+		    tab->s.current_line->parent->type == LINE_LINK)
+			wprintw(minibuf, "%s",
+			    tab->s.current_line->parent->alt);
+	}
 
 	if (in_minibuffer)
 		wmove(minibuf, 0, off_x + ministate.off - skip);
