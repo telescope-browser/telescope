@@ -187,7 +187,7 @@ struct lineprefix {
 	[LINE_TITLE_2] =	{ "## ",	"   " },
 	[LINE_TITLE_3] =	{ "### ",	"    " },
 	[LINE_ITEM] =		{ "* ",		"  " },
-	[LINE_QUOTE] =		{ "> ",		"> " },
+	[LINE_QUOTE] =		{ "> ",		"  " },
 	[LINE_PRE_START] =	{ "```",	"   " },
 	[LINE_PRE_CONTENT] =	{ "",		"" },
 	[LINE_PRE_END] =	{ "```",	"```" },
