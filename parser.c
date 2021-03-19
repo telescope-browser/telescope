@@ -39,18 +39,23 @@ parser_append(struct parser *p, const char *buf, size_t len)
 int
 parser_set_buf(struct parser *p, const char *buf, size_t len)
 {
-	free(p->buf);
-	p->buf = NULL;
+	char *tmp;
 
 	if (len == 0) {
 		p->len = 0;
+		free(p->buf);
+		p->buf = NULL;
 		return 1;
 	}
 
-	if ((p->buf = calloc(1, len)) == NULL)
+	/* p->buf and buf can (and probably almost always will)
+	 * overlap! */
+
+	if ((tmp = calloc(1, len)) == NULL)
 		return 0;
-	memcpy(p->buf, buf, len);
+	memcpy(tmp, buf, len);
+	free(p->buf);
+	p->buf = tmp;
 	p->len = len;
 	return 1;
 }
-
