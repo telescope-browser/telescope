@@ -59,3 +59,41 @@ parser_set_buf(struct parser *p, const char *buf, size_t len)
 	p->len = len;
 	return 1;
 }
+
+int
+parser_foreach_line(struct parser *p, const char *buf, size_t size,
+    parsechunkfn fn)
+{
+	const char	*b, *e;
+	size_t		 l, len;
+
+	if (p->len == 0) {
+		b = buf;
+		len = size;
+	} else {
+		if (!parser_append(p, buf, size))
+			return 0;
+		b = p->buf;
+		len = p->len;
+	}
+
+	while (len > 0) {
+		if ((e = memmem((char*)b, len, "\n", 1)) == NULL)
+			break;
+		l = e - b;
+
+		if (!fn(p, b, l))
+			return 0;
+
+		len -= l;
+		b += l;
+
+		if (len > 0) {
+			/* skip \n */
+			len--;
+			b++;
+		}
+	}
+
+	return parser_set_buf(p, b, len);
+}

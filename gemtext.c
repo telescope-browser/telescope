@@ -29,6 +29,7 @@
 #include <stdlib.h>
 
 static int	gemtext_parse(struct parser*, const char*, size_t);
+static int	gemtext_foreach_line(struct parser*, const char*, size_t);
 static int	gemtext_free(struct parser*);
 
 static int	parse_text(struct parser*, enum line_type, const char*, size_t);
@@ -337,43 +338,20 @@ detect_line_type(const char *buf, size_t len, int in_pre)
 static int
 gemtext_parse(struct parser *p, const char *buf, size_t size)
 {
-	const char	*b, *e;
-	enum line_type	 t;
-	size_t		 len, l;
+	return parser_foreach_line(p, buf, size, gemtext_foreach_line);
+}
 
-	if (p->len == 0) {
-		b = buf;
-		len = size;
-	} else {
-		if (!parser_append(p, buf, size))
-			return 0;
-		b = p->buf;
-		len = p->len;
-	}
+static int
+gemtext_foreach_line(struct parser *p, const char *line, size_t linelen)
+{
+	enum line_type t;
 
-	while (len > 0) {
-		if ((e = memmem((char*)b, len, "\n", 1)) == NULL)
-			break;
-		l = e - b;
-		t = detect_line_type(b, l, p->flags);
-		if (t == LINE_PRE_START)
-			p->flags = 1;
-		if (t == LINE_PRE_END)
-			p->flags = 0;
-		if (!parsers[t](p, t, b, l))
-			return 0;
-
-		len -= l;
-		b += l;
-
-		if (len > 0) {
-			/* skip \n */
-			len--;
-			b++;
-		}
-	}
-
-	return parser_set_buf(p, b, len);
+	t = detect_line_type(line, linelen, p->flags);
+	if (t == LINE_PRE_START)
+		p->flags = 1;
+	if (t == LINE_PRE_END)
+		p->flags = 0;
+	return parsers[t](p, t, line, linelen);
 }
 
 static int

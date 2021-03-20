@@ -24,6 +24,7 @@
 #include <string.h>
 
 static int	textplain_parse(struct parser*, const char*, size_t);
+static int	textplain_foreach_line(struct parser*, const char*, size_t);
 static int	textplain_free(struct parser*);
 
 static inline int
@@ -66,40 +67,13 @@ textplain_initparser(struct parser *p)
 static int
 textplain_parse(struct parser *p, const char *buf, size_t size)
 {
-	const char	*b, *e;
-	size_t		 len, l;
-	int		 r;
+	return parser_foreach_line(p, buf, size, textplain_foreach_line);
+}
 
-	if (p->len == 0) {
-		b = buf;
-		len = size;
-	} else {
-		if (!parser_append(p, buf, size))
-			return 0;
-		b = p->buf;
-		len = p->len;
-	}
-
-	while (len > 0) {
-		if ((e = memmem((char*)b, len, "\n", 1)) == NULL)
-			break;
-		l = e - b;
-
-		r = emit_line(p, LINE_PRE_CONTENT, b, l);
-		if (!r)
-			return 0;
-
-		len -= l;
-		b += l;
-
-		if (len > 0) {
-			/* skip \n */
-			len--;
-			b++;
-		}
-	}
-
-	return parser_set_buf(p, b, len);
+static int
+textplain_foreach_line(struct parser *p, const char *line, size_t linelen)
+{
+	return emit_line(p, LINE_PRE_CONTENT, line, linelen);
 }
 
 static int

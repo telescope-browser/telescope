@@ -227,6 +227,7 @@ extern const char	*err_pages[70];
 /* parser.c */
 int		 parser_append(struct parser*, const char*, size_t);
 int		 parser_set_buf(struct parser*, const char*, size_t);
+int		 parser_foreach_line(struct parser*, const char*, size_t, parsechunkfn);
 
 /* sandbox.c */
 void		 sandbox_network_process(void);
