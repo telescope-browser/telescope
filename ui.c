@@ -1661,7 +1661,7 @@ usage(void)
 }
 
 int
-ui_init(int argc, const char **argv)
+ui_init(int argc, char * const *argv)
 {
 	const char *url = NEW_TAB_URL;
 	int ch;

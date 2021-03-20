@@ -246,7 +246,7 @@ void		 add_to_bookmarks(const char*);
 void		 textplain_initparser(struct parser*);
 
 /* ui.c */
-int		 ui_init(int, const char**);
+int		 ui_init(int, char * const*);
 void		 ui_on_tab_loaded(struct tab*);
 void		 ui_on_tab_refresh(struct tab*);
 void		 ui_require_input(struct tab*, int);

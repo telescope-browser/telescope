@@ -412,7 +412,7 @@ add_to_bookmarks(const char *str)
 }
 
 int
-main(int argc, char **argv)
+main(int argc, char * const *argv)
 {
 	struct imsgbuf	network_ibuf, fs_ibuf;
 	int		net_fds[2], fs_fds[2];

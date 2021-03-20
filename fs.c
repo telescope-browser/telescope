@@ -22,6 +22,8 @@
 
 #include "telescope.h"
 
+#include <sys/stat.h>
+
 #include <errno.h>
 #include <limits.h>
 #include <stdio.h>
@@ -215,7 +217,8 @@ fs_main(struct imsgbuf *b)
 int
 load_certs(struct ohash *h)
 {
-	char		*p, *last, *errstr, *el, *line = NULL;
+	char		*p, *last, *el, *line = NULL;
+	const char	*errstr;
 	int		 i;
 	size_t		 linesize = 0;
 	ssize_t		 linelen;
