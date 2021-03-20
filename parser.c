@@ -64,17 +64,25 @@ int
 parser_foreach_line(struct parser *p, const char *buf, size_t size,
     parsechunkfn fn)
 {
-	const char	*b, *e;
-	size_t		 l, len;
+	char		*b, *e;
+	unsigned int	 ch;
+	size_t		 i, l, len;
 
-	if (p->len == 0) {
-		b = buf;
-		len = size;
-	} else {
-		if (!parser_append(p, buf, size))
-			return 0;
-		b = p->buf;
-		len = p->len;
+	if (!parser_append(p, buf, size))
+		return 0;
+	b = p->buf;
+	len = p->len;
+
+	/* drop every "funny" ASCII character */
+	for (i = 0; i < len; ) {
+		ch = b[i];
+		if ((ch >= ' ' || ch == '\n' || ch == '\t')
+		    && ch != 127) { /* del */
+			++i;
+			continue;
+		}
+		memmove(&b[i], &b[i+1], len - i);
+		len--;
 	}
 
 	while (len > 0) {
