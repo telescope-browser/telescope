@@ -28,16 +28,9 @@
  * 1. if it's a line in a pre-formatted block:
  *    a. hard wrap.
  *    b. repeat
- * 2. there is enough room for the next word?
- *    a. yes: render it
- *    b. no: break the current line.
- *       i.  while there isn't enough space to draw the current
- *           word, hard-wrap it
- *       ii. draw the remainder of the current word (can be the
- *           the entirely)
- * 3. render the spaces after the word
- *    a. but if there is not enough room break the line and
- *       forget them
+ * 2. otherwise advance the line char by char.
+ * 3. when ending the space, split the line at the last occurrence of
+ *    a "word separator" (i.e. " \t-") or at point if none.
  * 4. repeat
  *
  */
@@ -70,130 +63,82 @@ push_line(struct tab *tab, const struct line *l, const char *buf, size_t len, in
 }
 
 /*
- * Helper function for wrap_text.  Find the end of the current word
- * and the end of the separator after the word.
- */
-static int
-word_boundaries(const char *s, const char *sep, const char **endword, const char **endspc)
-{
-	*endword = s;
-	*endword = s;
-
-	if (*s == '\0')
-		return 0;
-
-	/* find the end of the current world */
-	for (; *s != '\0'; ++s) {
-		if (strchr(sep, *s) != NULL)
-			break;
-	}
-
-	*endword = s;
-
-	/* find the end of the separator */
-	for (; *s != '\0'; ++s) {
-		if (strchr(sep, *s) == NULL)
-			break;
-	}
-
-	*endspc = s;
-
-	return 1;
-}
-
-static inline int
-emitline(struct tab *tab, size_t zero, size_t *off, const struct line *l,
-    const char **line, int *cont)
-{
-	if (!push_line(tab, l, *line, *off - zero, *cont))
-		return 0;
-	if (!*cont)
-		*cont = 1;
-	*line += *off - zero;
-	*off = zero;
-	return 1;
-}
-
-/*
  * Build a list of visual line by wrapping the given line, assuming
  * that when printed will have a leading prefix prfx.
- *
- * TODO: it considers each byte one cell on the screen!
  */
-void
+int
 wrap_text(struct tab *tab, const char *prfx, struct line *l, size_t width)
 {
-	size_t		 zero, off, len;
-	int		 cont = 0;
-	const char	*endword, *endspc, *line, *linestart;
+	const char	*separators = " \t-";
+	const char	*start, *end, *line, *lastsep, *lastchar;
+	uint32_t	 cp = 0, state = 0;
+	size_t		 cur, prfxwidth, w;
+	int		 cont;
 
-	zero = strlen(prfx);
-	off = zero;
-	line = l->line;
-	linestart = l->line;
+	if ((line = l->line) == NULL)
+		return push_line(tab, l, NULL, 0, 0);
 
-	if (line == NULL) {
-		push_line(tab, l, NULL, 0, 0);
-		return;
-	}
-
-	while (word_boundaries(line, " \t-", &endword, &endspc)) {
-		len = endword - line;
-		if (off + len >= width) {
-			emitline(tab, zero, &off, l, &linestart, &cont);
-			while (len >= width) {
-				/* hard wrap */
-				emitline(tab, zero, &off, l, &linestart, &cont);
-				len -= width-1;
-				line += width-1;
-			}
-
-			if (len != 0)
-				off += len;
-		} else
-			off += len;
-
-		/* print the spaces iff not at bol */
-		len = endspc - endword;
-		/* line = endspc; */
-		if (off != zero) {
-			if (off + len >= width) {
-				emitline(tab, zero, &off, l, &linestart, &cont);
-				linestart = endspc;
-			} else
-				off += len;
+	prfxwidth = utf8_swidth(prfx);
+	cur = prfxwidth;
+	start = line;
+	lastsep = NULL;
+	lastchar = line;
+	cont = 0;
+	for (; *line; line++) {
+		if (utf8_decode(&state, &cp, *line))
+			continue;
+		w = utf8_chwidth(cp);
+		if (cur + w >= width -1) {
+			end = lastsep == NULL
+				? utf8_next_cp((char*)lastchar)
+				: utf8_next_cp((char*)lastsep);
+			if (!push_line(tab, l, start, end - start, cont))
+				return 0;
+			cont = 1;
+			start = end;
+			cur = prfxwidth + utf8_swidth_between(start, lastchar);
+		} else {
+			if (strchr(separators, *line) != NULL)
+				lastsep = line;
 		}
 
-		line = endspc;
+		lastchar = utf8_prev_cp(line, l->line);
+		cur += w;
 	}
 
-	emitline(tab, zero, &off, l, &linestart, &cont);
+	return push_line(tab, l, start, line - start, cont);
 }
 
 int
 hardwrap_text(struct tab *tab, struct line *l, size_t width)
 {
-	size_t		 off, len;
+	const char	*line, *start, *lastchar;
 	int		 cont;
-	const char	*linestart;
+	uint32_t	 state = 0, cp = 0;
+	size_t		 cur, w;
 
-	off = 0;
-	linestart = l->line;
+	if ((line = l->line) == NULL)
+		return push_line(tab, l, NULL, 0, 0);
 
-	if (l->line == NULL)
-		return emitline(tab, 0, &off, l, &linestart, &cont);
+	start = line;
+	lastchar = line;
+	cont = 0;
+	cur = 0;
+	for (; *line; line++) {
+		if (utf8_decode(&state, &cp, *line))
+			continue;
+		w = utf8_chwidth(cp);
+		if (cur + w >= width) {
+			if (!push_line(tab, l, start, lastchar - start, cont))
+				return 0;
+			cont = 1;
+			cur = 0;
+			start = lastchar;
+		}
 
-	len = strlen(l->line);
-
-	while (len >= width) {
-		len -= width-1;
-		off = width-1;
-		if (!emitline(tab, 0, &off, l, &linestart, &cont))
-			return 0;
+		lastchar = utf8_prev_cp(line, l->line);
+		cur += w;
 	}
 
-	if (len != 0)
-		return emitline(tab, 0, &len, l, &linestart, &cont);
-
-	return 1;
+	return push_line(tab, l, start, line - start, cont);
 }

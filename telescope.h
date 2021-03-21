@@ -274,7 +274,7 @@ int		 unicode_isgraph(uint32_t);
 void		 dispatch_imsg(struct imsgbuf*, imsg_handlerfn**, size_t);
 
 /* wrap.c */
-void		 wrap_text(struct tab*, const char*, struct line*, size_t);
+int		 wrap_text(struct tab*, const char*, struct line*, size_t);
 int		 hardwrap_text(struct tab*, struct line*, size_t);
 
 #endif /* TELESCOPE_H */
