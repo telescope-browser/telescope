@@ -556,7 +556,6 @@ cmd_beginning_of_buffer(struct tab *tab)
 	tab->s.curs_y = 0;
 	tab->s.line_x = 0;
 	restore_cursor(tab);
-	redraw_body(tab);
 }
 
 static void
@@ -573,7 +572,6 @@ cmd_end_of_buffer(struct tab *tab)
 	tab->s.current_line = TAILQ_LAST(&tab->s.head, vhead);
 	tab->s.line_x = body_cols;
 	restore_cursor(tab);
-	redraw_body(tab);
 }
 
 static void
@@ -1770,8 +1768,10 @@ void
 ui_on_tab_refresh(struct tab *tab)
 {
 	wrap_page(tab);
-	if (tab->flags & TAB_CURRENT)
+	if (tab->flags & TAB_CURRENT) {
+		restore_cursor(tab);
 		redraw_tab(tab);
+	}
 }
 
 void
