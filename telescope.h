@@ -256,16 +256,21 @@ void		 ui_end(void);
 
 /* utf.8 */
 uint32_t	 utf8_decode(uint32_t*restrict, uint32_t*restrict, uint8_t);
-void		 utf8_encode(uint32_t, char*);
+size_t		 utf8_encode(uint32_t, char*);
 char		*utf8_nth(char*, size_t);
 size_t		 utf8_cplen(char*);
 size_t		 utf8_chwidth(uint32_t);
 size_t		 utf8_snwidth(const char*, size_t);
 size_t		 utf8_swidth(const char*);
+size_t		 utf8_swidth_between(const char*, const char*);
+char		*utf8_next_cp(char*);
+char		*utf8_prev_cp(char*, char*);
 
 /* util.c */
 int		 mark_nonblock(int);
 int		 has_prefix(const char*, const char*);
+int		 unicode_isspace(uint32_t);
+int		 unicode_isgraph(uint32_t);
 void		 dispatch_imsg(struct imsgbuf*, imsg_handlerfn**, size_t);
 
 /* wrap.c */

@@ -16,6 +16,7 @@
 
 #include "telescope.h"
 
+#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
@@ -42,6 +43,22 @@ has_prefix(const char *str, const char *prfx)
 		if (str[i] != prfx[i])
 			return 0;
 	return prfx[i] == '\0';
+}
+
+int
+unicode_isspace(uint32_t cp)
+{
+	if (cp < INT8_MAX)
+		return isspace(cp);
+	return 0;
+}
+
+int
+unicode_isgraph(uint32_t cp)
+{
+	if (cp < INT8_MAX)
+		return isgraph(cp);
+	return 1;
 }
 
 void

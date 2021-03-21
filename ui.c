@@ -36,7 +36,6 @@
 
 #include <telescope.h>
 
-#include <ctype.h>
 #include <curses.h>
 #include <event.h>
 #include <locale.h>
@@ -168,14 +167,15 @@ static struct {
 	char	*curmesg;
 
 	char	 buf[1025];
-	size_t	 off, len;
+	char	*curs;
+	size_t	 cpoff;
 	char	 prompt[32];
 	void	 (*donefn)(void);
 	void	 (*abortfn)(void);
 
 	struct histhead	*history;
 	struct hist	*hist_cur;
-	size_t			 hist_off;
+	size_t		 hist_off;
 } ministate;
 
 struct lineprefix {
@@ -766,8 +766,7 @@ cmd_load_current_url(struct tab *tab)
 	    &lu_history);
 	strlcpy(ministate.prompt, "Load URL: ", sizeof(ministate.prompt));
 	strlcpy(ministate.buf, tab->hist_cur->h, sizeof(ministate.buf));
-	ministate.off = strlen(tab->hist_cur->h);
-	ministate.len = ministate.off;
+	ministate.curs = strchr(ministate.buf, '\0');
 }
 
 static void
@@ -776,8 +775,7 @@ cmd_bookmark_page(struct tab *tab)
 	enter_minibuffer(lu_self_insert, bp_select, exit_minibuffer, NULL);
 	strlcpy(ministate.prompt, "Bookmark URL: ", sizeof(ministate.prompt));
 	strlcpy(ministate.buf, tab->hist_cur->h, sizeof(ministate.buf));
-	ministate.off = strlen(tab->hist_cur->h);
-	ministate.len = ministate.off;
+	ministate.curs = strchr(ministate.buf, '\0');
 }
 
 static void
@@ -795,75 +793,72 @@ global_key_unbound(void)
 static void
 cmd_mini_delete_char(struct tab *tab)
 {
+	char *n;
+
 	minibuffer_taint_hist();
 
-	if (ministate.len == 0 || ministate.off == ministate.len)
+	if (*(n = utf8_next_cp(ministate.curs)) == '\0')
 		return;
 
-	memmove(&ministate.buf[ministate.off],
-	    &ministate.buf[ministate.off+1],
-	    ministate.len - ministate.off + 1);
-	ministate.len--;
+	memmove(ministate.curs, n, strlen(n)+1);
 }
 
 static void
 cmd_mini_delete_backward_char(struct tab *tab)
 {
+	char *p;
+
 	minibuffer_taint_hist();
 
-	if (ministate.len == 0 || ministate.off == 0)
+	if ((p = utf8_prev_cp(ministate.curs, ministate.buf)) == ministate.buf)
 		return;
 
-	memmove(&ministate.buf[ministate.off-1],
-	    &ministate.buf[ministate.off],
-	    ministate.len - ministate.off + 1);
-	ministate.off--;
-	ministate.len--;
+	memmove(p, ministate.curs, strlen(ministate.curs)+1);
 }
 
 static void
 cmd_mini_forward_char(struct tab *tab)
 {
-	if (ministate.off == ministate.len)
+	if (*ministate.curs == '\0')
 		return;
-	ministate.off++;
+	ministate.curs = utf8_next_cp(ministate.curs);
+	ministate.cpoff++;
 }
 
 static void
 cmd_mini_backward_char(struct tab *tab)
 {
-	if (ministate.off == 0)
+	if (ministate.cpoff == 0)
 		return;
-	ministate.off--;
+	ministate.cpoff--;
+	ministate.curs = utf8_prev_cp(ministate.curs-1, ministate.buf);
 }
 
 static void
 cmd_mini_move_end_of_line(struct tab *tab)
 {
-	ministate.off = ministate.len;
+	ministate.curs = strchr(ministate.buf, '\0');
+	ministate.cpoff = utf8_cplen(ministate.buf);
 }
 
 static void
 cmd_mini_move_beginning_of_line(struct tab *tab)
 {
-	ministate.off = 0;
+	ministate.curs = ministate.buf;
+	ministate.cpoff = 0;
 }
 
 static void
 cmd_mini_kill_line(struct tab *tab)
 {
 	minibuffer_taint_hist();
-
-        if (ministate.off == ministate.len)
-		return;
-	ministate.buf[ministate.off] = '\0';
-	ministate.len -= ministate.off;
+	*ministate.curs = '\0';
 }
 
 static void
 cmd_mini_abort(struct tab *tab)
 {
-        ministate.abortfn();
+	ministate.abortfn();
 }
 
 static void
@@ -891,10 +886,8 @@ cmd_mini_previous_history_element(struct tab *tab)
 		ministate.hist_off--;
 	}
 
-	if (ministate.hist_cur != NULL) {
-		ministate.off = 0;
-		ministate.len = strlen(ministate.hist_cur->h);
-	}
+	if (ministate.hist_cur != NULL)
+		ministate.curs = ministate.hist_cur->h;
 }
 
 static void
@@ -915,10 +908,8 @@ cmd_mini_next_history_element(struct tab *tab)
 		ministate.hist_off++;
 	}
 
-	if (ministate.hist_cur != NULL) {
-		ministate.off = 0;
-		ministate.len = strlen(ministate.hist_cur->h);
-	}
+	if (ministate.hist_cur != NULL)
+		ministate.curs = ministate.hist_cur->h;
 }
 
 static void
@@ -959,26 +950,29 @@ minibuffer_taint_hist(void)
 static void
 minibuffer_self_insert(void)
 {
+	char	tmp[5] = {0};
+	size_t	len;
+
 	minibuffer_taint_hist();
 
-	if (ministate.len == sizeof(ministate.buf) -1)
+	if (thiskey.cp == 0)
 		return;
 
-	/* TODO: utf8 handling! */
+	len = utf8_encode(thiskey.cp, tmp);
+	if (ministate.curs + len > ministate.buf + sizeof(ministate.buf) - 1)
+		return;
 
-	memmove(&ministate.buf[ministate.off+1],
-	    &ministate.buf[ministate.off],
-	    ministate.len - ministate.off + 1);
-	ministate.buf[ministate.off] = thiskey.key;
-	ministate.off++;
-	ministate.len++;
+	memmove(ministate.curs + len, ministate.curs, strlen(ministate.curs)+1);
+	memcpy(ministate.curs, tmp, len);
+	ministate.curs = utf8_next_cp(ministate.curs);
+	ministate.cpoff++;
 }
 
 static void
 eecmd_self_insert(void)
 {
-	if (thiskey.meta || isspace(thiskey.key) ||
-	    !isgraph(thiskey.key)) {
+	if (thiskey.meta || unicode_isspace(thiskey.cp) ||
+	    !unicode_isgraph(thiskey.cp)) {
 		global_key_unbound();
 		return;
 	}
@@ -1022,8 +1016,8 @@ ir_select(void)
 static void
 lu_self_insert(void)
 {
-	if (thiskey.meta || isspace(thiskey.key) ||
-	    !isgraph(thiskey.key)) {
+	if (thiskey.meta || unicode_isspace(thiskey.key) ||
+	    !unicode_isgraph(thiskey.key)) {
 		global_key_unbound();
 		return;
 	}
@@ -1426,10 +1420,12 @@ redraw_modeline(struct tab *tab)
 static void
 redraw_minibuffer(void)
 {
-	size_t skip = 0, off_x = 0, off_y = 0;
 	struct tab *tab;
+	size_t off_y, off_x = 0;
+	char *start;
 
 	werase(minibuf);
+
 	if (in_minibuffer) {
 		mvwprintw(minibuf, 0, 0, "%s", ministate.prompt);
 		if (ministate.hist_cur != NULL)
@@ -1439,37 +1435,33 @@ redraw_minibuffer(void)
 
 		getyx(minibuf, off_y, off_x);
 
-		while (ministate.off - skip > (size_t)COLS / 2) {
-			skip += MIN(ministate.off/4, 1);
+		start = ministate.hist_cur != NULL
+			? ministate.hist_cur->h
+			: ministate.buf;
+		while (utf8_swidth_between(start, ministate.curs) > (size_t)COLS/2) {
+			start = utf8_next_cp(start);
 		}
 
-		if (ministate.hist_cur != NULL)
-			wprintw(minibuf, "%s", ministate.hist_cur->h + skip);
-		else
-			wprintw(minibuf, "%s", ministate.buf + skip);
+		waddstr(minibuf, start);
 	}
 
-	if (ministate.curmesg != NULL) {
-		if (in_minibuffer)
-			wprintw(minibuf, "  [%s]", ministate.curmesg);
-		else
-			wprintw(minibuf, "%s", ministate.curmesg);
-	}
+	if (ministate.curmesg != NULL)
+                wprintw(minibuf, in_minibuffer ? "  [%s]" : "%s",
+		    ministate.curmesg);
 
 	if (!in_minibuffer && ministate.curmesg == NULL)
-		wprintw(minibuf, "%s", keybuf);
+		waddstr(minibuf, keybuf);
 
 	/* If nothing else, show the URL at point */
 	if (!in_minibuffer && ministate.curmesg == NULL && *keybuf == '\0') {
 		tab = current_tab();
 		if (tab->s.current_line != NULL &&
 		    tab->s.current_line->parent->type == LINE_LINK)
-			wprintw(minibuf, "%s",
-			    tab->s.current_line->parent->alt);
+			waddstr(minibuf, tab->s.current_line->parent->alt);
 	}
 
 	if (in_minibuffer)
-		wmove(minibuf, 0, off_x + ministate.off - skip);
+		wmove(minibuf, 0, off_x + utf8_swidth_between(start, ministate.curs));
 }
 
 static void
@@ -1625,8 +1617,8 @@ enter_minibuffer(void (*self_insert_fn)(void), void (*donefn)(void),
 	ministate.donefn = donefn;
 	ministate.abortfn = abortfn;
 	memset(ministate.buf, 0, sizeof(ministate.buf));
-        ministate.off = 0;
-	ministate.len = 0;
+	ministate.curs = ministate.buf;
+	ministate.cpoff = 0;
 	strlcpy(ministate.buf, "", sizeof(ministate.prompt));
 
 	ministate.history = hist;
