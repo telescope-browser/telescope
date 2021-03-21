@@ -15,8 +15,6 @@ pages, tabs, privsep, input from the minibuffer etc...
 There are still various things missing or, if you prefer, various
 things that you can help develop :)
 
- - UTF8 handling: it needs to handle non-ASCII characters in pages and
-   in the minibuffer input
  - subscriptions
  - tofu oob verification
  - client certificates
