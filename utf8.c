@@ -48,7 +48,7 @@ static const uint8_t utf8d[] = {
 	1,3,1,1,1,1,1,3,1,3,1,1,1,1,1,1,1,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1, // s7..s8
 };
 
-static inline uint32_t
+uint32_t
 utf8_decode(uint32_t* restrict state, uint32_t* restrict codep, uint8_t byte) {
 	uint32_t type = utf8d[byte];
 
@@ -62,6 +62,28 @@ utf8_decode(uint32_t* restrict state, uint32_t* restrict codep, uint8_t byte) {
 
 
 /* end of the converter, utility functions ahead */
+
+/* encode cp in s.  s must be at least 4 bytes wide */
+void
+utf8_encode(uint32_t cp, char *s)
+{
+	if (cp <= 0x7F) {
+                *s = (uint8_t)cp;
+	} else if (cp <= 0x7FF) {
+                s[1] = (uint8_t)(( cp        & 0x3F ) + 0x80);
+		s[0] = (uint8_t)(((cp >>  6) & 0x1F) + 0xC0);
+	} else if (cp <= 0xFFFF) {
+                s[2] = (uint8_t)(( cp        & 0x3F) + 0x80);
+		s[1] = (uint8_t)(((cp >>  6) & 0x3F) + 0x80);
+		s[0] = (uint8_t)(((cp >> 12) & 0x0F) + 0xE0);
+	} else if (cp <= 0x10FFFF) {
+                s[3] = (uint8_t)(( cp        & 0x3F) + 0x80);
+		s[2] = (uint8_t)(((cp >>  6) & 0x3F) + 0x80);
+		s[1] = (uint8_t)(((cp >> 12) & 0x3F) + 0x80);
+		s[0] = (uint8_t)(((cp >> 18) & 0x07) + 0xF0);
+	} else
+                s[0] = '\0';
+}
 
 char *
 utf8_nth(char *s, size_t n)

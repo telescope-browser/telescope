@@ -117,6 +117,7 @@ static void		 bp_select(void);
 
 static struct vline	*nth_line(struct tab*, size_t);
 static struct tab	*current_tab(void);
+static int		 readkey(void);
 static void		 dispatch_stdio(int, short, void*);
 static void		 handle_clear_minibuf(int, short, void*);
 static void		 handle_resize(int, short, void*);
@@ -139,7 +140,7 @@ static void		 switch_to_tab(struct tab*);
 static struct tab	*new_tab(const char*);
 static void		 usage(void);
 
-static struct { int meta, key; } thiskey;
+static struct { short meta; int key; uint32_t cp; } thiskey;
 
 static WINDOW	*tabline, *body, *modeline, *minibuf;
 static int	 body_lines, body_cols;
@@ -1079,37 +1080,62 @@ current_tab(void)
 	abort();
 }
 
-static void
-dispatch_stdio(int fd, short ev, void *d)
+static int
+readkey(void)
 {
-	struct keymap	*k;
-	const char	*keyname;
-	char		 tmp[2] = {0};
+	uint32_t state = 0;
 
-	thiskey.key = wgetch(body);
-	if (thiskey.key == ERR)
-		return;
-	if (thiskey.key == 27) {
-		/* TODO: make escape-time customizable */
+	if ((thiskey.key = wgetch(body)) == ERR)
+		return 0;
 
-		thiskey.meta = 1;
+	thiskey.meta = thiskey.key == 27;
+	if (thiskey.meta) {
 		thiskey.key = wgetch(body);
 		if (thiskey.key == ERR || thiskey.key == 27) {
 			thiskey.meta = 0;
 			thiskey.key = 27;
 		}
-	} else
-		thiskey.meta = 0;
+	}
+
+	thiskey.cp = 0;
+	if ((unsigned int)thiskey.key < UINT8_MAX) {
+		while (1) {
+			if (!utf8_decode(&state, &thiskey.cp, (uint8_t)thiskey.key))
+				break;
+			if ((thiskey.key = wgetch(body)) == ERR) {
+				message("Error decoding user input");
+				return 0;
+			}
+		}
+	}
+
+	return 1;
+}
+
+static void
+dispatch_stdio(int fd, short ev, void *d)
+{
+	struct keymap	*k;
+	const char	*keyname;
+	char		 tmp[5] = {0};
+
+	if (!readkey())
+		return;
 
 	if (keybuf[0] != '\0')
 		strlcat(keybuf, " ", sizeof(keybuf));
 	if (thiskey.meta)
 		strlcat(keybuf, "M-", sizeof(keybuf));
-	if ((keyname = unkbd(thiskey.key)) != NULL)
-		strlcat(keybuf, keyname, sizeof(keybuf));
-	else {
-		tmp[0] = thiskey.key;
+	if (thiskey.cp != 0) {
+		utf8_encode(thiskey.cp, tmp);
 		strlcat(keybuf, tmp, sizeof(keybuf));
+	} else {
+		if ((keyname = unkbd(thiskey.key)) != NULL)
+			strlcat(keybuf, keyname, sizeof(keybuf));
+		else {
+			tmp[0] = thiskey.key;
+			strlcat(keybuf, tmp, sizeof(keybuf));
+		}
 	}
 
 	TAILQ_FOREACH(k, &current_map->m, keymaps) {

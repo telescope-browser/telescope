@@ -255,6 +255,8 @@ void		 ui_notify(const char*, ...) __attribute__((format(printf, 1, 2)));
 void		 ui_end(void);
 
 /* utf.8 */
+uint32_t	 utf8_decode(uint32_t*restrict, uint32_t*restrict, uint8_t);
+void		 utf8_encode(uint32_t, char*);
 char		*utf8_nth(char*, size_t);
 size_t		 utf8_cplen(char*);
 size_t		 utf8_chwidth(uint32_t);
