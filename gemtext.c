@@ -254,7 +254,7 @@ parse_pre_start(struct parser *p, enum line_type t, const char *buf, size_t len)
 		return emit_line(p, t, NULL, NULL);
 
 	buf += 3;
-	len += 3;
+	len -= 3;
 
 	while (len > 0 && isspace(buf[0])) {
 		buf++;
