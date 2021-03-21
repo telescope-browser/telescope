@@ -21,10 +21,12 @@
  * SOFTWARE.
  */
 
-#include "gmid.h"
+#include "telescope.h"
 
+#include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <wchar.h>
 
 #define UTF8_ACCEPT 0
 #define UTF8_REJECT 1
@@ -47,7 +49,7 @@ static const uint8_t utf8d[] = {
 };
 
 static inline uint32_t
-utf8_decode(uint32_t* state, uint32_t* codep, uint8_t byte) {
+utf8_decode(uint32_t* restrict state, uint32_t* restrict codep, uint8_t byte) {
 	uint32_t type = utf8d[byte];
 
 	*codep = (*state != UTF8_ACCEPT) ?
@@ -58,25 +60,8 @@ utf8_decode(uint32_t* state, uint32_t* codep, uint8_t byte) {
 	return *state;
 }
 
-/* for the iri parser.  Modelled after printCodePoints */
-int
-valid_multibyte_utf8(struct parser *p)
-{
-	uint32_t cp = 0, state = 0;
-
-        for (; *p->iri; p->iri++)
-		if (!utf8_decode(&state, &cp, *p->iri))
-			break;
-
-	/* reject the ASCII range */
-	if (state || cp <= 0x7F) {
-		/* XXX: do some error recovery? */
-		if (state)
-			p->err = "invalid UTF-8 character";
-		return 0;
-	}
-	return 1;
-}
+
+/* end of the converter, utility functions ahead */
 
 char *
 utf8_nth(char *s, size_t n)
@@ -93,4 +78,62 @@ utf8_nth(char *s, size_t n)
 	if (i == n)
 		return s;
 	return NULL;
+}
+
+size_t
+utf8_cplen(char *s)
+{
+	uint32_t cp = 0, state = 0;
+	size_t len;
+
+	len = 0;
+	for (; *s; ++s)
+		if (!utf8_decode(&state, &cp, *s))
+			len++;
+	return len;
+}
+
+/* returns only 0, 1 or 2.  assumes sizeof(wchar_t) is 4 */
+size_t
+utf8_chwidth(uint32_t cp)
+{
+	/* XXX: if we're running on a platform where sizeof(wchar_t)
+	 * == 2 what to do?  The manpage for wcwidth and wcs isn't
+	 * clear about the encoding, but if it's 16 bit wide I assume
+	 * it must use UTF-16... right? */
+	assert(sizeof(wchar_t) == 4);
+
+	return wcwidth((wchar_t)cp);
+}
+
+/* NOTE: n is the number of codepoints, NOT the byte length.  In
+ * other words, s MUST be NUL-terminated. */
+size_t
+utf8_snwidth(const char *s, size_t n)
+{
+	size_t i, tot;
+	uint32_t cp = 0, state = 0;
+
+	tot = 0;
+	for (i = 0; *s && i < n; ++s)
+		if (!utf8_decode(&state, &cp, *s)) {
+			i++;
+			tot += utf8_chwidth(cp);
+		}
+
+	return tot;
+}
+
+size_t
+utf8_swidth(const char *s)
+{
+	size_t tot;
+	uint32_t cp = 0, state = 0;
+
+	tot = 0;
+	for (; *s; ++s)
+		if (!utf8_decode(&state, &cp, *s))
+			tot += utf8_chwidth(cp);
+
+	return tot;
 }

@@ -254,6 +254,13 @@ void		 ui_require_input(struct tab*, int);
 void		 ui_notify(const char*, ...) __attribute__((format(printf, 1, 2)));
 void		 ui_end(void);
 
+/* utf.8 */
+char		*utf8_nth(char*, size_t);
+size_t		 utf8_cplen(char*);
+size_t		 utf8_chwidth(uint32_t);
+size_t		 utf8_snwidth(const char*, size_t);
+size_t		 utf8_swidth(const char*);
+
 /* util.c */
 int		 mark_nonblock(int);
 int		 has_prefix(const char*, const char*);

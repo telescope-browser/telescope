@@ -18,6 +18,7 @@ telescope_SOURCES =	compat.h	\
 			ui.c		\
 			url.c		\
 			url.h		\
+			utf8.c		\
 			util.c		\
 			wrap.c
 

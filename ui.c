@@ -371,14 +371,12 @@ restore_cursor(struct tab *tab)
 	if (vl == NULL || vl->line == NULL)
 		tab->s.curs_x = tab->s.line_x = 0;
 	else
-		tab->s.line_x = MIN(tab->s.line_x, strlen(vl->line));
+		tab->s.curs_x = utf8_snwidth(vl->line, tab->s.line_x);
 
 	if (vl != NULL) {
 		prfx = line_prefixes[vl->parent->type].prfx1;
-		tab->s.curs_x = tab->s.line_x + strlen(prfx);
+		tab->s.curs_x += utf8_swidth(prfx);
 	}
-
-	wmove(body, tab->s.curs_y, tab->s.curs_x);
 }
 
 static void
@@ -477,7 +475,7 @@ cmd_move_end_of_line(struct tab *tab)
 	vl = tab->s.current_line;
 	if (vl->line == NULL)
 		return;
-	tab->s.line_x = body_cols;
+	tab->s.line_x = utf8_cplen(vl->line);
 	restore_cursor(tab);
 }
 
@@ -501,6 +499,7 @@ cmd_scroll_line_up(struct tab *tab)
 	print_vline(vl);
 
 	tab->s.current_line = TAILQ_PREV(tab->s.current_line, vhead, vlines);
+	restore_cursor(tab);
 }
 
 static void
@@ -522,6 +521,8 @@ cmd_scroll_line_down(struct tab *tab)
 	vl = nth_line(tab, tab->s.line_off + body_lines-1);
 	wmove(body, body_lines-1, 0);
 	print_vline(vl);
+
+	restore_cursor(tab);
 }
 
 static void
@@ -1453,7 +1454,6 @@ redraw_tab(struct tab *tab)
 	redraw_modeline(tab);
 	redraw_minibuffer();
 
-	restore_cursor(tab);
 	wrefresh(tabline);
 	wrefresh(modeline);
 
@@ -1487,6 +1487,8 @@ redraw_body(struct tab *tab)
 		if (line == body_lines)
 			break;
 	}
+
+	wmove(body, tab->s.curs_y, tab->s.curs_x);
 }
 
 static void
