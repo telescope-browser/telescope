@@ -180,26 +180,26 @@ utf8_swidth_between(const char *str, const char *end)
 }
 
 char *
-utf8_next_cp(char *s)
+utf8_next_cp(const char *s)
 {
 	uint32_t cp = 0, state = 0;
 
 	for (; *s; ++s)
 		if (!utf8_decode(&state, &cp, *s))
 			break;
-	return s+1;
+	return (char*)s+1;
 }
 
 char *
-utf8_prev_cp(char *start, char *base)
+utf8_prev_cp(const char *start, const char *base)
 {
 	uint8_t c;
 
 	for (; start > base; start--) {
 		c = *start;
                 if ((c & 0xC0) != 0x80)
-			return start;
+			return (char*)start;
 	}
 
-	return base;
+	return (char*)base;
 }

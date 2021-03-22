@@ -36,11 +36,11 @@
  */
 
 static int
-push_line(struct tab *tab, const struct line *l, const char *buf, size_t len, int cont)
+push_line(struct window *window, const struct line *l, const char *buf, size_t len, int cont)
 {
 	struct vline *vl;
 
-	tab->s.line_max++;
+	window->line_max++;
 
 	if ((vl = calloc(1, sizeof(*vl))) == NULL)
 		return 0;
@@ -55,10 +55,10 @@ push_line(struct tab *tab, const struct line *l, const char *buf, size_t len, in
 		memcpy(vl->line, buf, len);
 	vl->flags = cont;
 
-	if (TAILQ_EMPTY(&tab->s.head))
-		TAILQ_INSERT_HEAD(&tab->s.head, vl, vlines);
+	if (TAILQ_EMPTY(&window->head))
+		TAILQ_INSERT_HEAD(&window->head, vl, vlines);
 	else
-		TAILQ_INSERT_TAIL(&tab->s.head, vl, vlines);
+		TAILQ_INSERT_TAIL(&window->head, vl, vlines);
 	return 1;
 }
 
@@ -67,7 +67,7 @@ push_line(struct tab *tab, const struct line *l, const char *buf, size_t len, in
  * that when printed will have a leading prefix prfx.
  */
 int
-wrap_text(struct tab *tab, const char *prfx, struct line *l, size_t width)
+wrap_text(struct window *window, const char *prfx, struct line *l, size_t width)
 {
 	const char	*separators = " \t-";
 	const char	*start, *end, *line, *lastsep, *lastchar;
@@ -76,7 +76,7 @@ wrap_text(struct tab *tab, const char *prfx, struct line *l, size_t width)
 	int		 cont;
 
 	if ((line = l->line) == NULL)
-		return push_line(tab, l, NULL, 0, 0);
+		return push_line(window, l, NULL, 0, 0);
 
 	prfxwidth = utf8_swidth(prfx);
 	cur = prfxwidth;
@@ -92,7 +92,7 @@ wrap_text(struct tab *tab, const char *prfx, struct line *l, size_t width)
 			end = lastsep == NULL
 				? utf8_next_cp((char*)lastchar)
 				: utf8_next_cp((char*)lastsep);
-			if (!push_line(tab, l, start, end - start, cont))
+			if (!push_line(window, l, start, end - start, cont))
 				return 0;
 			cont = 1;
 			start = end;
@@ -106,11 +106,11 @@ wrap_text(struct tab *tab, const char *prfx, struct line *l, size_t width)
 		cur += w;
 	}
 
-	return push_line(tab, l, start, line - start, cont);
+	return push_line(window, l, start, line - start, cont);
 }
 
 int
-hardwrap_text(struct tab *tab, struct line *l, size_t width)
+hardwrap_text(struct window *window, struct line *l, size_t width)
 {
 	const char	*line, *start, *lastchar;
 	int		 cont;
@@ -118,7 +118,7 @@ hardwrap_text(struct tab *tab, struct line *l, size_t width)
 	size_t		 cur, w;
 
 	if ((line = l->line) == NULL)
-		return push_line(tab, l, NULL, 0, 0);
+		return push_line(window, l, NULL, 0, 0);
 
 	start = line;
 	lastchar = line;
@@ -129,7 +129,7 @@ hardwrap_text(struct tab *tab, struct line *l, size_t width)
 			continue;
 		w = utf8_chwidth(cp);
 		if (cur + w >= width) {
-			if (!push_line(tab, l, start, lastchar - start, cont))
+			if (!push_line(window, l, start, lastchar - start, cont))
 				return 0;
 			cont = 1;
 			cur = 0;
@@ -140,5 +140,5 @@ hardwrap_text(struct tab *tab, struct line *l, size_t width)
 		cur += w;
 	}
 
-	return push_line(tab, l, start, line - start, cont);
+	return push_line(window, l, start, line - start, cont);
 }

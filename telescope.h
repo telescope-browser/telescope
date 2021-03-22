@@ -100,30 +100,6 @@ struct parser {
 	TAILQ_HEAD(, line)	 head;
 };
 
-struct histhead {
-	TAILQ_HEAD(mhisthead, hist)	head;
-	size_t				len;
-};
-struct hist {
-	char			h[1025];
-	TAILQ_ENTRY(hist)	entries;
-};
-
-struct ui_state {
-	int			 curs_x;
-	int			 curs_y;
-	size_t			 line_off;
-	size_t			 line_max;
-	struct vline		*current_line;
-	size_t			 line_x;
-
-	short			 loading_anim;
-	short			 loading_anim_step;
-	struct event		 loadingev;
-
-	TAILQ_HEAD(vhead, vline) head;
-};
-
 /*
  * differnt types of trust for a certificate.  Following
  * gemini://thfr.info/gemini/modified-trust-verify.gmi
@@ -143,9 +119,28 @@ struct tofu_entry {
 	int	verified;
 };
 
+struct histhead {
+	TAILQ_HEAD(mhisthead, hist)	head;
+	size_t				len;
+};
+struct hist {
+	char			h[1025];
+	TAILQ_ENTRY(hist)	entries;
+};
+
+struct window {
+	struct parser		 page;
+	int			 curs_x;
+	int			 curs_y;
+	size_t			 line_off;
+	size_t			 line_max;
+	struct vline		*current_line;
+	size_t			 cpoff;
+	TAILQ_HEAD(vhead, vline) head;
+};
+
 extern TAILQ_HEAD(tabshead, tab) tabshead;
 struct tab {
-	struct parser		 page;
 	TAILQ_ENTRY(tab)	 tabs;
 	uint32_t		 id;
 	uint32_t		 flags;
@@ -160,7 +155,11 @@ struct tab {
 	char			 meta[GEMINI_URL_LEN];
 	int			 redirect_count;
 
-	struct ui_state		 s;
+	struct window		 window;
+
+	short			 loading_anim;
+	short			 loading_anim_step;
+	struct event		 loadingev;
 };
 
 struct proto {
@@ -182,7 +181,7 @@ struct keymap {
 	int			 meta;
 	int			 key;
 	struct kmap		 map;
-	void			(*fn)(struct tab*);
+	void			(*fn)(struct window*);
 
 	TAILQ_ENTRY(keymap)	 keymaps;
 };
@@ -210,7 +209,7 @@ void		 hist_push(struct histhead*, struct hist*);
 /* keymap.c */
 int		 kbd(const char*);
 const char	*unkbd(int);
-int		 kmap_define_key(struct kmap*, const char*, void(*)(struct tab*));
+int		 kmap_define_key(struct kmap*, const char*, void(*)(struct window*));
 
 /* mime.c */
 int		 setup_parser_for(struct tab*);
@@ -263,8 +262,8 @@ size_t		 utf8_chwidth(uint32_t);
 size_t		 utf8_snwidth(const char*, size_t);
 size_t		 utf8_swidth(const char*);
 size_t		 utf8_swidth_between(const char*, const char*);
-char		*utf8_next_cp(char*);
-char		*utf8_prev_cp(char*, char*);
+char		*utf8_next_cp(const char*);
+char		*utf8_prev_cp(const char*, const char*);
 
 /* util.c */
 int		 mark_nonblock(int);
@@ -274,7 +273,7 @@ int		 unicode_isgraph(uint32_t);
 void		 dispatch_imsg(struct imsgbuf*, imsg_handlerfn**, size_t);
 
 /* wrap.c */
-int		 wrap_text(struct tab*, const char*, struct line*, size_t);
-int		 hardwrap_text(struct tab*, struct line*, size_t);
+int		 wrap_text(struct window*, const char*, struct line*, size_t);
+int		 hardwrap_text(struct window*, struct line*, size_t);
 
 #endif /* TELESCOPE_H */

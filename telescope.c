@@ -219,7 +219,7 @@ handle_imsg_buf(struct imsg *imsg, size_t datalen)
 
 	tab = tab_by_id(imsg->hdr.peerid);
 
-	if (!tab->page.parse(&tab->page, imsg->data, datalen))
+	if (!tab->window.page.parse(&tab->window.page, imsg->data, datalen))
 		die();
 
 	ui_on_tab_refresh(tab);
@@ -228,14 +228,14 @@ handle_imsg_buf(struct imsg *imsg, size_t datalen)
 static void
 handle_imsg_eof(struct imsg *imsg, size_t datalen)
 {
-	struct tab	*t;
+	struct tab	*tab;
 
-	t = tab_by_id(imsg->hdr.peerid);
-	if (!t->page.free(&t->page))
+	tab = tab_by_id(imsg->hdr.peerid);
+	if (!tab->window.page.free(&tab->window.page))
 		die();
 
-	ui_on_tab_refresh(t);
-	ui_on_tab_loaded(t);
+	ui_on_tab_refresh(tab);
+	ui_on_tab_loaded(tab);
 }
 
 static void
@@ -277,10 +277,10 @@ handle_dispatch_imsg(int fd, short ev, void *d)
 static void
 load_page_from_str(struct tab *tab, const char *page)
 {
-	gemtext_initparser(&tab->page);
-	if (!tab->page.parse(&tab->page, page, strlen(page)))
+	gemtext_initparser(&tab->window.page);
+	if (!tab->window.page.parse(&tab->window.page, page, strlen(page)))
 		die();
-	if (!tab->page.free(&tab->page))
+	if (!tab->window.page.free(&tab->window.page))
 		die();
 	ui_on_tab_refresh(tab);
 	ui_on_tab_loaded(tab);
@@ -303,7 +303,7 @@ load_about_url(struct tab *tab, const char *url)
 	len = sizeof(tab->hist_cur->h)-1;
 	strlcpy(tab->hist_cur->h, url, len);
 
-	gemtext_initparser(&tab->page);
+	gemtext_initparser(&tab->window.page);
 
 	imsg_compose(fsibuf, IMSG_GET, tab->id, 0, -1,
 	    tab->hist_cur->h, len+1);
