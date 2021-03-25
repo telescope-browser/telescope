@@ -25,6 +25,7 @@ static void		 die(void) __attribute__((__noreturn__));
 static struct tab	*tab_by_id(uint32_t);
 static void		 handle_imsg_err(struct imsg*, size_t);
 static void		 handle_imsg_check_cert(struct imsg*, size_t);
+static void		 handle_check_cert_user_choice(int, unsigned int);
 static void		 handle_imsg_got_code(struct imsg*, size_t);
 static void		 handle_imsg_got_meta(struct imsg*, size_t);
 static void		 handle_imsg_buf(struct imsg*, size_t);
@@ -118,14 +119,24 @@ handle_imsg_check_cert(struct imsg *imsg, size_t datalen)
 	} else
 		tofu_res = !strcmp(hash, e->hash);
 
-	if (tofu_res)
+	if (tofu_res) {
 		tab->trust = e->verified ? TS_VERIFIED : TS_TRUSTED;
-	else {
+		imsg_compose(netibuf, IMSG_CERT_STATUS, imsg->hdr.peerid, 0, -1,
+		    &tofu_res, sizeof(tofu_res));
+		imsg_flush(netibuf);
+	} else {
 		tab->trust = TS_UNTRUSTED;
 		load_page_from_str(tab, "# Certificate mismatch\n");
+		ui_yornp("Certificate mismatch.  Proceed?",
+		    handle_check_cert_user_choice);
 	}
-	imsg_compose(netibuf, IMSG_CERT_STATUS, imsg->hdr.peerid, 0, -1,
-	    &tofu_res, sizeof(tofu_res));
+}
+
+static void
+handle_check_cert_user_choice(int accept, unsigned int tabid)
+{
+	imsg_compose(netibuf, IMSG_CERT_STATUS, tabid, 0, -1,
+	    &accept, sizeof(accept));
 	imsg_flush(netibuf);
 }
 

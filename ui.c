@@ -109,6 +109,8 @@ static void		 ir_select(void);
 static void		 lu_self_insert(void);
 static void		 lu_select(void);
 static void		 bp_select(void);
+static void		 yornp_self_insert(void);
+static void		 yornp_abort(void);
 
 static struct vline	*nth_line(struct window*, size_t);
 static struct tab	*current_tab(void);
@@ -149,6 +151,8 @@ static uint32_t		 tab_counter;
 
 static char	keybuf[64];
 
+static void (*yornp_cb)(int, unsigned int);
+
 struct kmap global_map,
 	minibuffer_map,
 	*current_map,
@@ -163,7 +167,7 @@ static int	in_minibuffer;
 static struct {
 	char		*curmesg;
 
-	char		 prompt[32];
+	char		 prompt[64];
 	void		 (*donefn)(void);
 	void		 (*abortfn)(void);
 
@@ -1065,6 +1069,25 @@ bp_select(void)
 		message("Abort.");
 }
 
+static void
+yornp_self_insert(void)
+{
+	if (thiskey.key != 'y' && thiskey.key != 'n') {
+		message("Please answer y or n");
+		return;
+	}
+
+	yornp_cb(thiskey.key == 'y', current_tab()->id);
+	exit_minibuffer();
+}
+
+static void
+yornp_abort(void)
+{
+	yornp_cb(0, current_tab()->id);
+	exit_minibuffer();
+}
+
 static struct vline *
 nth_line(struct window *window, size_t n)
 {
@@ -1824,6 +1847,21 @@ ui_require_input(struct tab *tab, int hide)
 	strlcpy(ministate.prompt, "Input required: ",
 	    sizeof(ministate.prompt));
 	redraw_tab(tab);
+}
+
+void
+ui_yornp(const char *prompt, void (*fn)(int, unsigned int))
+{
+	size_t len;
+
+	yornp_cb = fn;
+	enter_minibuffer(yornp_self_insert, yornp_self_insert,
+	    yornp_abort, NULL);
+
+	len = sizeof(ministate.prompt);
+	strlcpy(ministate.prompt, prompt, len);
+	strlcat(ministate.prompt, " (y or n) ", len);
+	redraw_tab(current_tab());
 }
 
 void
