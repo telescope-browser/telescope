@@ -637,6 +637,7 @@ client_main(struct imsgbuf *b)
 	if ((tlsconf = tls_config_new()) == NULL)
 		die();
 	tls_config_insecure_noverifycert(tlsconf);
+	tls_config_insecure_noverifyname(tlsconf);
 
 	event_init();
 
