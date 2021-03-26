@@ -55,50 +55,53 @@ static void		 load_default_keys(void);
 static void		 empty_vlist(struct window*);
 static void		 restore_cursor(struct window*);
 
-static void		 cmd_previous_line(struct window*);
-static void		 cmd_next_line(struct window*);
-static void		 cmd_backward_char(struct window*);
-static void		 cmd_forward_char(struct window*);
-static void		 cmd_backward_paragraph(struct window*);
-static void		 cmd_forward_paragraph(struct window*);
-static void		 cmd_move_beginning_of_line(struct window*);
-static void		 cmd_move_end_of_line(struct window*);
-static void		 cmd_redraw(struct window*);
-static void		 cmd_scroll_line_down(struct window*);
-static void		 cmd_scroll_line_up(struct window*);
-static void		 cmd_scroll_up(struct window*);
-static void		 cmd_scroll_down(struct window*);
-static void		 cmd_beginning_of_buffer(struct window*);
-static void		 cmd_end_of_buffer(struct window*);
-static void		 cmd_kill_telescope(struct window*);
-static void		 cmd_push_button(struct window*);
-static void		 cmd_push_button_new_tab(struct window*);
-static void		 cmd_previous_button(struct window*);
-static void		 cmd_next_button(struct window*);
-static void		 cmd_previous_page(struct window*);
-static void		 cmd_next_page(struct window*);
-static void		 cmd_clear_minibuf(struct window*);
-static void		 cmd_execute_extended_command(struct window*);
-static void		 cmd_tab_close(struct window*);
-static void		 cmd_tab_close_other(struct window*);
-static void		 cmd_tab_new(struct window*);
-static void		 cmd_tab_next(struct window*);
-static void		 cmd_tab_previous(struct window*);
-static void		 cmd_load_url(struct window*);
-static void		 cmd_load_current_url(struct window*);
-static void		 cmd_bookmark_page(struct window*);
-static void		 cmd_goto_bookmarks(struct window*);
+#define CMD(fnname) static void fnname(struct window *)
+
+CMD(cmd_previous_line);
+CMD(cmd_next_line);
+CMD(cmd_backward_char);
+CMD(cmd_forward_char);
+CMD(cmd_backward_paragraph);
+CMD(cmd_forward_paragraph);
+CMD(cmd_move_beginning_of_line);
+CMD(cmd_move_end_of_line);
+CMD(cmd_redraw);
+CMD(cmd_scroll_line_down);
+CMD(cmd_scroll_line_up);
+CMD(cmd_scroll_up);
+CMD(cmd_scroll_down);
+CMD(cmd_beginning_of_buffer);
+CMD(cmd_end_of_buffer);
+CMD(cmd_kill_telescope);
+CMD(cmd_push_button);
+CMD(cmd_push_button_new_tab);
+CMD(cmd_previous_button);
+CMD(cmd_next_button);
+CMD(cmd_previous_page);
+CMD(cmd_next_page);
+CMD(cmd_clear_minibuf);
+CMD(cmd_execute_extended_command);
+CMD(cmd_tab_close);
+CMD(cmd_tab_close_other);
+CMD(cmd_tab_new);
+CMD(cmd_tab_next);
+CMD(cmd_tab_previous);
+CMD(cmd_load_url);
+CMD(cmd_load_current_url);
+CMD(cmd_bookmark_page);
+CMD(cmd_goto_bookmarks);
+
+CMD(cmd_mini_delete_char);
+CMD(cmd_mini_delete_backward_char);
+CMD(cmd_mini_kill_line);
+CMD(cmd_mini_abort);
+CMD(cmd_mini_complete_and_exit);
+CMD(cmd_mini_previous_history_element);
+CMD(cmd_mini_next_history_element);
+
+#include "cmd.gen.h"
 
 static void		 global_key_unbound(void);
-
-static void		 cmd_mini_delete_char(struct window*);
-static void		 cmd_mini_delete_backward_char(struct window*);
-static void		 cmd_mini_kill_line(struct window*);
-static void		 cmd_mini_abort(struct window*);
-static void		 cmd_mini_complete_and_exit(struct window*);
-static void		 cmd_mini_previous_history_element(struct window*);
-static void		 cmd_mini_next_history_element(struct window*);
-
 static void		 minibuffer_hist_save_entry(void);
 static void		 minibuffer_taint_hist(void);
 static void		 minibuffer_self_insert(void);
@@ -813,12 +816,6 @@ cmd_goto_bookmarks(struct window *window)
 }
 
 static void
-global_key_unbound(void)
-{
-	message("%s is undefined", keybuf);
-}
-
-static void
 cmd_mini_delete_char(struct window *window)
 {
 	char *c, *n;
@@ -939,6 +936,12 @@ cmd_mini_next_history_element(struct window *window)
 }
 
 static void
+global_key_unbound(void)
+{
+	message("%s is undefined", keybuf);
+}
+
+static void
 minibuffer_hist_save_entry(void)
 {
 	struct hist	*hist;
@@ -1009,9 +1012,19 @@ eecmd_self_insert(void)
 static void
 eecmd_select(void)
 {
+	struct cmds *cmd;
+
 	exit_minibuffer();
 	minibuffer_hist_save_entry();
-	message("TODO: try to execute %s", ministate.buf);
+
+	for (cmd = cmds; cmd->cmd != NULL; ++cmd) {
+		if (!strcmp(cmd->cmd, ministate.buf)) {
+			cmd->fn(current_window());
+			return;
+		}
+	}
+
+	message("Unknown command: %s", ministate.buf);
 }
 
 static void

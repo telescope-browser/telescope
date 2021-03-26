@@ -13,4 +13,5 @@ install-sh
 missing
 stamp-h1
 *.o
+cmd.gen.h
 telescope

@@ -1,10 +1,12 @@
 bin_PROGRAMS =		telescope
 
-telescope_SOURCES =	compat.h	\
+telescope_SOURCES =	cmd.gen.h	\
+			compat.h	\
 			compat/*.[ch]	\
 			fs.c		\
 			gemini.c	\
 			gemtext.c	\
+			gencmd.awk	\
 			hash.c		\
 			hist.c		\
 			keymap.c	\
@@ -22,6 +24,11 @@ telescope_SOURCES =	compat.h	\
 			util.c		\
 			wrap.c
 
+CLEANFILES =		cmd.gen.h
+
 LDADD = $(LIBOBJS)
 
 dist_doc_DATA =		README.md LICENSE
+
+cmd.gen.h: ui.c gencmd.awk
+	awk -F '[()]' -f gencmd.awk < ui.c > $@
