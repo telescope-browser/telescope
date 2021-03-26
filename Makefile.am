@@ -31,4 +31,4 @@ LDADD = $(LIBOBJS)
 dist_doc_DATA =		README.md LICENSE
 
 cmd.gen.h: ui.c gencmd.awk
-	awk -F '[()]' -f gencmd.awk < ui.c > $@
+	${AWK} -F '[()]' -f gencmd.awk < ui.c > $@
