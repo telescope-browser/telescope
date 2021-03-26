@@ -26,7 +26,7 @@ telescope_SOURCES =	cmd.gen.h	\
 
 CLEANFILES =		cmd.gen.h
 
-LDADD = $(LIBOBJS)
+LDADD =			$(LIBOBJS)
 
 dist_doc_DATA =		README.md LICENSE
 
