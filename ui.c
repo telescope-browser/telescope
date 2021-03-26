@@ -725,9 +725,8 @@ cmd_tab_close(struct window *window)
 static void
 cmd_tab_close_other(struct window *window)
 {
-	struct tab *tab, *t, *i;
+	struct tab *t, *i;
 
-	tab = current_tab();
 	TAILQ_FOREACH_SAFE(t, &tabshead, tabs, i) {
 		if (t->flags & TAB_CURRENT)
 			continue;
