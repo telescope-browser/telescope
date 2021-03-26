@@ -1016,17 +1016,16 @@ eecmd_select(void)
 {
 	struct cmds *cmd;
 
-	exit_minibuffer();
-	minibuffer_hist_save_entry();
-
 	for (cmd = cmds; cmd->cmd != NULL; ++cmd) {
 		if (!strcmp(cmd->cmd, ministate.buf)) {
+			exit_minibuffer();
+			minibuffer_hist_save_entry();
 			cmd->fn(current_window());
 			return;
 		}
 	}
 
-	message("Unknown command: %s", ministate.buf);
+	message("No match");
 }
 
 static void
