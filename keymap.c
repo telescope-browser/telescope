@@ -101,6 +101,7 @@ static struct keytable {
 	{ "<f63>",	KEY_F(63) },
 	/* ... */
 	{ "del",	KEY_BACKSPACE },
+	{ "backspace",	127 },
 	{ "esc",	27 },
 	{ "space",	' ' },
 	{ "spc",	' ' },

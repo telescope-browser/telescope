@@ -351,6 +351,8 @@ load_default_keys(void)
 	minibuffer_set_key("esc",		cmd_mini_abort);
 	minibuffer_set_key("C-d",		cmd_mini_delete_char);
 	minibuffer_set_key("del",		cmd_mini_delete_backward_char);
+	minibuffer_set_key("backspace",		cmd_mini_delete_backward_char);
+	minibuffer_set_key("C-h",		cmd_mini_delete_backward_char);
 
 	minibuffer_set_key("C-b",		cmd_backward_char);
 	minibuffer_set_key("C-f",		cmd_forward_char);
