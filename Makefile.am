@@ -24,6 +24,8 @@ telescope_SOURCES =	cmd.gen.h	\
 			util.c		\
 			wrap.c
 
+BUILT_SOURCES =		cmd.gen.h
+
 CLEANFILES =		cmd.gen.h
 
 LDADD =			$(LIBOBJS)
