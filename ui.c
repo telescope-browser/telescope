@@ -273,6 +273,9 @@ load_default_keys(void)
 	global_set_key("M-space",	cmd_scroll_up);
 	global_set_key("space",		cmd_scroll_down);
 
+	global_set_key("M-<",		cmd_beginning_of_buffer);
+	global_set_key("M->",		cmd_end_of_buffer);
+
 	global_set_key("C-x C-c",	cmd_kill_telescope);
 
 	global_set_key("C-g",		cmd_clear_minibuf);
@@ -288,9 +291,6 @@ load_default_keys(void)
 	global_set_key("C-x t O",	cmd_tab_previous);
 	global_set_key("C-x t m",	cmd_tab_move);
 	global_set_key("C-x t M",	cmd_tab_move_to);
-
-	global_set_key("M-<",		cmd_beginning_of_buffer);
-	global_set_key("M->",		cmd_end_of_buffer);
 
 	global_set_key("C-M-b",		cmd_previous_page);
 	global_set_key("C-M-f",		cmd_next_page);
@@ -311,15 +311,15 @@ load_default_keys(void)
 	global_set_key("K",		cmd_scroll_line_up);
 	global_set_key("J",		cmd_scroll_line_down);
 
+	global_set_key("g g",		cmd_beginning_of_buffer);
+	global_set_key("G",		cmd_end_of_buffer);
+
 	global_set_key("g D",		cmd_tab_close);
 	global_set_key("g N",		cmd_tab_new);
 	global_set_key("g t",		cmd_tab_next);
 	global_set_key("g T",		cmd_tab_previous);
 	global_set_key("g M-t",		cmd_tab_move);
 	global_set_key("g M-T",		cmd_tab_move_to);
-
-	global_set_key("g g",		cmd_beginning_of_buffer);
-	global_set_key("G",		cmd_end_of_buffer);
 
 	global_set_key("H",		cmd_previous_page);
 	global_set_key("L",		cmd_next_page);
