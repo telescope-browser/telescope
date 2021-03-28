@@ -32,5 +32,7 @@ LDADD =			$(LIBOBJS)
 
 dist_doc_DATA =		README.md LICENSE
 
-cmd.gen.h: ui.c gencmd.awk
-	${AWK} -F '[()]' -f gencmd.awk < ui.c > $@
+dist_man1_MANS =	telescope.1
+
+cmd.gen.h: $(srcdir)/ui.c $(srcdir)/gencmd.awk
+	${AWK} -F '[()]' -f $(srcdir)/gencmd.awk < $(srcdir)/ui.c > $@
