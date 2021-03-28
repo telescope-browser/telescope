@@ -1,0 +1,423 @@
+.\" Copyright (c) 2021 Omar Polo <op@omarpolo.com>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.Dd $Mdocdate: March 28 2021$
+.Dt TELESCOPE 1
+.Os
+.Sh NAME
+.Nm telescope
+.Nd Gemini client
+.Sh SYNOPSIS
+.Nm
+.Bk -words
+.Op Ar URL
+.Ek
+.Sh DESCRIPTION
+.Nm
+is an interactive browser for the Gemini protocol.
+It is able to process text/gemini and more in general every text/* file.
+.Nm
+also features tabs, bookmarks and out-of-band TOFU verification.
+.Sh TOFU
+.Nm
+aims to use the "Trust, but Verify (where appropriate)" approach.
+The idea is to define three level of verification for a certificate:
+.Bl -tag -width 12m
+.It untrusted
+the server fingerprint does NOT match the stored value
+.It trusted
+the server fingerprint matches the store one
+.It verified
+the fingerprint matches and has been verified out-of-band
+.El
+.Pp
+Most of the time the
+.Dq trusted
+level is enough, but where is appropriate users should be able to
+verify out-of-band the certificate.
+.Pp
+At the moment, there is no built-in support for an out-of-band
+verification though.
+.Pp
+Known certificates are store in
+.Pa ~/.telescope/known_hosts
+with a format similar to the
+.Xr ssh 1 Ns '
+.Pa known_hosts
+file.
+Each line is a record and it's made up by three fields, separated by a
+single space, according to the following format:
+.Dq HOST HASH TRUSTED
+where:
+.Pp
+.Bl -tag -width 12m
+.It HOST
+is the hostname.
+.It HASH
+is the hash of the certificate, as outputted by
+.Xr tls_peer_cert_hash 3 Ns .
+.It TRUSTED
+a single digit.
+0 means trusted, 1 verified.
+.El
+.Sh DEFAULT KEY BINDINGS
+The default key bindings are very similar to GNU Emacs, but care has
+been taken to include also bindings familiar for
+.Xr vi 1
+and
+.Dq CUA
+users.
+In the following examples, C-x means Control-x, M-x means Meta-x,
+where the Meta key may be either a special key on the keyboard or the
+ALT key; otherwise ESC followed by the key X works as well, and C-M-x
+means to press the key X together with both Control and Meta.
+.Pp
+Keys are usually a single character, like
+.Sq p
+or
+.Sq n ,
+but some special keys are accepted as well.
+.Pp
+.Bl -tag -width 16m -offset indent -compact
+.It <up>
+Up arrow
+.It <down>
+Down arrow
+.It <left>
+Left arrow
+.It <right>
+Right arrow
+.It <prior>
+Previous page/Page up
+.It <next>
+Next page/Page down
+.It <home>
+Home
+.It <end>
+End
+.It <f0> thru <f63>
+Function keys
+.It del or backspace
+Backspace
+.It esc
+Escape
+.It space or spc
+Space
+.It enter or ret
+Enter
+.It tab
+Tab
+.El
+.Ss GNU Emacs-like keys
+.Bl -tag -width xxxxxxxxxxxx -offset indent -compact
+.It C-p
+.Ic previous-line
+.It C-n
+.Ic next-line
+.It C-f
+.Ic forward-char
+.It C-b
+.Ic backward-char
+.It M-{
+.Ic backward-paragraph
+.It M-}
+.Ic forward-paragraph
+.It C-a
+.Ic move-beginning-of-line
+.It C-e
+.Ic move-end-of-line
+.It M-v, M-space
+.Ic scroll-up
+.It C-v, space
+.Ic scroll-down
+.It M-<
+.Ic beginning-of-buffer
+.It M->
+.Ic end-of-buffer
+.It C-x C-c
+.Ic kill-telescope
+.It C-g
+.Ic clear-minibuf
+.It M-x
+.Ic execute-extended-command
+.It C-x C-f
+.Ic load-url
+.It C-x M-f
+.Ic load-current-url
+.It C-x t 0
+.Ic tab-close
+.It C-x t 1
+.Ic tab-close-other
+.It C-x t 2
+.Ic tab-new
+.It C-x t o
+.Ic tab-next
+.It C-x t O
+.Ic tab-previous
+.It C-x t m
+.Ic tab-move
+.It C-x t M
+.Ic tab-move-to
+.It C-M-b
+.Ic previous-page
+.It C-M-f
+.Ic next-page
+.It <f7> a
+.Ic bookmark-page
+.It <f7> <f7>
+.Ic goto-bookmarks
+.El
+.Ss Xr vi 1 Ns -like keys
+.Bl -tag -width xxxxxxxxxxxx -offset indent -compact
+.It k
+.Ic previous-line
+.It j
+.Ic next-line
+.It l
+.Ic forward-char
+.It h
+.Ic backward-char
+.It {
+.Ic backward-paragraph
+.It }
+.Ic forward-paragraph
+.It ^
+.Ic move-beginning-of-line
+.It $
+.Ic move-end-of-line
+.It K
+.Ic scroll-line-up
+.It J
+.Ic scroll-line-down
+.It g g
+.Ic beginning-of-buffer
+.it G
+.Ic end-of-buffer
+.It g D
+.Ic tab-close
+.It g N
+.Ic tab-new
+.It g t
+.Ic tab-next
+.It g T
+.Ic tab-previous
+.It g M-t
+.Ic tab-move
+.It g M-T
+.Ic tab-move-to
+.It H
+.Ic previous-page
+.It L
+.Ic next-page
+.It q
+.Ic kill-telescope
+.It ESC
+.Ic clear-minibuf
+.It :
+.Ic execute-extended-command
+.El
+.Ss CUA-like keys
+.Bl -tag -width xxxxxxxxxxxx -offset indent -compact
+.It <up>
+.Ic previous-line
+.It <down>
+.Ic next-line
+.It <right>
+.Ic forward-char
+.It <left>
+.Ic backward-char
+.It <prior>
+.Ic scroll-up
+.It <next>
+.Ic scroll-down
+.It M-<left>
+.Ic previous-page
+.It M-<right>
+.Ic next-page
+.El
+.Ss Neither Emacs nor vi specific
+.Bl -tag -width xxxxxxxxxxxx -offset indent -compact
+.It enter
+.Ic push-button
+.It M-enter
+.Ic push-button-new-tab
+.It M-tab
+.Ic previous-button
+.It tab
+.Ic next-button
+.El
+.Ss Minibuffer-specific keys
+.Bl -tag -width xxxxxxxxxxxx -offset indent -compact
+.It enter
+.Ic mini-complete-and-exit
+.It C-g
+.Ic mini-abort
+.It ESC
+.Ic mini-abort
+.It C-d
+.Ic mini-delete-char
+.It del
+.Ic mini-delete-backward-char
+.It backspace
+.Ic mini-delete-backward-char
+.It C-h
+.Ic mini-delete-backward-char
+.It C-b
+.Ic backward-char
+.It C-f
+.Ic forward-char
+.It <left>
+.Ic backward-char
+.It <right>
+.Ic forward-char
+.It C-e
+.Ic move-end-of-line
+.It C-a
+.Ic move-beginning-of-line
+.It <end>
+.Ic move-end-of-line
+.It <home>
+.Ic move-beginning-of-line
+.It C-k
+.Ic mini-kill-line
+.It M-p
+.Ic mini-previous-history-element
+.It M-n
+.Ic mini-next-history-element
+.It <up>
+.Ic mini-previous-history-element
+.It <down>
+.Ic mini-next-history-element
+.El
+.Sh INTERACTIVE COMMANDS
+Follows the documentation for the interactive commands.
+These commands can be bound to a key or executed with
+.Ic execute-extended-command .
+.Ss Movement commands
+.Bl -tag -width execute-extended-command -compact
+.It Ic backward-char
+Move point one character backward.
+.It Ic backward-paragraph
+Move point one paragraph backward.
+.It Ic beginning-of-buffer
+Move point to the beginning of the buffer.
+.It Ic end-of-buffer
+Move point to the end of the buffer.
+.It Ic forward-char
+Move point one character forward.
+.It Ic forward-paragraph
+Move point one paragraph forward.
+.It Ic move-beginning-of-line
+Move point at the beginning of the current (visual) line.
+.It Ic move-end-of-line
+Move point at the end of the current (visual) line.
+.It Ic next-button
+Move point to the next link.
+.It Ic next-line
+Move point to the next (visual) line, in the same column if possible.
+.It Ic previous-button
+Move point to the previous link.
+.It Ic previous-line
+Move point to the previous (visual) line.
+.El
+.Ss Bookmark-related commands
+.Pp
+.Bl -tag -width execute-extended-command -compact
+.It Ic bookmark-page
+Add a link to the bookmark file.
+It preloads the minibuffer with the current URL.
+.It Ic goto-bookmarks
+Load the bookmarks page.
+.El
+.Ss Tab-related commands
+.Bl -tag -width execute-extended-command -compact
+.It Ic tab-close
+Close the current tab.
+.It Ic tab-close-other
+Close all tabs but the current one.
+.It Ic tab-move
+Move the current tab after the next one, wrapping around if
+needed.
+.It Ic tab-move-to
+Move the current tab before the previous one, wrapping around if needed.
+.It Ic tab-new
+Open a new tab.
+.It Ic tab-next
+Focus next tab, wrapping around eventually.
+.It Ic tab-previous
+Focus the previous tab, wrapping around eventually.
+.El
+.Ss Misc commands
+.Bl -tag -width execute-extended-command -compact
+.It Ic clear-minibuf
+Clears the echo area.
+.It Ic execute-extended-command
+Prompts for a command name using the minibuffer.
+.It Ic kill-telescope
+Quit
+.Nm .
+.It Ic load-current-url
+Prompts for an URL, the minibuffer is preloaded with the current
+one.
+.It Ic load-url
+Prompts for an URL.
+.It Ic next-page
+Load the next item in the history list.
+.It Ic previous-page
+Load the previous item in the history list.
+.It Ic push-button
+Follow the link on the current line.
+.It Ic push-button-new-tab
+Follow the link on the current line on a new tab.
+.It Ic redraw
+Redraws the screen, useful if some background program messed up the
+display.
+.It Ic scroll-down
+Scroll down by one visual page.
+.It Ic scroll-line-down
+Scroll down by one line.
+.It Ic scroll-line-up
+Scroll up by one line.
+.It Ic scroll-up
+Scroll up by one visual page.
+.El
+.Ss Minibuffer commands
+.Bl -tag -width execute-extended-command -compact
+.It Ic mini-abort
+Abort the current minibuffer action.
+.It Ic mini-complete-and-exit
+Complete the current minibuffer action.
+.It Ic mini-delete-backward-char
+Delete the character before the point.
+.It Ic mini-delete-char
+Delete the character after the point.
+.It Ic mini-kill-line
+Delete from the point until the end of the line.
+.It Ic mini-next-history-element
+Load the previous history element.
+.It Ic mini-previous-history-element
+Load the next history element.
+.El
+.Sh FILES
+.Bl -tag -width Ds -compact
+.It Pa ~/.telescope/bookmarks.gmi
+Holds the bookmarks.
+.It Pa ~/.telescope/known_hosts
+Contains a list of host keys for all the hosts the user has visited.
+See the TOFU section for more info.
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+program was written by
+.An Omar Polo Aq Mt op@omarpolo.com .
