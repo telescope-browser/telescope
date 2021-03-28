@@ -35,4 +35,4 @@ dist_doc_DATA =		README.md LICENSE
 dist_man1_MANS =	telescope.1
 
 cmd.gen.h: $(srcdir)/ui.c $(srcdir)/gencmd.awk
-	${AWK} -F '[()]' -f $(srcdir)/gencmd.awk < $(srcdir)/ui.c > $@
+	${AWK} -f $(srcdir)/gencmd.awk < $(srcdir)/ui.c > $@
