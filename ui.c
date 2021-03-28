@@ -86,6 +86,8 @@ CMD(cmd_tab_close_other);
 CMD(cmd_tab_new);
 CMD(cmd_tab_next);
 CMD(cmd_tab_previous);
+CMD(cmd_tab_move);
+CMD(cmd_tab_move_to);
 CMD(cmd_load_url);
 CMD(cmd_load_current_url);
 CMD(cmd_bookmark_page);
@@ -284,6 +286,8 @@ load_default_keys(void)
 	global_set_key("C-x t 2",	cmd_tab_new);
 	global_set_key("C-x t o",	cmd_tab_next);
 	global_set_key("C-x t O",	cmd_tab_previous);
+	global_set_key("C-x t m",	cmd_tab_move);
+	global_set_key("C-x t M",	cmd_tab_move_to);
 
 	global_set_key("M-<",		cmd_beginning_of_buffer);
 	global_set_key("M->",		cmd_end_of_buffer);
@@ -311,6 +315,8 @@ load_default_keys(void)
 	global_set_key("g N",		cmd_tab_new);
 	global_set_key("g t",		cmd_tab_next);
 	global_set_key("g T",		cmd_tab_previous);
+	global_set_key("g M-t",		cmd_tab_move);
+	global_set_key("g M-T",		cmd_tab_move_to);
 
 	global_set_key("g g",		cmd_beginning_of_buffer);
 	global_set_key("G",		cmd_end_of_buffer);
@@ -767,6 +773,39 @@ cmd_tab_previous(struct window *window)
 	if ((t = TAILQ_PREV(tab, tabshead, tabs)) == NULL)
 		t = TAILQ_LAST(&tabshead, tabshead);
 	t->flags |= TAB_CURRENT;
+}
+
+static void
+cmd_tab_move(struct window *window)
+{
+	struct tab *tab, *t;
+
+	tab = current_tab();
+	t = TAILQ_NEXT(tab, tabs);
+	TAILQ_REMOVE(&tabshead, tab, tabs);
+
+	if (t == NULL)
+		TAILQ_INSERT_HEAD(&tabshead, tab, tabs);
+	else
+		TAILQ_INSERT_AFTER(&tabshead, t, tab, tabs);
+}
+
+static void
+cmd_tab_move_to(struct window *window)
+{
+	struct tab *tab, *t;
+
+	tab = current_tab();
+	t = TAILQ_PREV(tab, tabshead, tabs);
+	TAILQ_REMOVE(&tabshead, tab, tabs);
+
+	if (t == NULL) {
+		if (TAILQ_EMPTY(&tabshead))
+			TAILQ_INSERT_HEAD(&tabshead, tab, tabs);
+		else
+			TAILQ_INSERT_TAIL(&tabshead, tab, tabs);
+	} else
+		TAILQ_INSERT_BEFORE(t, tab, tabs);
 }
 
 static void
