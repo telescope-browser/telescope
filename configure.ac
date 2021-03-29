@@ -1,7 +1,7 @@
 AC_INIT([telescope], [0.1], [telescope@omarpolo.com], [telescope], [gemini://telescope.omarpolo.com])
 AC_CONFIG_LIBOBJ_DIR(compat)
 AM_INIT_AUTOMAKE([-Wall foreign subdir-objects])
-AC_PROG_CC
+AC_PROG_CC_C99
 AC_USE_SYSTEM_EXTENSIONS
 
 PKG_PROG_PKG_CONFIG
