@@ -400,7 +400,7 @@ write_request(int fd, short ev, void *d)
 	struct req	*req = d;
 	ssize_t		 r;
 	size_t		 len;
-	char		 buf[1024];
+	char		 buf[1027]; /* URL + \r\n\0 */
 
 	strlcpy(buf, "gemini://", sizeof(buf));
 	strlcat(buf, req->url.host, sizeof(buf));
