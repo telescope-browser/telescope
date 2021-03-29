@@ -84,11 +84,11 @@ static void		 handle_dispatch_imsg(int, short, void*);
 struct timeval timeout_for_handshake = { 5, 0 };
 
 static imsg_handlerfn *handlers[] = {
-	[IMSG_GET] = handle_get,
-	[IMSG_CERT_STATUS] = handle_cert_status,
-	[IMSG_PROCEED] = handle_proceed,
-	[IMSG_STOP] = handle_stop,
-	[IMSG_QUIT] = handle_quit,
+	[IMSG_GET]		= handle_get,
+	[IMSG_CERT_STATUS]	= handle_cert_status,
+	[IMSG_PROCEED]		= handle_proceed,
+	[IMSG_STOP]		= handle_stop,
+	[IMSG_QUIT]		= handle_quit,
 };
 
 typedef void (*statefn)(int, short, void*);
@@ -147,6 +147,7 @@ try_to_connect(int fd, short ev, void *d)
 	int		 error = 0;
 	socklen_t	 len = sizeof(error);
 
+again:
 	if (req->p == NULL)
 		goto err;
 
@@ -163,7 +164,7 @@ try_to_connect(int fd, short ev, void *d)
 	req->fd = socket(req->p->ai_family, req->p->ai_socktype, req->p->ai_protocol);
 	if (req->fd == -1) {
 		req->p = req->p->ai_next;
-		try_to_connect(fd, ev, req);
+		goto again;
 	} else {
 		mark_nonblock(req->fd);
 		if (connect(req->fd, req->p->ai_addr, req->p->ai_addrlen) == 0)
