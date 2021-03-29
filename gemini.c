@@ -480,8 +480,7 @@ parse_reply(struct req *req)
 	e++;
 	len = e - req->buf;
 	imsg_compose(ibuf, IMSG_GOT_CODE, req->id, 0, -1, &code, sizeof(code));
-	imsg_compose(ibuf, IMSG_GOT_META, req->id, 0, -1,
-	    req->buf, len);
+	imsg_compose(ibuf, IMSG_GOT_META, req->id, 0, -1, req->buf, len);
 	imsg_flush(ibuf);
 
 	if (code != 20)
