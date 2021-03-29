@@ -57,8 +57,7 @@ static void		 try_to_connect(int, short, void*);
 static void		 query_done(struct asr_result*, void*);
 static void		 async_conn_towards(struct req*);
 #else
-static char		*xasprintf(const char*, ...);
-static int 		 blocking_conn_towards(struct url*, char**);
+static void 		 blocking_conn_towards(struct req*);
 #endif
 
 static void		 close_with_err(struct req*, const char*);
@@ -217,28 +216,13 @@ async_conn_towards(struct req *req)
 	req->asrev = event_asr_run(q, query_done, req);
 }
 #else
-static char *
-xasprintf(const char *fmt, ...)
-{
-	va_list ap;
-	char *s;
-
-	va_start(ap, fmt);
-	if (vasprintf(&s, fmt, ap) == -1)
-		s = NULL;
-	va_end(ap);
-
-	return s;
-}
-
-static int
-blocking_conn_towards(struct url *url, char **err)
+static void
+blocking_conn_towards(struct req *req)
 {
 	struct addrinfo	 hints, *servinfo, *p;
+	struct url	*url = &req->url;
 	int		 status, sock;
 	const char	*proto = "1965";
-
-	*err = NULL;
 
 	if (*url->port != '\0')
 		proto = url->port;
@@ -248,9 +232,9 @@ blocking_conn_towards(struct url *url, char **err)
 	hints.ai_socktype = SOCK_STREAM;
 
 	if ((status = getaddrinfo(url->host, proto, &hints, &servinfo))) {
-		*err = xasprintf("failed to resolve %s: %s",
+		close_with_errf(req, "failed to resolve %s: %s",
 		    url->host, gai_strerror(status));
-		return -1;
+		return;
 	}
 
 	sock = -1;
@@ -261,14 +245,16 @@ blocking_conn_towards(struct url *url, char **err)
 			break;
 		close(sock);
 	}
-
-	if (sock == -1)
-		*err = xasprintf("couldn't connect to %s", url->host);
-	else
-		mark_nonblock(sock);
-
 	freeaddrinfo(servinfo);
-	return sock;
+
+	if (sock == -1) {
+		close_with_errf(req, "couldn't connect to %s", url->host);
+		return;
+	}
+
+	req->fd = sock;
+	mark_nonblock(req->fd);
+	setup_tls(req);
 }
 #endif
 
@@ -567,16 +553,7 @@ handle_get(struct imsg *imsg, size_t datalen)
 #if HAVE_ASR_RUN
         async_conn_towards(req);
 #else
-	{
-		char *err = NULL;
-
-		if ((req->fd = blocking_conn_towards(&req->url, &err)) == -1) {
-			close_with_err(req, err);
-			free(err);
-			return;
-		}
-		setup_tls(req);
-	}
+	blocking_conn_towards(req);
 #endif
 }
 
