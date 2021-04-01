@@ -91,7 +91,7 @@ CMD(cmd_tab_move_to);
 CMD(cmd_load_url);
 CMD(cmd_load_current_url);
 CMD(cmd_bookmark_page);
-CMD(cmd_goto_bookmarks);
+CMD(cmd_list_bookmarks);
 CMD(cmd_toggle_help);
 
 CMD(cmd_mini_delete_char);
@@ -293,7 +293,7 @@ load_default_keys(void)
 	global_set_key("C-M-f",		cmd_next_page);
 
 	global_set_key("<f7> a",	cmd_bookmark_page);
-	global_set_key("<f7> <f7>",	cmd_goto_bookmarks);
+	global_set_key("<f7> <f7>",	cmd_list_bookmarks);
 
 	/* vi/vi-like */
 	global_set_key("k",		cmd_previous_line);
@@ -848,7 +848,7 @@ cmd_bookmark_page(struct window *window)
 }
 
 static void
-cmd_goto_bookmarks(struct window *window)
+cmd_list_bookmarks(struct window *window)
 {
 	load_url_in_tab(current_tab(), "about:bookmarks");
 }
