@@ -448,9 +448,6 @@ main(int argc, char * const *argv)
 {
 	struct imsgbuf	network_ibuf, fs_ibuf;
 	int		net_fds[2], fs_fds[2];
-	pid_t		pid;
-
-	pid = getpid();
 
 	signal(SIGCHLD, SIG_IGN);
 
@@ -466,7 +463,7 @@ main(int argc, char * const *argv)
 		err(1, "fork");
 	case 0:
 		/* child */
-		setproctitle("(%d) fs", pid);
+		setproctitle("fs");
 		close(fs_fds[0]);
 		imsg_init(&fs_ibuf, fs_fds[1]);
 		exit(fs_main(&fs_ibuf));
@@ -484,7 +481,7 @@ main(int argc, char * const *argv)
 		err(1, "fork");
 	case 0:
 		/* child */
-		setproctitle("(%d) client", pid);
+		setproctitle("client");
 		close(net_fds[0]);
 		close(fs_fds[0]);
 		imsg_init(&network_ibuf, net_fds[1]);
@@ -495,7 +492,7 @@ main(int argc, char * const *argv)
 		netibuf = &network_ibuf;
 	}
 
-	setproctitle("(%d) ui", pid);
+	setproctitle("ui");
 
 	telescope_ohash_init(&certs, 5, offsetof(struct tofu_entry, domain));
 	load_certs(&certs);
