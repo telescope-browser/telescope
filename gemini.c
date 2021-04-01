@@ -488,9 +488,9 @@ parse_reply(struct req *req)
 	imsg_flush(ibuf);
 
 	if (20 <= code && code < 30)
-		close_conn(0, 0, req);
-	else
 		advance_buf(req, len+1); /* skip \n too */
+	else
+		close_conn(0, 0, req);
 
 	return;
 
