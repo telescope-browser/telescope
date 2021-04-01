@@ -250,7 +250,7 @@ int		 ui_init(int, char * const*);
 void		 ui_on_tab_loaded(struct tab*);
 void		 ui_on_tab_refresh(struct tab*);
 void		 ui_require_input(struct tab*, int);
-void		 ui_yornp(const char*, void (*)(int, unsigned int));
+void		 ui_yornp(const char*, void (*)(int, void*), void*);
 void		 ui_notify(const char*, ...) __attribute__((format(printf, 1, 2)));
 void		 ui_end(void);
 

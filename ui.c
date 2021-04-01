@@ -168,7 +168,8 @@ static uint32_t		 tab_counter;
 
 static char	keybuf[64];
 
-static void (*yornp_cb)(int, unsigned int);
+static void (*yornp_cb)(int, void*);
+static void *yornp_data;
 
 struct kmap global_map,
 	minibuffer_map,
@@ -1141,14 +1142,16 @@ yornp_self_insert(void)
 		return;
 	}
 
-	yornp_cb(thiskey.key == 'y', current_tab()->id);
+	yornp_cb(thiskey.key == 'y', yornp_data);
+	yornp_data = NULL;
 	exit_minibuffer();
 }
 
 static void
 yornp_abort(void)
 {
-	yornp_cb(0, current_tab()->id);
+	yornp_cb(0, yornp_data);
+	yornp_data = NULL;
 	exit_minibuffer();
 }
 
@@ -2016,11 +2019,12 @@ ui_require_input(struct tab *tab, int hide)
 }
 
 void
-ui_yornp(const char *prompt, void (*fn)(int, unsigned int))
+ui_yornp(const char *prompt, void (*fn)(int, void*), void *data)
 {
 	size_t len;
 
 	yornp_cb = fn;
+	yornp_data = data;
 	enter_minibuffer(yornp_self_insert, yornp_self_insert,
 	    yornp_abort, NULL);
 
