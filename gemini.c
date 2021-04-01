@@ -390,6 +390,10 @@ write_request(int fd, short ev, void *d)
 
 	strlcpy(buf, "gemini://", sizeof(buf));
 	strlcat(buf, req->url.host, sizeof(buf));
+	if (*req->url.port != '\0' && strcmp("1965", req->url.port)) {
+		strlcat(buf, ":", sizeof(buf));
+		strlcat(buf, req->url.port, sizeof(buf));
+	}
 	strlcat(buf, "/", sizeof(buf));
 	strlcat(buf, req->url.path, sizeof(buf));
 
