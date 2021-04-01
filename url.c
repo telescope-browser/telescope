@@ -127,11 +127,21 @@ parse_pct_encoded(struct parser *p)
 	return 1;
 }
 
-/* ALPHA *( ALPHA / DIGIT / "+" / "-" / "." ) "://" */
+/*
+ * ALPHA *( ALPHA / DIGIT / "+" / "-" / "." ) "://"
+ * or
+ * "//"
+ */
 static int
 parse_scheme(struct parser *p)
 {
 	p->parsed->scheme = p->iri;
+
+	if (p->iri[0] == '/' && p->iri[1] == '/') {
+		*p->iri = '\0';
+		p->iri += 2;
+		return 1;
+	}
 
 	if (!isalpha(*p->iri)) {
 		p->err = "illegal character in scheme";
@@ -419,8 +429,10 @@ url_parse(const char *data, struct url *url, const char **err)
 		return 0;
 	}
 
-	if (u.scheme != NULL)
-		strlcpy(url->scheme, u.scheme, sizeof(url->scheme));
+	/* XXX: hack around our not complete compliance with RFC 3986 */
+	/* if (u.scheme != NULL) */
+		strlcpy(url->scheme, "gemini", sizeof(url->scheme));
+
 	if (u.host != NULL)
 		strlcpy(url->host, u.host, sizeof(url->host));
 	if (u.port != NULL)
@@ -440,7 +452,7 @@ url_resolve_from(struct url *url, const char *str, const char **err)
 {
 	char *marker, *query, *hash, *i;
 
-	marker = strstr(str, "://");
+	marker = strstr(str, "//");
 	query = strchr(str, '?');
 	hash = strchr(str, '#');
 
