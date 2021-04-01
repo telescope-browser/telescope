@@ -59,13 +59,12 @@ Each line is a record and it's made up by three fields, separated by a
 single space, according to the following format:
 .Dq HOST HASH TRUSTED
 where:
-.Pp
 .Bl -tag -width 12m
 .It HOST
 is the hostname.
 .It HASH
 is the hash of the certificate, as outputted by
-.Xr tls_peer_cert_hash 3 Ns .
+.Xr tls_peer_cert_hash 3 .
 .It TRUSTED
 a single digit.
 0 means trusted, 1 verified.
@@ -201,7 +200,7 @@ Tab
 .Ic scroll-line-down
 .It g g
 .Ic beginning-of-buffer
-.it G
+.It G
 .Ic end-of-buffer
 .It g D
 .Ic tab-close
@@ -333,7 +332,6 @@ Move point to the previous link.
 Move point to the previous (visual) line.
 .El
 .Ss Bookmark-related commands
-.Pp
 .Bl -tag -width execute-extended-command -compact
 .It Ic bookmark-page
 Add a link to the bookmark file.
@@ -420,6 +418,7 @@ Holds the bookmarks.
 .It Pa ~/.telescope/known_hosts
 Contains a list of host keys for all the hosts the user has visited.
 See the TOFU section for more info.
+.El
 .Sh AUTHORS
 .An -nosplit
 The
