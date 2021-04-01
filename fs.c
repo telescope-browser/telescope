@@ -37,19 +37,28 @@ static void		 handle_get(struct imsg*, size_t);
 static void		 handle_quit(struct imsg*, size_t);
 static void		 handle_bookmark_page(struct imsg*, size_t);
 static void		 handle_save_cert(struct imsg*, size_t);
+static void		 handle_session_start(struct imsg*, size_t);
+static void		 handle_session_tab(struct imsg*, size_t);
+static void		 handle_session_end(struct imsg*, size_t);
 static void		 handle_dispatch_imsg(int, short, void*);
 
 static struct event		 imsgev;
 static struct imsgbuf		*ibuf;
 
+static FILE			*session;
+
 static char	bookmark_file[PATH_MAX];
 static char	known_hosts_file[PATH_MAX];
+static char	session_file[PATH_MAX];
 
 static imsg_handlerfn *handlers[] = {
 	[IMSG_GET] = handle_get,
 	[IMSG_QUIT] = handle_quit,
 	[IMSG_BOOKMARK_PAGE] = handle_bookmark_page,
 	[IMSG_SAVE_CERT] = handle_save_cert,
+	[IMSG_SESSION_START] = handle_session_start,
+	[IMSG_SESSION_TAB] = handle_session_tab,
+	[IMSG_SESSION_END] = handle_session_end,
 };
 
 static void __attribute__((__noreturn__))
@@ -174,6 +183,40 @@ end:
 }
 
 static void
+handle_session_start(struct imsg *imsg, size_t datalen)
+{
+	if (datalen != 0)
+		die();
+
+	if ((session = fopen(session_file, "w")) == NULL)
+		die();
+}
+
+static void
+handle_session_tab(struct imsg *imsg, size_t datalen)
+{
+	if (session == NULL)
+		die();
+
+	if (datalen == 0)
+		die();
+
+	/* skip the NUL-terminator */
+        fwrite(imsg->data, 1, datalen-1, session);
+
+	fprintf(session, "\n");
+}
+
+static void
+handle_session_end(struct imsg *imsg, size_t datalen)
+{
+	if (session == NULL)
+		die();
+	fclose(session);
+	session = NULL;
+}
+
+static void
 handle_dispatch_imsg(int fd, short ev, void *d)
 {
 	struct imsgbuf	*ibuf = d;
@@ -194,6 +237,9 @@ fs_init(void)
 
 	strlcpy(known_hosts_file, getenv("HOME"), sizeof(known_hosts_file));
 	strlcat(known_hosts_file, "/.telescope/known_hosts", sizeof(known_hosts_file));
+
+	strlcpy(session_file, getenv("HOME"), sizeof(session_file));
+	strlcat(session_file, "/.telescope/session", sizeof(session_file));
 
 	return 1;
 }
@@ -275,4 +321,29 @@ load_certs(struct ohash *h)
 
 	free(line);
 	return ferror(f);
+}
+
+int
+load_last_session(void (*cb)(const char*))
+{
+	char	*nl, *line = NULL;
+	int	 e;
+	size_t	 linesize = 0;
+	ssize_t	 linelen;
+	FILE	*session;
+
+	if ((session = fopen(session_file, "r")) == NULL)
+		return 0;
+
+	while ((linelen = getline(&line, &linesize, session)) != -1) {
+                if ((nl = strchr(line, '\n')) != NULL)
+			*nl = '\0';
+		cb(line);
+	}
+
+	free(line);
+	e = ferror(session);
+	fclose(session);
+
+	return !e;
 }

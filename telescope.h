@@ -47,6 +47,10 @@ enum imsg_type {
 	IMSG_BOOKMARK_OK,
 	IMSG_SAVE_CERT,
 	IMSG_SAVE_CERT_OK,
+
+	IMSG_SESSION_START,
+	IMSG_SESSION_TAB,
+	IMSG_SESSION_END,
 };
 
 enum line_type {
@@ -190,6 +194,7 @@ struct keymap {
 int		 fs_init(void);
 int		 fs_main(struct imsgbuf*);
 int		 load_certs(struct ohash*);
+int		 load_last_session(void(*)(const char*));
 
 /* gemini.c */
 int		 client_main(struct imsgbuf*);
@@ -241,6 +246,7 @@ int		 load_previous_page(struct tab*);
 int		 load_next_page(struct tab*);
 void		 stop_tab(struct tab*);
 void		 add_to_bookmarks(const char*);
+void		 save_session(void);
 
 /* textplain.c */
 void		 textplain_initparser(struct parser*);

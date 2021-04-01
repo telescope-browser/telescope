@@ -427,6 +427,24 @@ add_to_bookmarks(const char *str)
 	imsg_flush(fsibuf);
 }
 
+void
+save_session(void)
+{
+	struct tab *tab;
+
+	imsg_compose(fsibuf, IMSG_SESSION_START, 0, 0, -1, NULL, 0);
+	imsg_flush(fsibuf);
+
+	TAILQ_FOREACH(tab, &tabshead, tabs) {
+		imsg_compose(fsibuf, IMSG_SESSION_TAB, 0, 0, -1,
+		    tab->hist_cur->h, strlen(tab->hist_cur->h)+1);
+		imsg_flush(fsibuf);
+	}
+
+	imsg_compose(fsibuf, IMSG_SESSION_END, 0, 0, -1, NULL, 0);
+	imsg_flush(fsibuf);
+}
+
 int
 main(int argc, char * const *argv)
 {

@@ -147,6 +147,7 @@ static void		 enter_minibuffer(void(*)(void), void(*)(void), void(*)(void), stru
 static void		 exit_minibuffer(void);
 static void		 switch_to_tab(struct tab*);
 static struct tab	*new_tab(const char*);
+static void		 session_new_tab_cb(const char*);
 static void		 usage(void);
 
 static struct { short meta; int key; uint32_t cp; } thiskey;
@@ -590,6 +591,7 @@ cmd_end_of_buffer(struct window *window)
 static void
 cmd_kill_telescope(struct window *window)
 {
+	save_session();
 	event_loopbreak();
 }
 
@@ -1895,6 +1897,12 @@ new_tab(const char *url)
 }
 
 static void
+session_new_tab_cb(const char *url)
+{
+	new_tab(url);
+}
+
+static void
 usage(void)
 {
 	fprintf(stderr, "USAGE: %s [url]\n", getprogname());
@@ -1976,7 +1984,9 @@ ui_init(int argc, char * const *argv)
 	signal_set(&winchev, SIGWINCH, handle_resize, NULL);
 	signal_add(&winchev, NULL);
 
-	new_tab(url);
+	load_last_session(session_new_tab_cb);
+	if (strcmp(url, NEW_TAB_URL) || TAILQ_EMPTY(&tabshead))
+		new_tab(url);
 
 	return 1;
 }
