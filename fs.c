@@ -67,7 +67,9 @@ serve_bookmarks(uint32_t peerid)
 	FILE		*f;
 
 	if ((f = fopen(bookmark_file, "r")) == NULL) {
-		t = "# error\n\nCan't open bookmarks\n";
+		t = "# Bookmarks\n\n"
+		    "No bookmarks yet!\n"
+		    "Create ~/.telescope/bookmarks.gmi or use `bookmark-page'.\n";
 		imsg_compose(ibuf, IMSG_BUF, peerid, 0, -1, t, strlen(t));
 		imsg_compose(ibuf, IMSG_EOF, peerid, 0, -1, NULL, 0);
 		imsg_flush(ibuf);
