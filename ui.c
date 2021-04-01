@@ -1811,7 +1811,6 @@ stop_loading_anim(struct tab *tab)
 static void
 load_url_in_tab(struct tab *tab, const char *url)
 {
-	empty_vlist(&tab->window);
 	message("Loading %s...", url);
 	start_loading_anim(tab);
 	load_url(tab, url);
