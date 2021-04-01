@@ -274,6 +274,8 @@ int		 unicode_isgraph(uint32_t);
 void		 dispatch_imsg(struct imsgbuf*, imsg_handlerfn**, size_t);
 
 /* wrap.c */
+void		 empty_linelist(struct window*);
+void		 empty_vlist(struct window*);
 int		 wrap_text(struct window*, const char*, struct line*, size_t);
 int		 hardwrap_text(struct window*, struct line*, size_t);
 

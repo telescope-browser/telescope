@@ -368,6 +368,9 @@ do_load_url(struct tab *tab, const char *url)
 	}
 
 	protos[0].loadfn(tab, url);
+
+	empty_vlist(&tab->window);
+	empty_linelist(&tab->window);
 }
 
 void

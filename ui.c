@@ -53,7 +53,6 @@
 static struct event	stdioev, winchev;
 
 static void		 load_default_keys(void);
-static void		 empty_vlist(struct window*);
 static void		 restore_cursor(struct window*);
 
 #define CMD(fnname) static void fnname(struct window *)
@@ -236,21 +235,6 @@ static struct tab_face {
 } tab_face = {
 	A_REVERSE, A_REVERSE, A_NORMAL
 };
-
-static void
-empty_vlist(struct window *window)
-{
-	struct vline *vl, *t;
-
-	window->current_line = NULL;
-	window->line_max = 0;
-
-	TAILQ_FOREACH_SAFE(vl, &window->head, vlines, t) {
-		TAILQ_REMOVE(&window->head, vl, vlines);
-		free(vl->line);
-		free(vl);
-	}
-}
 
 static inline void
 global_set_key(const char *key, void (*fn)(struct window*))

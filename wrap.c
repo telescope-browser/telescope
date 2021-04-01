@@ -35,6 +35,34 @@
  *
  */
 
+void
+empty_linelist(struct window *window)
+{
+	struct line *l, *lt;
+
+	TAILQ_FOREACH_SAFE(l, &window->page.head, lines, lt) {
+		TAILQ_REMOVE(&window->page.head, l, lines);
+		free(l->line);
+		free(l->alt);
+		free(l);
+	}
+}
+
+void
+empty_vlist(struct window *window)
+{
+	struct vline *vl, *t;
+
+	window->current_line = NULL;
+	window->line_max = 0;
+
+	TAILQ_FOREACH_SAFE(vl, &window->head, vlines, t) {
+		TAILQ_REMOVE(&window->head, vl, vlines);
+		free(vl->line);
+		free(vl);
+	}
+}
+
 static int
 push_line(struct window *window, const struct line *l, const char *buf, size_t len, int cont)
 {
