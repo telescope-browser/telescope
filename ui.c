@@ -36,6 +36,7 @@
 
 #include <telescope.h>
 
+#include <assert.h>
 #include <curses.h>
 #include <event.h>
 #include <locale.h>
@@ -92,6 +93,7 @@ CMD(cmd_load_url);
 CMD(cmd_load_current_url);
 CMD(cmd_bookmark_page);
 CMD(cmd_goto_bookmarks);
+CMD(cmd_toggle_help);
 
 CMD(cmd_mini_delete_char);
 CMD(cmd_mini_delete_backward_char);
@@ -124,13 +126,18 @@ static int		 readkey(void);
 static void		 dispatch_stdio(int, short, void*);
 static void		 handle_clear_minibuf(int, short, void*);
 static void		 handle_resize(int, short, void*);
-static int		 wrap_page(struct window*);
-static void		 print_vline(struct vline*);
+static int		 wrap_page(struct window*, int);
+static void		 print_vline(WINDOW*, struct vline*);
 static void		 redraw_tabline(void);
+static void		 redraw_window(WINDOW*, int, struct window*);
+static void		 redraw_help(void);
 static void		 redraw_body(struct tab*);
 static void		 redraw_modeline(struct tab*);
 static void		 redraw_minibuffer(void);
 static void		 redraw_tab(struct tab*);
+static void		 emit_help_item(char*, void*);
+static void		 rec_compute_help(struct kmap*, char*, size_t);
+static void		 recompute_help(void);
 static void		 vmessage(const char*, va_list);
 static void		 message(const char*, ...) __attribute__((format(printf, 1, 2)));
 static void		 start_loading_anim(struct tab*);
@@ -147,6 +154,12 @@ static struct { short meta; int key; uint32_t cp; } thiskey;
 
 static WINDOW	*tabline, *body, *modeline, *minibuf;
 static int	 body_lines, body_cols;
+
+static WINDOW		*help;
+static struct window	 helpwin;
+static int		 help_lines, help_cols;
+
+static int		 side_window;
 
 static struct event	clminibufev;
 static struct timeval	clminibufev_timer = { 5, 0 };
@@ -346,6 +359,7 @@ load_default_keys(void)
 	global_set_key("C-l",		cmd_redraw);
 
 	/* global */
+	global_set_key("<f1>",		cmd_toggle_help);
 	global_set_key("C-m",		cmd_push_button);
 	global_set_key("M-enter",	cmd_push_button_new_tab);
 	global_set_key("M-tab",		cmd_previous_button);
@@ -511,7 +525,7 @@ cmd_scroll_line_up(struct window *window)
 	vl = nth_line(window, --window->line_off);
 	wscrl(body, -1);
 	wmove(body, 0, 0);
-	print_vline(vl);
+	print_vline(body, vl);
 
 	window->current_line = TAILQ_PREV(window->current_line, vhead, vlines);
 	restore_cursor(window);
@@ -535,7 +549,7 @@ cmd_scroll_line_down(struct window *window)
 
 	vl = nth_line(window, window->line_off + body_lines-1);
 	wmove(body, body_lines-1, 0);
-	print_vline(vl);
+	print_vline(body, vl);
 
 	restore_cursor(window);
 }
@@ -853,6 +867,20 @@ static void
 cmd_goto_bookmarks(struct window *window)
 {
 	load_url_in_tab(current_tab(), "about:bookmarks");
+}
+
+static void
+cmd_toggle_help(struct window *window)
+{
+	side_window = !side_window;
+	if (side_window)
+		recompute_help();
+
+	/* ugly hack, but otherwise the window doesn't get updated
+	 * until I call handle_resize a second time (i.e. C-l).  I
+	 * will be happy to know why something like this is needed. */
+	handle_resize(0, 0, NULL);
+	handle_resize(0, 0, NULL);
 }
 
 static void
@@ -1261,6 +1289,9 @@ dispatch_stdio(int fd, short ev, void *d)
 	current_map = base_map;
 
 done:
+	if (side_window)
+		recompute_help();
+
 	redraw_tab(current_tab());
 }
 
@@ -1297,20 +1328,34 @@ handle_resize(int sig, short ev, void *d)
 	mvwin(modeline, LINES-2, 0);
 	wresize(modeline, 1, COLS);
 
-	wresize(body, LINES-3, COLS);
 	body_lines = LINES-3;
 	body_cols = COLS;
+
+	if (side_window) {
+		help_cols = 0.3 * COLS;
+		help_lines = LINES-3;
+		mvwin(help, 1, 0);
+		wresize(help, help_lines, help_cols);
+
+		wrap_page(&helpwin, help_cols);
+
+		body_cols = COLS - help_cols - 1;
+		mvwin(body, 1, help_cols);
+	} else
+		mvwin(body, 1, 0);
+
+	wresize(body, body_lines, body_cols);
 
 	wresize(tabline, 1, COLS);
 
 	tab = current_tab();
 
-	wrap_page(&tab->window);
+	wrap_page(&tab->window, body_cols);
 	redraw_tab(tab);
 }
 
 static int
-wrap_page(struct window *window)
+wrap_page(struct window *window, int width)
 {
 	struct line		*l;
 	const struct line	*orig;
@@ -1339,10 +1384,10 @@ wrap_page(struct window *window)
 		case LINE_QUOTE:
 		case LINE_PRE_START:
 		case LINE_PRE_END:
-			wrap_text(window, prfx, l, body_cols);
+			wrap_text(window, prfx, l, width);
 			break;
 		case LINE_PRE_CONTENT:
-                        hardwrap_text(window, l, body_cols);
+                        hardwrap_text(window, l, width);
 			break;
 		}
 
@@ -1367,7 +1412,7 @@ wrap_page(struct window *window)
 }
 
 static void
-print_vline(struct vline *vl)
+print_vline(WINDOW *window, struct vline *vl)
 {
 	const char *text = vl->line;
 	const char *prfx;
@@ -1382,13 +1427,13 @@ print_vline(struct vline *vl)
 	if (text == NULL)
 		text = "";
 
-	wattron(body, prefix_face);
-	wprintw(body, "%s", prfx);
-	wattroff(body, prefix_face);
+	wattron(window, prefix_face);
+	wprintw(window, "%s", prfx);
+	wattroff(window, prefix_face);
 
-	wattron(body, text_face);
-	wprintw(body, "%s", text);
-	wattroff(body, text_face);
+	wattron(window, text_face);
+	wprintw(window, "%s", text);
+	wattroff(window, text_face);
 }
 
 static void
@@ -1466,6 +1511,43 @@ redraw_tabline(void)
 		waddch(tabline, ' ');
 	if (truncated)
 		mvwprintw(tabline, 0, COLS-1, ">");
+}
+
+static void
+redraw_window(WINDOW *win, int height, struct window *window)
+{
+	struct vline	*vl;
+	int		 l;
+
+	werase(win);
+
+	window->line_off = MIN(window->line_max-1, window->line_off);
+	if (TAILQ_EMPTY(&window->head))
+		return;
+
+	l = 0;
+	vl = nth_line(window, window->line_off);
+	for (; vl != NULL; vl = TAILQ_NEXT(vl, vlines)) {
+		wmove(win, l, 0);
+		print_vline(win, vl);
+		l++;
+		if (l == height)
+			break;
+	}
+
+	wmove(win, window->curs_y, window->curs_x);
+}
+
+static void
+redraw_help(void)
+{
+	redraw_window(help, help_lines, &helpwin);
+}
+
+static void
+redraw_body(struct tab *tab)
+{
+	redraw_window(body, body_lines, &tab->window);
 }
 
 static inline char
@@ -1574,46 +1656,90 @@ redraw_minibuffer(void)
 static void
 redraw_tab(struct tab *tab)
 {
+	if (side_window) {
+		redraw_help();
+		wnoutrefresh(help);
+	}
+
 	redraw_tabline();
 	redraw_body(tab);
 	redraw_modeline(tab);
 	redraw_minibuffer();
 
-	wrefresh(tabline);
-	wrefresh(modeline);
+	wnoutrefresh(tabline);
+	wnoutrefresh(modeline);
 
 	if (in_minibuffer) {
-		wrefresh(body);
-		wrefresh(minibuf);
+		wnoutrefresh(body);
+		wnoutrefresh(minibuf);
 	} else {
-		wrefresh(minibuf);
-		wrefresh(body);
+		wnoutrefresh(minibuf);
+		wnoutrefresh(body);
+	}
+
+	doupdate();
+}
+
+static void
+emit_help_item(char *prfx, void *fn)
+{
+	struct line	*l;
+	struct cmds	*cmd;
+
+	for (cmd = cmds; cmd->cmd != NULL; ++cmd) {
+		if (fn == cmd->fn)
+			break;
+	}
+	assert(cmd != NULL);
+
+	if ((l = calloc(1, sizeof(*l))) == NULL)
+		abort();
+
+	l->type = LINE_TEXT;
+	l->alt = NULL;
+
+	asprintf(&l->line, "%s %s", prfx, cmd->cmd);
+
+	if (TAILQ_EMPTY(&helpwin.page.head))
+		TAILQ_INSERT_HEAD(&helpwin.page.head, l, lines);
+	else
+		TAILQ_INSERT_TAIL(&helpwin.page.head, l, lines);
+}
+
+static void
+rec_compute_help(struct kmap *keymap, char *prfx, size_t len)
+{
+	struct keymap	*k;
+	char		 p[32];
+	const char	*kn;
+
+	TAILQ_FOREACH(k, &keymap->m, keymaps) {
+		strlcpy(p, prfx, sizeof(p));
+		if (*p != '\0')
+			strlcat(p, " ", sizeof(p));
+		if (k->meta)
+			strlcat(p, "M-", sizeof(p));
+		if ((kn = unkbd(k->key)) != NULL)
+			strlcat(p, kn, sizeof(p));
+		else
+			strlcat(p, keyname(k->key), sizeof(p));
+
+		if (k->fn == NULL)
+			rec_compute_help(&k->map, p, sizeof(p));
+		else
+			emit_help_item(p, k->fn);
 	}
 }
 
 static void
-redraw_body(struct tab *tab)
+recompute_help(void)
 {
-	struct vline	*vl;
-	int		 line;
+	char	p[32] = { 0 };
 
-	werase(body);
-
-	tab->window.line_off = MIN(tab->window.line_max-1, tab->window.line_off);
-	if (TAILQ_EMPTY(&tab->window.head))
-		return;
-
-	line = 0;
-	vl = nth_line(&tab->window, tab->window.line_off);
-	for (; vl != NULL; vl = TAILQ_NEXT(vl, vlines)) {
-		wmove(body, line, 0);
-		print_vline(vl);
-		line++;
-		if (line == body_lines)
-			break;
-	}
-
-	wmove(body, tab->window.curs_y, tab->window.curs_x);
+	empty_vlist(&helpwin);
+	empty_linelist(&helpwin);
+	rec_compute_help(current_map, p, sizeof(p));
+	wrap_page(&helpwin, help_cols);
 }
 
 static void
@@ -1822,6 +1948,9 @@ ui_init(int argc, char * const *argv)
 	ministate.vline.parent = &ministate.line;
 	ministate.window.current_line = &ministate.vline;
 
+	/* initialize help window */
+	TAILQ_INIT(&helpwin.head);
+
 	base_map = &global_map;
 	current_map = &global_map;
 	load_default_keys();
@@ -1840,6 +1969,8 @@ ui_init(int argc, char * const *argv)
 	if ((modeline = newwin(1, COLS, LINES-2, 0)) == NULL)
 		return 0;
 	if ((minibuf = newwin(1, COLS, LINES-1, 0)) == NULL)
+		return 0;
+	if ((help = newwin(1, 1, 1, 0)) == NULL)
 		return 0;
 
 	body_lines = LINES-3;
@@ -1881,7 +2012,7 @@ ui_on_tab_loaded(struct tab *tab)
 void
 ui_on_tab_refresh(struct tab *tab)
 {
-	wrap_page(&tab->window);
+	wrap_page(&tab->window, body_cols);
 	if (tab->flags & TAB_CURRENT) {
 		restore_cursor(&tab->window);
 		redraw_tab(tab);
