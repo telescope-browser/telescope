@@ -1430,23 +1430,30 @@ static void
 redraw_tabline(void)
 {
 	struct tab	*tab;
-	size_t		 toskip;
-	int		 current, x, y, truncated;
+	size_t		 toskip, ots, tabwidth, space, x;
+	int		 current, y, truncated;
 	const char	*title;
 	char		 buf[25];
 
+	tabwidth = sizeof(buf)+1;
+	space = COLS-2;
+
 	toskip = 0;
-	x = 1;
 	TAILQ_FOREACH(tab, &tabshead, tabs) {
-		x += sizeof(buf) + 1;
 		toskip++;
 		if (tab->flags & TAB_CURRENT)
 			break;
 	}
-	if (x < COLS-2)
+
+	if (toskip * tabwidth < space)
 		toskip = 0;
-	else
+	else {
+		ots = toskip;
 		toskip--;
+                while (toskip != 0 &&
+		    (ots - toskip+1) * tabwidth < space)
+			toskip--;
+	}
 
 	werase(tabline);
 	wattron(tabline, tab_face.background);
@@ -1497,7 +1504,7 @@ redraw_tabline(void)
 	}
 
 	wattron(tabline, tab_face.background);
-	for (; x < COLS; ++x)
+	for (; x < (size_t)COLS; ++x)
 		waddch(tabline, ' ');
 	if (truncated)
 		mvwprintw(tabline, 0, COLS-1, ">");
