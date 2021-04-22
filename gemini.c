@@ -96,7 +96,7 @@ TAILQ_HEAD(, req) reqhead;
 /* a pending request */
 struct req {
 	struct event		 ev;
-	struct url		 url;
+	struct phos_uri		 url;
 	uint32_t		 id;
 	int			 fd;
 	struct tls		*ctx;
@@ -388,19 +388,8 @@ write_request(int fd, short ev, void *d)
 	size_t		 len;
 	char		 buf[1027]; /* URL + \r\n\0 */
 
-	strlcpy(buf, "gemini://", sizeof(buf));
-	strlcat(buf, req->url.host, sizeof(buf));
-	if (*req->url.port != '\0' && strcmp("1965", req->url.port)) {
-		strlcat(buf, ":", sizeof(buf));
-		strlcat(buf, req->url.port, sizeof(buf));
-	}
-	strlcat(buf, "/", sizeof(buf));
-	strlcat(buf, req->url.path, sizeof(buf));
-
-	if (req->url.query[0] != '\0') {
-		strlcat(buf, "?", sizeof(buf));
-		strlcat(buf, req->url.query, sizeof(buf));
-	}
+	if (!phos_serialize_uri(&req->url, buf, sizeof(buf)))
+		die();
 
 	len = strlcat(buf, "\r\n", sizeof(buf));
 
@@ -534,7 +523,6 @@ static void
 handle_get(struct imsg *imsg, size_t datalen)
 {
 	struct req	*req;
-	const char	*e;
 	char		*data;
 
 	data = imsg->data;
@@ -548,8 +536,8 @@ handle_get(struct imsg *imsg, size_t datalen)
 	req->id = imsg->hdr.peerid;
 	TAILQ_INSERT_HEAD(&reqhead, req, reqs);
 
-        if (!url_parse(imsg->data, &req->url, &e)) {
-		close_with_err(req, e);
+        if (!phos_parse_absolute_uri(data, &req->url)) {
+		close_with_err(req, "Can't parse URI");
 		return;
 	}
 

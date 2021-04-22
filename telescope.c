@@ -14,8 +14,8 @@ struct tabshead		 tabshead;
 
 /* the first is also the fallback one */
 static struct proto protos[] = {
-	{ "gemini:",	load_gemini_url },
-	{ "about:",	load_about_url },
+	{ "gemini",	load_gemini_url },
+	{ "about",	load_about_url },
 	{ NULL, NULL },
 };
 
@@ -100,7 +100,7 @@ handle_imsg_check_cert(struct imsg *imsg, size_t datalen)
 
 	tab = tab_by_id(imsg->hdr.peerid);
 
-	if ((e = telescope_lookup_tofu(&certs, tab->url.host)) == NULL) {
+	if ((e = telescope_lookup_tofu(&certs, tab->uri.host)) == NULL) {
 		/* TODO: an update in libressl/libretls changed
 		 * significantly.  Find a better approach at storing
 		 * the certs! */
@@ -110,7 +110,7 @@ handle_imsg_check_cert(struct imsg *imsg, size_t datalen)
 		tofu_res = 1;	/* trust on first use */
 		if ((e = calloc(1, sizeof(*e))) == NULL)
 			abort();
-		strlcpy(e->domain, tab->url.host, sizeof(e->domain));
+		strlcpy(e->domain, tab->uri.host, sizeof(e->domain));
 		strlcpy(e->hash, hash, sizeof(e->hash));
 		telescope_ohash_insert(&certs, e);
 		imsg_compose(fsibuf, IMSG_SAVE_CERT, tab->id, 0, -1,
@@ -300,77 +300,58 @@ load_page_from_str(struct tab *tab, const char *page)
 void
 load_about_url(struct tab *tab, const char *url)
 {
-	char	*m;
-	size_t	 len;
-
 	tab->trust = TS_VERIFIED;
-
-	memset(&tab->url, 0, sizeof(tab->url));
-
-	m = strchr(url, ':');
-	strlcpy(tab->url.scheme, "about", sizeof(tab->url.scheme));
-	strlcpy(tab->url.path, m+1, sizeof(tab->url.path));
-
-	len = sizeof(tab->hist_cur->h)-1;
-	strlcpy(tab->hist_cur->h, url, len);
 
 	gemtext_initparser(&tab->window.page);
 
 	imsg_compose(fsibuf, IMSG_GET, tab->id, 0, -1,
-	    tab->hist_cur->h, len+1);
+	    tab->hist_cur->h, strlen(tab->hist_cur->h)+1);
 	imsg_flush(fsibuf);
 }
 
 void
 load_gemini_url(struct tab *tab, const char *url)
 {
-	const char	*err;
-	char		*p;
 	size_t		 len;
 
-	len = sizeof(tab->hist_cur->h)-1;
-
-	if (has_prefix(url, "gemini:")) {
-		if (!url_parse(url, &tab->url, &err))
-			goto err;
-	} else {
-		if (!url_resolve_from(&tab->url, url, &err))
-			goto err;
-	}
-
-	url_unparse(&tab->url, tab->hist_cur->h, len);
+	len = sizeof(tab->hist_cur->h);
 	imsg_compose(netibuf, IMSG_GET, tab->id, 0, -1,
-	    tab->hist_cur->h, len+1);
+	    tab->hist_cur->h, len);
 	imsg_flush(netibuf);
 	return;
-
-err:
-	if (asprintf(&p, "#error loading %s\n>%s\n",
-	    url, err) == -1)
-		die();
-	strlcpy(tab->hist_cur->h, url, len);
-	load_page_from_str(tab, p);
-	free(p);
 }
 
 static void
 do_load_url(struct tab *tab, const char *url)
 {
-	struct proto *p;
+	struct phos_uri	 uri;
+	struct proto	*p;
+	char		*t;
 
 	tab->trust = TS_UNKNOWN;
 
+	memcpy(&uri, &tab->uri, sizeof(tab->uri));
+	if (!phos_resolve_uri_from_str(&uri, url, &tab->uri)) {
+                if (asprintf(&t, "#error loading %s\n>%s\n",
+		    url, "Can't parse the URI") == -1)
+			die();
+		strlcpy(tab->hist_cur->h, url, sizeof(tab->hist_cur->h));
+		load_page_from_str(tab, t);
+		free(t);
+		return;
+	}
+
+	phos_serialize_uri(&tab->uri, tab->hist_cur->h,
+	    sizeof(tab->hist_cur->h));
+
 	for (p = protos; p->schema != NULL; ++p) {
-		if (has_prefix(url, p->schema)) {
+		if (!strcmp(uri.scheme, p->schema)) {
 			p->loadfn(tab, url);
-			return;
+                        return;
 		}
 	}
 
 	protos[0].loadfn(tab, url);
-
-	empty_vlist(&tab->window);
-	empty_linelist(&tab->window);
 }
 
 void
@@ -385,6 +366,8 @@ load_url(struct tab *tab, const char *url)
 	}
 	hist_push(&tab->hist, tab->hist_cur);
 	do_load_url(tab, url);
+	empty_vlist(&tab->window);
+	empty_linelist(&tab->window);
 }
 
 int

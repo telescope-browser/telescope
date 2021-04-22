@@ -20,8 +20,7 @@
 #include "compat.h"
 
 #include <event.h>
-
-#include "url.h"
+#include <phos/phos.h>
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -150,7 +149,7 @@ struct tab {
 	uint32_t		 flags;
 
 	enum trust_state	 trust;
-	struct url		 url;
+	struct phos_uri		 uri;
 	struct histhead		 hist;
 	struct hist		*hist_cur;
 	size_t			 hist_off;

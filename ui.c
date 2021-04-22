@@ -1091,7 +1091,7 @@ static void
 ir_select(void)
 {
 	char		 buf[1025] = {0};
-	struct url	 url;
+	struct phos_uri	 uri;
 	struct tab	*tab;
 
 	tab = current_tab();
@@ -1100,9 +1100,12 @@ ir_select(void)
 	minibuffer_hist_save_entry();
 
 	/* a bit ugly but... */
-	memcpy(&url, &tab->url, sizeof(tab->url));
-	url_set_query(&url, ministate.buf);
-	url_unparse(&url, buf, sizeof(buf));
+	memcpy(&uri, &tab->uri, sizeof(tab->uri));
+
+	/* XXX: ptc encode! */
+	memcpy(&uri.query, ministate.buf, strlen(ministate.buf)+1);
+
+	phos_serialize_uri(&uri, buf, sizeof(buf));
 	load_url_in_tab(tab, buf);
 }
 

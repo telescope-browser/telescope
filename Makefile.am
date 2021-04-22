@@ -18,11 +18,12 @@ telescope_SOURCES =	cmd.gen.h	\
 			telescope.h	\
 			textplain.c	\
 			ui.c		\
-			url.c		\
-			url.h		\
 			utf8.c		\
 			util.c		\
 			wrap.c
+
+# phos bundled files
+telescope_SOURCES +=	phos/phos_uri.c
 
 BUILT_SOURCES =		cmd.gen.h
 

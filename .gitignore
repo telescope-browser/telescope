@@ -1,6 +1,9 @@
 TAGS
 .deps
 compat/.deps
+phos/.deps
+phos/.dirstamp
+phos/*.o
 Makefile
 Makefile.in
 aclocal.m4
