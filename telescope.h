@@ -251,6 +251,7 @@ void		 save_session(void);
 void		 textplain_initparser(struct parser*);
 
 /* ui.c */
+unsigned int	 tab_new_id(void);
 int		 ui_init(int, char * const*);
 void		 ui_on_tab_loaded(struct tab*);
 void		 ui_on_tab_refresh(struct tab*);

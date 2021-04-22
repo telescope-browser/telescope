@@ -1878,6 +1878,12 @@ switch_to_tab(struct tab *tab)
 	tab->flags |= TAB_CURRENT;
 }
 
+unsigned int
+tab_new_id(void)
+{
+	return tab_counter++;
+}
+
 static struct tab *
 new_tab(const char *url)
 {
@@ -1892,7 +1898,7 @@ new_tab(const char *url)
 
 	TAILQ_INIT(&tab->window.head);
 
-	tab->id = tab_counter++;
+	tab->id = tab_new_id();
 	switch_to_tab(tab);
 
 	if (TAILQ_EMPTY(&tabshead))

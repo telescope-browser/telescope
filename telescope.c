@@ -314,6 +314,9 @@ load_gemini_url(struct tab *tab, const char *url)
 {
 	size_t		 len;
 
+	stop_tab(tab);
+	tab->id = tab_new_id();
+
 	len = sizeof(tab->hist_cur->h);
 	imsg_compose(netibuf, IMSG_GET, tab->id, 0, -1,
 	    tab->hist_cur->h, len);
