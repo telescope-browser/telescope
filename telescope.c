@@ -345,7 +345,7 @@ do_load_url(struct tab *tab, const char *url)
 	    sizeof(tab->hist_cur->h));
 
 	for (p = protos; p->schema != NULL; ++p) {
-		if (!strcmp(uri.scheme, p->schema)) {
+		if (!strcmp(tab->uri.scheme, p->schema)) {
 			p->loadfn(tab, url);
                         return;
 		}
