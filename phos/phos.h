@@ -42,6 +42,7 @@ int	 phos_parse_uri_reference(const char*, struct phos_uri*);
 int	 phos_parse_absolute_uri(const char*, struct phos_uri*);
 int	 phos_resolve_uri_from_str(const struct phos_uri*, const char *, struct phos_uri*);
 void	 phos_uri_drop_empty_segments(struct phos_uri*);
+int	 phos_uri_set_query(struct phos_uri*, const char*);
 int	 phos_serialize_uri(const struct phos_uri*, char*, size_t);
 
 #ifdef __cplusplus
