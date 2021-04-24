@@ -1099,10 +1099,7 @@ ir_select(void)
 
 	/* a bit ugly but... */
 	memcpy(&uri, &tab->uri, sizeof(tab->uri));
-
-	/* XXX: ptc encode! */
-	memcpy(&uri.query, ministate.buf, strlen(ministate.buf)+1);
-
+	phos_uri_set_query(&uri, ministate.buf);
 	phos_serialize_uri(&uri, buf, sizeof(buf));
 	load_url_in_tab(tab, buf);
 }
