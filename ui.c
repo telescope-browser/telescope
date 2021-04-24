@@ -28,9 +28,7 @@
  *
  * This means that on every resize we have to clear our list of lines
  * and re-render everything.  A clever approach would be to do this
- * ``on-demand''.
- *
- * TODO: make the text formatting on-demand.
+ * ``on-demand'', but it's still missing.
  *
  */
 
