@@ -2043,6 +2043,11 @@ ui_yornp(const char *prompt, void (*fn)(int, unsigned int),
 {
 	size_t len;
 
+	if (in_minibuffer) {
+		fn(0, data);
+		return;
+	}
+
 	yornp_cb = fn;
 	yornp_data = data;
 	enter_minibuffer(yornp_self_insert, yornp_self_insert,
