@@ -898,6 +898,11 @@ phos_serialize_uri(const struct phos_uri *uri, char *buf, size_t len)
 		CAT(uri->host);
 	}
 
+	if (*uri->port != '\0' && strcmp(uri->port, "1965")) {
+		CAT(":");
+		CAT(uri->port);
+	}
+
 	CAT(uri->path);
 
 	if (*uri->query != '\0') {
