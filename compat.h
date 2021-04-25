@@ -86,6 +86,10 @@ size_t		 strlcpy(char*, const char*, size_t);
 size_t		 strlcat(char*, const char*, size_t);
 #endif
 
+#ifndef HAVE_STRSEP
+char		*strsep(char**, const char*);
+#endif
+
 #ifndef HAVE_STRTONUM
 long long	 strtonum(const char*, long long, long long, const char**);
 #endif

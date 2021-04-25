@@ -17,6 +17,7 @@ AC_REPLACE_FUNCS([
 	recallocarray \
 	strlcat \
 	strlcpy \
+	strsep \
 	strtonum \
 	setproctitle \
 ])
