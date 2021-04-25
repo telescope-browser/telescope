@@ -220,7 +220,7 @@ static void
 blocking_conn_towards(struct req *req)
 {
 	struct addrinfo	 hints, *servinfo, *p;
-	struct url	*url = &req->url;
+	struct phos_uri	*url = &req->url;
 	int		 status, sock;
 	const char	*proto = "1965";
 
