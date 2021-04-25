@@ -203,7 +203,7 @@ void		 gemtext_initparser(struct parser*);
 
 /* hash.c */
 void			 telescope_ohash_init(struct ohash*, unsigned int, ptrdiff_t);
-struct tofu_entry	*telescope_lookup_tofu(struct ohash*, const char*);
+struct tofu_entry	*telescope_lookup_tofu(struct ohash*, const char*, const char*);
 void			 telescope_ohash_insert(struct ohash*, struct tofu_entry*);
 
 /* hist.c */

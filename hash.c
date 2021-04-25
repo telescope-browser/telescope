@@ -17,6 +17,7 @@
 #include "telescope.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 static void	*hash_alloc(size_t, void*);
 static void	*hash_calloc(size_t, size_t, void*);
@@ -58,11 +59,18 @@ telescope_ohash_init(struct ohash *h, unsigned int sz, ptrdiff_t ko)
 }
 
 struct tofu_entry *
-telescope_lookup_tofu(struct ohash *h, const char *domain)
+telescope_lookup_tofu(struct ohash *h, const char *domain, const char *port)
 {
+	char		buf[GEMINI_URL_LEN];
 	unsigned int	slot;
 
-	slot = ohash_qlookup(h, domain);
+	strlcpy(buf, domain, sizeof(buf));
+	if (port != NULL && *port != '\0' && strcmp(port, "1965")) {
+		strlcat(buf, ":", sizeof(buf));
+		strlcat(buf, port, sizeof(buf));
+	}
+
+	slot = ohash_qlookup(h, buf);
 	return ohash_find(h, slot);
 }
 

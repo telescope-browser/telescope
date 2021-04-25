@@ -1,5 +1,7 @@
 2021-04-25  Omar Polo  <op@omarpolo.com>
 
+	* hash.c (telescope_lookup_tofu): save certificates per (host, port) tuple, not only per-host
+
 	* configure.ac: tagged 0.1.1
 
 	* gemini.c (blocking_conn_towards): fix compilation if !HAVE_ASR_RUN
