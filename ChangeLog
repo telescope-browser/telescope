@@ -1,0 +1,6 @@
+2021-04-25  Omar Polo  <op@omarpolo.com>
+
+	* gemini.c (blocking_conn_towards): fix compilation if !HAVE_ASR_RUN
+
+	* phos/phos_uri.c (phos_serialize_uri): handle URIs which port is not 1965
+
