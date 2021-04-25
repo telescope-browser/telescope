@@ -25,7 +25,6 @@ telescope_SOURCES =	cmd.gen.h	\
 # phos bundled files
 telescope_SOURCES +=	phos/phos.h	\
 			phos/phos_uri.c
-			
 
 BUILT_SOURCES =		cmd.gen.h
 
