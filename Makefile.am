@@ -7,7 +7,6 @@ telescope_SOURCES =	cmd.gen.h	\
 			gemini.c	\
 			gemtext.c	\
 			gencmd.awk	\
-			hash.c		\
 			hist.c		\
 			keymap.c	\
 			mime.c		\
@@ -17,6 +16,7 @@ telescope_SOURCES =	cmd.gen.h	\
 			telescope.c	\
 			telescope.h	\
 			textplain.c	\
+			tofu.c		\
 			ui.c		\
 			utf8.c		\
 			util.c		\

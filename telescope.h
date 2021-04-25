@@ -201,11 +201,6 @@ int		 client_main(struct imsgbuf*);
 /* gemtext.c */
 void		 gemtext_initparser(struct parser*);
 
-/* hash.c */
-void			 tofu_init(struct ohash*, unsigned int, ptrdiff_t);
-struct tofu_entry	*tofu_lookup(struct ohash*, const char*, const char*);
-void			 tofu_add(struct ohash*, struct tofu_entry*);
-
 /* hist.c */
 void		 hist_clear_forward(struct histhead*, struct hist*);
 void		 hist_push(struct histhead*, struct hist*);
@@ -249,6 +244,11 @@ void		 save_session(void);
 
 /* textplain.c */
 void		 textplain_initparser(struct parser*);
+
+/* tofu.c */
+void			 tofu_init(struct ohash*, unsigned int, ptrdiff_t);
+struct tofu_entry	*tofu_lookup(struct ohash*, const char*, const char*);
+void			 tofu_add(struct ohash*, struct tofu_entry*);
 
 /* ui.c */
 unsigned int	 tab_new_id(void);
