@@ -268,7 +268,7 @@ load_certs(struct ohash *h)
 	char		*p, *last, *el, *line = NULL;
 	const char	*errstr;
 	int		 i;
-	size_t		 linesize = 0;
+	size_t		 lineno = 0, linesize = 0;
 	ssize_t		 linelen;
 	FILE		*f;
 	struct tofu_entry *e;
@@ -280,15 +280,14 @@ load_certs(struct ohash *h)
 		if ((e = calloc(1, sizeof(*e))) == NULL)
 			abort();
 
+		lineno++;
 		i = 0;
                 for ((p = strtok_r(line, " ", &last)); p;
 		    (p = strtok_r(NULL, " ", &last))) {
-			if (*p == '\n') {
-				free(e);
+			if (*p == '\n')
 				break;
-			}
 
-			switch (i) {
+			switch (i++) {
 			case 0:
 				strlcpy(e->domain, p, sizeof(e->domain));
 				break;
@@ -297,7 +296,7 @@ load_certs(struct ohash *h)
 				break;
 			case 2:
 				if ((el = strchr(p, '\n')) == NULL)
-					abort();
+					break;
 				*el = '\0';
 
 				/* 0 <= verified <= 1 */
@@ -306,17 +305,17 @@ load_certs(struct ohash *h)
 					errx(1, "verification for %s is %s: %s",
 					    e->domain, errstr, p);
 				break;
-			default:
-				abort();
 			}
-			i++;
 		}
 
 		if (i != 0 && i != 3)
-			abort();
+			warnx("%s:%zu invalid entry",
+			    known_hosts_file, lineno);
 
-		if (i != 0)
+		if (i == 3)
 			tofu_add(h, e);
+		else
+			free(e);
 	}
 
 	free(line);

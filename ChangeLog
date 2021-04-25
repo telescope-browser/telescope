@@ -1,5 +1,7 @@
 2021-04-25  Omar Polo  <op@omarpolo.com>
 
+	* fs.c (load_certs): don't crash on invalid lines in known_hosts
+
 	* hash.c (telescope_lookup_tofu): save certificates per (host, port) tuple, not only per-host
 
 	* configure.ac: tagged 0.1.1
