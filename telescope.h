@@ -117,7 +117,7 @@ enum trust_state {
 struct tofu_entry {
 	char	domain[GEMINI_URL_LEN];
 	/* enough space for ``PROTO:HASH''.  probably isn't a good
-	 * idea thou. */
+	 * idea tho. */
 	char	hash[128+1];
 	int	verified;
 };
