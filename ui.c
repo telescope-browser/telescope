@@ -1142,15 +1142,15 @@ yornp_self_insert(void)
 		return;
 	}
 
-	yornp_cb(thiskey.key == 'y', yornp_data);
 	exit_minibuffer();
+	yornp_cb(thiskey.key == 'y', yornp_data);
 }
 
 static void
 yornp_abort(void)
 {
-	yornp_cb(0, yornp_data);
 	exit_minibuffer();
+	yornp_cb(0, yornp_data);
 }
 
 static struct vline *
