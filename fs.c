@@ -262,12 +262,25 @@ fs_main(struct imsgbuf *b)
 
 
 
+static int
+parse_khost_line(char *line, char *tmp[3])
+{
+	char **ap;
+
+	for (ap = tmp; ap < &tmp[3] &&
+	    (*ap = strsep(&line, " \t\n")) != NULL;) {
+		if (**ap != '\0')
+			ap++;
+	}
+
+	return ap == &tmp[3] && *line == '\0';
+}
+
 int
 load_certs(struct ohash *h)
 {
-	char		*p, *last, *el, *line = NULL;
+	char		*tmp[3], *line = NULL;
 	const char	*errstr;
-	int		 i;
 	size_t		 lineno = 0, linesize = 0;
 	ssize_t		 linelen;
 	FILE		*f;
@@ -281,41 +294,22 @@ load_certs(struct ohash *h)
 			abort();
 
 		lineno++;
-		i = 0;
-                for ((p = strtok_r(line, " ", &last)); p;
-		    (p = strtok_r(NULL, " ", &last))) {
-			if (*p == '\n')
-				break;
 
-			switch (i++) {
-			case 0:
-				strlcpy(e->domain, p, sizeof(e->domain));
-				break;
-			case 1:
-				strlcpy(e->hash, p, sizeof(e->hash));
-				break;
-			case 2:
-				if ((el = strchr(p, '\n')) == NULL)
-					break;
-				*el = '\0';
+		if (parse_khost_line(line, tmp)) {
+			strlcpy(e->domain, tmp[0], sizeof(e->domain));
+			strlcpy(e->hash, tmp[1], sizeof(e->hash));
 
-				/* 0 <= verified <= 1 */
-				e->verified = strtonum(p, -1, 2, &errstr);
-				if (errstr != NULL)
-					errx(1, "verification for %s is %s: %s",
-					    e->domain, errstr, p);
-				break;
-			}
-		}
-
-		if (i != 0 && i != 3)
+			e->verified = strtonum(tmp[2], 0, 1, &errstr);
+			if (errstr != NULL)
+				errx(1, "%s:%zu verification for %s is %s: %s",
+				    known_hosts_file, lineno,
+				    e->domain, errstr, tmp[2]);
+			tofu_add(h, e);
+		} else {
 			warnx("%s:%zu invalid entry",
 			    known_hosts_file, lineno);
-
-		if (i == 3)
-			tofu_add(h, e);
-		else
 			free(e);
+		}
 	}
 
 	free(line);
