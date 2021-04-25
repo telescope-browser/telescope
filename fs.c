@@ -37,6 +37,7 @@ static void		 handle_get(struct imsg*, size_t);
 static void		 handle_quit(struct imsg*, size_t);
 static void		 handle_bookmark_page(struct imsg*, size_t);
 static void		 handle_save_cert(struct imsg*, size_t);
+static void		 handle_update_cert(struct imsg*, size_t);
 static void		 handle_session_start(struct imsg*, size_t);
 static void		 handle_session_tab(struct imsg*, size_t);
 static void		 handle_session_end(struct imsg*, size_t);
@@ -48,7 +49,7 @@ static struct imsgbuf		*ibuf;
 static FILE			*session;
 
 static char	bookmark_file[PATH_MAX];
-static char	known_hosts_file[PATH_MAX];
+static char	known_hosts_file[PATH_MAX], known_hosts_tmp[PATH_MAX];
 static char	session_file[PATH_MAX];
 
 static imsg_handlerfn *handlers[] = {
@@ -56,6 +57,7 @@ static imsg_handlerfn *handlers[] = {
 	[IMSG_QUIT] = handle_quit,
 	[IMSG_BOOKMARK_PAGE] = handle_bookmark_page,
 	[IMSG_SAVE_CERT] = handle_save_cert,
+	[IMSG_UPDATE_CERT] = handle_update_cert,
 	[IMSG_SESSION_START] = handle_session_start,
 	[IMSG_SESSION_TAB] = handle_session_tab,
 	[IMSG_SESSION_END] = handle_session_end,
@@ -183,6 +185,68 @@ end:
 }
 
 static void
+handle_update_cert(struct imsg *imsg, size_t datalen)
+{
+	FILE	*tmp, *f;
+	struct	 tofu_entry entry;
+	char	 sfn[PATH_MAX], *line = NULL, *t;
+	size_t	 l, linesize = 0;
+	ssize_t	 linelen;
+	int	 fd, e, res = 0;
+
+	if (datalen != sizeof(entry))
+		die();
+	memcpy(&entry, imsg->data, datalen);
+
+	strlcpy(sfn, known_hosts_tmp, sizeof(sfn));
+	if ((fd = mkstemp(sfn)) == -1 ||
+	    (tmp = fdopen(fd, "w")) == NULL) {
+		if (fd != -1) {
+			unlink(sfn);
+			close(fd);
+		}
+		res = 0;
+		goto end;
+	}
+
+	if ((f = fopen(known_hosts_file, "r")) == NULL) {
+		unlink(sfn);
+		fclose(tmp);
+                res = 0;
+		goto end;
+	}
+
+	l = strlen(entry.domain);
+	while ((linelen = getline(&line, &linesize, f)) != -1) {
+		if ((t = strstr(line, entry.domain)) != NULL &&
+		    (line[l] == ' ' || line[l] == '\t'))
+			continue;
+		/* line has a trailing \n */
+		fprintf(tmp, "%s", line);
+	}
+	fprintf(tmp, "%s %s %d\n", entry.domain, entry.hash, entry.verified);
+
+	free(line);
+	e = ferror(tmp);
+
+	fclose(tmp);
+	fclose(f);
+
+	if (e) {
+		unlink(sfn);
+		res = 0;
+		goto end;
+	}
+
+	res = rename(sfn, known_hosts_file) != -1;
+
+end:
+	imsg_compose(ibuf, IMSG_UPDATE_CERT_OK, imsg->hdr.peerid, 0, -1,
+	    &res, sizeof(res));
+	imsg_flush(ibuf);
+}
+
+static void
 handle_session_start(struct imsg *imsg, size_t datalen)
 {
 	if (datalen != 0)
@@ -237,6 +301,10 @@ fs_init(void)
 
 	strlcpy(known_hosts_file, getenv("HOME"), sizeof(known_hosts_file));
 	strlcat(known_hosts_file, "/.telescope/known_hosts", sizeof(known_hosts_file));
+
+	strlcpy(known_hosts_tmp, getenv("HOME"), sizeof(known_hosts_tmp));
+	strlcat(known_hosts_tmp, "/.telescope/known_hosts.tmp.XXXXXXXXXX",
+	    sizeof(known_hosts_file));
 
 	strlcpy(session_file, getenv("HOME"), sizeof(session_file));
 	strlcat(session_file, "/.telescope/session", sizeof(session_file));

@@ -26,12 +26,14 @@ static struct tab	*tab_by_id(uint32_t);
 static void		 handle_imsg_err(struct imsg*, size_t);
 static void		 handle_imsg_check_cert(struct imsg*, size_t);
 static void		 handle_check_cert_user_choice(int, unsigned int);
+static void		 handle_maybe_save_new_cert(int, unsigned int);
 static void		 handle_imsg_got_code(struct imsg*, size_t);
 static void		 handle_imsg_got_meta(struct imsg*, size_t);
 static void		 handle_imsg_buf(struct imsg*, size_t);
 static void		 handle_imsg_eof(struct imsg*, size_t);
 static void		 handle_imsg_bookmark_ok(struct imsg*, size_t);
 static void		 handle_imsg_save_cert_ok(struct imsg*, size_t);
+static void		 handle_imsg_update_cert_ok(struct imsg *, size_t);
 static void		 handle_dispatch_imsg(int, short, void*);
 static void		 load_page_from_str(struct tab*, const char*);
 static void		 do_load_url(struct tab*, const char*);
@@ -45,6 +47,7 @@ static imsg_handlerfn *handlers[] = {
 	[IMSG_EOF] = handle_imsg_eof,
 	[IMSG_BOOKMARK_OK] = handle_imsg_bookmark_ok,
 	[IMSG_SAVE_CERT_OK] = handle_imsg_save_cert_ok,
+	[IMSG_UPDATE_CERT_OK] = handle_imsg_update_cert_ok,
 };
 
 static struct ohash	certs;
@@ -131,6 +134,8 @@ handle_imsg_check_cert(struct imsg *imsg, size_t datalen)
 	} else {
 		tab->trust = TS_UNTRUSTED;
 		load_page_from_str(tab, "# Certificate mismatch\n");
+		if ((tab->cert = strdup(hash)) == NULL)
+			die();
 		ui_yornp("Certificate mismatch.  Proceed?",
 		    handle_check_cert_user_choice, tab->id);
 	}
@@ -139,9 +144,53 @@ handle_imsg_check_cert(struct imsg *imsg, size_t datalen)
 static void
 handle_check_cert_user_choice(int accept, unsigned int tabid)
 {
+	struct tab *tab;
+
+	tab = tab_by_id(tabid);
+
 	imsg_compose(netibuf, IMSG_CERT_STATUS, tabid, 0, -1,
 	    &accept, sizeof(accept));
 	imsg_flush(netibuf);
+
+	if (accept)
+		ui_yornp("Save the new certificate?",
+		    handle_maybe_save_new_cert, tabid);
+	else {
+		free(tab->cert);
+		tab->cert = NULL;
+	}
+}
+
+static void
+handle_maybe_save_new_cert(int accept, unsigned int tabid)
+{
+	struct tab *tab;
+	struct tofu_entry *e;
+
+	tab = tab_by_id(tabid);
+
+	if (!accept)
+		goto end;
+
+	if ((e = calloc(1, sizeof(e))) == NULL)
+		die();
+
+	strlcpy(e->domain, tab->uri.host, sizeof(e->domain));
+	if (*tab->uri.port != '\0' && strcmp(tab->uri.port, "1965")) {
+		strlcat(e->domain, ":", sizeof(e->domain));
+		strlcat(e->domain, tab->uri.port, sizeof(e->domain));
+	}
+	strlcpy(e->hash, tab->cert, sizeof(e->hash));
+	imsg_compose(fsibuf, IMSG_UPDATE_CERT, 0, 0, -1, e, sizeof(*e));
+	imsg_flush(fsibuf);
+
+	tofu_update(&certs, e);
+
+	tab->trust = TS_TRUSTED;
+
+end:
+	free(tab->cert);
+	tab->cert = NULL;
 }
 
 static inline int
@@ -280,6 +329,18 @@ handle_imsg_save_cert_ok(struct imsg *imsg, size_t datalen)
 	if (res != 0)
 		ui_notify("Failed to save the cert for: %s",
 		    strerror(res));
+}
+
+static void
+handle_imsg_update_cert_ok(struct imsg *imsg, size_t datalen)
+{
+	int res;
+
+	if (datalen != sizeof(res))
+		die();
+	memcpy(&res, imsg->data, datalen);
+	if (!res)
+		ui_notify("Failed to update the certificate");
 }
 
 static void

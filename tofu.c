@@ -82,3 +82,17 @@ tofu_add(struct ohash *h, struct tofu_entry *e)
 	slot = ohash_qlookup(h, e->domain);
 	ohash_insert(h, slot, e);
 }
+
+void
+tofu_update(struct ohash *h, struct tofu_entry *e)
+{
+	struct tofu_entry *t;
+
+	if ((t = tofu_lookup(h, e->domain, NULL)) == NULL)
+		tofu_add(h, e);
+	else {
+		strlcpy(t->hash, e->hash, sizeof(t->hash));
+		t->verified = e->verified;
+		free(e);
+	}
+}

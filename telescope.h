@@ -46,6 +46,8 @@ enum imsg_type {
 	IMSG_BOOKMARK_OK,
 	IMSG_SAVE_CERT,
 	IMSG_SAVE_CERT_OK,
+	IMSG_UPDATE_CERT,
+	IMSG_UPDATE_CERT_OK,
 
 	IMSG_SESSION_START,
 	IMSG_SESSION_TAB,
@@ -148,6 +150,7 @@ struct tab {
 	uint32_t		 id;
 	uint32_t		 flags;
 
+	char			*cert;
 	enum trust_state	 trust;
 	struct phos_uri		 uri;
 	struct histhead		 hist;
@@ -249,6 +252,7 @@ void		 textplain_initparser(struct parser*);
 void			 tofu_init(struct ohash*, unsigned int, ptrdiff_t);
 struct tofu_entry	*tofu_lookup(struct ohash*, const char*, const char*);
 void			 tofu_add(struct ohash*, struct tofu_entry*);
+void			 tofu_update(struct ohash*, struct tofu_entry*);
 
 /* ui.c */
 unsigned int	 tab_new_id(void);

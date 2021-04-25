@@ -1,5 +1,7 @@
 2021-04-25  Omar Polo  <op@omarpolo.com>
 
+	* telescope.c (handle_check_cert_user_choice): allow saving the new certificate after mismatch
+
 	* fs.c (load_certs): don't crash on invalid lines in known_hosts
 
 	* hash.c (telescope_lookup_tofu): save certificates per (host, port) tuple, not only per-host
