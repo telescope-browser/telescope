@@ -316,7 +316,7 @@ load_certs(struct ohash *h)
 			abort();
 
 		if (i != 0)
-			telescope_ohash_insert(h, e);
+			tofu_add(h, e);
 	}
 
 	free(line);

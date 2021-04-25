@@ -100,7 +100,7 @@ handle_imsg_check_cert(struct imsg *imsg, size_t datalen)
 
 	tab = tab_by_id(imsg->hdr.peerid);
 
-	if ((e = telescope_lookup_tofu(&certs, tab->uri.host, tab->uri.port)) == NULL) {
+	if ((e = tofu_lookup(&certs, tab->uri.host, tab->uri.port)) == NULL) {
 		/* TODO: an update in libressl/libretls changed
 		 * significantly.  Find a better approach at storing
 		 * the certs! */
@@ -116,7 +116,7 @@ handle_imsg_check_cert(struct imsg *imsg, size_t datalen)
 			strlcat(e->domain, tab->uri.port, sizeof(e->domain));
 		}
 		strlcpy(e->hash, hash, sizeof(e->hash));
-		telescope_ohash_insert(&certs, e);
+		tofu_add(&certs, e);
 		imsg_compose(fsibuf, IMSG_SAVE_CERT, tab->id, 0, -1,
 		    e, sizeof(*e));
 		imsg_flush(fsibuf);
@@ -484,7 +484,7 @@ main(int argc, char * const *argv)
 
 	setproctitle("ui");
 
-	telescope_ohash_init(&certs, 5, offsetof(struct tofu_entry, domain));
+	tofu_init(&certs, 5, offsetof(struct tofu_entry, domain));
 	load_certs(&certs);
 
 	TAILQ_INIT(&tabshead);

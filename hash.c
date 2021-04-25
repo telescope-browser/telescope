@@ -46,7 +46,7 @@ hash_free(void *ptr, void *d)
 }
 
 void
-telescope_ohash_init(struct ohash *h, unsigned int sz, ptrdiff_t ko)
+tofu_init(struct ohash *h, unsigned int sz, ptrdiff_t ko)
 {
 	struct ohash_info info = {
 		.key_offset = ko,
@@ -59,7 +59,7 @@ telescope_ohash_init(struct ohash *h, unsigned int sz, ptrdiff_t ko)
 }
 
 struct tofu_entry *
-telescope_lookup_tofu(struct ohash *h, const char *domain, const char *port)
+tofu_lookup(struct ohash *h, const char *domain, const char *port)
 {
 	char		buf[GEMINI_URL_LEN];
 	unsigned int	slot;
@@ -75,7 +75,7 @@ telescope_lookup_tofu(struct ohash *h, const char *domain, const char *port)
 }
 
 void
-telescope_ohash_insert(struct ohash *h, struct tofu_entry *e)
+tofu_add(struct ohash *h, struct tofu_entry *e)
 {
 	unsigned int	slot;
 
