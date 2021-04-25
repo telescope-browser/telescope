@@ -1,5 +1,7 @@
 2021-04-25  Omar Polo  <op@omarpolo.com>
 
+	* ui.c (cmd_scroll_up): fix cmd_scroll_down/up: they scrolled two line more than what intended
+
 	* telescope.c (handle_check_cert_user_choice): allow saving the new certificate after mismatch
 
 	* fs.c (load_certs): don't crash on invalid lines in known_hosts

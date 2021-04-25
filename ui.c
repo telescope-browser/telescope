@@ -543,7 +543,7 @@ cmd_scroll_up(struct window *window)
 {
 	size_t off;
 
-	off = body_lines+1;
+	off = body_lines-1;
 
 	for (; off > 0; --off)
 		cmd_scroll_line_up(window);
@@ -554,7 +554,7 @@ cmd_scroll_down(struct window *window)
 {
 	size_t off;
 
-	off = body_lines+1;
+	off = body_lines-1;
 
 	for (; off > 0; --off)
 		cmd_scroll_line_down(window);
