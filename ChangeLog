@@ -1,6 +1,7 @@
 2021-04-30  Omar Polo  <op@omarpolo.com>
 
 	* ui.c (cmd_load_url): automatic gemini:// on load-url
+	(cmd_forward_char): fix out-of-bound
 
 2021-04-25  Omar Polo  <op@omarpolo.com>
 

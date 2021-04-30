@@ -446,7 +446,11 @@ cmd_backward_char(struct window *window)
 static void
 cmd_forward_char(struct window *window)
 {
-	window->cpoff++;
+	size_t len;
+
+	len = utf8_cplen(ministate.buf);
+	if (++window->cpoff > len)
+		window->cpoff = len;
 	restore_cursor(window);
 }
 
