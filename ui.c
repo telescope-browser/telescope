@@ -823,6 +823,8 @@ cmd_load_url(struct window *window)
 	enter_minibuffer(lu_self_insert, lu_select, exit_minibuffer,
 	    &lu_history);
 	strlcpy(ministate.prompt, "Load URL: ", sizeof(ministate.prompt));
+	strlcpy(ministate.buf, "gemini://", sizeof(ministate.buf));
+	cmd_move_end_of_line(&ministate.window);
 }
 
 static void
