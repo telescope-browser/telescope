@@ -53,7 +53,8 @@ static struct event	stdioev, winchev;
 static void		 load_default_keys(void);
 static void		 restore_cursor(struct window*);
 
-#define CMD(fnname) static void fnname(struct window *)
+#define CMD(fnname)	static void fnname(struct window *)
+#define DEFALIAS(s, d)	/* nothing */
 
 CMD(cmd_previous_line);
 CMD(cmd_next_line);
@@ -70,7 +71,11 @@ CMD(cmd_scroll_up);
 CMD(cmd_scroll_down);
 CMD(cmd_beginning_of_buffer);
 CMD(cmd_end_of_buffer);
+
 CMD(cmd_kill_telescope);
+DEFALIAS(q, cmd_kill_telescope)
+DEFALIAS(wq, cmd_kill_telescope)
+
 CMD(cmd_push_button);
 CMD(cmd_push_button_new_tab);
 CMD(cmd_previous_button);
