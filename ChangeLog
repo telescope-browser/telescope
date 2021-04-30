@@ -1,3 +1,7 @@
+2021-04-30  Omar Polo  <op@omarpolo.com>
+
+	* ui.c (cmd_load_url): automatic gemini:// on load-url
+
 2021-04-25  Omar Polo  <op@omarpolo.com>
 
 	* ui.c (cmd_scroll_up): fix cmd_scroll_down/up: they scrolled two line more than what intended
