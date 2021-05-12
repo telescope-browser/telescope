@@ -32,7 +32,7 @@
  *
  */
 
-#include <telescope.h>
+#include "telescope.h"
 
 #include <assert.h>
 #include <curses.h>

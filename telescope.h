@@ -18,9 +18,9 @@
 #define TELESCOPE_H
 
 #include "compat.h"
+#include "phos/phos.h"
 
 #include <event.h>
-#include <phos/phos.h>
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
