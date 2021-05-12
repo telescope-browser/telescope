@@ -2,6 +2,7 @@
 
 	* ui.c (handle_resize): debounce resize event
 	(cmd_forward_char): unbreak forward-char
+	added aliases for tab-{next,new,previous}
 
 2021-04-30  Omar Polo  <op@omarpolo.com>
 
