@@ -45,6 +45,7 @@
 #include <unistd.h>
 
 #define TAB_CURRENT	0x1
+#define TAB_URGENT	0x2
 
 #define NEW_TAB_URL	"about:new"
 
@@ -782,6 +783,7 @@ cmd_tab_next(struct window *window)
 	if ((t = TAILQ_NEXT(tab, tabs)) == NULL)
 		t = TAILQ_FIRST(&tabshead);
 	t->flags |= TAB_CURRENT;
+	t->flags &= ~TAB_URGENT;
 }
 
 static void
@@ -795,6 +797,7 @@ cmd_tab_previous(struct window *window)
 	if ((t = TAILQ_PREV(tab, tabshead, tabs)) == NULL)
 		t = TAILQ_LAST(&tabshead, tabshead);
 	t->flags |= TAB_CURRENT;
+	t->flags &= ~TAB_URGENT;
 }
 
 static void
@@ -1510,7 +1513,11 @@ redraw_tabline(void)
 		if (*(title = tab->window.page.title) == '\0')
 			title = tab->hist_cur->h;
 
-		strlcpy(buf, " ", sizeof(buf));
+		if (tab->flags & TAB_URGENT)
+			strlcpy(buf, "!", sizeof(buf));
+		else
+			strlcpy(buf, " ", sizeof(buf));
+
                 if (strlcat(buf, title, sizeof(buf)) >= sizeof(buf)) {
 			/* truncation happens */
 			strlcpy(&buf[sizeof(buf)-4], "...", 4);
@@ -2058,7 +2065,8 @@ ui_on_tab_refresh(struct tab *tab)
 	if (tab->flags & TAB_CURRENT) {
 		restore_cursor(&tab->window);
 		redraw_tab(tab);
-	}
+	} else
+		tab->flags |= TAB_URGENT;
 }
 
 void

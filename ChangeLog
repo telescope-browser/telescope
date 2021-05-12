@@ -3,6 +3,7 @@
 	* ui.c (handle_resize): debounce resize event
 	(cmd_forward_char): unbreak forward-char
 	added aliases for tab-{next,new,previous}
+	(redraw_tabline): display a `!' when a non-focused tab gets loaded
 
 2021-04-30  Omar Polo  <op@omarpolo.com>
 
