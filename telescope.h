@@ -85,8 +85,6 @@ struct vline {
 struct parser;
 struct page;
 
-/* typedef void	(*initparserfn)(struct parser*); */
-
 typedef int	(*parsechunkfn)(struct parser*, const char*, size_t);
 typedef int	(*parserfreefn)(struct parser*);
 
@@ -118,8 +116,11 @@ enum trust_state {
 
 struct tofu_entry {
 	char	domain[GEMINI_URL_LEN];
-	/* enough space for ``PROTO:HASH''.  probably isn't a good
-	 * idea tho. */
+
+	/*
+	 * enough space for ``PROTO:HASH''.  probably isn't a good
+	 * idea tho.
+	 */
 	char	hash[128+1];
 	int	verified;
 };
@@ -171,10 +172,12 @@ struct tab {
 struct proto {
 	const char	*schema;
 
-	/* should load the given url in the tab.  Optionally, it may
+	/*
+	 * should load the given url in the tab.  Optionally, it may
 	 * consider the given url as relative to the one already
 	 * present in tab.  It must set tab->urlstr to a serialized
-	 * human-friendly URL. */
+	 * human-friendly URL.
+	 */
 	void		 (*loadfn)(struct tab*, const char*);
 };
 
