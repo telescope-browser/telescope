@@ -26,9 +26,9 @@ telescope_SOURCES =	cmd.gen.h	\
 telescope_SOURCES +=	phos/phos.h	\
 			phos/phos_uri.c
 
-BUILT_SOURCES =		cmd.gen.h
+BUILT_SOURCES =		cmd.gen.h compile_flags.txt
 
-CLEANFILES =		cmd.gen.h
+CLEANFILES =		cmd.gen.h compile_flags.txt
 
 LDADD =			$(LIBOBJS)
 
@@ -38,3 +38,6 @@ dist_man1_MANS =	telescope.1
 
 cmd.gen.h: $(srcdir)/ui.c $(srcdir)/gencmd.awk
 	${AWK} -f $(srcdir)/gencmd.awk < $(srcdir)/ui.c > $@
+
+compile_flags.txt:
+	printf "%s\n" ${CFLAGS} > compile_flags.txt
