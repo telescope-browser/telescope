@@ -878,9 +878,11 @@ cmd_toggle_help(struct window *window)
 	if (side_window)
 		recompute_help();
 
-	/* ugly hack, but otherwise the window doesn't get updated
+	/*
+	 * ugly hack, but otherwise the window doesn't get updated
 	 * until I call handle_resize a second time (i.e. C-l).  I
-	 * will be happy to know why something like this is needed. */
+	 * will be happy to know why something like this is needed.
+	 */
 	handle_resize(0, 0, NULL);
 	handle_resize(0, 0, NULL);
 }
