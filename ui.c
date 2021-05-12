@@ -86,9 +86,16 @@ CMD(cmd_clear_minibuf);
 CMD(cmd_execute_extended_command);
 CMD(cmd_tab_close);
 CMD(cmd_tab_close_other);
+
 CMD(cmd_tab_new);
+DEFALIAS(tabnew, cmd_tab_new)
+
 CMD(cmd_tab_next);
+DEFALIAS(tabn, cmd_tab_next)
+
 CMD(cmd_tab_previous);
+DEFALIAS(tabp, cmd_tab_previous)
+
 CMD(cmd_tab_move);
 CMD(cmd_tab_move_to);
 CMD(cmd_load_url);
