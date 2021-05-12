@@ -1,6 +1,7 @@
 2021-05-12  Omar Polo  <op@omarpolo.com>
 
 	* ui.c (handle_resize): debounce resize event
+	(cmd_forward_char): unbreak forward-char
 
 2021-04-30  Omar Polo  <op@omarpolo.com>
 
