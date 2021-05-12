@@ -128,6 +128,7 @@ static int		 readkey(void);
 static void		 dispatch_stdio(int, short, void*);
 static void		 handle_clear_minibuf(int, short, void*);
 static void		 handle_resize(int, short, void*);
+static void		 handle_resize_timeout(int, short, void*);
 static int		 wrap_page(struct window*, int);
 static void		 print_vline(WINDOW*, struct vline*);
 static void		 redraw_tabline(void);
@@ -154,6 +155,9 @@ static void		 session_new_tab_cb(const char*);
 static void		 usage(void);
 
 static struct { short meta; int key; uint32_t cp; } thiskey;
+
+static struct event	resizeev;
+static struct timeval	resize_timer = { 0, 250000 };
 
 static WINDOW	*tabline, *body, *modeline, *minibuf;
 static int	 body_lines, body_cols;
@@ -1309,6 +1313,16 @@ handle_clear_minibuf(int fd, short ev, void *d)
 
 static void
 handle_resize(int sig, short ev, void *d)
+{
+	if (event_pending(&resizeev, EV_TIMEOUT, NULL)) {
+		event_del(&resizeev);
+	}
+	evtimer_set(&resizeev, handle_resize_timeout, NULL);
+	evtimer_add(&resizeev, &resize_timer);
+}
+
+static void
+handle_resize_timeout(int s, short ev, void *d)
 {
 	struct tab	*tab;
 
