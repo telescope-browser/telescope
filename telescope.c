@@ -172,7 +172,7 @@ handle_maybe_save_new_cert(int accept, unsigned int tabid)
 	if (!accept)
 		goto end;
 
-	if ((e = calloc(1, sizeof(e))) == NULL)
+	if ((e = calloc(1, sizeof(*e))) == NULL)
 		die();
 
 	strlcpy(e->domain, tab->uri.host, sizeof(e->domain));
