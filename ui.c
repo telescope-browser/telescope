@@ -452,7 +452,7 @@ cmd_forward_char(struct window *window)
 {
 	size_t len;
 
-	len = utf8_cplen(ministate.buf);
+	len = utf8_cplen(window->current_line->line);
 	if (++window->cpoff > len)
 		window->cpoff = len;
 	restore_cursor(window);
