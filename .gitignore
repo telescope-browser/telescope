@@ -18,3 +18,4 @@ stamp-h1
 *.o
 cmd.gen.h
 telescope
+compile_flags.txt
