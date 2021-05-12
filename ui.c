@@ -712,7 +712,9 @@ cmd_execute_extended_command(struct window *window)
 		strlcat(ministate.prompt, "M-", len);
 
 	strlcat(ministate.prompt, keyname(thiskey.key), len);
-	strlcat(ministate.prompt, " ", len);
+
+	if (thiskey.meta)
+		strlcat(ministate.prompt, " ", len);
 }
 
 static void
