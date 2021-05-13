@@ -1,3 +1,7 @@
+2021-05-13  Omar Polo  <op@omarpolo.com>
+
+	* gemtext.c (gemtext_free): heuristic to obtain the page title: if no h1 found, try with h2s and h3s
+
 2021-05-12  Omar Polo  <op@omarpolo.com>
 
 	* ui.c (handle_resize): debounce resize event

@@ -40,6 +40,7 @@ static int	parse_quote(struct parser*, enum line_type, const char*, size_t);
 static int	parse_pre_start(struct parser*, enum line_type, const char*, size_t);
 static int	parse_pre_cnt(struct parser*, enum line_type, const char*, size_t);
 static int	parse_pre_end(struct parser*, enum line_type, const char*, size_t);
+static void	search_title(struct parser*, enum line_type);
 
 typedef int (parselinefn)(struct parser*, enum line_type, const char*, size_t);
 
@@ -369,5 +370,29 @@ gemtext_free(struct parser *p)
 	}
 
 	free(p->buf);
+
+	/*
+	 * use the first level 2 or 3 header as page title if none
+	 * found yet.
+	 */
+	if (*p->title == '\0')
+		search_title(p, LINE_TITLE_2);
+	if (*p->title == '\0')
+		search_title(p, LINE_TITLE_3);
+
 	return 1;
+}
+
+static void
+search_title(struct parser *p, enum line_type level)
+{
+	struct line *l;
+
+	TAILQ_FOREACH(l, &p->head, lines) {
+		if (l->type == level) {
+			if (l->line == NULL)
+				continue;
+			strlcpy(p->title, l->line, sizeof(p->title));
+		}
+	}
 }
