@@ -22,7 +22,7 @@
  *  - UTF8
  */
 
-#include <telescope.h>
+#include "telescope.h"
 
 #include <ctype.h>
 #include <string.h>
