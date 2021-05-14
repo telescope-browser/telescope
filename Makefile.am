@@ -1,6 +1,7 @@
 bin_PROGRAMS =		telescope
 
-telescope_SOURCES =	cmd.gen.h	\
+telescope_SOURCES =	cmd.h		\
+			cmd.gen.h	\
 			compat.h	\
 			compat/*.[ch]	\
 			fs.c		\
@@ -36,8 +37,8 @@ dist_doc_DATA =		README.md LICENSE
 
 dist_man1_MANS =	telescope.1
 
-cmd.gen.h: $(srcdir)/ui.c $(srcdir)/gencmd.awk
-	${AWK} -f $(srcdir)/gencmd.awk < $(srcdir)/ui.c > $@
+cmd.gen.h: $(srcdir)/cmd.h $(srcdir)/gencmd.awk
+	${AWK} -f $(srcdir)/gencmd.awk < $(srcdir)/cmd.h > $@
 
 compile_flags.txt:
 	printf "%s\n" ${CFLAGS} > compile_flags.txt

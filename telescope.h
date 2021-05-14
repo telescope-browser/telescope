@@ -17,6 +17,7 @@
 #ifndef TELESCOPE_H
 #define TELESCOPE_H
 
+#include "cmd.h"
 #include "compat.h"
 #include "phos/phos.h"
 
