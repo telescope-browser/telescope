@@ -48,8 +48,10 @@ parser_set_buf(struct parser *p, const char *buf, size_t len)
 		return 1;
 	}
 
-	/* p->buf and buf can (and probably almost always will)
-	 * overlap! */
+	/*
+	 * p->buf and buf can (and probably almost always will)
+	 * overlap!
+	 */
 
 	if ((tmp = calloc(1, len)) == NULL)
 		return 0;
