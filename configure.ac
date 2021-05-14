@@ -22,6 +22,25 @@ AC_REPLACE_FUNCS([
 	setproctitle \
 ])
 
+AC_MSG_CHECKING([for sys/queue.h with TAILQ_FOREACH_SAFE])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
+#include <sys/queue.h>
+#include <stddef.h>
+], [
+	TAILQ_HEAD(tailhead, entry) head;
+	struct entry {
+		TAILQ_ENTRY(entry) entries;
+	} *np, *nt;
+	TAILQ_INIT(&head);
+	TAILQ_FOREACH_SAFE(np, &head, entries, nt) {
+		/* nop */ ;
+	}
+	return 0;
+])], [
+	AC_MSG_RESULT(yes)
+	AC_DEFINE([HAVE_QUEUE_H], 1, [QUEUE_H])
+], AC_MSG_RESULT(no))
+
 AC_CHECK_DECL(PR_SET_NAME, AC_DEFINE([HAVE_PR_SET_NAME], 1, [pr_set_name]), [],
 	[[#include <sys/prctl.h>]])
 
