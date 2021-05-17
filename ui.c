@@ -79,7 +79,7 @@ static int		 readkey(void);
 static void		 dispatch_stdio(int, short, void*);
 static void		 handle_clear_minibuf(int, short, void*);
 static void		 handle_resize(int, short, void*);
-static void		 handle_resize_timeout(int, short, void*);
+static void		 handle_resize_nodelay(int, short, void*);
 static int		 wrap_page(struct window*, int);
 static void		 print_vline(WINDOW*, struct vline*);
 static void		 redraw_tabline(void);
@@ -841,8 +841,8 @@ cmd_toggle_help(struct window *window)
 	 * until I call handle_resize a second time (i.e. C-l).  I
 	 * will be happy to know why something like this is needed.
 	 */
-	handle_resize_timeout(0, 0, NULL);
-	handle_resize_timeout(0, 0, NULL);
+	handle_resize_nodelay(0, 0, NULL);
+	handle_resize_nodelay(0, 0, NULL);
 }
 
 void
@@ -1305,12 +1305,12 @@ handle_resize(int sig, short ev, void *d)
 	if (event_pending(&resizeev, EV_TIMEOUT, NULL)) {
 		event_del(&resizeev);
 	}
-	evtimer_set(&resizeev, handle_resize_timeout, NULL);
+	evtimer_set(&resizeev, handle_resize_nodelay, NULL);
 	evtimer_add(&resizeev, &resize_timer);
 }
 
 static void
-handle_resize_timeout(int s, short ev, void *d)
+handle_resize_nodelay(int s, short ev, void *d)
 {
 	struct tab	*tab;
 
