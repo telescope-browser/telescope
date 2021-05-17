@@ -841,8 +841,8 @@ cmd_toggle_help(struct window *window)
 	 * until I call handle_resize a second time (i.e. C-l).  I
 	 * will be happy to know why something like this is needed.
 	 */
-	handle_resize(0, 0, NULL);
-	handle_resize(0, 0, NULL);
+	handle_resize_timeout(0, 0, NULL);
+	handle_resize_timeout(0, 0, NULL);
 }
 
 void
