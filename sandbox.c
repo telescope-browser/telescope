@@ -33,7 +33,7 @@ sandbox_network_process(void)
 void
 sandbox_ui_process(void)
 {
-	if (pledge("stdio tty", NULL) == -1)
+	if (pledge("stdio tty recvfd", NULL) == -1)
 		err(1, "pledge");
 }
 
@@ -42,7 +42,7 @@ sandbox_fs_process(void)
 {
 	char path[PATH_MAX];
 
-        if (unveil("/tmp", "r") == -1)
+	if (unveil("/tmp", "rwc") == -1)
 		err(1, "unveil");
 
 	strlcpy(path, getenv("HOME"), sizeof(path));
@@ -55,7 +55,7 @@ sandbox_fs_process(void)
 	if (unveil(path, "rwc") == -1)
 		err(1, "unveil");
 
-	if (pledge("stdio rpath wpath cpath", NULL) == -1)
+	if (pledge("stdio rpath wpath cpath sendfd", NULL) == -1)
 		err(1, "pledge");
 }
 

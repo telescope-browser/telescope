@@ -29,6 +29,9 @@ static void		 handle_check_cert_user_choice(int, unsigned int);
 static void		 handle_maybe_save_new_cert(int, unsigned int);
 static void		 handle_imsg_got_code(struct imsg*, size_t);
 static void		 handle_imsg_got_meta(struct imsg*, size_t);
+static void		 handle_maybe_save_page(int, unsigned int);
+static void		 handle_save_page_path(const char *, unsigned int);
+static void		 handle_imsg_file_opened(struct imsg*, size_t);
 static void		 handle_imsg_buf(struct imsg*, size_t);
 static void		 handle_imsg_eof(struct imsg*, size_t);
 static void		 handle_imsg_bookmark_ok(struct imsg*, size_t);
@@ -48,6 +51,7 @@ static imsg_handlerfn *handlers[] = {
 	[IMSG_BOOKMARK_OK] = handle_imsg_bookmark_ok,
 	[IMSG_SAVE_CERT_OK] = handle_imsg_save_cert_ok,
 	[IMSG_UPDATE_CERT_OK] = handle_imsg_update_cert_ok,
+	[IMSG_FILE_OPENED] = handle_imsg_file_opened,
 };
 
 static struct ohash	certs;
@@ -261,6 +265,8 @@ handle_imsg_got_meta(struct imsg *imsg, size_t datalen)
 			imsg_flush(netibuf);
 		} else {
 			load_page_from_str(tab, err_pages[UNKNOWN_TYPE_OR_CSET]);
+			ui_yornp("Can't display page, wanna save?",
+			    handle_maybe_save_page, tab->id);
 		}
 	} else if (tab->code < 40) { /* 3x */
 		tab->redirect_count++;
@@ -277,14 +283,84 @@ handle_imsg_got_meta(struct imsg *imsg, size_t datalen)
 }
 
 static void
-handle_imsg_buf(struct imsg *imsg, size_t datalen)
+handle_maybe_save_page(int dosave, unsigned int tabid)
+{
+	if (dosave)
+		ui_read("Save to path", handle_save_page_path, tabid);
+	else
+		stop_tab(tab_by_id(tabid));
+}
+
+static void
+handle_save_page_path(const char *path, unsigned int tabid)
+{
+	struct tab *tab;
+
+	if (path == NULL) {
+		stop_tab(tab_by_id(tabid));
+		return;
+	}
+
+	tab = tab_by_id(tabid);
+	tab->path = strdup(path);
+
+	imsg_compose(fsibuf, IMSG_FILE_OPEN, tabid, 0, -1, path, strlen(path)+1);
+	imsg_flush(fsibuf);
+}
+
+static void
+handle_imsg_file_opened(struct imsg *imsg, size_t datalen)
 {
 	struct tab	*tab;
+	char		*page;
+	const char	*e;
+	int		 l;
 
 	tab = tab_by_id(imsg->hdr.peerid);
 
-	if (!tab->window.page.parse(&tab->window.page, imsg->data, datalen))
-		die();
+	if (imsg->fd == -1) {
+		stop_tab(tab);
+
+		e = imsg->data;
+		if (e[datalen-1] != '\0')
+			die();
+		l = asprintf(&page, "# Can't open file\n\n> %s: %s\n",
+		    tab->path, e);
+		if (l == -1)
+			die();
+		load_page_from_str(tab, page);
+		free(page);
+	} else {
+		tab->fd = imsg->fd;
+		imsg_compose(netibuf, IMSG_PROCEED, tab->id, 0, -1, NULL, 0);
+		imsg_flush(netibuf);
+	}
+}
+
+static void
+handle_imsg_buf(struct imsg *imsg, size_t datalen)
+{
+	struct tab	*tab;
+	int		 l;
+	char		*page;
+
+	tab = tab_by_id(imsg->hdr.peerid);
+
+	tab->bytes += datalen;
+	if (tab->fd == -1) {
+		if (!tab->window.page.parse(&tab->window.page,
+		    imsg->data, datalen))
+			die();
+	} else {
+		write(tab->fd, imsg->data, datalen);
+		l = asprintf(&page, "Writing \"%s\"... (%zu bytes)\n",
+		    tab->path,
+		    tab->bytes);
+		if (l == -1)
+			die();
+		load_page_from_str(tab, page);
+		free(page);
+	}
 
 	ui_on_tab_refresh(tab);
 }
@@ -293,10 +369,28 @@ static void
 handle_imsg_eof(struct imsg *imsg, size_t datalen)
 {
 	struct tab	*tab;
+	int		 l;
+	char		*page;
 
 	tab = tab_by_id(imsg->hdr.peerid);
-	if (!tab->window.page.free(&tab->window.page))
-		die();
+
+	if (tab->fd == -1) {
+		if (!tab->window.page.free(&tab->window.page))
+			die();
+	} else {
+		l = asprintf(&page, "Wrote %s (%zu bytes)\n",
+		    tab->path,
+		    tab->bytes);
+		if (l == -1)
+			die();
+		load_page_from_str(tab, page);
+		free(page);
+
+		close(tab->fd);
+		tab->fd = -1;
+		free(tab->path);
+		tab->path = NULL;
+	}
 
 	ui_on_tab_refresh(tab);
 	ui_on_tab_loaded(tab);
@@ -396,6 +490,13 @@ do_load_url(struct tab *tab, const char *url)
 	struct proto	*p;
 	char		*t;
 
+	if (tab->fd != -1) {
+		close(tab->fd);
+		tab->fd = -1;
+		free(tab->path);
+		tab->path = NULL;
+	}
+
 	tab->trust = TS_UNKNOWN;
 
 	memcpy(&uri, &tab->uri, sizeof(tab->uri));
@@ -467,6 +568,14 @@ stop_tab(struct tab *tab)
 {
 	imsg_compose(netibuf, IMSG_STOP, tab->id, 0, -1, NULL, 0);
 	imsg_flush(netibuf);
+
+	if (tab->fd != -1) {
+		close(tab->fd);
+		tab->fd = -1;
+		free(tab->path);
+		tab->path = NULL;
+		load_page_from_str(tab, "Stopped.\n");
+	}
 }
 
 void

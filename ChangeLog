@@ -1,3 +1,7 @@
+2021-05-17  Omar Polo  <op@omarpolo.com>
+
+	* telescope.c (handle_imsg_got_meta): ask the user to save a page when it can't be rendered
+
 2021-05-13  Omar Polo  <op@omarpolo.com>
 
 	* gemtext.c (gemtext_free): heuristic to obtain the page title: if no h1 found, try with h2s and h3s

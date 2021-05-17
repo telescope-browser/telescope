@@ -68,6 +68,9 @@ static void		 lu_select(void);
 static void		 bp_select(void);
 static void		 yornp_self_insert(void);
 static void		 yornp_abort(void);
+static void		 read_self_insert(void);
+static void		 read_abort(void);
+static void		 read_select(void);
 
 static struct vline	*nth_line(struct window*, size_t);
 static struct tab	*current_tab(void);
@@ -127,6 +130,9 @@ static char	keybuf[64];
 static void (*yornp_cb)(int, unsigned int);
 static unsigned int yornp_data;
 
+static void (*read_cb)(const char*, unsigned int);
+static unsigned int read_data;
+
 struct kmap global_map,
 	minibuffer_map,
 	*current_map,
@@ -134,7 +140,8 @@ struct kmap global_map,
 
 static struct histhead eecmd_history,
 	ir_history,
-	lu_history;
+	lu_history,
+	read_history;
 
 static int	in_minibuffer;
 
@@ -1123,6 +1130,32 @@ yornp_abort(void)
 	yornp_cb(0, yornp_data);
 }
 
+static void
+read_self_insert(void)
+{
+	if (thiskey.meta || !unicode_isgraph(thiskey.cp)) {
+		global_key_unbound();
+		return;
+	}
+
+	minibuffer_self_insert();
+}
+
+static void
+read_abort(void)
+{
+	exit_minibuffer();
+	read_cb(NULL, read_data);
+}
+
+static void
+read_select(void)
+{
+        exit_minibuffer();
+	minibuffer_hist_save_entry();
+	read_cb(ministate.buf, read_data);
+}
+
 static struct vline *
 nth_line(struct window *window, size_t n)
 {
@@ -1872,6 +1905,7 @@ new_tab(const char *url)
 		event_loopbreak();
 		return NULL;
 	}
+	tab->fd = -1;
 
 	TAILQ_INIT(&tab->hist.head);
 
@@ -2041,6 +2075,26 @@ ui_yornp(const char *prompt, void (*fn)(int, unsigned int),
 	len = sizeof(ministate.prompt);
 	strlcpy(ministate.prompt, prompt, len);
 	strlcat(ministate.prompt, " (y or n) ", len);
+	redraw_tab(current_tab());
+}
+
+void
+ui_read(const char *prompt, void (*fn)(const char*, unsigned int),
+    unsigned int data)
+{
+	size_t len;
+
+	if (in_minibuffer)
+		return;
+
+	read_cb = fn;
+	read_data = data;
+	enter_minibuffer(read_self_insert, read_select, read_abort,
+	    &read_history);
+
+	len = sizeof(ministate.prompt);
+	strlcpy(ministate.prompt, prompt, len);
+	strlcat(ministate.prompt, ": ", len);
 	redraw_tab(current_tab());
 }
 

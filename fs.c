@@ -25,6 +25,7 @@
 #include <sys/stat.h>
 
 #include <errno.h>
+#include <fcntl.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,6 +39,7 @@ static void		 handle_quit(struct imsg*, size_t);
 static void		 handle_bookmark_page(struct imsg*, size_t);
 static void		 handle_save_cert(struct imsg*, size_t);
 static void		 handle_update_cert(struct imsg*, size_t);
+static void		 handle_file_open(struct imsg*, size_t);
 static void		 handle_session_start(struct imsg*, size_t);
 static void		 handle_session_tab(struct imsg*, size_t);
 static void		 handle_session_end(struct imsg*, size_t);
@@ -58,6 +60,7 @@ static imsg_handlerfn *handlers[] = {
 	[IMSG_BOOKMARK_PAGE] = handle_bookmark_page,
 	[IMSG_SAVE_CERT] = handle_save_cert,
 	[IMSG_UPDATE_CERT] = handle_update_cert,
+	[IMSG_FILE_OPEN] = handle_file_open,
 	[IMSG_SESSION_START] = handle_session_start,
 	[IMSG_SESSION_TAB] = handle_session_tab,
 	[IMSG_SESSION_END] = handle_session_end,
@@ -243,6 +246,27 @@ handle_update_cert(struct imsg *imsg, size_t datalen)
 end:
 	imsg_compose(ibuf, IMSG_UPDATE_CERT_OK, imsg->hdr.peerid, 0, -1,
 	    &res, sizeof(res));
+	imsg_flush(ibuf);
+}
+
+static void
+handle_file_open(struct imsg *imsg, size_t datalen)
+{
+	char	*path, *e;
+	int	 fd;
+
+	path = imsg->data;
+	if (path[datalen-1] != '\0')
+		die();
+
+	if ((fd = open(path, O_WRONLY | O_TRUNC | O_CREAT, 0644)) == -1) {
+		e = strerror(errno);
+		imsg_compose(ibuf, IMSG_FILE_OPENED, imsg->hdr.peerid, 0, -1,
+		    e, strlen(e)+1);
+	} else
+		imsg_compose(ibuf, IMSG_FILE_OPENED, imsg->hdr.peerid, 0, fd,
+		    NULL, 0);
+
 	imsg_flush(ibuf);
 }
 

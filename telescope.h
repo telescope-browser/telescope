@@ -50,6 +50,9 @@ enum imsg_type {
 	IMSG_UPDATE_CERT,
 	IMSG_UPDATE_CERT_OK,
 
+	IMSG_FILE_OPEN,
+	IMSG_FILE_OPENED,
+
 	IMSG_SESSION_START,
 	IMSG_SESSION_TAB,
 	IMSG_SESSION_END,
@@ -168,6 +171,10 @@ struct tab {
 	short			 loading_anim;
 	short			 loading_anim_step;
 	struct event		 loadingev;
+
+	int			 fd;
+	size_t			 bytes;
+	char			*path;
 };
 
 struct proto {
@@ -264,6 +271,7 @@ int		 ui_init(int, char * const*);
 void		 ui_on_tab_loaded(struct tab*);
 void		 ui_on_tab_refresh(struct tab*);
 void		 ui_require_input(struct tab*, int);
+void		 ui_read(const char*, void(*)(const char*, unsigned int), unsigned int);
 void		 ui_yornp(const char*, void (*)(int, unsigned int), unsigned int);
 void		 ui_notify(const char*, ...) __attribute__((format(printf, 1, 2)));
 void		 ui_end(void);
