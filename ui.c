@@ -53,7 +53,7 @@
 static struct event	stdioev, winchev;
 
 static void		 load_default_keys(void);
-static void		 restore_cursor(struct window*);
+static void		 restore_cursor(struct buffer*);
 
 static void		 global_key_unbound(void);
 static void		 minibuffer_hist_save_entry(void);
@@ -72,18 +72,18 @@ static void		 read_self_insert(void);
 static void		 read_abort(void);
 static void		 read_select(void);
 
-static struct vline	*nth_line(struct window*, size_t);
+static struct vline	*nth_line(struct buffer*, size_t);
 static struct tab	*current_tab(void);
-static struct window	*current_window(void);
+static struct buffer	*current_buffer(void);
 static int		 readkey(void);
 static void		 dispatch_stdio(int, short, void*);
 static void		 handle_clear_minibuf(int, short, void*);
 static void		 handle_resize(int, short, void*);
 static void		 handle_resize_nodelay(int, short, void*);
-static int		 wrap_page(struct window*, int);
+static int		 wrap_page(struct buffer*, int);
 static void		 print_vline(WINDOW*, struct vline*);
 static void		 redraw_tabline(void);
-static void		 redraw_window(WINDOW*, int, struct window*);
+static void		 redraw_window(WINDOW*, int, struct buffer*);
 static void		 redraw_help(void);
 static void		 redraw_body(struct tab*);
 static void		 redraw_modeline(struct tab*);
@@ -114,7 +114,7 @@ static WINDOW	*tabline, *body, *modeline, *minibuf;
 static int	 body_lines, body_cols;
 
 static WINDOW		*help;
-static struct window	 helpwin;
+static struct buffer	 helpwin;
 static int		 help_lines, help_cols;
 
 static int		 side_window;
@@ -155,7 +155,7 @@ static struct {
 	char		 buf[1025];
 	struct line	 line;
 	struct vline	 vline;
-	struct window	 window;
+	struct buffer	 buffer;
 
 	struct histhead	*history;
 	struct hist	*hist_cur;
@@ -201,14 +201,14 @@ static struct tab_face {
 };
 
 static inline void
-global_set_key(const char *key, void (*fn)(struct window*))
+global_set_key(const char *key, void (*fn)(struct buffer*))
 {
 	if (!kmap_define_key(&global_map, key, fn))
 		_exit(1);
 }
 
 static inline void
-minibuffer_set_key(const char *key, void (*fn)(struct window*))
+minibuffer_set_key(const char *key, void (*fn)(struct buffer*))
 {
 	if (!kmap_define_key(&minibuffer_map, key, fn))
 		_exit(1);
@@ -339,239 +339,239 @@ load_default_keys(void)
 }
 
 static void
-restore_cursor(struct window *window)
+restore_cursor(struct buffer *buffer)
 {
 	struct vline	*vl;
 	const char	*prfx;
 
-	vl = window->current_line;
+	vl = buffer->current_line;
 	if (vl == NULL || vl->line == NULL)
-		window->curs_x = window->cpoff = 0;
+		buffer->curs_x = buffer->cpoff = 0;
 	else
-		window->curs_x = utf8_snwidth(vl->line, window->cpoff);
+		buffer->curs_x = utf8_snwidth(vl->line, buffer->cpoff);
 
 	if (vl != NULL) {
 		prfx = line_prefixes[vl->parent->type].prfx1;
-		window->curs_x += utf8_swidth(prfx);
+		buffer->curs_x += utf8_swidth(prfx);
 	}
 }
 
 void
-cmd_previous_line(struct window *window)
+cmd_previous_line(struct buffer *buffer)
 {
 	struct vline	*vl;
 
-	if (window->current_line == NULL
-	    || (vl = TAILQ_PREV(window->current_line, vhead, vlines)) == NULL)
+	if (buffer->current_line == NULL
+	    || (vl = TAILQ_PREV(buffer->current_line, vhead, vlines)) == NULL)
 		return;
 
-	if (--window->curs_y < 0) {
-		window->curs_y = 0;
-		cmd_scroll_line_up(window);
+	if (--buffer->curs_y < 0) {
+		buffer->curs_y = 0;
+		cmd_scroll_line_up(buffer);
 		return;
 	}
 
-	window->current_line = vl;
-	restore_cursor(window);
+	buffer->current_line = vl;
+	restore_cursor(buffer);
 }
 
 void
-cmd_next_line(struct window *window)
+cmd_next_line(struct buffer *buffer)
 {
 	struct vline	*vl;
 
-	if (window->current_line == NULL
-	    || (vl = TAILQ_NEXT(window->current_line, vlines)) == NULL)
+	if (buffer->current_line == NULL
+	    || (vl = TAILQ_NEXT(buffer->current_line, vlines)) == NULL)
 		return;
 
-	if (++window->curs_y > body_lines-1) {
-		window->curs_y = body_lines-1;
-		cmd_scroll_line_down(window);
+	if (++buffer->curs_y > body_lines-1) {
+		buffer->curs_y = body_lines-1;
+		cmd_scroll_line_down(buffer);
 		return;
 	}
 
-	window->current_line = vl;
-	restore_cursor(window);
+	buffer->current_line = vl;
+	restore_cursor(buffer);
 }
 
 void
-cmd_backward_char(struct window *window)
+cmd_backward_char(struct buffer *buffer)
 {
-	if (window->cpoff != 0)
-		window->cpoff--;
-	restore_cursor(window);
+	if (buffer->cpoff != 0)
+		buffer->cpoff--;
+	restore_cursor(buffer);
 }
 
 void
-cmd_forward_char(struct window *window)
+cmd_forward_char(struct buffer *buffer)
 {
 	size_t len = 0;
 
-	if (window->current_line->line != NULL)
-		len = utf8_cplen(window->current_line->line);
-	if (++window->cpoff > len)
-		window->cpoff = len;
-	restore_cursor(window);
+	if (buffer->current_line->line != NULL)
+		len = utf8_cplen(buffer->current_line->line);
+	if (++buffer->cpoff > len)
+		buffer->cpoff = len;
+	restore_cursor(buffer);
 }
 
 void
-cmd_backward_paragraph(struct window *window)
+cmd_backward_paragraph(struct buffer *buffer)
 {
 	do {
-		if (window->current_line == NULL ||
-		    window->current_line == TAILQ_FIRST(&window->head)) {
+		if (buffer->current_line == NULL ||
+		    buffer->current_line == TAILQ_FIRST(&buffer->head)) {
 			message("No previous paragraph");
 			return;
 		}
-		cmd_previous_line(window);
-	} while (window->current_line->line != NULL ||
-	    window->current_line->parent->type != LINE_TEXT);
+		cmd_previous_line(buffer);
+	} while (buffer->current_line->line != NULL ||
+	    buffer->current_line->parent->type != LINE_TEXT);
 }
 
 void
-cmd_forward_paragraph(struct window *window)
+cmd_forward_paragraph(struct buffer *buffer)
 {
 	do {
-		if (window->current_line == NULL ||
-		    window->current_line == TAILQ_LAST(&window->head, vhead)) {
+		if (buffer->current_line == NULL ||
+		    buffer->current_line == TAILQ_LAST(&buffer->head, vhead)) {
 			message("No next paragraph");
 			return;
 		}
-		cmd_next_line(window);
-	} while (window->current_line->line != NULL ||
-	    window->current_line->parent->type != LINE_TEXT);
+		cmd_next_line(buffer);
+	} while (buffer->current_line->line != NULL ||
+	    buffer->current_line->parent->type != LINE_TEXT);
 }
 
 void
-cmd_move_beginning_of_line(struct window *window)
+cmd_move_beginning_of_line(struct buffer *buffer)
 {
-	window->cpoff = 0;
-	restore_cursor(window);
+	buffer->cpoff = 0;
+	restore_cursor(buffer);
 }
 
 void
-cmd_move_end_of_line(struct window *window)
+cmd_move_end_of_line(struct buffer *buffer)
 {
 	struct vline	*vl;
 
-	vl = window->current_line;
+	vl = buffer->current_line;
 	if (vl->line == NULL)
 		return;
-	window->cpoff = utf8_cplen(vl->line);
-	restore_cursor(window);
+	buffer->cpoff = utf8_cplen(vl->line);
+	restore_cursor(buffer);
 }
 
 void
-cmd_redraw(struct window *window)
+cmd_redraw(struct buffer *buffer)
 {
 	handle_resize(0, 0, NULL);
 }
 
 void
-cmd_scroll_line_up(struct window *window)
+cmd_scroll_line_up(struct buffer *buffer)
 {
 	struct vline	*vl;
 
-	if (window->line_off == 0)
+	if (buffer->line_off == 0)
 		return;
 
-	vl = nth_line(window, --window->line_off);
+	vl = nth_line(buffer, --buffer->line_off);
 	wscrl(body, -1);
 	wmove(body, 0, 0);
 	print_vline(body, vl);
 
-	window->current_line = TAILQ_PREV(window->current_line, vhead, vlines);
-	restore_cursor(window);
+	buffer->current_line = TAILQ_PREV(buffer->current_line, vhead, vlines);
+	restore_cursor(buffer);
 }
 
 void
-cmd_scroll_line_down(struct window *window)
+cmd_scroll_line_down(struct buffer *buffer)
 {
 	struct vline	*vl;
 
-	vl = window->current_line;
+	vl = buffer->current_line;
 	if ((vl = TAILQ_NEXT(vl, vlines)) == NULL)
 		return;
-	window->current_line = vl;
+	buffer->current_line = vl;
 
-	window->line_off++;
+	buffer->line_off++;
 	wscrl(body, 1);
 
-	if (window->line_max - window->line_off < (size_t)body_lines)
+	if (buffer->line_max - buffer->line_off < (size_t)body_lines)
 		return;
 
-	vl = nth_line(window, window->line_off + body_lines-1);
+	vl = nth_line(buffer, buffer->line_off + body_lines-1);
 	wmove(body, body_lines-1, 0);
 	print_vline(body, vl);
 
-	restore_cursor(window);
+	restore_cursor(buffer);
 }
 
 void
-cmd_scroll_up(struct window *window)
+cmd_scroll_up(struct buffer *buffer)
 {
 	size_t off;
 
 	off = body_lines-1;
 
 	for (; off > 0; --off)
-		cmd_scroll_line_up(window);
+		cmd_scroll_line_up(buffer);
 }
 
 void
-cmd_scroll_down(struct window *window)
+cmd_scroll_down(struct buffer *buffer)
 {
 	size_t off;
 
 	off = body_lines-1;
 
 	for (; off > 0; --off)
-		cmd_scroll_line_down(window);
+		cmd_scroll_line_down(buffer);
 }
 
 void
-cmd_beginning_of_buffer(struct window *window)
+cmd_beginning_of_buffer(struct buffer *buffer)
 {
-	window->current_line = TAILQ_FIRST(&window->head);
-	window->line_off = 0;
-	window->curs_y = 0;
-	window->cpoff = 0;
-	restore_cursor(window);
+	buffer->current_line = TAILQ_FIRST(&buffer->head);
+	buffer->line_off = 0;
+	buffer->curs_y = 0;
+	buffer->cpoff = 0;
+	restore_cursor(buffer);
 }
 
 void
-cmd_end_of_buffer(struct window *window)
+cmd_end_of_buffer(struct buffer *buffer)
 {
 	ssize_t off;
 
-	off = window->line_max - body_lines;
+	off = buffer->line_max - body_lines;
 	off = MAX(0, off);
 
-	window->line_off = off;
-	window->curs_y = MIN((size_t)body_lines, window->line_max-1);
+	buffer->line_off = off;
+	buffer->curs_y = MIN((size_t)body_lines, buffer->line_max-1);
 
-	window->current_line = TAILQ_LAST(&window->head, vhead);
-	window->cpoff = body_cols;
-	restore_cursor(window);
+	buffer->current_line = TAILQ_LAST(&buffer->head, vhead);
+	buffer->cpoff = body_cols;
+	restore_cursor(buffer);
 }
 
 void
-cmd_kill_telescope(struct window *window)
+cmd_kill_telescope(struct buffer *buffer)
 {
 	save_session();
 	event_loopbreak();
 }
 
 void
-cmd_push_button(struct window *window)
+cmd_push_button(struct buffer *buffer)
 {
 	struct vline	*vl;
 	size_t		 nth;
 
-	nth = window->line_off + window->curs_y;
-	if (nth >= window->line_max)
+	nth = buffer->line_off + buffer->curs_y;
+	if (nth >= buffer->line_max)
 		return;
-	vl = nth_line(window, nth);
+	vl = nth_line(buffer, nth);
 	if (vl->parent->type != LINE_LINK)
 		return;
 
@@ -579,15 +579,15 @@ cmd_push_button(struct window *window)
 }
 
 void
-cmd_push_button_new_tab(struct window *window)
+cmd_push_button_new_tab(struct buffer *buffer)
 {
 	struct vline	*vl;
 	size_t		 nth;
 
-	nth = window->line_off + window->curs_y;
-	if (nth > window->line_max)
+	nth = buffer->line_off + buffer->curs_y;
+	if (nth > buffer->line_max)
 		return;
-	vl = nth_line(window, nth);
+	vl = nth_line(buffer, nth);
 	if (vl->parent->type != LINE_LINK)
 		return;
 
@@ -595,33 +595,33 @@ cmd_push_button_new_tab(struct window *window)
 }
 
 void
-cmd_previous_button(struct window *window)
+cmd_previous_button(struct buffer *buffer)
 {
 	do {
-		if (window->current_line == NULL ||
-		    window->current_line == TAILQ_FIRST(&window->head)) {
+		if (buffer->current_line == NULL ||
+		    buffer->current_line == TAILQ_FIRST(&buffer->head)) {
 			message("No previous link");
 			return;
 		}
-		cmd_previous_line(window);
-	} while (window->current_line->parent->type != LINE_LINK);
+		cmd_previous_line(buffer);
+	} while (buffer->current_line->parent->type != LINE_LINK);
 }
 
 void
-cmd_next_button(struct window *window)
+cmd_next_button(struct buffer *buffer)
 {
 	do {
-		if (window->current_line == NULL ||
-		    window->current_line == TAILQ_LAST(&window->head, vhead)) {
+		if (buffer->current_line == NULL ||
+		    buffer->current_line == TAILQ_LAST(&buffer->head, vhead)) {
 			message("No next link");
 			return;
 		}
-		cmd_next_line(window);
-	} while (window->current_line->parent->type != LINE_LINK);
+		cmd_next_line(buffer);
+	} while (buffer->current_line->parent->type != LINE_LINK);
 }
 
 void
-cmd_previous_page(struct window *window)
+cmd_previous_page(struct buffer *buffer)
 {
 	struct tab *tab = current_tab();
 
@@ -632,7 +632,7 @@ cmd_previous_page(struct window *window)
 }
 
 void
-cmd_next_page(struct window *window)
+cmd_next_page(struct buffer *buffer)
 {
 	struct tab *tab = current_tab();
 
@@ -643,13 +643,13 @@ cmd_next_page(struct window *window)
 }
 
 void
-cmd_clear_minibuf(struct window *window)
+cmd_clear_minibuf(struct buffer *buffer)
 {
 	handle_clear_minibuf(0, 0, NULL);
 }
 
 void
-cmd_execute_extended_command(struct window *window)
+cmd_execute_extended_command(struct buffer *buffer)
 {
 	size_t	 len;
 
@@ -674,7 +674,7 @@ cmd_execute_extended_command(struct window *window)
 }
 
 void
-cmd_tab_close(struct window *window)
+cmd_tab_close(struct buffer *buffer)
 {
 	struct tab *tab, *t;
 
@@ -699,7 +699,7 @@ cmd_tab_close(struct window *window)
 }
 
 void
-cmd_tab_close_other(struct window *window)
+cmd_tab_close_other(struct buffer *buffer)
 {
 	struct tab *t, *i;
 
@@ -714,13 +714,13 @@ cmd_tab_close_other(struct window *window)
 }
 
 void
-cmd_tab_new(struct window *window)
+cmd_tab_new(struct buffer *buffer)
 {
 	new_tab(NEW_TAB_URL);
 }
 
 void
-cmd_tab_next(struct window *window)
+cmd_tab_next(struct buffer *buffer)
 {
 	struct tab *tab, *t;
 
@@ -734,7 +734,7 @@ cmd_tab_next(struct window *window)
 }
 
 void
-cmd_tab_previous(struct window *window)
+cmd_tab_previous(struct buffer *buffer)
 {
 	struct tab *tab, *t;
 
@@ -748,7 +748,7 @@ cmd_tab_previous(struct window *window)
 }
 
 void
-cmd_tab_move(struct window *window)
+cmd_tab_move(struct buffer *buffer)
 {
 	struct tab *tab, *t;
 
@@ -763,7 +763,7 @@ cmd_tab_move(struct window *window)
 }
 
 void
-cmd_tab_move_to(struct window *window)
+cmd_tab_move_to(struct buffer *buffer)
 {
 	struct tab *tab, *t;
 
@@ -781,7 +781,7 @@ cmd_tab_move_to(struct window *window)
 }
 
 void
-cmd_load_url(struct window *window)
+cmd_load_url(struct buffer *buffer)
 {
 	if (in_minibuffer) {
 		message("We don't have enable-recursive-minibuffers");
@@ -792,11 +792,11 @@ cmd_load_url(struct window *window)
 	    &lu_history);
 	strlcpy(ministate.prompt, "Load URL: ", sizeof(ministate.prompt));
 	strlcpy(ministate.buf, "gemini://", sizeof(ministate.buf));
-	cmd_move_end_of_line(&ministate.window);
+	cmd_move_end_of_line(&ministate.buffer);
 }
 
 void
-cmd_load_current_url(struct window *window)
+cmd_load_current_url(struct buffer *buffer)
 {
 	struct tab *tab = current_tab();
 
@@ -809,28 +809,28 @@ cmd_load_current_url(struct window *window)
 	    &lu_history);
 	strlcpy(ministate.prompt, "Load URL: ", sizeof(ministate.prompt));
 	strlcpy(ministate.buf, tab->hist_cur->h, sizeof(ministate.buf));
-	ministate.window.cpoff = utf8_cplen(ministate.buf);
+	ministate.buffer.cpoff = utf8_cplen(ministate.buf);
 }
 
 void
-cmd_bookmark_page(struct window *window)
+cmd_bookmark_page(struct buffer *buffer)
 {
 	struct tab *tab = current_tab();
 
 	enter_minibuffer(lu_self_insert, bp_select, exit_minibuffer, NULL);
 	strlcpy(ministate.prompt, "Bookmark URL: ", sizeof(ministate.prompt));
 	strlcpy(ministate.buf, tab->hist_cur->h, sizeof(ministate.buf));
-	ministate.window.cpoff = utf8_cplen(ministate.buf);
+	ministate.buffer.cpoff = utf8_cplen(ministate.buf);
 }
 
 void
-cmd_list_bookmarks(struct window *window)
+cmd_list_bookmarks(struct buffer *buffer)
 {
 	load_url_in_tab(current_tab(), "about:bookmarks");
 }
 
 void
-cmd_toggle_help(struct window *window)
+cmd_toggle_help(struct buffer *buffer)
 {
 	side_window = !side_window;
 	if (side_window)
@@ -846,7 +846,7 @@ cmd_toggle_help(struct window *window)
 }
 
 void
-cmd_mini_delete_char(struct window *window)
+cmd_mini_delete_char(struct buffer *buffer)
 {
 	char *c, *n;
 
@@ -857,7 +857,7 @@ cmd_mini_delete_char(struct window *window)
 
 	minibuffer_taint_hist();
 
-	c = utf8_nth(window->current_line->line, window->cpoff);
+	c = utf8_nth(buffer->current_line->line, buffer->cpoff);
 	if (*c == '\0')
 		return;
 	n = utf8_next_cp(c);
@@ -866,7 +866,7 @@ cmd_mini_delete_char(struct window *window)
 }
 
 void
-cmd_mini_delete_backward_char(struct window *window)
+cmd_mini_delete_backward_char(struct buffer *buffer)
 {
 	char *c, *p, *start;
 
@@ -877,18 +877,18 @@ cmd_mini_delete_backward_char(struct window *window)
 
 	minibuffer_taint_hist();
 
-	c = utf8_nth(window->current_line->line, window->cpoff);
-	start = window->current_line->line;
+	c = utf8_nth(buffer->current_line->line, buffer->cpoff);
+	start = buffer->current_line->line;
 	if (c == start)
 		return;
 	p = utf8_prev_cp(c-1, start);
 
 	memmove(p, c, strlen(c)+1);
-	window->cpoff--;
+	buffer->cpoff--;
 }
 
 void
-cmd_mini_kill_line(struct window *window)
+cmd_mini_kill_line(struct buffer *buffer)
 {
 	char *c;
 
@@ -898,12 +898,12 @@ cmd_mini_kill_line(struct window *window)
 	}
 
 	minibuffer_taint_hist();
-	c = utf8_nth(window->current_line->line, window->cpoff);
+	c = utf8_nth(buffer->current_line->line, buffer->cpoff);
 	*c = '\0';
 }
 
 void
-cmd_mini_abort(struct window *window)
+cmd_mini_abort(struct buffer *buffer)
 {
 	if (!in_minibuffer)
 		return;
@@ -912,7 +912,7 @@ cmd_mini_abort(struct window *window)
 }
 
 void
-cmd_mini_complete_and_exit(struct window *window)
+cmd_mini_complete_and_exit(struct buffer *buffer)
 {
 	if (!in_minibuffer)
 		return;
@@ -922,7 +922,7 @@ cmd_mini_complete_and_exit(struct window *window)
 }
 
 void
-cmd_mini_previous_history_element(struct window *window)
+cmd_mini_previous_history_element(struct buffer *buffer)
 {
 	if (ministate.history == NULL) {
 		message("No history");
@@ -940,11 +940,11 @@ cmd_mini_previous_history_element(struct window *window)
 	}
 
 	if (ministate.hist_cur != NULL)
-		window->current_line->line = ministate.hist_cur->h;
+		buffer->current_line->line = ministate.hist_cur->h;
 }
 
 void
-cmd_mini_next_history_element(struct window *window)
+cmd_mini_next_history_element(struct buffer *buffer)
 {
 	if (ministate.history == NULL) {
 		message("No history");
@@ -962,7 +962,7 @@ cmd_mini_next_history_element(struct window *window)
 	}
 
 	if (ministate.hist_cur != NULL)
-		window->current_line->line = ministate.hist_cur->h;
+		buffer->current_line->line = ministate.hist_cur->h;
 }
 
 static void
@@ -1018,13 +1018,13 @@ minibuffer_self_insert(void)
 		return;
 
 	len = utf8_encode(thiskey.cp, tmp);
-	c = utf8_nth(ministate.window.current_line->line, ministate.window.cpoff);
+	c = utf8_nth(ministate.buffer.current_line->line, ministate.buffer.cpoff);
 	if (c + len > ministate.buf + sizeof(ministate.buf) - 1)
 		return;
 
 	memmove(c + len, c, strlen(c)+1);
 	memcpy(c, tmp, len);
-	ministate.window.cpoff++;
+	ministate.buffer.cpoff++;
 }
 
 static void
@@ -1048,7 +1048,7 @@ eecmd_select(void)
 		if (!strcmp(cmd->cmd, ministate.buf)) {
 			exit_minibuffer();
 			minibuffer_hist_save_entry();
-			cmd->fn(current_window());
+			cmd->fn(current_buffer());
 			return;
 		}
 	}
@@ -1157,13 +1157,13 @@ read_select(void)
 }
 
 static struct vline *
-nth_line(struct window *window, size_t n)
+nth_line(struct buffer *buffer, size_t n)
 {
 	struct vline	*vl;
 	size_t		 i;
 
 	i = 0;
-	TAILQ_FOREACH(vl, &window->head, vlines) {
+	TAILQ_FOREACH(vl, &buffer->head, vlines) {
 		if (i == n)
 			return vl;
 		i++;
@@ -1187,12 +1187,12 @@ current_tab(void)
 	abort();
 }
 
-static struct window *
-current_window(void)
+static struct buffer *
+current_buffer(void)
 {
 	if (in_minibuffer)
-		return &ministate.window;
-	return &current_tab()->window;
+		return &ministate.buffer;
+	return &current_tab()->buffer;
 }
 
 static int
@@ -1261,7 +1261,7 @@ dispatch_stdio(int fd, short ev, void *d)
 			else {
 				current_map = base_map;
 				strlcpy(keybuf, "", sizeof(keybuf));
-				k->fn(current_window());
+				k->fn(current_buffer());
 			}
 			goto done;
 		}
@@ -1348,29 +1348,29 @@ handle_resize_nodelay(int s, short ev, void *d)
 
 	tab = current_tab();
 
-	wrap_page(&tab->window, body_cols);
+	wrap_page(&tab->buffer, body_cols);
 	redraw_tab(tab);
 }
 
 static int
-wrap_page(struct window *window, int width)
+wrap_page(struct buffer *buffer, int width)
 {
 	struct line		*l;
 	const struct line	*orig;
 	struct vline		*vl;
 	const char		*prfx;
 
-	orig = window->current_line == NULL
+	orig = buffer->current_line == NULL
 		? NULL
-		: window->current_line->parent;
-	window->current_line = NULL;
+		: buffer->current_line->parent;
+	buffer->current_line = NULL;
 
-	window->curs_y = 0;
-	window->line_off = 0;
+	buffer->curs_y = 0;
+	buffer->line_off = 0;
 
-	empty_vlist(window);
+	empty_vlist(buffer);
 
-	TAILQ_FOREACH(l, &window->page.head, lines) {
+	TAILQ_FOREACH(l, &buffer->page.head, lines) {
 		prfx = line_prefixes[l->type].prfx1;
 		switch (l->type) {
 		case LINE_TEXT:
@@ -1382,29 +1382,29 @@ wrap_page(struct window *window, int width)
 		case LINE_QUOTE:
 		case LINE_PRE_START:
 		case LINE_PRE_END:
-			wrap_text(window, prfx, l, width);
+			wrap_text(buffer, prfx, l, width);
 			break;
 		case LINE_PRE_CONTENT:
-                        hardwrap_text(window, l, width);
+                        hardwrap_text(buffer, l, width);
 			break;
 		}
 
-		if (orig == l && window->current_line == NULL) {
-			window->line_off = window->line_max-1;
-			window->current_line = TAILQ_LAST(&window->head, vhead);
+		if (orig == l && buffer->current_line == NULL) {
+			buffer->line_off = buffer->line_max-1;
+			buffer->current_line = TAILQ_LAST(&buffer->head, vhead);
 
 			while (1) {
-				vl = TAILQ_PREV(window->current_line, vhead, vlines);
+				vl = TAILQ_PREV(buffer->current_line, vhead, vlines);
 				if (vl == NULL || vl->parent != orig)
 					break;
-				window->current_line = vl;
-				window->line_off--;
+				buffer->current_line = vl;
+				buffer->line_off--;
 			}
 		}
 	}
 
-        if (window->current_line == NULL)
-		window->current_line = TAILQ_FIRST(&window->head);
+        if (buffer->current_line == NULL)
+		buffer->current_line = TAILQ_FIRST(&buffer->head);
 
 	return 1;
 }
@@ -1483,7 +1483,7 @@ redraw_tabline(void)
 
 		current = tab->flags & TAB_CURRENT;
 
-		if (*(title = tab->window.page.title) == '\0')
+		if (*(title = tab->buffer.page.title) == '\0')
 			title = tab->hist_cur->h;
 
 		if (tab->flags & TAB_URGENT)
@@ -1523,19 +1523,19 @@ redraw_tabline(void)
 }
 
 static void
-redraw_window(WINDOW *win, int height, struct window *window)
+redraw_window(WINDOW *win, int height, struct buffer *buffer)
 {
 	struct vline	*vl;
 	int		 l;
 
 	werase(win);
 
-	window->line_off = MIN(window->line_max-1, window->line_off);
-	if (TAILQ_EMPTY(&window->head))
+	buffer->line_off = MIN(buffer->line_max-1, buffer->line_off);
+	if (TAILQ_EMPTY(&buffer->head))
 		return;
 
 	l = 0;
-	vl = nth_line(window, window->line_off);
+	vl = nth_line(buffer, buffer->line_off);
 	for (; vl != NULL; vl = TAILQ_NEXT(vl, vlines)) {
 		wmove(win, l, 0);
 		print_vline(win, vl);
@@ -1544,7 +1544,7 @@ redraw_window(WINDOW *win, int height, struct window *window)
 			break;
 	}
 
-	wmove(win, window->curs_y, window->curs_x);
+	wmove(win, buffer->curs_y, buffer->curs_x);
 }
 
 static void
@@ -1556,7 +1556,7 @@ redraw_help(void)
 static void
 redraw_body(struct tab *tab)
 {
-	redraw_window(body, body_lines, &tab->window);
+	redraw_window(body, body_lines, &tab->buffer);
 }
 
 static inline char
@@ -1575,7 +1575,7 @@ redraw_modeline(struct tab *tab)
 {
 	double		 pct;
 	int		 x, y, max_x, max_y;
-	const char	*mode = tab->window.page.name;
+	const char	*mode = tab->buffer.page.name;
 	const char	*spin = "-\\|/";
 
 	werase(modeline);
@@ -1587,20 +1587,20 @@ redraw_modeline(struct tab *tab)
 	    trust_status_char(tab->trust),
 	    mode == NULL ? "(none)" : mode);
 
-	pct = (tab->window.line_off + tab->window.curs_y) * 100.0 / tab->window.line_max;
+	pct = (tab->buffer.line_off + tab->buffer.curs_y) * 100.0 / tab->buffer.line_max;
 
-	if (tab->window.line_max <= (size_t)body_lines)
+	if (tab->buffer.line_max <= (size_t)body_lines)
                 wprintw(modeline, "All ");
-	else if (tab->window.line_off == 0)
+	else if (tab->buffer.line_off == 0)
                 wprintw(modeline, "Top ");
-	else if (tab->window.line_off + body_lines >= tab->window.line_max)
+	else if (tab->buffer.line_off + body_lines >= tab->buffer.line_max)
 		wprintw(modeline, "Bottom ");
 	else
 		wprintw(modeline, "%.0f%% ", pct);
 
 	wprintw(modeline, "%d/%d %s ",
-	    tab->window.line_off + tab->window.curs_y,
-	    tab->window.line_max,
+	    tab->buffer.line_off + tab->buffer.curs_y,
+	    tab->buffer.line_max,
 	    tab->hist_cur->h);
 
 	getyx(modeline, y, x);
@@ -1634,8 +1634,8 @@ redraw_minibuffer(void)
 		start = ministate.hist_cur != NULL
 			? ministate.hist_cur->h
 			: ministate.buf;
-		c = utf8_nth(ministate.window.current_line->line,
-		    ministate.window.cpoff);
+		c = utf8_nth(ministate.buffer.current_line->line,
+		    ministate.buffer.cpoff);
 		while (utf8_swidth_between(start, c) > (size_t)COLS/2) {
 			start = utf8_next_cp(start);
 		}
@@ -1653,9 +1653,9 @@ redraw_minibuffer(void)
 	/* If nothing else, show the URL at point */
 	if (!in_minibuffer && ministate.curmesg == NULL && *keybuf == '\0') {
 		tab = current_tab();
-		if (tab->window.current_line != NULL &&
-		    tab->window.current_line->parent->type == LINE_LINK)
-			waddstr(minibuf, tab->window.current_line->parent->alt);
+		if (tab->buffer.current_line != NULL &&
+		    tab->buffer.current_line->parent->type == LINE_LINK)
+			waddstr(minibuf, tab->buffer.current_line->parent->alt);
 	}
 
 	if (in_minibuffer)
@@ -1840,8 +1840,8 @@ load_url_in_tab(struct tab *tab, const char *url)
 	start_loading_anim(tab);
 	load_url(tab, url);
 
-	tab->window.curs_x = 0;
-	tab->window.curs_y = 0;
+	tab->buffer.curs_x = 0;
+	tab->buffer.curs_y = 0;
 	redraw_tab(tab);
 }
 
@@ -1858,9 +1858,9 @@ enter_minibuffer(void (*self_insert_fn)(void), void (*donefn)(void),
 	ministate.donefn = donefn;
 	ministate.abortfn = abortfn;
 	memset(ministate.buf, 0, sizeof(ministate.buf));
-	ministate.window.current_line = &ministate.vline;
-	ministate.window.current_line->line = ministate.buf;
-	ministate.window.cpoff = 0;
+	ministate.buffer.current_line = &ministate.vline;
+	ministate.buffer.current_line->line = ministate.buf;
+	ministate.buffer.cpoff = 0;
 	strlcpy(ministate.buf, "", sizeof(ministate.prompt));
 
 	ministate.history = hist;
@@ -1909,7 +1909,7 @@ new_tab(const char *url)
 
 	TAILQ_INIT(&tab->hist.head);
 
-	TAILQ_INIT(&tab->window.head);
+	TAILQ_INIT(&tab->buffer.head);
 
 	tab->id = tab_new_id();
 	switch_to_tab(tab);
@@ -1967,7 +1967,7 @@ ui_init(int argc, char * const *argv)
 
 	ministate.line.type = LINE_TEXT;
 	ministate.vline.parent = &ministate.line;
-	ministate.window.current_line = &ministate.vline;
+	ministate.buffer.current_line = &ministate.vline;
 
 	/* initialize help window */
 	TAILQ_INIT(&helpwin.head);
@@ -2035,9 +2035,9 @@ ui_on_tab_loaded(struct tab *tab)
 void
 ui_on_tab_refresh(struct tab *tab)
 {
-	wrap_page(&tab->window, body_cols);
+	wrap_page(&tab->buffer, body_cols);
 	if (tab->flags & TAB_CURRENT) {
-		restore_cursor(&tab->window);
+		restore_cursor(&tab->buffer);
 		redraw_tab(tab);
 	} else
 		tab->flags |= TAB_URGENT;

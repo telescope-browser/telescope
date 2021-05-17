@@ -139,7 +139,7 @@ unkbd(int k)
 }
 
 int
-kmap_define_key(struct kmap *map, const char *key, void (*fn)(struct window*))
+kmap_define_key(struct kmap *map, const char *key, void (*fn)(struct buffer*))
 {
 	int ctrl, meta, k;
 	struct keymap	*entry;

@@ -138,7 +138,7 @@ struct hist {
 	TAILQ_ENTRY(hist)	entries;
 };
 
-struct window {
+struct buffer {
 	struct parser		 page;
 	int			 curs_x;
 	int			 curs_y;
@@ -166,7 +166,7 @@ struct tab {
 	char			 meta[GEMINI_URL_LEN];
 	int			 redirect_count;
 
-	struct window		 window;
+	struct buffer		 buffer;
 
 	short			 loading_anim;
 	short			 loading_anim_step;
@@ -198,7 +198,7 @@ struct keymap {
 	int			 meta;
 	int			 key;
 	struct kmap		 map;
-	void			(*fn)(struct window*);
+	void			(*fn)(struct buffer*);
 
 	TAILQ_ENTRY(keymap)	 keymaps;
 };
@@ -222,7 +222,7 @@ void		 hist_push(struct histhead*, struct hist*);
 /* keymap.c */
 int		 kbd(const char*);
 const char	*unkbd(int);
-int		 kmap_define_key(struct kmap*, const char*, void(*)(struct window*));
+int		 kmap_define_key(struct kmap*, const char*, void(*)(struct buffer*));
 
 /* mime.c */
 int		 setup_parser_for(struct tab*);
@@ -296,9 +296,9 @@ int		 unicode_isgraph(uint32_t);
 void		 dispatch_imsg(struct imsgbuf*, imsg_handlerfn**, size_t);
 
 /* wrap.c */
-void		 empty_linelist(struct window*);
-void		 empty_vlist(struct window*);
-int		 wrap_text(struct window*, const char*, struct line*, size_t);
-int		 hardwrap_text(struct window*, struct line*, size_t);
+void		 empty_linelist(struct buffer*);
+void		 empty_vlist(struct buffer*);
+int		 wrap_text(struct buffer*, const char*, struct line*, size_t);
+int		 hardwrap_text(struct buffer*, struct line*, size_t);
 
 #endif /* TELESCOPE_H */

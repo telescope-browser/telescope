@@ -1,6 +1,6 @@
-struct window;
+struct buffer;
 
-#define CMD(fnname)	void fnname(struct window *)
+#define CMD(fnname)	void fnname(struct buffer *)
 #define DEFALIAS(s, d)	/* nothing */
 
 CMD(cmd_previous_line);

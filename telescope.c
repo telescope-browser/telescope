@@ -348,7 +348,7 @@ handle_imsg_buf(struct imsg *imsg, size_t datalen)
 
 	tab->bytes += datalen;
 	if (tab->fd == -1) {
-		if (!tab->window.page.parse(&tab->window.page,
+		if (!tab->buffer.page.parse(&tab->buffer.page,
 		    imsg->data, datalen))
 			die();
 	} else {
@@ -375,7 +375,7 @@ handle_imsg_eof(struct imsg *imsg, size_t datalen)
 	tab = tab_by_id(imsg->hdr.peerid);
 
 	if (tab->fd == -1) {
-		if (!tab->window.page.free(&tab->window.page))
+		if (!tab->buffer.page.free(&tab->buffer.page))
 			die();
 	} else {
 		l = asprintf(&page, "Wrote %s (%zu bytes)\n",
@@ -447,10 +447,10 @@ handle_dispatch_imsg(int fd, short ev, void *d)
 static void
 load_page_from_str(struct tab *tab, const char *page)
 {
-	gemtext_initparser(&tab->window.page);
-	if (!tab->window.page.parse(&tab->window.page, page, strlen(page)))
+	gemtext_initparser(&tab->buffer.page);
+	if (!tab->buffer.page.parse(&tab->buffer.page, page, strlen(page)))
 		die();
-	if (!tab->window.page.free(&tab->window.page))
+	if (!tab->buffer.page.free(&tab->buffer.page))
 		die();
 	ui_on_tab_refresh(tab);
 	ui_on_tab_loaded(tab);
@@ -461,7 +461,7 @@ load_about_url(struct tab *tab, const char *url)
 {
 	tab->trust = TS_VERIFIED;
 
-	gemtext_initparser(&tab->window.page);
+	gemtext_initparser(&tab->buffer.page);
 
 	imsg_compose(fsibuf, IMSG_GET, tab->id, 0, -1,
 	    tab->hist_cur->h, strlen(tab->hist_cur->h)+1);
@@ -535,8 +535,8 @@ load_url(struct tab *tab, const char *url)
 	}
 	hist_push(&tab->hist, tab->hist_cur);
 	do_load_url(tab, url);
-	empty_vlist(&tab->window);
-	empty_linelist(&tab->window);
+	empty_vlist(&tab->buffer);
+	empty_linelist(&tab->buffer);
 }
 
 int
