@@ -1,3 +1,7 @@
+2021-06-11  Omar Polo  <op@omarpolo.com>
+
+	* ui.c (switch_to_tab): drop the urgent flag when switching to a tab after closing one
+
 2021-05-17  Omar Polo  <op@omarpolo.com>
 
 	* telescope.c (handle_imsg_got_meta): ask the user to save a page when it can't be rendered
