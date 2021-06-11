@@ -1888,6 +1888,7 @@ switch_to_tab(struct tab *tab)
 	}
 
 	tab->flags |= TAB_CURRENT;
+	tab->flags &= ~TAB_URGENT;
 }
 
 unsigned int
