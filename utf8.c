@@ -121,7 +121,7 @@ utf8_cplen(char *s)
 	return len;
 }
 
-/* returns only 0, 1 or 2.  assumes sizeof(wchar_t) is 4 */
+/* returns only 0, 1, 2 or 8.  assumes sizeof(wchar_t) is 4 */
 size_t
 utf8_chwidth(uint32_t cp)
 {
@@ -130,6 +130,14 @@ utf8_chwidth(uint32_t cp)
 	 * clear about the encoding, but if it's 16 bit wide I assume
 	 * it must use UTF-16... right? */
 	assert(sizeof(wchar_t) == 4);
+
+	/*
+	 * quick and dirty fix for the tabs.  In the future we may
+	 * want to expand tabs into N spaces, but for the time being
+	 * this seems to be good enough (tm).
+	 */
+	if (cp == '\t')
+		return 8;
 
 	return wcwidth((wchar_t)cp);
 }
