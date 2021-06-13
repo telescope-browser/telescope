@@ -661,10 +661,12 @@ main(int argc, char * const *argv)
 
 	event_init();
 
-	event_set(&netev, netibuf->fd, EV_READ | EV_PERSIST, handle_dispatch_imsg, netibuf);
+	event_set(&netev, netibuf->fd, EV_READ | EV_PERSIST,
+	    handle_dispatch_imsg, netibuf);
 	event_add(&netev, NULL);
 
-	event_set(&fsev, fsibuf->fd, EV_READ | EV_PERSIST, handle_dispatch_imsg, fsibuf);
+	event_set(&fsev, fsibuf->fd, EV_READ | EV_PERSIST,
+	    handle_dispatch_imsg, fsibuf);
 	event_add(&fsev, NULL);
 
 	if (ui_init(argc, argv)) {
