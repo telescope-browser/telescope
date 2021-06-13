@@ -1,3 +1,10 @@
+2021-06-13  Omar Polo  <op@omarpolo.com>
+
+	* telescope.c (main): ignore SIGPIPE: prevent telescope from dying
+	when connecting to non-tls/non-gemini servers (found by trying to
+	load a bogus ``gemini://gemini.nytpu.com'' -- the correct url for
+	the capsule is ``gemini://nytpu.com'')
+
 2021-06-12  Omar Polo  <op@omarpolo.com>
 
 	* configure.ac: tagged 0.2

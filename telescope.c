@@ -610,6 +610,7 @@ main(int argc, char * const *argv)
 	int		net_fds[2], fs_fds[2];
 
 	signal(SIGCHLD, SIG_IGN);
+	signal(SIGPIPE, SIG_IGN);
 
 	/* initialize part of the fs layer.  Before starting the UI
 	 * and dropping the priviledges we need to read some stuff. */
