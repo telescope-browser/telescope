@@ -22,7 +22,7 @@
  *    to something more asynchronous
  */
 
-#include <telescope.h>
+#include "telescope.h"
 
 #include <sys/types.h>
 #include <sys/socket.h>
