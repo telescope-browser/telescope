@@ -1,7 +1,7 @@
 BEGIN {
         FS = "[(,)]";
 
-        print "static struct cmds { const char *cmd; void(*fn)(struct window*); } cmds[] = {";
+        print "static struct cmds { const char *cmd; void(*fn)(struct buffer*); } cmds[] = {";
 }
 
 /^CMD/ {
