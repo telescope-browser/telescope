@@ -75,6 +75,16 @@ struct tab_face  {
 };
 extern struct tab_face tab_face;
 
+struct modeline_face {
+	int background;
+};
+extern struct modeline_face modeline_face;
+
+struct minibuffer_face {
+	int background;
+};
+extern struct minibuffer_face minibuffer_face;
+
 enum line_type {
 	LINE_TEXT,
 	LINE_LINK,

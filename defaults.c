@@ -49,3 +49,11 @@ struct tab_face tab_face = {
 	.tab		= A_REVERSE,
 	.current_tab	= A_NORMAL,
 };
+
+struct modeline_face modeline_face = {
+	.background = A_REVERSE,
+};
+
+struct minibuffer_face minibuffer_face = {
+	.background = A_NORMAL,
+};

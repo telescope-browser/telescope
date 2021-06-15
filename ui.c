@@ -1543,7 +1543,7 @@ redraw_modeline(struct tab *tab)
 	const char	*spin = "-\\|/";
 
 	werase(modeline);
-	wattron(modeline, A_REVERSE);
+	wattron(modeline, modeline_face.background);
 	wmove(modeline, 0, 0);
 
 	wprintw(modeline, "-%c%c %s ",
@@ -1575,6 +1575,8 @@ redraw_modeline(struct tab *tab)
 
 	for (; x < max_x; ++x)
 		waddstr(modeline, "-");
+
+	wattroff(modeline, modeline_face.background);
 }
 
 static void
@@ -1584,6 +1586,7 @@ redraw_minibuffer(void)
 	size_t off_y, off_x = 0;
 	char *start, *c;
 
+	wattron(minibuf, minibuffer_face.background);
 	werase(minibuf);
 
 	if (in_minibuffer) {
@@ -1624,6 +1627,8 @@ redraw_minibuffer(void)
 
 	if (in_minibuffer)
 		wmove(minibuf, 0, off_x + utf8_swidth_between(start, c));
+
+	wattroff(minibuf, minibuffer_face.background);
 }
 
 static void
