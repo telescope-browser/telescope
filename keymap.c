@@ -108,6 +108,7 @@ static struct keytable {
 	{ "enter",	CTRL('m') },
 	{ "ret",	CTRL('m' )},
 	{ "tab",	CTRL('i') },
+	{ "backtab",	KEY_BTAB },
 	/* ... */
 	{ NULL, 0 },
 };
