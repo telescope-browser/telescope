@@ -17,6 +17,7 @@
 #include "telescope.h"
 
 #include <curses.h>
+#include <string.h>
 
 struct lineprefix line_prefixes[] = {
 	[LINE_TEXT] =		{ "",		"" },
@@ -57,3 +58,45 @@ struct modeline_face modeline_face = {
 struct minibuffer_face minibuffer_face = {
 	.background = A_NORMAL,
 };
+
+int
+config_setprfx(const char *name, int cont, const char *str)
+{
+	size_t i;
+	struct lineprefix *p;
+	struct mapping {
+		const char	*label;
+		int		 id;
+	} mappings[] = {
+		{"text",	LINE_TEXT},
+		{"link",	LINE_LINK},
+		{"title1",	LINE_TITLE_1},
+		{"title2",	LINE_TITLE_2},
+		{"title3",	LINE_TITLE_3},
+		{"item",	LINE_ITEM},
+		{"quote",	LINE_QUOTE},
+		{"pre.start",	LINE_PRE_START},
+		{"pre",		LINE_PRE_CONTENT},
+		{"pre.end",	LINE_PRE_END},
+	};
+
+	if (!has_prefix(name, "line."))
+		return 0;
+	name += 5;
+
+	for (i = 0; i < sizeof(mappings)/sizeof(mappings[0]); ++i) {
+		if (!strcmp(name, mappings[i].label)) {
+			name += strlen(mappings[i].label);
+			p = &line_prefixes[mappings[i].id];
+
+			if (cont)
+				p->prfx2 = str;
+			else
+				p->prfx1 = str;
+
+			return 1;
+		}
+	}
+
+	return 0;
+}

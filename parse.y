@@ -39,6 +39,7 @@ typedef struct {
 } yystype;
 #define YYSTYPE yystype
 
+static char *current_style;
 static const char *path;
 
 FILE *yyfp;
@@ -65,14 +66,18 @@ grammar		: /* empty */
 		| error '\n'
 		;
 
-rule		: set | style | bind | unbind ;
+rule		: set
+		| style		{ free(current_style); current_style = NULL; }
+		| bind
+		| unbind
+		;
 
 set		: TSET TSTRING '=' TSTRING	{ printf("set %s = \"%s\"\n", $2, $4); }
 		| TSET TSTRING '=' TNUMBER	{ printf("set %s = %d\n", $2, $4); }
 		;
 
-style		: TSTYLE TSTRING { printf("(%s) ", $2); }	styleopt
-		| TSTYLE TSTRING { printf("[%s]\n", $2); }	'{' styleopts '}'
+style		: TSTYLE TSTRING { current_style = $2; } styleopt
+		| TSTYLE TSTRING { current_style = $2; } '{' styleopts '}'
 		;
 
 styleopts	: /* empty */
@@ -80,8 +85,8 @@ styleopts	: /* empty */
 		| styleopts styleopt '\n'
 		;
 
-styleopt	: TPRFX TSTRING			{ printf("style prefix setted to \"%s\"\n", $2); }
-		| TCONT TSTRING			{ printf("style cont setted to \"%s\"\n", $2); }
+styleopt	: TPRFX TSTRING			{ setprfx(0, $2); }
+		| TCONT TSTRING			{ setprfx(1, $2); }
 		| TBG TSTRING			{ printf("style background setted to \"%s\"\n", $2); }
 		| TFG TSTRING			{ printf("style foreground setted to \"%s\"\n", $2); }
 		| TATTR TBOLD			{ printf("style attr setted to bold\n"); }
@@ -260,6 +265,18 @@ eof:
 	if (ferror(yyfp))
 		yyerror("input error reading config");
 	return 0;
+}
+
+static void
+setprfx(int cont, const char *name)
+{
+	if (current_style == NULL) {
+		warnx("current_style = NULL!");
+		abort();
+	}
+
+	if (!config_setprfx(current_style, cont, name))
+		yyerror("invalid style %s", name);
 }
 
 void

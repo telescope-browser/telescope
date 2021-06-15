@@ -230,6 +230,9 @@ struct keymap {
 	TAILQ_ENTRY(keymap)	 keymaps;
 };
 
+/* defaults.c */
+int		 config_setprfx(const char *, int, const char *);
+
 /* fs.c */
 int		 fs_init(void);
 int		 fs_main(struct imsgbuf*);
