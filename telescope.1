@@ -20,6 +20,8 @@
 .Sh SYNOPSIS
 .Nm
 .Bk -words
+.Op Fl hn
+.Op Fl c Pa config
 .Op Ar URL
 .Ek
 .Sh DESCRIPTION
@@ -28,6 +30,20 @@ is an interactive browser for the Gemini protocol.
 It is able to process text/gemini and more in general every text/* file.
 .Nm
 also features tabs, bookmarks and out-of-band TOFU verification.
+.Pp
+The arguments are as follows:
+.Bl -tag -width tenletters
+.It Fl h
+Display version and usage.
+.It Fl n
+Configtest mode.
+Only check the configuration file for validity.
+.It Fl c Pa config
+Specify an alternative configuration file.
+By default
+.Pa $HOME/.telescope/config
+is loaded.
+.El
 .Sh TOFU
 .Nm
 aims to use the "Trust, but Verify (where appropriate)" approach.

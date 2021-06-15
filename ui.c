@@ -38,6 +38,7 @@
 #include <assert.h>
 #include <curses.h>
 #include <event.h>
+#include <limits.h>
 #include <locale.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -161,44 +162,6 @@ static struct {
 	struct hist	*hist_cur;
 	size_t		 hist_off;
 } ministate;
-
-struct lineprefix {
-	const char	*prfx1;
-	const char	*prfx2;
-} line_prefixes[] = {
-	[LINE_TEXT] =		{ "",		"" },
-	[LINE_LINK] =		{ "=> ",	"   " },
-	[LINE_TITLE_1] =	{ "# ",		"  " },
-	[LINE_TITLE_2] =	{ "## ",	"   " },
-	[LINE_TITLE_3] =	{ "### ",	"    " },
-	[LINE_ITEM] =		{ "* ",		"  " },
-	[LINE_QUOTE] =		{ "> ",		"  " },
-	[LINE_PRE_START] =	{ "```",	"   " },
-	[LINE_PRE_CONTENT] =	{ "",		"" },
-	[LINE_PRE_END] =	{ "```",	"```" },
-};
-
-static struct line_face {
-	int prefix_prop;
-	int text_prop;
-} line_faces[] = {
-	[LINE_TEXT] =		{ 0,		0 },
-	[LINE_LINK] =		{ 0,		A_UNDERLINE },
-	[LINE_TITLE_1] =	{ A_BOLD,	A_BOLD },
-	[LINE_TITLE_2] =	{ A_BOLD,	A_BOLD },
-	[LINE_TITLE_3] =	{ A_BOLD,	A_BOLD },
-	[LINE_ITEM] =		{ 0,		0 },
-	[LINE_QUOTE] =		{ 0,		A_DIM },
-	[LINE_PRE_START] =	{ 0,		0 },
-	[LINE_PRE_CONTENT] =	{ 0,		0 },
-	[LINE_PRE_END] =	{ 0,		0 },
-};
-
-static struct tab_face {
-	int background, tab, current_tab;
-} tab_face = {
-	A_REVERSE, A_REVERSE, A_NORMAL
-};
 
 static inline void
 global_set_key(const char *key, void (*fn)(struct buffer*))
@@ -1933,24 +1896,45 @@ session_new_tab_cb(const char *url)
 static void
 usage(void)
 {
-	fprintf(stderr, "USAGE: %s [url]\n", getprogname());
+	fprintf(stderr, "USAGE: %s [-hn] [-c config] [url]\n", getprogname());
+	fprintf(stderr, "version: " PACKAGE " " VERSION "\n");
 }
 
 int
 ui_init(int argc, char * const *argv)
 {
+	char path[PATH_MAX];
 	const char *url = NEW_TAB_URL;
-	int ch;
+	int ch, configtest = 0, fonf = 0;
 
-	while ((ch = getopt(argc, argv, "")) != -1) {
+	strlcpy(path, getenv("HOME"), sizeof(path));
+	strlcat(path, "/.telescope/config", sizeof(path));
+
+	while ((ch = getopt(argc, argv, "c:hn")) != -1) {
 		switch (ch) {
-		default:
+		case 'c':
+			fonf = 1;
+			strlcpy(path, optarg, sizeof(path));
+			break;
+		case 'n':
+			configtest = 1;
+			break;
+		case 'h':
 			usage();
 			return 0;
+		default:
+			usage();
+			return 1;
 		}
 	}
 	argc -= optind;
 	argv += optind;
+
+	parseconfig(path, fonf);
+	if (configtest){
+		puts("config OK");
+		exit(0);
+	}
 
 	if (argc != 0)
 		url = argv[0];

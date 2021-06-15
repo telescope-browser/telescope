@@ -15,8 +15,10 @@ depcomp
 install-sh
 missing
 stamp-h1
+ylwrap
 *.o
 cmd.gen.h
+parse.c
 telescope
 compile_flags.txt
 telescope-*.tar.gz

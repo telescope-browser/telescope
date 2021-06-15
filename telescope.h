@@ -58,6 +58,23 @@ enum imsg_type {
 	IMSG_SESSION_END,
 };
 
+struct lineprefix {
+	const char	*prfx1;
+	const char	*prfx2;
+};
+extern struct lineprefix line_prefixes[];
+
+struct line_face {
+	int prefix_prop;
+	int text_prop;
+};
+extern struct line_face line_faces[];
+
+struct tab_face  {
+	int background, tab, current_tab;
+};
+extern struct tab_face tab_face;
+
 enum line_type {
 	LINE_TEXT,
 	LINE_LINK,
@@ -235,6 +252,9 @@ extern const char	*about_new;
 #define MALFORMED_RESPONSE	2
 #define UNKNOWN_TYPE_OR_CSET	3
 extern const char	*err_pages[70];
+
+/* parse.y */
+void		 parseconfig(const char *, int);
 
 /* parser.c */
 int		 parser_append(struct parser*, const char*, size_t);
