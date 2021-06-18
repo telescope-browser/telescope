@@ -48,6 +48,7 @@ int parse_errors = 0;
 
 static void yyerror(const char *, ...);
 static int yylex(void);
+static void setprfx(int, const char *);
 
 %}
 
