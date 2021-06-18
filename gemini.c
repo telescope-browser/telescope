@@ -52,8 +52,9 @@ struct req;
 
 static void		 die(void) __attribute__((__noreturn__));
 
-#if HAVE_ASR_RUN
 static void		 try_to_connect(int, short, void*);
+
+#if HAVE_ASR_RUN
 static void		 query_done(struct asr_result*, void*);
 static void		 async_conn_towards(struct req*);
 #else
@@ -103,8 +104,9 @@ struct req {
 	char			 buf[1024];
 	size_t			 off;
 
+	struct addrinfo		*servinfo, *p;
 #if HAVE_ASR_RUN
-	struct addrinfo		 hints, *servinfo, *p;
+	struct addrinfo		 hints;
 	struct event_asr	*asrev;
 #endif
 
@@ -138,7 +140,6 @@ die(void)
 	abort(); 		/* TODO */
 }
 
-#if HAVE_ASR_RUN
 static void
 try_to_connect(int fd, short ev, void *d)
 {
@@ -183,6 +184,7 @@ done:
 	setup_tls(req);
 }
 
+#if HAVE_ASR_RUN
 static void
 query_done(struct asr_result *res, void *d)
 {
@@ -219,9 +221,9 @@ async_conn_towards(struct req *req)
 static void
 blocking_conn_towards(struct req *req)
 {
-	struct addrinfo	 hints, *servinfo, *p;
+	struct addrinfo	 hints;
 	struct phos_uri	*url = &req->url;
-	int		 status, sock;
+	int		 status;
 	const char	*proto = "1965";
 
 	if (*url->port != '\0')
@@ -231,30 +233,15 @@ blocking_conn_towards(struct req *req)
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 
-	if ((status = getaddrinfo(url->host, proto, &hints, &servinfo))) {
+	if ((status = getaddrinfo(url->host, proto, &hints, &req->servinfo))) {
 		close_with_errf(req, "failed to resolve %s: %s",
 		    url->host, gai_strerror(status));
 		return;
 	}
 
-	sock = -1;
-	for (p = servinfo; p != NULL; p = p->ai_next) {
-		if ((sock = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1)
-			continue;
-		if (connect(sock, p->ai_addr, p->ai_addrlen) != -1)
-			break;
-		close(sock);
-	}
-	freeaddrinfo(servinfo);
-
-	if (sock == -1) {
-		close_with_errf(req, "couldn't connect to %s", url->host);
-		return;
-	}
-
-	req->fd = sock;
-	mark_nonblock(req->fd);
-	setup_tls(req);
+	req->fd = -1;
+	req->p = req->servinfo;
+	try_to_connect(0, 0, req);
 }
 #endif
 

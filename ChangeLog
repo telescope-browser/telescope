@@ -1,3 +1,7 @@
+2021-06-18  Omar Polo  <op@omarpolo.com>
+
+	* gemini.c (try_to_connect): use the async try_to_connect even when !HAVE_ASR_RUN
+
 2021-06-13  Omar Polo  <op@omarpolo.com>
 
 	* telescope.c (main): ignore SIGPIPE: prevent telescope from dying
