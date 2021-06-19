@@ -34,6 +34,7 @@
 
 static void		 die(void) __attribute__((__noreturn__));
 static void		 serve_bookmarks(uint32_t);
+static void		 send_page(struct imsg *, const char *);
 static void		 handle_get(struct imsg*, size_t);
 static void		 handle_quit(struct imsg*, size_t);
 static void		 handle_bookmark_page(struct imsg*, size_t);
@@ -105,6 +106,15 @@ serve_bookmarks(uint32_t peerid)
 }
 
 static void
+send_page(struct imsg *imsg, const char *page)
+{
+	imsg_compose(ibuf, IMSG_BUF, imsg->hdr.peerid, 0, -1,
+	    page, strlen(page));
+	imsg_compose(ibuf, IMSG_EOF, imsg->hdr.peerid, 0, -1, NULL, 0);
+	imsg_flush(ibuf);
+}
+
+static void
 handle_get(struct imsg *imsg, size_t datalen)
 {
 	char		*data;
@@ -115,13 +125,16 @@ handle_get(struct imsg *imsg, size_t datalen)
 	if (data[datalen-1] != '\0')
 		die();
 
-	if (!strcmp(data, "about:new")) {
-		imsg_compose(ibuf, IMSG_BUF, imsg->hdr.peerid, 0, -1,
-		    about_new, strlen(about_new));
-		imsg_compose(ibuf, IMSG_EOF, imsg->hdr.peerid, 0, -1, NULL, 0);
-		imsg_flush(ibuf);
+	if (!strcmp(data, "about:about")) {
+		send_page(imsg, about_about);
+	} else if (!strcmp(data, "about:blank")) {
+		send_page(imsg, about_blank);
 	} else if (!strcmp(data, "about:bookmarks")) {
 		serve_bookmarks(imsg->hdr.peerid);
+	} else if (!strcmp(data, "about:help")) {
+		send_page(imsg, about_help);
+	} else if (!strcmp(data, "about:new")) {
+		send_page(imsg, about_new);
 	} else {
 		p = "# not found!\n";
 		imsg_compose(ibuf, IMSG_BUF, imsg->hdr.peerid, 0, -1, p, strlen(p));

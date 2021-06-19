@@ -1,5 +1,7 @@
 2021-06-19  Omar Polo  <op@omarpolo.com>
 
+	* pages.c: added about:about, about:blank and about:help pages
+
 	* defaults.c (config_setvari): add fill-column config to manage the max-width when filling the page.
 	(config_setvars): add new-tab-url config to specify the default url for new tabs.
 

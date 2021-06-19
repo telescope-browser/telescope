@@ -263,6 +263,9 @@ int		 kmap_define_key(struct kmap*, const char*, void(*)(struct buffer*));
 int		 setup_parser_for(struct tab*);
 
 /* pages.c */
+extern const char	*about_about;
+extern const char	*about_blank;
+extern const char	*about_help;
 extern const char	*about_new;
 
 #define CANNOT_FETCH		0
