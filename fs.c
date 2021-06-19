@@ -430,8 +430,11 @@ load_last_session(void (*cb)(const char*))
 	ssize_t	 linelen;
 	FILE	*session;
 
-	if ((session = fopen(session_file, "r")) == NULL)
+	if ((session = fopen(session_file, "r")) == NULL) {
+		/* first time? */
+		cb("about:help");
 		return 0;
+	}
 
 	while ((linelen = getline(&line, &linesize, session)) != -1) {
                 if ((nl = strchr(line, '\n')) != NULL)

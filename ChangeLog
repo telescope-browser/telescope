@@ -1,5 +1,7 @@
 2021-06-19  Omar Polo  <op@omarpolo.com>
 
+	* fs.c (load_last_session): load about:help during the first startup
+
 	* pages.c: added about:about, about:blank and about:help pages
 
 	* defaults.c (config_setvari): add fill-column config to manage the max-width when filling the page.
