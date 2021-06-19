@@ -23,6 +23,7 @@
 
 char *new_tab_url = NULL;
 int fill_column = INT_MAX;
+int olivetti_mode = 0;
 
 struct lineprefix line_prefixes[] = {
 	[LINE_TEXT] =		{ "",		"" },
@@ -112,6 +113,8 @@ config_setvari(const char *var, int val)
 	if (!strcmp(var, "fill-column")) {
 		if (val > 0)
 			fill_column = val;
+	} else if (!strcmp(var, "olivetti-mode")) {
+		olivetti_mode = !!val;
 	} else
 		return 0;
 	return 1;

@@ -60,6 +60,7 @@ enum imsg_type {
 
 extern char	*new_tab_url;
 extern int	 fill_column;
+extern int	 olivetti_mode;
 
 struct lineprefix {
 	const char	*prfx1;

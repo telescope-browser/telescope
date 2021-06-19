@@ -106,6 +106,8 @@ static struct tab	*new_tab(const char*);
 static void		 session_new_tab_cb(const char*);
 static void		 usage(void);
 
+static int		 x_offset;
+
 static struct { short meta; int key; uint32_t cp; } thiskey;
 
 static struct event	resizeev;
@@ -162,6 +164,15 @@ static struct {
 	struct hist	*hist_cur;
 	size_t		 hist_off;
 } ministate;
+
+static inline void
+update_x_offset()
+{
+	if (olivetti_mode && fill_column < body_cols)
+		x_offset = (body_cols - fill_column)/2;
+	else
+		x_offset = 0;
+}
 
 static inline void
 global_set_key(const char *key, void (*fn)(struct buffer*))
@@ -313,6 +324,8 @@ restore_cursor(struct buffer *buffer)
 		buffer->curs_x = buffer->cpoff = 0;
 	else
 		buffer->curs_x = utf8_snwidth(vl->line, buffer->cpoff);
+
+	buffer->curs_x += x_offset;
 
 	if (vl != NULL) {
 		prfx = line_prefixes[vl->parent->type].prfx1;
@@ -1311,6 +1324,7 @@ handle_resize_nodelay(int s, short ev, void *d)
 	} else
 		mvwin(body, 1, 0);
 
+	update_x_offset();
 	wresize(body, body_lines, body_cols);
 
 	wresize(tabline, 1, COLS);
@@ -1327,6 +1341,7 @@ wrap_page(struct buffer *buffer, int width)
 	struct line		*l;
 	const struct line	*orig;
 	struct vline		*vl;
+	int			 pre_width;
 	const char		*prfx;
 
 	orig = buffer->current_line == NULL
@@ -1354,7 +1369,11 @@ wrap_page(struct buffer *buffer, int width)
 			wrap_text(buffer, prfx, l, MIN(fill_column, width));
 			break;
 		case LINE_PRE_CONTENT:
-                        hardwrap_text(buffer, l, width);
+			if (olivetti_mode)
+				pre_width = MIN(fill_column, width);
+			else
+				pre_width = width;
+			hardwrap_text(buffer, l, pre_width);
 			break;
 		}
 
@@ -1506,7 +1525,7 @@ redraw_window(WINDOW *win, int height, struct buffer *buffer)
 	l = 0;
 	vl = nth_line(buffer, buffer->line_off);
 	for (; vl != NULL; vl = TAILQ_NEXT(vl, vlines)) {
-		wmove(win, l, 0);
+		wmove(win, l, x_offset);
 		print_vline(win, vl);
 		l++;
 		if (l == height)
@@ -1643,6 +1662,8 @@ redraw_tab(struct tab *tab)
 		redraw_help();
 		wnoutrefresh(help);
 	}
+
+	restore_cursor(&tab->buffer);
 
 	redraw_tabline();
 	redraw_body(tab);
@@ -1992,6 +2013,8 @@ ui_init(int argc, char * const *argv)
 
 	body_lines = LINES-3;
 	body_cols = COLS;
+
+	update_x_offset();
 
 	keypad(body, TRUE);
 	scrollok(body, TRUE);
