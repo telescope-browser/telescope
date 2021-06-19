@@ -111,7 +111,7 @@ int
 config_setvari(const char *var, int val)
 {
 	if (!strcmp(var, "fill-column")) {
-		if ((fill_column = var) <= 0)
+		if ((fill_column = val) <= 0)
 			fill_column = INT_MAX;
 	} else if (!strcmp(var, "olivetti-mode")) {
 		olivetti_mode = !!val;
