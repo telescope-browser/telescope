@@ -100,8 +100,8 @@ const char *about_help =
 	"}\n"
 	"\n"
 	"style line.quote {\n"
-	"	prefix \"┃ \"\n"
-	"	cont   \"┃ \"\n"
+	"	prefix \" ┃ \"\n"
+	"	cont   \" ┃ \"\n"
 	"}\n"
 	"```\n"
 	;
