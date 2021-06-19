@@ -50,6 +50,7 @@ CMD(cmd_load_current_url);
 CMD(cmd_bookmark_page);
 CMD(cmd_list_bookmarks);
 CMD(cmd_toggle_help);
+CMD(cmd_olivetti_mode);
 
 CMD(cmd_mini_delete_char);
 CMD(cmd_mini_delete_backward_char);

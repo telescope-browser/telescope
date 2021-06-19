@@ -1,5 +1,7 @@
 2021-06-19  Omar Polo  <op@omarpolo.com>
 
+	* ui.c (cmd_olivetti_mode): added olivetti-mode (the function)
+
 	* defaults.c (config_setvari): added olivetti-mode!
 
 	* fs.c (load_last_session): load about:help during the first startup

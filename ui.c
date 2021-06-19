@@ -828,6 +828,18 @@ cmd_toggle_help(struct buffer *buffer)
 }
 
 void
+cmd_olivetti_mode(struct buffer *buffer)
+{
+	olivetti_mode = !olivetti_mode;
+	if (olivetti_mode)
+		message("olivetti-mode enabled");
+	else
+		message("olivetti-mode disabled");
+
+	handle_resize_nodelay(0, 0, NULL);
+}
+
+void
 cmd_mini_delete_char(struct buffer *buffer)
 {
 	char *c, *n;
