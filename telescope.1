@@ -448,6 +448,81 @@ The following aliases are available during
 .It Ic q No and Ic wq
 .Ic kill-telescope
 .El
+.Sh CONFIGURATION FILE
+During the startup,
+.Nm
+reads the configuration file at
+.Pa ~/.telescope/config
+or the one given with the
+.Fl c
+flag.
+.Pp
+The format of the configuration file is fairly flexible.
+The current line can be extended over multiple ones using a
+backslash
+.Pq Sq \e .
+Comments can be put anywhere in the file using a hash mark
+.Pq Sq # ,
+and extend to the end of the current line, but backslashes can't be
+used to extend comments over multiple lines.
+.Pp
+The following constructs are available:
+.Bl -tag -width Ds
+.It Ic set Ar opt No = Ar val
+Set the option
+.Ar opt
+to the value
+.Ar val .
+Valid options are:
+.Pp
+.Bl -tag -width twelveletters -compact
+.It fill-column
+.Pq integer
+If greater than zero, lines of text will be formatted in a way that
+don't exceed the given number of columns.
+.It new-tab-url
+.Pq string
+Default URL for the new tab page.
+.It olivetti-mode
+.Pq integer
+Enable
+.Ic olivetti-mode
+by default if non zero.
+.El
+.It Ic style Ar name Ar option
+Change the styling of the element identified by
+.Ar name .
+Multiple options may be specified within curly braces.
+Valid style identifiers are:
+.Bl -tag -width 14m -compact -offset Ds
+.It line.text
+for text lines
+.It line.link
+for link lines
+.It line.title1..3
+for headings
+.It line.item
+for item lines
+.It line.quote
+for quotes
+.It line.pre.start
+for the heading of a preformatted block
+.It line.pre
+for the content of a preformatted block
+.It line.pre.end
+for the closing line of a preformatted block
+.El
+.Pp
+Valid options are:
+.Bl -tag -width tenletters -compact -offset Ds
+.It Ic prefix Ar str
+Set the prefix for the given line to
+.Ar str .
+.It Ic cont Ar str
+Set the prefix for the continuation line to
+.Ar str .
+.El
+.El
 .Sh FILES
 .Bl -tag -width Ds -compact
 .It Pa ~/.telescope/bookmarks.gmi
@@ -463,6 +538,27 @@ Gets written on
 .Ic kill-telescope
 and loaded on startup.
 .El
+.Sh EXAMPLES
+The following is the config file as used by me
+.Bd -literal -offset indent
+set fill-column = 72
+set olivetti-mode = 1
+
+style line.item {
+	prefix " • "
+	cont   "   "
+}
+
+style line.link {
+	prefix "→ "
+	cont   "  "
+}
+
+style line.quote {
+	prefix " ┃ "
+	cont   " ┃ "
+}
+.Ed
 .Sh AUTHORS
 .An -nosplit
 The
