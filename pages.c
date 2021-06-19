@@ -78,6 +78,8 @@ const char *about_help =
 	" Telescope with the following configuration:\n"
 	"\n"
 	"``` Example of configuration file with some pretty defaults\n"
+	"# ~/.telescope/config\n"
+	"\n"
 	"# break paragraphs at most at the 72th column\n"
 	"set fill-column = 72\n"
 	"\n"
@@ -109,7 +111,9 @@ const char *about_new =
 	"\n"
 	"Version: " VERSION "\n"
 	"Bug reports to: " PACKAGE_BUGREPORT "\n"
-	"=> " PACKAGE_URL " Telescope Gemini site: " PACKAGE_URL "\n"
+	"\n"
+	"=> " PACKAGE_URL " Telescope project page\n"
+	"=> about:help Help\n"
 	;
 
 /* XXX: keep in sync with telescope.c:/^normalize_code/ */
