@@ -100,3 +100,15 @@ config_setprfx(const char *name, int cont, const char *str)
 
 	return 0;
 }
+
+int
+config_setvari(const char *var, int val)
+{
+	return 0;
+}
+
+int
+config_setvars(const char *var, char *val)
+{
+	return 0;
+}

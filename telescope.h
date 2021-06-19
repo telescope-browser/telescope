@@ -232,6 +232,8 @@ struct keymap {
 
 /* defaults.c */
 int		 config_setprfx(const char *, int, const char *);
+int		 config_setvari(const char *, int);
+int		 config_setvars(const char *, char *);
 
 /* fs.c */
 int		 fs_init(void);

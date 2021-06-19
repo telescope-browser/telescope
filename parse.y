@@ -49,6 +49,8 @@ int parse_errors = 0;
 static void yyerror(const char *, ...);
 static int yylex(void);
 static void setprfx(int, const char *);
+static void setvari(char *, int);
+static void setvars(char *, char *);
 
 %}
 
@@ -73,8 +75,8 @@ rule		: set
 		| unbind
 		;
 
-set		: TSET TSTRING '=' TSTRING	{ printf("set %s = \"%s\"\n", $2, $4); }
-		| TSET TSTRING '=' TNUMBER	{ printf("set %s = %d\n", $2, $4); }
+set		: TSET TSTRING '=' TSTRING	{ setvars($2, $4); }
+		| TSET TSTRING '=' TNUMBER	{ setvari($2, $4); }
 		;
 
 style		: TSTYLE TSTRING { current_style = $2; } styleopt
@@ -278,6 +280,26 @@ setprfx(int cont, const char *name)
 
 	if (!config_setprfx(current_style, cont, name))
 		yyerror("invalid style %s", name);
+}
+
+static void
+setvari(char *var, int val)
+{
+	if (!config_setvari(var, val))
+		yyerror("invalid variable or value: %s = %d",
+		    var, val);
+
+	free(var);
+}
+
+static void
+setvars(char *var, char *val)
+{
+        if (!config_setvars(var, val))
+		yyerror("invalid variable or value: %s = \"%s\"",
+		    var, val);
+
+	free(var);
 }
 
 void
