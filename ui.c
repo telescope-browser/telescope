@@ -680,7 +680,12 @@ cmd_tab_close_other(struct buffer *buffer)
 void
 cmd_tab_new(struct buffer *buffer)
 {
-	new_tab(NEW_TAB_URL);
+	const char *url;
+
+	if ((url = new_tab_url) == NULL)
+		url = NEW_TAB_URL;
+
+	new_tab(url);
 }
 
 void

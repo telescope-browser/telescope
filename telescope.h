@@ -58,7 +58,8 @@ enum imsg_type {
 	IMSG_SESSION_END,
 };
 
-extern int fill_column;
+extern char	*new_tab_url;
+extern int	 fill_column;
 
 struct lineprefix {
 	const char	*prfx1;

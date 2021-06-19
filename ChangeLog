@@ -1,6 +1,7 @@
 2021-06-19  Omar Polo  <op@omarpolo.com>
 
 	* defaults.c (config_setvari): add fill-column config to manage the max-width when filling the page.
+	(config_setvars): add new-tab-url config to specify the default url for new tabs.
 
 2021-06-18  Omar Polo  <op@omarpolo.com>
 

@@ -18,8 +18,10 @@
 
 #include <curses.h>
 #include <limits.h>
+#include <stdlib.h>
 #include <string.h>
 
+char *new_tab_url = NULL;
 int fill_column = INT_MAX;
 
 struct lineprefix line_prefixes[] = {
@@ -118,5 +120,11 @@ config_setvari(const char *var, int val)
 int
 config_setvars(const char *var, char *val)
 {
-	return 0;
+	if (!strcmp(var, "new-tab-url")) {
+		if (new_tab_url != NULL)
+			free(new_tab_url);
+		new_tab_url = val;
+	} else
+		return 0;
+	return 1;
 }
