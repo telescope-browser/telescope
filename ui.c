@@ -1346,7 +1346,7 @@ wrap_page(struct buffer *buffer, int width)
 		case LINE_QUOTE:
 		case LINE_PRE_START:
 		case LINE_PRE_END:
-			wrap_text(buffer, prfx, l, width);
+			wrap_text(buffer, prfx, l, MIN(fill_column, width));
 			break;
 		case LINE_PRE_CONTENT:
                         hardwrap_text(buffer, l, width);

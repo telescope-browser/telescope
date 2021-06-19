@@ -1,3 +1,7 @@
+2021-06-19  Omar Polo  <op@omarpolo.com>
+
+	* defaults.c (config_setvari): add fill-column config to manage the max-width when filling the page.
+
 2021-06-18  Omar Polo  <op@omarpolo.com>
 
 	* gemini.c (try_to_connect): use the async try_to_connect even when !HAVE_ASR_RUN

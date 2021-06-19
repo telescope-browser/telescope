@@ -17,7 +17,10 @@
 #include "telescope.h"
 
 #include <curses.h>
+#include <limits.h>
 #include <string.h>
+
+int fill_column = INT_MAX;
 
 struct lineprefix line_prefixes[] = {
 	[LINE_TEXT] =		{ "",		"" },
@@ -104,7 +107,12 @@ config_setprfx(const char *name, int cont, const char *str)
 int
 config_setvari(const char *var, int val)
 {
-	return 0;
+	if (!strcmp(var, "fill-column")) {
+		if (val > 0)
+			fill_column = val;
+	} else
+		return 0;
+	return 1;
 }
 
 int
