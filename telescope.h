@@ -171,6 +171,10 @@ struct hist {
 
 struct buffer {
 	struct parser		 page;
+
+	size_t			 last_line_off;
+	int			 force_redraw;
+
 	int			 curs_x;
 	int			 curs_y;
 	size_t			 line_off;

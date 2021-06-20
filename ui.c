@@ -1352,6 +1352,7 @@ wrap_page(struct buffer *buffer, int width)
 		: buffer->current_line->parent;
 	buffer->current_line = NULL;
 
+	buffer->force_redraw = 1;
 	buffer->curs_y = 0;
 	buffer->line_off = 0;
 
@@ -1519,11 +1520,23 @@ redraw_window(WINDOW *win, int height, struct buffer *buffer)
 	struct vline	*vl;
 	int		 l;
 
+	/*
+	 * Don't bother redraw the body if nothing changed.  Cursor
+	 * movements count as "nothing changed" if it hasn't produced
+	 * a scroll.  Ensure that wmove is called though!
+	 */
+	if (!buffer->force_redraw &&
+	    buffer->last_line_off == buffer->line_off)
+		goto end;
+
 	werase(win);
 
 	buffer->line_off = MIN(buffer->line_max-1, buffer->line_off);
+	buffer->force_redraw = 0;
+	buffer->last_line_off = buffer->line_off;
+
 	if (TAILQ_EMPTY(&buffer->head))
-		return;
+		goto end;
 
 	l = 0;
 	vl = nth_line(buffer, buffer->line_off);
@@ -1535,6 +1548,7 @@ redraw_window(WINDOW *win, int height, struct buffer *buffer)
 			break;
 	}
 
+end:
 	wmove(win, buffer->curs_y, buffer->curs_x);
 }
 
