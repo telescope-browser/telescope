@@ -1440,6 +1440,14 @@ ui_toggle_side_window(void)
 	side_window = !side_window;
 	if (side_window)
 		recompute_help();
+
+	/*
+	 * ugly hack, but otherwise the window doesn't get updated
+	 * until I call handle_resize a second time (i.e. C-l).  I
+	 * will be happy to know why something like this is needed.
+	 */
+	handle_resize_nodelay(0, 0, NULL);
+	handle_resize_nodelay(0, 0, NULL);
 }
 
 void

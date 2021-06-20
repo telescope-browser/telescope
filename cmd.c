@@ -484,7 +484,6 @@ void
 cmd_toggle_help(struct buffer *buffer)
 {
 	ui_toggle_side_window();
-	ui_schedule_redraw();
 }
 
 void
