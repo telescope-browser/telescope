@@ -134,16 +134,14 @@ cmd_redraw(struct buffer *buffer)
 void
 cmd_scroll_line_up(struct buffer *buffer)
 {
-	struct vline	*vl;
-
 	if (buffer->current_line == NULL)
 		return;
 
-	if ((vl = TAILQ_PREV(buffer->current_line, vhead, vlines)) == NULL)
+	if (buffer->line_off == 0)
 		return;
 
-	buffer->current_line = vl;
 	buffer->line_off--;
+	buffer->current_line = TAILQ_PREV(buffer->current_line, vhead, vlines);
 	restore_cursor(buffer);
 }
 
