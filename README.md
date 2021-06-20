@@ -20,9 +20,6 @@ things that you can help develop :)
  - client certificates
  - add other GUIs: atm it uses only ncurses, but telescope shouldn't
    be restricted to TTYs only!
- - configuration file: even proposals are accepted.  It needs a way to
-   define keybindings, colors etc in a way that will possibly work on
-   more than one graphic libraries.
 
 ![Telescope new tab](images/about-new.png)
 
