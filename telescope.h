@@ -361,6 +361,8 @@ void		 ir_select(void);
 void		 lu_self_insert(void);
 void		 lu_select(void);
 void		 bp_select(void);
+void		 vmessage(const char*, va_list);
+void		 message(const char*, ...) __attribute__((format(printf, 1, 2)));
 void		 start_loading_anim(struct tab *tab);
 void		 load_url_in_tab(struct tab *, const char *);
 void		 enter_minibuffer(void(*)(void), void(*)(void), void(*)(void), struct histhead *);
@@ -378,7 +380,6 @@ void		 ui_schedule_redraw(void);
 void		 ui_require_input(struct tab*, int);
 void		 ui_read(const char*, void(*)(const char*, unsigned int), unsigned int);
 void		 ui_yornp(const char*, void (*)(int, unsigned int), unsigned int);
-void		 ui_notify(const char*, ...) __attribute__((format(printf, 1, 2)));
 void		 ui_end(void);
 
 /* utf.8 */

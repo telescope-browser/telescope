@@ -406,9 +406,9 @@ handle_imsg_bookmark_ok(struct imsg *imsg, size_t datalen)
 
 	memcpy(&res, imsg->data, sizeof(res));
 	if (res == 0)
-		ui_notify("Added to bookmarks!");
+		message("Added to bookmarks!");
 	else
-		ui_notify("Failed to add to bookmarks: %s",
+		message("Failed to add to bookmarks: %s",
 		    strerror(res));
 }
 
@@ -421,7 +421,7 @@ handle_imsg_save_cert_ok(struct imsg *imsg, size_t datalen)
 		die();
 	memcpy(&res, imsg->data, datalen);
 	if (res != 0)
-		ui_notify("Failed to save the cert for: %s",
+		message("Failed to save the cert for: %s",
 		    strerror(res));
 }
 
@@ -434,7 +434,7 @@ handle_imsg_update_cert_ok(struct imsg *imsg, size_t datalen)
 		die();
 	memcpy(&res, imsg->data, datalen);
 	if (!res)
-		ui_notify("Failed to update the certificate");
+		message("Failed to update the certificate");
 }
 
 static void

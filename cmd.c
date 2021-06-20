@@ -20,8 +20,6 @@
 #include "telescope.h"
 #include "cmd.gen.h"
 
-#define message ui_notify
-
 void
 cmd_previous_line(struct buffer *buffer)
 {

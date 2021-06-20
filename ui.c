@@ -78,8 +78,6 @@ static void		 redraw_tab(struct tab*);
 static void		 emit_help_item(char*, void*);
 static void		 rec_compute_help(struct kmap*, char*, size_t);
 static void		 recompute_help(void);
-static void		 vmessage(const char*, va_list);
-static void		 message(const char*, ...) __attribute__((format(printf, 1, 2)));
 static void		 update_loading_anim(int, short, void*);
 static void		 stop_loading_anim(struct tab*);
 static void		 session_new_tab_cb(const char*);
@@ -1110,7 +1108,7 @@ recompute_help(void)
 	wrap_page(&helpwin, help_cols);
 }
 
-static void
+void
 vmessage(const char *fmt, va_list ap)
 {
 	if (evtimer_pending(&clminibufev, NULL))
@@ -1138,7 +1136,7 @@ vmessage(const char *fmt, va_list ap)
 	}
 }
 
-static void
+void
 message(const char *fmt, ...)
 {
 	va_list ap;
@@ -1503,16 +1501,6 @@ ui_read(const char *prompt, void (*fn)(const char*, unsigned int),
 	strlcpy(ministate.prompt, prompt, len);
 	strlcat(ministate.prompt, ": ", len);
 	redraw_tab(current_tab());
-}
-
-void
-ui_notify(const char *fmt, ...)
-{
-	va_list ap;
-
-	va_start(ap, fmt);
-	vmessage(fmt, ap);
-	va_end(ap);
 }
 
 void
