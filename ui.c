@@ -449,15 +449,14 @@ cmd_scroll_line_up(struct buffer *buffer)
 {
 	struct vline	*vl;
 
-	if (buffer->line_off == 0)
+	if (buffer->current_line == NULL)
 		return;
 
-	vl = nth_line(buffer, --buffer->line_off);
-	wscrl(body, -1);
-	wmove(body, 0, 0);
-	print_vline(body, vl);
+	if ((vl = TAILQ_PREV(buffer->current_line, vhead, vlines)) == NULL)
+		return;
 
-	buffer->current_line = TAILQ_PREV(buffer->current_line, vhead, vlines);
+	buffer->current_line = vl;
+	buffer->line_off--;
 	restore_cursor(buffer);
 }
 
@@ -466,21 +465,14 @@ cmd_scroll_line_down(struct buffer *buffer)
 {
 	struct vline	*vl;
 
-	vl = buffer->current_line;
-	if ((vl = TAILQ_NEXT(vl, vlines)) == NULL)
+	if (buffer->current_line == NULL)
 		return;
+
+	if ((vl = TAILQ_NEXT(buffer->current_line, vlines)) == NULL)
+		return;
+
 	buffer->current_line = vl;
-
 	buffer->line_off++;
-	wscrl(body, 1);
-
-	if (buffer->line_max - buffer->line_off < (size_t)body_lines)
-		return;
-
-	vl = nth_line(buffer, buffer->line_off + body_lines-1);
-	wmove(body, body_lines-1, 0);
-	print_vline(body, vl);
-
 	restore_cursor(buffer);
 }
 
