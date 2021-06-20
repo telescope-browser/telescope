@@ -184,6 +184,12 @@ struct buffer {
 	TAILQ_HEAD(vhead, vline) head;
 };
 
+
+#define TAB_CURRENT	0x1
+#define TAB_URGENT	0x2
+
+#define NEW_TAB_URL	"about:new"
+
 extern TAILQ_HEAD(tabshead, tab) tabshead;
 struct tab {
 	TAILQ_ENTRY(tab)	 tabs;
@@ -312,10 +318,63 @@ void			 tofu_add(struct ohash*, struct tofu_entry*);
 void			 tofu_update(struct ohash*, struct tofu_entry*);
 
 /* ui.c */
+extern int	 body_lines;
+extern int	 body_cols;
+extern int	 in_minibuffer;
+
+struct thiskey {
+	short meta;
+	int key;
+	uint32_t cp;
+};
+extern struct thiskey thiskey;
+
+extern struct histhead eecmd_history,
+	ir_history,
+	lu_history,
+	read_history;
+
+struct ministate {
+	char		*curmesg;
+
+	char		 prompt[64];
+	void		 (*donefn)(void);
+	void		 (*abortfn)(void);
+
+	char		 buf[1025];
+	struct line	 line;
+	struct vline	 vline;
+	struct buffer	 buffer;
+
+	struct histhead	*history;
+	struct hist	*hist_cur;
+	size_t		 hist_off;
+};
+extern struct ministate ministate;
+
+void		 restore_cursor(struct buffer *);
+void		 minibuffer_taint_hist(void);
+void		 eecmd_self_insert(void);
+void		 eecmd_select(void);
+void		 ir_self_insert(void);
+void		 ir_select(void);
+void		 lu_self_insert(void);
+void		 lu_select(void);
+void		 bp_select(void);
+void		 start_loading_anim(struct tab *tab);
+void		 load_url_in_tab(struct tab *, const char *);
+void		 enter_minibuffer(void(*)(void), void(*)(void), void(*)(void), struct histhead *);
+void		 exit_minibuffer(void);
+void		 switch_to_tab(struct tab *);
+struct tab	*current_tab(void);
+struct tab	*new_tab(const char *);
 unsigned int	 tab_new_id(void);
 int		 ui_init(int, char * const*);
 void		 ui_on_tab_loaded(struct tab*);
 void		 ui_on_tab_refresh(struct tab*);
+const char	*ui_keyname(int);
+void		 ui_toggle_side_window(void);
+void		 ui_schedule_redraw(void);
 void		 ui_require_input(struct tab*, int);
 void		 ui_read(const char*, void(*)(const char*, unsigned int), unsigned int);
 void		 ui_yornp(const char*, void (*)(int, unsigned int), unsigned int);

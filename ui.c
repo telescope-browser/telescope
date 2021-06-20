@@ -46,27 +46,13 @@
 #include <string.h>
 #include <unistd.h>
 
-#define TAB_CURRENT	0x1
-#define TAB_URGENT	0x2
-
-#define NEW_TAB_URL	"about:new"
-
 static struct event	stdioev, winchev;
 
 static void		 load_default_keys(void);
-static void		 restore_cursor(struct buffer*);
 
 static void		 global_key_unbound(void);
 static void		 minibuffer_hist_save_entry(void);
-static void		 minibuffer_taint_hist(void);
 static void		 minibuffer_self_insert(void);
-static void		 eecmd_self_insert(void);
-static void		 eecmd_select(void);
-static void		 ir_self_insert(void);
-static void		 ir_select(void);
-static void		 lu_self_insert(void);
-static void		 lu_select(void);
-static void		 bp_select(void);
 static void		 yornp_self_insert(void);
 static void		 yornp_abort(void);
 static void		 read_self_insert(void);
@@ -74,7 +60,6 @@ static void		 read_abort(void);
 static void		 read_select(void);
 
 static struct vline	*nth_line(struct buffer*, size_t);
-static struct tab	*current_tab(void);
 static struct buffer	*current_buffer(void);
 static int		 readkey(void);
 static void		 dispatch_stdio(int, short, void*);
@@ -95,26 +80,21 @@ static void		 rec_compute_help(struct kmap*, char*, size_t);
 static void		 recompute_help(void);
 static void		 vmessage(const char*, va_list);
 static void		 message(const char*, ...) __attribute__((format(printf, 1, 2)));
-static void		 start_loading_anim(struct tab*);
 static void		 update_loading_anim(int, short, void*);
 static void		 stop_loading_anim(struct tab*);
-static void		 load_url_in_tab(struct tab*, const char*);
-static void		 enter_minibuffer(void(*)(void), void(*)(void), void(*)(void), struct histhead*);
-static void		 exit_minibuffer(void);
-static void		 switch_to_tab(struct tab*);
-static struct tab	*new_tab(const char*);
 static void		 session_new_tab_cb(const char*);
 static void		 usage(void);
 
 static int		 x_offset;
 
-static struct { short meta; int key; uint32_t cp; } thiskey;
+struct thiskey thiskey;
 
 static struct event	resizeev;
 static struct timeval	resize_timer = { 0, 250000 };
 
 static WINDOW	*tabline, *body, *modeline, *minibuf;
-static int	 body_lines, body_cols;
+
+int			 body_lines, body_cols;
 
 static WINDOW		*help;
 static struct buffer	 helpwin;
@@ -141,29 +121,14 @@ struct kmap global_map,
 	*current_map,
 	*base_map;
 
-static struct histhead eecmd_history,
+struct histhead eecmd_history,
 	ir_history,
 	lu_history,
 	read_history;
 
-static int	in_minibuffer;
+int in_minibuffer;
 
-static struct {
-	char		*curmesg;
-
-	char		 prompt[64];
-	void		 (*donefn)(void);
-	void		 (*abortfn)(void);
-
-	char		 buf[1025];
-	struct line	 line;
-	struct vline	 vline;
-	struct buffer	 buffer;
-
-	struct histhead	*history;
-	struct hist	*hist_cur;
-	size_t		 hist_off;
-} ministate;
+struct ministate ministate;
 
 static inline void
 update_x_offset()
@@ -313,7 +278,7 @@ load_default_keys(void)
 	minibuffer_set_key("<down>",		cmd_mini_next_history_element);
 }
 
-static void
+void
 restore_cursor(struct buffer *buffer)
 {
 	struct vline	*vl;
@@ -331,624 +296,6 @@ restore_cursor(struct buffer *buffer)
 		prfx = line_prefixes[vl->parent->type].prfx1;
 		buffer->curs_x += utf8_swidth(prfx);
 	}
-}
-
-void
-cmd_previous_line(struct buffer *buffer)
-{
-	struct vline	*vl;
-
-	if (buffer->current_line == NULL
-	    || (vl = TAILQ_PREV(buffer->current_line, vhead, vlines)) == NULL)
-		return;
-
-	if (--buffer->curs_y < 0) {
-		buffer->curs_y = 0;
-		cmd_scroll_line_up(buffer);
-		return;
-	}
-
-	buffer->current_line = vl;
-	restore_cursor(buffer);
-}
-
-void
-cmd_next_line(struct buffer *buffer)
-{
-	struct vline	*vl;
-
-	if (buffer->current_line == NULL
-	    || (vl = TAILQ_NEXT(buffer->current_line, vlines)) == NULL)
-		return;
-
-	if (++buffer->curs_y > body_lines-1) {
-		buffer->curs_y = body_lines-1;
-		cmd_scroll_line_down(buffer);
-		return;
-	}
-
-	buffer->current_line = vl;
-	restore_cursor(buffer);
-}
-
-void
-cmd_backward_char(struct buffer *buffer)
-{
-	if (buffer->cpoff != 0)
-		buffer->cpoff--;
-	restore_cursor(buffer);
-}
-
-void
-cmd_forward_char(struct buffer *buffer)
-{
-	size_t len = 0;
-
-	if (buffer->current_line->line != NULL)
-		len = utf8_cplen(buffer->current_line->line);
-	if (++buffer->cpoff > len)
-		buffer->cpoff = len;
-	restore_cursor(buffer);
-}
-
-void
-cmd_backward_paragraph(struct buffer *buffer)
-{
-	do {
-		if (buffer->current_line == NULL ||
-		    buffer->current_line == TAILQ_FIRST(&buffer->head)) {
-			message("No previous paragraph");
-			return;
-		}
-		cmd_previous_line(buffer);
-	} while (buffer->current_line->line != NULL ||
-	    buffer->current_line->parent->type != LINE_TEXT);
-}
-
-void
-cmd_forward_paragraph(struct buffer *buffer)
-{
-	do {
-		if (buffer->current_line == NULL ||
-		    buffer->current_line == TAILQ_LAST(&buffer->head, vhead)) {
-			message("No next paragraph");
-			return;
-		}
-		cmd_next_line(buffer);
-	} while (buffer->current_line->line != NULL ||
-	    buffer->current_line->parent->type != LINE_TEXT);
-}
-
-void
-cmd_move_beginning_of_line(struct buffer *buffer)
-{
-	buffer->cpoff = 0;
-	restore_cursor(buffer);
-}
-
-void
-cmd_move_end_of_line(struct buffer *buffer)
-{
-	struct vline	*vl;
-
-	vl = buffer->current_line;
-	if (vl->line == NULL)
-		return;
-	buffer->cpoff = utf8_cplen(vl->line);
-	restore_cursor(buffer);
-}
-
-void
-cmd_redraw(struct buffer *buffer)
-{
-	handle_resize(0, 0, NULL);
-}
-
-void
-cmd_scroll_line_up(struct buffer *buffer)
-{
-	struct vline	*vl;
-
-	if (buffer->current_line == NULL)
-		return;
-
-	if ((vl = TAILQ_PREV(buffer->current_line, vhead, vlines)) == NULL)
-		return;
-
-	buffer->current_line = vl;
-	buffer->line_off--;
-	restore_cursor(buffer);
-}
-
-void
-cmd_scroll_line_down(struct buffer *buffer)
-{
-	struct vline	*vl;
-
-	if (buffer->current_line == NULL)
-		return;
-
-	if ((vl = TAILQ_NEXT(buffer->current_line, vlines)) == NULL)
-		return;
-
-	buffer->current_line = vl;
-	buffer->line_off++;
-	restore_cursor(buffer);
-}
-
-void
-cmd_scroll_up(struct buffer *buffer)
-{
-	size_t off;
-
-	off = body_lines-1;
-
-	for (; off > 0; --off)
-		cmd_scroll_line_up(buffer);
-}
-
-void
-cmd_scroll_down(struct buffer *buffer)
-{
-	size_t off;
-
-	off = body_lines-1;
-
-	for (; off > 0; --off)
-		cmd_scroll_line_down(buffer);
-}
-
-void
-cmd_beginning_of_buffer(struct buffer *buffer)
-{
-	buffer->current_line = TAILQ_FIRST(&buffer->head);
-	buffer->line_off = 0;
-	buffer->curs_y = 0;
-	buffer->cpoff = 0;
-	restore_cursor(buffer);
-}
-
-void
-cmd_end_of_buffer(struct buffer *buffer)
-{
-	ssize_t off;
-
-	off = buffer->line_max - body_lines;
-	off = MAX(0, off);
-
-	buffer->line_off = off;
-	buffer->curs_y = MIN((size_t)body_lines, buffer->line_max-1);
-
-	buffer->current_line = TAILQ_LAST(&buffer->head, vhead);
-	buffer->cpoff = body_cols;
-	restore_cursor(buffer);
-}
-
-void
-cmd_kill_telescope(struct buffer *buffer)
-{
-	save_session();
-	event_loopbreak();
-}
-
-void
-cmd_push_button(struct buffer *buffer)
-{
-	struct vline	*vl;
-	size_t		 nth;
-
-	nth = buffer->line_off + buffer->curs_y;
-	if (nth >= buffer->line_max)
-		return;
-	vl = nth_line(buffer, nth);
-	if (vl->parent->type != LINE_LINK)
-		return;
-
-	load_url_in_tab(current_tab(), vl->parent->alt);
-}
-
-void
-cmd_push_button_new_tab(struct buffer *buffer)
-{
-	struct vline	*vl;
-	size_t		 nth;
-
-	nth = buffer->line_off + buffer->curs_y;
-	if (nth > buffer->line_max)
-		return;
-	vl = nth_line(buffer, nth);
-	if (vl->parent->type != LINE_LINK)
-		return;
-
-	new_tab(vl->parent->alt);
-}
-
-void
-cmd_previous_button(struct buffer *buffer)
-{
-	do {
-		if (buffer->current_line == NULL ||
-		    buffer->current_line == TAILQ_FIRST(&buffer->head)) {
-			message("No previous link");
-			return;
-		}
-		cmd_previous_line(buffer);
-	} while (buffer->current_line->parent->type != LINE_LINK);
-}
-
-void
-cmd_next_button(struct buffer *buffer)
-{
-	do {
-		if (buffer->current_line == NULL ||
-		    buffer->current_line == TAILQ_LAST(&buffer->head, vhead)) {
-			message("No next link");
-			return;
-		}
-		cmd_next_line(buffer);
-	} while (buffer->current_line->parent->type != LINE_LINK);
-}
-
-void
-cmd_previous_page(struct buffer *buffer)
-{
-	struct tab *tab = current_tab();
-
-	if (!load_previous_page(tab))
-		message("No previous page");
-	else
-		start_loading_anim(tab);
-}
-
-void
-cmd_next_page(struct buffer *buffer)
-{
-	struct tab *tab = current_tab();
-
-	if (!load_next_page(tab))
-		message("No next page");
-	else
-		start_loading_anim(tab);
-}
-
-void
-cmd_clear_minibuf(struct buffer *buffer)
-{
-	handle_clear_minibuf(0, 0, NULL);
-}
-
-void
-cmd_execute_extended_command(struct buffer *buffer)
-{
-	size_t	 len;
-
-	if (in_minibuffer) {
-		message("We don't have enable-recursive-minibuffers");
-		return;
-	}
-
-	enter_minibuffer(eecmd_self_insert, eecmd_select, exit_minibuffer,
-	    &eecmd_history);
-
-	len = sizeof(ministate.prompt);
-	strlcpy(ministate.prompt, "", len);
-
-	if (thiskey.meta)
-		strlcat(ministate.prompt, "M-", len);
-
-	strlcat(ministate.prompt, keyname(thiskey.key), len);
-
-	if (thiskey.meta)
-		strlcat(ministate.prompt, " ", len);
-}
-
-void
-cmd_tab_close(struct buffer *buffer)
-{
-	struct tab *tab, *t;
-
-	tab = current_tab();
-	if (TAILQ_PREV(tab, tabshead, tabs) == NULL &&
-	    TAILQ_NEXT(tab, tabs) == NULL) {
-		message("Can't close the only tab.");
-		return;
-	}
-
-	if (evtimer_pending(&tab->loadingev, NULL))
-		evtimer_del(&tab->loadingev);
-
-	stop_tab(tab);
-
-	if ((t = TAILQ_PREV(tab, tabshead, tabs)) == NULL)
-		t = TAILQ_NEXT(tab, tabs);
-	TAILQ_REMOVE(&tabshead, tab, tabs);
-	free(tab);
-
-	switch_to_tab(t);
-}
-
-void
-cmd_tab_close_other(struct buffer *buffer)
-{
-	struct tab *t, *i;
-
-	TAILQ_FOREACH_SAFE(t, &tabshead, tabs, i) {
-		if (t->flags & TAB_CURRENT)
-			continue;
-
-		stop_tab(t);
-		TAILQ_REMOVE(&tabshead, t, tabs);
-		free(t);
-	}
-}
-
-void
-cmd_tab_new(struct buffer *buffer)
-{
-	const char *url;
-
-	if ((url = new_tab_url) == NULL)
-		url = NEW_TAB_URL;
-
-	new_tab(url);
-}
-
-void
-cmd_tab_next(struct buffer *buffer)
-{
-	struct tab *tab, *t;
-
-	tab = current_tab();
-	tab->flags &= ~TAB_CURRENT;
-
-	if ((t = TAILQ_NEXT(tab, tabs)) == NULL)
-		t = TAILQ_FIRST(&tabshead);
-	t->flags |= TAB_CURRENT;
-	t->flags &= ~TAB_URGENT;
-}
-
-void
-cmd_tab_previous(struct buffer *buffer)
-{
-	struct tab *tab, *t;
-
-	tab = current_tab();
-	tab->flags &= ~TAB_CURRENT;
-
-	if ((t = TAILQ_PREV(tab, tabshead, tabs)) == NULL)
-		t = TAILQ_LAST(&tabshead, tabshead);
-	t->flags |= TAB_CURRENT;
-	t->flags &= ~TAB_URGENT;
-}
-
-void
-cmd_tab_move(struct buffer *buffer)
-{
-	struct tab *tab, *t;
-
-	tab = current_tab();
-	t = TAILQ_NEXT(tab, tabs);
-	TAILQ_REMOVE(&tabshead, tab, tabs);
-
-	if (t == NULL)
-		TAILQ_INSERT_HEAD(&tabshead, tab, tabs);
-	else
-		TAILQ_INSERT_AFTER(&tabshead, t, tab, tabs);
-}
-
-void
-cmd_tab_move_to(struct buffer *buffer)
-{
-	struct tab *tab, *t;
-
-	tab = current_tab();
-	t = TAILQ_PREV(tab, tabshead, tabs);
-	TAILQ_REMOVE(&tabshead, tab, tabs);
-
-	if (t == NULL) {
-		if (TAILQ_EMPTY(&tabshead))
-			TAILQ_INSERT_HEAD(&tabshead, tab, tabs);
-		else
-			TAILQ_INSERT_TAIL(&tabshead, tab, tabs);
-	} else
-		TAILQ_INSERT_BEFORE(t, tab, tabs);
-}
-
-void
-cmd_load_url(struct buffer *buffer)
-{
-	if (in_minibuffer) {
-		message("We don't have enable-recursive-minibuffers");
-		return;
-	}
-
-	enter_minibuffer(lu_self_insert, lu_select, exit_minibuffer,
-	    &lu_history);
-	strlcpy(ministate.prompt, "Load URL: ", sizeof(ministate.prompt));
-	strlcpy(ministate.buf, "gemini://", sizeof(ministate.buf));
-	cmd_move_end_of_line(&ministate.buffer);
-}
-
-void
-cmd_load_current_url(struct buffer *buffer)
-{
-	struct tab *tab = current_tab();
-
-	if (in_minibuffer) {
-		message("We don't have enable-recursive-minibuffers");
-		return;
-	}
-
-	enter_minibuffer(lu_self_insert, lu_select, exit_minibuffer,
-	    &lu_history);
-	strlcpy(ministate.prompt, "Load URL: ", sizeof(ministate.prompt));
-	strlcpy(ministate.buf, tab->hist_cur->h, sizeof(ministate.buf));
-	ministate.buffer.cpoff = utf8_cplen(ministate.buf);
-}
-
-void
-cmd_bookmark_page(struct buffer *buffer)
-{
-	struct tab *tab = current_tab();
-
-	enter_minibuffer(lu_self_insert, bp_select, exit_minibuffer, NULL);
-	strlcpy(ministate.prompt, "Bookmark URL: ", sizeof(ministate.prompt));
-	strlcpy(ministate.buf, tab->hist_cur->h, sizeof(ministate.buf));
-	ministate.buffer.cpoff = utf8_cplen(ministate.buf);
-}
-
-void
-cmd_list_bookmarks(struct buffer *buffer)
-{
-	load_url_in_tab(current_tab(), "about:bookmarks");
-}
-
-void
-cmd_toggle_help(struct buffer *buffer)
-{
-	side_window = !side_window;
-	if (side_window)
-		recompute_help();
-
-	/*
-	 * ugly hack, but otherwise the window doesn't get updated
-	 * until I call handle_resize a second time (i.e. C-l).  I
-	 * will be happy to know why something like this is needed.
-	 */
-	handle_resize_nodelay(0, 0, NULL);
-	handle_resize_nodelay(0, 0, NULL);
-}
-
-void
-cmd_olivetti_mode(struct buffer *buffer)
-{
-	olivetti_mode = !olivetti_mode;
-	if (olivetti_mode)
-		message("olivetti-mode enabled");
-	else
-		message("olivetti-mode disabled");
-
-	handle_resize_nodelay(0, 0, NULL);
-}
-
-void
-cmd_mini_delete_char(struct buffer *buffer)
-{
-	char *c, *n;
-
-	if (!in_minibuffer) {
-		message("text is read-only");
-		return;
-	}
-
-	minibuffer_taint_hist();
-
-	c = utf8_nth(buffer->current_line->line, buffer->cpoff);
-	if (*c == '\0')
-		return;
-	n = utf8_next_cp(c);
-
-	memmove(c, n, strlen(n)+1);
-}
-
-void
-cmd_mini_delete_backward_char(struct buffer *buffer)
-{
-	char *c, *p, *start;
-
-	if (!in_minibuffer) {
-		message("text is read-only");
-		return;
-	}
-
-	minibuffer_taint_hist();
-
-	c = utf8_nth(buffer->current_line->line, buffer->cpoff);
-	start = buffer->current_line->line;
-	if (c == start)
-		return;
-	p = utf8_prev_cp(c-1, start);
-
-	memmove(p, c, strlen(c)+1);
-	buffer->cpoff--;
-}
-
-void
-cmd_mini_kill_line(struct buffer *buffer)
-{
-	char *c;
-
-	if (!in_minibuffer) {
-		message("text is read-only");
-		return;
-	}
-
-	minibuffer_taint_hist();
-	c = utf8_nth(buffer->current_line->line, buffer->cpoff);
-	*c = '\0';
-}
-
-void
-cmd_mini_abort(struct buffer *buffer)
-{
-	if (!in_minibuffer)
-		return;
-
-	ministate.abortfn();
-}
-
-void
-cmd_mini_complete_and_exit(struct buffer *buffer)
-{
-	if (!in_minibuffer)
-		return;
-
-	minibuffer_taint_hist();
-	ministate.donefn();
-}
-
-void
-cmd_mini_previous_history_element(struct buffer *buffer)
-{
-	if (ministate.history == NULL) {
-		message("No history");
-		return;
-	}
-
-	if (ministate.hist_cur == NULL ||
-	    (ministate.hist_cur = TAILQ_PREV(ministate.hist_cur, mhisthead, entries)) == NULL) {
-		ministate.hist_cur = TAILQ_LAST(&ministate.history->head, mhisthead);
-		ministate.hist_off = ministate.history->len - 1;
-		if (ministate.hist_cur == NULL)
-			message("No prev item");
-	} else {
-		ministate.hist_off--;
-	}
-
-	if (ministate.hist_cur != NULL)
-		buffer->current_line->line = ministate.hist_cur->h;
-}
-
-void
-cmd_mini_next_history_element(struct buffer *buffer)
-{
-	if (ministate.history == NULL) {
-		message("No history");
-		return;
-	}
-
-	if (ministate.hist_cur == NULL ||
-	    (ministate.hist_cur = TAILQ_NEXT(ministate.hist_cur, entries)) == NULL) {
-		ministate.hist_cur = TAILQ_FIRST(&ministate.history->head);
-		ministate.hist_off = 0;
-		if (ministate.hist_cur == NULL)
-			message("No next item");
-	} else {
-		ministate.hist_off++;
-	}
-
-	if (ministate.hist_cur != NULL)
-		buffer->current_line->line = ministate.hist_cur->h;
 }
 
 static void
@@ -982,7 +329,7 @@ minibuffer_hist_save_entry(void)
  * element, copy that to the current buf and reset the "history
  * navigation" thing.
  */
-static void
+void
 minibuffer_taint_hist(void)
 {
 	if (ministate.hist_cur == NULL)
@@ -1013,7 +360,7 @@ minibuffer_self_insert(void)
 	ministate.buffer.cpoff++;
 }
 
-static void
+void
 eecmd_self_insert(void)
 {
 	if (thiskey.meta || unicode_isspace(thiskey.cp) ||
@@ -1025,7 +372,7 @@ eecmd_self_insert(void)
 	minibuffer_self_insert();
 }
 
-static void
+void
 eecmd_select(void)
 {
 	struct cmds *cmd;
@@ -1042,13 +389,13 @@ eecmd_select(void)
 	message("No match");
 }
 
-static void
+void
 ir_self_insert(void)
 {
 	minibuffer_self_insert();
 }
 
-static void
+void
 ir_select(void)
 {
 	char		 buf[1025] = {0};
@@ -1067,7 +414,7 @@ ir_select(void)
 	load_url_in_tab(tab, buf);
 }
 
-static void
+void
 lu_self_insert(void)
 {
 	if (thiskey.meta || unicode_isspace(thiskey.key) ||
@@ -1079,7 +426,7 @@ lu_self_insert(void)
 	minibuffer_self_insert();
 }
 
-static void
+void
 lu_select(void)
 {
 	exit_minibuffer();
@@ -1087,7 +434,7 @@ lu_select(void)
 	load_url_in_tab(current_tab(), ministate.buf);
 }
 
-static void
+void
 bp_select(void)
 {
 	exit_minibuffer();
@@ -1159,7 +506,7 @@ nth_line(struct buffer *buffer, size_t n)
 	abort();
 }
 
-static struct tab *
+struct tab *
 current_tab(void)
 {
 	struct tab *t;
@@ -1173,7 +520,7 @@ current_tab(void)
 	abort();
 }
 
-static struct buffer *
+struct buffer *
 current_buffer(void)
 {
 	if (in_minibuffer)
@@ -1768,14 +1115,18 @@ vmessage(const char *fmt, va_list ap)
 {
 	if (evtimer_pending(&clminibufev, NULL))
 		evtimer_del(&clminibufev);
-	evtimer_set(&clminibufev, handle_clear_minibuf, NULL);
-	evtimer_add(&clminibufev, &clminibufev_timer);
 
 	free(ministate.curmesg);
+	ministate.curmesg = NULL;
 
-	/* TODO: what to do if the allocation fails here? */
-	if (vasprintf(&ministate.curmesg, fmt, ap) == -1)
-		ministate.curmesg = NULL;
+	if (fmt != NULL) {
+		evtimer_set(&clminibufev, handle_clear_minibuf, NULL);
+		evtimer_add(&clminibufev, &clminibufev_timer);
+
+		/* TODO: what to do if the allocation fails here? */
+		if (vasprintf(&ministate.curmesg, fmt, ap) == -1)
+			ministate.curmesg = NULL;
+	}
 
 	redraw_minibuffer();
 	if (in_minibuffer) {
@@ -1797,7 +1148,7 @@ message(const char *fmt, ...)
 	va_end(ap);
 }
 
-static void
+void
 start_loading_anim(struct tab *tab)
 {
 	if (tab->loading_anim)
@@ -1845,7 +1196,7 @@ stop_loading_anim(struct tab *tab)
 		wrefresh(minibuf);
 }
 
-static void
+void
 load_url_in_tab(struct tab *tab, const char *url)
 {
 	message("Loading %s...", url);
@@ -1857,7 +1208,7 @@ load_url_in_tab(struct tab *tab, const char *url)
 	redraw_tab(tab);
 }
 
-static void
+void
 enter_minibuffer(void (*self_insert_fn)(void), void (*donefn)(void),
     void (*abortfn)(void), struct histhead *hist)
 {
@@ -1880,7 +1231,7 @@ enter_minibuffer(void (*self_insert_fn)(void), void (*donefn)(void),
 	ministate.hist_off = 0;
 }
 
-static void
+void
 exit_minibuffer(void)
 {
 	werase(minibuf);
@@ -1890,7 +1241,7 @@ exit_minibuffer(void)
 	current_map = &global_map;
 }
 
-static void
+void
 switch_to_tab(struct tab *tab)
 {
 	struct tab	*t;
@@ -1909,7 +1260,7 @@ tab_new_id(void)
 	return tab_counter++;
 }
 
-static struct tab *
+struct tab *
 new_tab(const char *url)
 {
 	struct tab	*tab;
@@ -2077,6 +1428,26 @@ ui_on_tab_refresh(struct tab *tab)
 		redraw_tab(tab);
 	} else
 		tab->flags |= TAB_URGENT;
+}
+
+const char *
+ui_keyname(int k)
+{
+	return keyname(k);
+}
+
+void
+ui_toggle_side_window(void)
+{
+	side_window = !side_window;
+	if (side_window)
+		recompute_help();
+}
+
+void
+ui_schedule_redraw(void)
+{
+	handle_resize_nodelay(0, 0, NULL);
 }
 
 void
