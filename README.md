@@ -18,8 +18,8 @@ things that you can help develop :)
  - subscriptions
  - tofu oob verification
  - client certificates
- - add other GUIs: atm it uses only ncurses, but telescope shouldn't
-   be restricted to TTYs only!
+ - add other GUIs: at the moment it uses only ncurses, but telescope
+   shouldn't be restricted to TTYs only!
 
 ![Telescope new tab](images/about-new.png)
 
