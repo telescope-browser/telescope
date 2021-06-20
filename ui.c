@@ -1263,9 +1263,8 @@ dispatch_stdio(int fd, short ev, void *d)
 
 	if (current_map->unhandled_input != NULL)
 		current_map->unhandled_input();
-	else {
+	else
 		global_key_unbound();
-	}
 
 	strlcpy(keybuf, "", sizeof(keybuf));
 	current_map = base_map;
