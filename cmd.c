@@ -202,7 +202,7 @@ cmd_end_of_buffer(struct buffer *buffer)
 	off = MAX(0, off);
 
 	buffer->line_off = off;
-	buffer->curs_y = MIN((size_t)body_lines, buffer->line_max-1);
+	buffer->curs_y = MIN((size_t)body_lines-1, buffer->line_max-1);
 
 	buffer->current_line = TAILQ_LAST(&buffer->head, vhead);
 	buffer->cpoff = body_cols;
