@@ -42,7 +42,6 @@ static struct lineface_descr {
 	[LINE_PRE_START] =	{.pp=PPSTART_PRFX,	.p=PT,		.tp=PT_TRAIL},
 	[LINE_PRE_CONTENT] =	{.pp=PP_PRFX,		.p=PP,		.tp=PP_TRAIL},
 	[LINE_PRE_END] =	{.pp=PPEND_PRFX,	.p=PPEND,	.tp=PPEND_TRAIL},
-
 };
 
 struct lineprefix line_prefixes[] = {
@@ -169,24 +168,26 @@ config_setcolor(int bg, const char *name, int prfx, int line, int trail)
         struct mapping *m;
 	struct lineface_descr *d;
 
-	if (!has_prefix(name, "line."))
-		return 0;
-	name += 5;
+	if (has_prefix(name, "line.")) {
+		name += 5;
 
-	if ((m = mapping_by_name(name)) == NULL)
-		return 0;
+		if ((m = mapping_by_name(name)) == NULL)
+			return 0;
 
-	d = &linefaces_descr[m->linetype];
+		d = &linefaces_descr[m->linetype];
 
-	d->used = 1;
-	if (bg) {
-		d->prfx_bg = prfx;
-		d->bg = line;
-		d->trail_bg = trail;
+		d->used = 1;
+		if (bg) {
+			d->prfx_bg = prfx;
+			d->bg = line;
+			d->trail_bg = trail;
+		} else {
+			d->prfx_fg = prfx;
+			d->fg = line;
+			d->trail_fg = trail;
+		}
 	} else {
-		d->prfx_fg = prfx;
-		d->fg = line;
-		d->trail_fg = trail;
+		return 0;
 	}
 
 	return 1;
