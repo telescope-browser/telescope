@@ -27,21 +27,22 @@ int olivetti_mode = 0;
 int enable_colors = 1;
 
 static struct lineface_descr {
-	int	prfx_used, used;
-	int	prfx_pair, pair;
-	int	prfx_bg, bg;
-	int	prfx_fg, fg;
+	int	used;
+	int	pp, p, tp;
+	int	prfx_bg, bg, trail_bg;
+	int	prfx_fg, fg, trail_fg;
 } linefaces_descr[] = {
-	[LINE_TEXT] =		{ 0, 0, PAIR_TEXT_PRFX,		PAIR_TEXT,	0, 0, 0, 0 },
-	[LINE_LINK] =		{ 0, 0, PAIR_LINK_PRFX,		PAIR_LINK,	0, 0, 0, 0 },
-	[LINE_TITLE_1] =	{ 0, 0, PAIR_TITLE_1_PRFX,	PAIR_TITLE_1,	0, 0, 0, 0 },
-	[LINE_TITLE_2] =	{ 0, 0, PAIR_TITLE_2_PRFX,	PAIR_TITLE_1,	0, 0, 0, 0 },
-	[LINE_TITLE_3] =	{ 0, 0, PAIR_TITLE_3_PRFX,	PAIR_TITLE_3,	0, 0, 0, 0 },
-	[LINE_ITEM] =		{ 0, 0, PAIR_ITEM_PRFX,		PAIR_ITEM,	0, 0, 0, 0 },
-	[LINE_QUOTE] =		{ 0, 0, PAIR_QUOTE_PRFX,	PAIR_QUOTE,	0, 0, 0, 0 },
-	[LINE_PRE_START] =	{ 0, 0, PAIR_PRE_START_PRFX,	PAIR_TEXT,	0, 0, 0, 0 },
-	[LINE_PRE_CONTENT] =	{ 0, 0, PAIR_PRE_PRFX,		PAIR_PRE,	0, 0, 0, 0 },
-	[LINE_PRE_END] =	{ 0, 0, PAIR_PRE_END_PRFX,	PAIR_PRE_END,	0, 0, 0, 0 },
+	[LINE_TEXT] =		{.pp=PT_PRFX,		.p=PT,		.tp=PT_TRAIL},
+	[LINE_LINK] =		{.pp=PL_PRFX,		.p=PL,		.tp=PL_TRAIL},
+	[LINE_TITLE_1] =	{.pp=PT1_PRFX,		.p=PT1,		.tp=PT1_TRAIL},
+	[LINE_TITLE_2] =	{.pp=PT2_PRFX,		.p=PT1,		.tp=PT1_TRAIL},
+	[LINE_TITLE_3] =	{.pp=PT3_PRFX,		.p=PT3,		.tp=PT3_TRAIL},
+	[LINE_ITEM] =		{.pp=PI_PRFX,		.p=PI,		.tp=PI_TRAIL},
+	[LINE_QUOTE] =		{.pp=PQ_PRFX,		.p=PQ,		.tp=PQ_TRAIL},
+	[LINE_PRE_START] =	{.pp=PPSTART_PRFX,	.p=PT,		.tp=PT_TRAIL},
+	[LINE_PRE_CONTENT] =	{.pp=PP_PRFX,		.p=PP,		.tp=PP_TRAIL},
+	[LINE_PRE_END] =	{.pp=PPEND_PRFX,	.p=PPEND,	.tp=PPEND_TRAIL},
+
 };
 
 struct lineprefix line_prefixes[] = {
@@ -58,16 +59,16 @@ struct lineprefix line_prefixes[] = {
 };
 
 struct line_face line_faces[] = {
-	[LINE_TEXT] =		{ 0,		0 },
-	[LINE_LINK] =		{ 0,		A_UNDERLINE },
-	[LINE_TITLE_1] =	{ A_BOLD,	A_BOLD },
-	[LINE_TITLE_2] =	{ A_BOLD,	A_BOLD },
-	[LINE_TITLE_3] =	{ A_BOLD,	A_BOLD },
-	[LINE_ITEM] =		{ 0,		0 },
-	[LINE_QUOTE] =		{ 0,		A_DIM },
-	[LINE_PRE_START] =	{ 0,		0 },
-	[LINE_PRE_CONTENT] =	{ 0,		0 },
-	[LINE_PRE_END] =	{ 0,		0 },
+	[LINE_TEXT] =		{ 0,		0,		0 },
+	[LINE_LINK] =		{ 0,		A_UNDERLINE,	0 },
+	[LINE_TITLE_1] =	{ A_BOLD,	A_BOLD,		0 },
+	[LINE_TITLE_2] =	{ A_BOLD,	A_BOLD,		0 },
+	[LINE_TITLE_3] =	{ A_BOLD,	A_BOLD,		0 },
+	[LINE_ITEM] =		{ 0,		0,		0 },
+	[LINE_QUOTE] =		{ 0,		A_DIM,		0 },
+	[LINE_PRE_START] =	{ 0,		0,		0 },
+	[LINE_PRE_CONTENT] =	{ 0,		0,		0 },
+	[LINE_PRE_END] =	{ 0,		0,		0 },
 };
 
 struct tab_face tab_face = {
@@ -87,19 +88,17 @@ struct minibuffer_face minibuffer_face = {
 struct mapping {
 	const char	*label;
 	int		 linetype;
-	int		 facetype;
-	int		 facetype_prfx;
 } mappings[] = {
-	{"text",	LINE_TEXT,		PAIR_TEXT,	PAIR_TEXT_PRFX},
-	{"link",	LINE_LINK,		PAIR_LINK,	PAIR_LINK_PRFX},
-	{"title1",	LINE_TITLE_1,		PAIR_TITLE_1,	PAIR_TITLE_1_PRFX},
-	{"title2",	LINE_TITLE_2,		PAIR_TITLE_2,	PAIR_TITLE_2_PRFX},
-	{"title3",	LINE_TITLE_3,		PAIR_TITLE_3,	PAIR_TITLE_3_PRFX},
-	{"item",	LINE_ITEM,		PAIR_ITEM,	PAIR_ITEM_PRFX},
-	{"quote",	LINE_QUOTE,		PAIR_QUOTE,	PAIR_QUOTE_PRFX},
-	{"pre.start",	LINE_PRE_START,		PAIR_PRE_START,	PAIR_PRE_START_PRFX},
-	{"pre",		LINE_PRE_CONTENT,	PAIR_PRE,	PAIR_PRE_PRFX},
-	{"pre.end",	LINE_PRE_END,		PAIR_PRE_END,	PAIR_PRE_END_PRFX},
+	{"text",	LINE_TEXT},
+	{"link",	LINE_LINK},
+	{"title1",	LINE_TITLE_1},
+	{"title2",	LINE_TITLE_2},
+	{"title3",	LINE_TITLE_3},
+	{"item",	LINE_ITEM},
+	{"quote",	LINE_QUOTE},
+	{"pre.start",	LINE_PRE_START},
+	{"pre",		LINE_PRE_CONTENT},
+	{"pre.end",	LINE_PRE_END},
 };
 
 static struct mapping *
@@ -116,7 +115,7 @@ mapping_by_name(const char *name)
 }
 
 int
-config_setprfx(const char *name, int cont, const char *str)
+config_setprfx(const char *name, const char *prfx, const char *cont)
 {
 	struct lineprefix *p;
 	struct mapping *m;
@@ -129,11 +128,8 @@ config_setprfx(const char *name, int cont, const char *str)
 		return 0;
 
 	p = &line_prefixes[m->linetype];
-
-	if (cont)
-		p->prfx2 = str;
-	else
-		p->prfx1 = str;
+	p->prfx1 = prfx;
+	p->prfx2 = cont;
 
 	return 1;
 }
@@ -168,7 +164,7 @@ config_setvars(const char *var, char *val)
 }
 
 int
-config_setcolor(const char *name, int prfx, int bg, int color)
+config_setcolor(int bg, const char *name, int prfx, int line, int trail)
 {
         struct mapping *m;
 	struct lineface_descr *d;
@@ -182,18 +178,15 @@ config_setcolor(const char *name, int prfx, int bg, int color)
 
 	d = &linefaces_descr[m->linetype];
 
-	if (prfx) {
-		d->prfx_used = 1;
-		if (bg)
-			d->prfx_bg = color;
-		else
-			d->prfx_fg = color;
+	d->used = 1;
+	if (bg) {
+		d->prfx_bg = prfx;
+		d->bg = line;
+		d->trail_bg = trail;
 	} else {
-		d->used = 1;
-		if (bg)
-			d->bg = color;
-		else
-			d->fg = color;
+		d->prfx_fg = prfx;
+		d->fg = line;
+		d->trail_fg = trail;
 	}
 
 	return 1;
@@ -211,14 +204,15 @@ config_apply_colors(void)
 		d = &linefaces_descr[i];
 		f = &line_faces[i];
 
-		if (d->prfx_used) {
-			init_pair(d->prfx_pair, d->prfx_fg, d->prfx_bg);
-			f->prefix_prop = COLOR_PAIR(d->prfx_pair);
-		}
-
 		if (d->used) {
-			init_pair(d->pair, d->fg, d->bg);
-			f->text_prop = COLOR_PAIR(d->pair);
+			init_pair(d->pp, d->prfx_fg, d->prfx_bg);
+			f->prefix_prop = COLOR_PAIR(d->pp);
+
+			init_pair(d->p, d->fg, d->bg);
+			f->text_prop = COLOR_PAIR(d->p);
+
+			init_pair(d->tp, d->trail_fg, d->trail_bg);
+			f->trail_prop = COLOR_PAIR(d->tp);
 		}
 	}
 }

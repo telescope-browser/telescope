@@ -72,6 +72,7 @@ extern struct lineprefix line_prefixes[];
 struct line_face {
 	int prefix_prop;
 	int text_prop;
+	int trail_prop;
 };
 extern struct line_face line_faces[];
 
@@ -245,10 +246,10 @@ struct keymap {
 };
 
 /* defaults.c */
-int		 config_setprfx(const char *, int, const char *);
+int		 config_setprfx(const char *, const char *, const char *);
 int		 config_setvari(const char *, int);
 int		 config_setvars(const char *, char *);
-int		 config_setcolor(const char *, int, int, int);
+int		 config_setcolor(int, const char *, int, int, int);
 void		 config_apply_colors(void);
 
 /* fs.c */
@@ -324,27 +325,37 @@ extern int	 body_lines;
 extern int	 body_cols;
 extern int	 in_minibuffer;
 
-enum {
-	PAIR_TEXT = 1,
-	PAIR_TEXT_PRFX,
-	PAIR_LINK,
-	PAIR_LINK_PRFX,
-	PAIR_TITLE_1,
-	PAIR_TITLE_1_PRFX,
-	PAIR_TITLE_2,
-	PAIR_TITLE_2_PRFX,
-	PAIR_TITLE_3,
-	PAIR_TITLE_3_PRFX,
-	PAIR_ITEM,
-	PAIR_ITEM_PRFX,
-	PAIR_QUOTE,
-	PAIR_QUOTE_PRFX,
-	PAIR_PRE_START,
-	PAIR_PRE_START_PRFX,
-	PAIR_PRE,
-	PAIR_PRE_PRFX,
-	PAIR_PRE_END,
-	PAIR_PRE_END_PRFX,
+enum pairs {
+	PT = 1,
+	PT_PRFX,
+	PT_TRAIL,
+	PL,
+	PL_PRFX,
+	PL_TRAIL,
+	PT1,
+	PT1_PRFX,
+	PT1_TRAIL,
+	PT2,
+	PT2_PRFX,
+	PT2_TRAIL,
+	PT3,
+	PT3_PRFX,
+	PT3_TRAIL,
+	PI,
+	PI_PRFX,
+	PI_TRAIL,
+	PQ,
+	PQ_PRFX,
+	PQ_TRAIL,
+	PPSTART,
+	PPSTART_PRFX,
+	PPSTART_TRAIL,
+	PP,
+	PP_PRFX,
+	PP_TRAIL,
+	PPEND,
+	PPEND_PRFX,
+	PPEND_TRAIL,
 };
 
 struct thiskey {

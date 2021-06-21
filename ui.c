@@ -753,9 +753,10 @@ print_vline(int off, int width, WINDOW *window, struct vline *vl)
 	const char *prfx;
 	int prefix_face = line_faces[vl->parent->type].prefix_prop;
 	int text_face = line_faces[vl->parent->type].text_prop;
+	int trail_face = line_faces[vl->parent->type].trail_prop;
 	int i, left, x, y;
 
-	/* unused, set by wgetyx */
+	/* unused, set by getyx */
 	(void)y;
 
 	if (!vl->flags)
@@ -766,7 +767,6 @@ print_vline(int off, int width, WINDOW *window, struct vline *vl)
 	if (text == NULL)
 		text = "";
 
-	/* TODO: load the pair for the default background */
 	for (i = 0; i < off; i++)
 		waddch(window, ' ');
 
@@ -776,16 +776,17 @@ print_vline(int off, int width, WINDOW *window, struct vline *vl)
 
 	wattron(window, text_face);
 	wprintw(window, "%s", text);
+	wattroff(window, text_face);
 
 	getyx(window, y, x);
 
 	left = width - x;
 
-	/* draw the rest of the line with line face */
-	for (i = 0; i < left - off; ++i)
+	wattron(window, trail_face);
+	for (i = 0; i < left - off - 1; ++i)
 		waddch(window, ' ');
+	wattroff(window, trail_face);
 
-	wattroff(window, text_face);
 }
 
 static void

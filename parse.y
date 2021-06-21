@@ -42,7 +42,7 @@ typedef struct {
 #define YYSTYPE yystype
 
 static char *current_style;
-static int current_bg, current_fg;
+static int color_type;
 
 static const char *path;
 
@@ -52,11 +52,11 @@ int parse_errors = 0;
 
 static void yyerror(const char *, ...);
 static int yylex(void);
-static void setprfx(int, const char *);
+static void setprfx(const char *, const char *);
 static void setvari(char *, int);
 static void setvars(char *, char *);
 static int colorname(const char *);
-static void setcolor(int, int, const char *);
+static void setcolor(const char *, const char *, const char *);
 
 %}
 
@@ -96,20 +96,17 @@ styleopts	: /* empty */
 		| styleopts styleopt '\n'
 		;
 
-styleopt	: TPRFX TSTRING	{ setprfx(0, $2); }
-		| TCONT TSTRING	{ setprfx(1, $2); }
-		| TBG TSTRING {
-			setcolor(0, 1, $2);
-			setcolor(1, 1, $2);
-			free($2);
-		}
-		| TFG TSTRING {
-			setcolor(0, 0, $2);
-			setcolor(1, 0, $2);
-			free($2);
-		}
+styleopt	: TPRFX TSTRING		{ setprfx($2, $2); }
+		| TPRFX TSTRING TSTRING	{ setprfx($2, $2); }
+		| TBG { color_type = TBG; } colorspec
+		| TFG { color_type = TFG; } colorspec
 		| TATTR TBOLD			{ printf("style attr setted to bold\n"); }
 		| TATTR TUNDERLINE		{ printf("style attr setted to underline\n"); }
+		;
+
+colorspec	: TSTRING			{ setcolor($1, $1, $1); free($1); }
+		| TSTRING TSTRING		{ setcolor($1, $2, $1); free($1); free($2); }
+		| TSTRING TSTRING TSTRING	{ setcolor($1, $2, $3); free($1); free($2); free($3); }
 		;
 
 bind		: TBIND TSTRING TSTRING TSTRING	{ printf("TODO: bind %s %s %s\n", $2, $3, $4); }
@@ -287,12 +284,12 @@ eof:
 }
 
 static void
-setprfx(int cont, const char *name)
+setprfx(const char *prfx, const char *cont)
 {
 	assert(current_style != NULL);
 
-	if (!config_setprfx(current_style, cont, name))
-		yyerror("invalid style %s", name);
+	if (!config_setprfx(current_style, prfx, cont))
+		yyerror("invalid style %s", current_style);
 }
 
 static void
@@ -344,18 +341,19 @@ colorname(const char *name)
 }
 
 void
-setcolor(int prfx, int bg, const char *color)
+setcolor(const char *prfx, const char *line, const char *trail)
 {
-	int c;
+	int p, l, t;
 
 	assert(current_style != NULL);
 
-	if ((c = colorname(color)) == -1)
+	if ((p = colorname(prfx)) == -1 ||
+	    (l = colorname(line)) == -1 ||
+	    (t = colorname(trail)) == -1)
 		return;
 
-	if (!config_setcolor(current_style, prfx, bg, c))
-		yyerror("can't set color \"%s\" for %s", color,
-		    current_style);
+	if (!config_setcolor(color_type == TBG, current_style, p, l, t))
+		yyerror("invalid style %s", current_style);
 }
 
 void
