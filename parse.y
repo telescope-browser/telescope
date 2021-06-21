@@ -359,12 +359,6 @@ setcolor(const char *prfx, const char *line, const char *trail)
 void
 parseconfig(const char *filename, int fonf)
 {
-	/*
-	char c;
-	printf("proceed?\n");
-	read(0, &c, 1);
-	*/
-
 	if ((yyfp = fopen(filename, "r")) == NULL) {
 		if (fonf)
 			err(1, "%s", filename);
