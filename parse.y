@@ -319,7 +319,7 @@ colorname(const char *name)
 		const char	*name;
 		short		 val;
 	} *i, colors[] = {
-		{ "default",	0 },
+		{ "default",	-1 },
 		{ "black",	COLOR_BLACK },
 		{ "red",	COLOR_RED },
 		{ "green",	COLOR_GREEN },
@@ -347,10 +347,9 @@ setcolor(const char *prfx, const char *line, const char *trail)
 
 	assert(current_style != NULL);
 
-	if ((p = colorname(prfx)) == -1 ||
-	    (l = colorname(line)) == -1 ||
-	    (t = colorname(trail)) == -1)
-		return;
+	p = colorname(prfx);
+	l = colorname(line);
+	t = colorname(trail);
 
 	if (!config_setcolor(color_type == TBG, current_style, p, l, t))
 		yyerror("invalid style %s", current_style);

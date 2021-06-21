@@ -767,8 +767,10 @@ print_vline(int off, int width, WINDOW *window, struct vline *vl)
 	if (text == NULL)
 		text = "";
 
+	wattron(window, body_face.left);
 	for (i = 0; i < off; i++)
 		waddch(window, ' ');
+	wattroff(window, body_face.left);
 
 	wattron(window, prefix_face);
 	wprintw(window, "%s", prfx);
@@ -786,6 +788,11 @@ print_vline(int off, int width, WINDOW *window, struct vline *vl)
 	for (i = 0; i < left - off - 1; ++i)
 		waddch(window, ' ');
 	wattroff(window, trail_face);
+
+	wattron(window, body_face.right);
+	for (i = 0; i < off; i++)
+		waddch(window, ' ');
+	wattroff(window, body_face.right);
 
 }
 
@@ -1400,6 +1407,7 @@ ui_init(int argc, char * const *argv)
 	if (enable_colors) {
 		if (has_colors()) {
 			start_color();
+			use_default_colors();
 			config_apply_colors();
 		} else
 			enable_colors = 0;

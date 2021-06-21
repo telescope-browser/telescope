@@ -82,8 +82,11 @@ struct tab_face  {
 extern struct tab_face tab_face;
 
 struct body_face {
+	int lbg, lfg;
 	int bg, fg;
-	int body;
+	int rbg, rfg;
+
+	int left, body, right;
 };
 extern struct body_face body_face;
 
@@ -333,6 +336,9 @@ extern int	 in_minibuffer;
 
 enum pairs {
 	PBODY = 1,
+	PBLEFT,
+	PBRIGHT,
+
 	PT,
 	PT_PRFX,
 	PT_TRAIL,

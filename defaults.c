@@ -77,8 +77,9 @@ struct tab_face tab_face = {
 };
 
 struct body_face body_face = {
-	.bg = 0,
-	.fg = 0,
+	.lbg = -1, .lfg = -1,
+	.bg  = -1, .fg  = -1,
+	.rbg = -1, .rfg = -1,
 };
 
 struct modeline_face modeline_face = {
@@ -192,10 +193,15 @@ config_setcolor(int bg, const char *name, int prfx, int line, int trail)
 			d->trail_fg = trail;
 		}
 	} else if (!strcmp(name, "line")) {
-		if (bg)
-			body_face.bg = prfx;
-		else
+		if (bg) {
+			body_face.lbg = prfx;
+			body_face.bg  = line;
+			body_face.rbg = trail;
+		} else {
 			body_face.fg = prfx;
+			body_face.fg = line;
+			body_face.fg = trail;
+		}
 	} else {
 		return 0;
 	}
@@ -229,4 +235,10 @@ config_apply_colors(void)
 
 	init_pair(PBODY, body_face.fg, body_face.bg);
 	body_face.body = COLOR_PAIR(PBODY);
+
+	init_pair(PBLEFT, body_face.lfg, body_face.lbg);
+	body_face.left = COLOR_PAIR(PBLEFT);
+
+	init_pair(PBRIGHT, body_face.rfg, body_face.rbg);
+	body_face.right = COLOR_PAIR(PBRIGHT);
 }
