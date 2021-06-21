@@ -129,7 +129,7 @@ int in_minibuffer;
 struct ministate ministate;
 
 static inline void
-update_x_offset()
+update_x_offset(void)
 {
 	if (olivetti_mode && fill_column < body_cols)
 		x_offset = (body_cols - fill_column)/2;
@@ -780,6 +780,11 @@ redraw_tabline(void)
 	const char	*title;
 	char		 buf[25];
 
+	x = 0;
+
+	/* unused, but setted by a getyx */
+	(void)y;
+
 	tabwidth = sizeof(buf)+1;
 	space = COLS-2;
 
@@ -923,6 +928,7 @@ trust_status_char(enum trust_state ts)
 	case TS_UNTRUSTED:	return '!';
 	case TS_TRUSTED:	return 'v';
 	case TS_VERIFIED:	return 'V';
+	default:		return 'X';
 	}
 }
 
@@ -976,7 +982,10 @@ redraw_minibuffer(void)
 {
 	struct tab *tab;
 	size_t off_y, off_x = 0;
-	char *start, *c;
+	char *start = NULL, *c = NULL;
+
+	/* unused, but set by getyx */
+	(void)off_y;
 
 	wattron(minibuf, minibuffer_face.background);
 	werase(minibuf);
