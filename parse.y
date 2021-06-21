@@ -22,8 +22,10 @@
 
 #include "telescope.h"
 
+#include <assert.h>
 #include <ctype.h>
 #include <limits.h>
+#include <ncurses.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -40,6 +42,8 @@ typedef struct {
 #define YYSTYPE yystype
 
 static char *current_style;
+static int current_bg, current_fg;
+
 static const char *path;
 
 FILE *yyfp;
@@ -51,6 +55,8 @@ static int yylex(void);
 static void setprfx(int, const char *);
 static void setvari(char *, int);
 static void setvars(char *, char *);
+static int colorname(const char *);
+static void setcolor(int, int, const char *);
 
 %}
 
@@ -70,7 +76,10 @@ grammar		: /* empty */
 		;
 
 rule		: set
-		| style		{ free(current_style); current_style = NULL; }
+		| style {
+			free(current_style);
+			current_style = NULL;
+		}
 		| bind
 		| unbind
 		;
@@ -79,19 +88,26 @@ set		: TSET TSTRING '=' TSTRING	{ setvars($2, $4); }
 		| TSET TSTRING '=' TNUMBER	{ setvari($2, $4); }
 		;
 
-style		: TSTYLE TSTRING { current_style = $2; } styleopt
-		| TSTYLE TSTRING { current_style = $2; } '{' styleopts '}'
-		;
+style		: TSTYLE TSTRING { current_style = $2; } stylespec ;
+stylespec	: styleopt | '{' styleopts '}' ;
 
 styleopts	: /* empty */
 		| styleopts '\n'
 		| styleopts styleopt '\n'
 		;
 
-styleopt	: TPRFX TSTRING			{ setprfx(0, $2); }
-		| TCONT TSTRING			{ setprfx(1, $2); }
-		| TBG TSTRING			{ printf("style background setted to \"%s\"\n", $2); }
-		| TFG TSTRING			{ printf("style foreground setted to \"%s\"\n", $2); }
+styleopt	: TPRFX TSTRING	{ setprfx(0, $2); }
+		| TCONT TSTRING	{ setprfx(1, $2); }
+		| TBG TSTRING {
+			setcolor(0, 1, $2);
+			setcolor(1, 1, $2);
+			free($2);
+		}
+		| TFG TSTRING {
+			setcolor(0, 0, $2);
+			setcolor(1, 0, $2);
+			free($2);
+		}
 		| TATTR TBOLD			{ printf("style attr setted to bold\n"); }
 		| TATTR TUNDERLINE		{ printf("style attr setted to underline\n"); }
 		;
@@ -125,8 +141,8 @@ static struct keyword {
 	{ "style", TSTYLE },
 	{ "prefix", TPRFX },
 	{ "cont", TCONT },
-	{ "background", TBG },
-	{ "foreground", TFG },
+	{ "bg", TBG },
+	{ "fg", TFG },
 	{ "attr", TATTR },
 	{ "bold", TBOLD },
 	{ "underline", TUNDERLINE },
@@ -273,10 +289,7 @@ eof:
 static void
 setprfx(int cont, const char *name)
 {
-	if (current_style == NULL) {
-		warnx("current_style = NULL!");
-		abort();
-	}
+	assert(current_style != NULL);
 
 	if (!config_setprfx(current_style, cont, name))
 		yyerror("invalid style %s", name);
@@ -302,9 +315,58 @@ setvars(char *var, char *val)
 	free(var);
 }
 
+static int
+colorname(const char *name)
+{
+	struct {
+		const char	*name;
+		short		 val;
+	} *i, colors[] = {
+		{ "default",	0 },
+		{ "black",	COLOR_BLACK },
+		{ "red",	COLOR_RED },
+		{ "green",	COLOR_GREEN },
+		{ "yellow",	COLOR_YELLOW },
+		{ "blue",	COLOR_BLUE },
+		{ "magenta",	COLOR_MAGENTA },
+		{ "cyan",	COLOR_CYAN },
+		{ "white",	COLOR_WHITE },
+		{ NULL, 0 },
+	};
+
+	for (i = colors; i->name != NULL; ++i) {
+		if (!strcmp(i->name, name))
+			return i->val;
+	}
+
+	yyerror("unknown color name \"%s\"", name);
+	return -1;
+}
+
+void
+setcolor(int prfx, int bg, const char *color)
+{
+	int c;
+
+	assert(current_style != NULL);
+
+	if ((c = colorname(color)) == -1)
+		return;
+
+	if (!config_setcolor(current_style, prfx, bg, c))
+		yyerror("can't set color \"%s\" for %s", color,
+		    current_style);
+}
+
 void
 parseconfig(const char *filename, int fonf)
 {
+	/*
+	char c;
+	printf("proceed?\n");
+	read(0, &c, 1);
+	*/
+
 	if ((yyfp = fopen(filename, "r")) == NULL) {
 		if (fonf)
 			err(1, "%s", filename);

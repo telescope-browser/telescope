@@ -248,6 +248,8 @@ struct keymap {
 int		 config_setprfx(const char *, int, const char *);
 int		 config_setvari(const char *, int);
 int		 config_setvars(const char *, char *);
+int		 config_setcolor(const char *, int, int, int);
+void		 config_apply_colors(void);
 
 /* fs.c */
 int		 fs_init(void);
@@ -321,6 +323,29 @@ void			 tofu_update(struct ohash*, struct tofu_entry*);
 extern int	 body_lines;
 extern int	 body_cols;
 extern int	 in_minibuffer;
+
+enum {
+	PAIR_TEXT = 1,
+	PAIR_TEXT_PRFX,
+	PAIR_LINK,
+	PAIR_LINK_PRFX,
+	PAIR_TITLE_1,
+	PAIR_TITLE_1_PRFX,
+	PAIR_TITLE_2,
+	PAIR_TITLE_2_PRFX,
+	PAIR_TITLE_3,
+	PAIR_TITLE_3_PRFX,
+	PAIR_ITEM,
+	PAIR_ITEM_PRFX,
+	PAIR_QUOTE,
+	PAIR_QUOTE_PRFX,
+	PAIR_PRE_START,
+	PAIR_PRE_START_PRFX,
+	PAIR_PRE,
+	PAIR_PRE_PRFX,
+	PAIR_PRE_END,
+	PAIR_PRE_END_PRFX,
+};
 
 struct thiskey {
 	short meta;

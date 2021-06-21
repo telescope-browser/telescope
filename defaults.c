@@ -26,6 +26,24 @@ int fill_column = INT_MAX;
 int olivetti_mode = 0;
 int enable_colors = 1;
 
+static struct lineface_descr {
+	int	prfx_used, used;
+	int	prfx_pair, pair;
+	int	prfx_bg, bg;
+	int	prfx_fg, fg;
+} linefaces_descr[] = {
+	[LINE_TEXT] =		{ 0, 0, PAIR_TEXT_PRFX,		PAIR_TEXT,	0, 0, 0, 0 },
+	[LINE_LINK] =		{ 0, 0, PAIR_LINK_PRFX,		PAIR_LINK,	0, 0, 0, 0 },
+	[LINE_TITLE_1] =	{ 0, 0, PAIR_TITLE_1_PRFX,	PAIR_TITLE_1,	0, 0, 0, 0 },
+	[LINE_TITLE_2] =	{ 0, 0, PAIR_TITLE_2_PRFX,	PAIR_TITLE_1,	0, 0, 0, 0 },
+	[LINE_TITLE_3] =	{ 0, 0, PAIR_TITLE_3_PRFX,	PAIR_TITLE_3,	0, 0, 0, 0 },
+	[LINE_ITEM] =		{ 0, 0, PAIR_ITEM_PRFX,		PAIR_ITEM,	0, 0, 0, 0 },
+	[LINE_QUOTE] =		{ 0, 0, PAIR_QUOTE_PRFX,	PAIR_QUOTE,	0, 0, 0, 0 },
+	[LINE_PRE_START] =	{ 0, 0, PAIR_PRE_START_PRFX,	PAIR_TEXT,	0, 0, 0, 0 },
+	[LINE_PRE_CONTENT] =	{ 0, 0, PAIR_PRE_PRFX,		PAIR_PRE,	0, 0, 0, 0 },
+	[LINE_PRE_END] =	{ 0, 0, PAIR_PRE_END_PRFX,	PAIR_PRE_END,	0, 0, 0, 0 },
+};
+
 struct lineprefix line_prefixes[] = {
 	[LINE_TEXT] =		{ "",		"" },
 	[LINE_LINK] =		{ "=> ",	"   " },
@@ -66,46 +84,58 @@ struct minibuffer_face minibuffer_face = {
 	.background = A_NORMAL,
 };
 
+struct mapping {
+	const char	*label;
+	int		 linetype;
+	int		 facetype;
+	int		 facetype_prfx;
+} mappings[] = {
+	{"text",	LINE_TEXT,		PAIR_TEXT,	PAIR_TEXT_PRFX},
+	{"link",	LINE_LINK,		PAIR_LINK,	PAIR_LINK_PRFX},
+	{"title1",	LINE_TITLE_1,		PAIR_TITLE_1,	PAIR_TITLE_1_PRFX},
+	{"title2",	LINE_TITLE_2,		PAIR_TITLE_2,	PAIR_TITLE_2_PRFX},
+	{"title3",	LINE_TITLE_3,		PAIR_TITLE_3,	PAIR_TITLE_3_PRFX},
+	{"item",	LINE_ITEM,		PAIR_ITEM,	PAIR_ITEM_PRFX},
+	{"quote",	LINE_QUOTE,		PAIR_QUOTE,	PAIR_QUOTE_PRFX},
+	{"pre.start",	LINE_PRE_START,		PAIR_PRE_START,	PAIR_PRE_START_PRFX},
+	{"pre",		LINE_PRE_CONTENT,	PAIR_PRE,	PAIR_PRE_PRFX},
+	{"pre.end",	LINE_PRE_END,		PAIR_PRE_END,	PAIR_PRE_END_PRFX},
+};
+
+static struct mapping *
+mapping_by_name(const char *name)
+{
+	size_t i;
+
+	for (i = 0; i < sizeof(mappings)/sizeof(mappings[0]); ++i) {
+		if (!strcmp(name, mappings[i].label))
+			return &mappings[i];
+	}
+
+	return NULL;
+}
+
 int
 config_setprfx(const char *name, int cont, const char *str)
 {
-	size_t i;
 	struct lineprefix *p;
-	struct mapping {
-		const char	*label;
-		int		 id;
-	} mappings[] = {
-		{"text",	LINE_TEXT},
-		{"link",	LINE_LINK},
-		{"title1",	LINE_TITLE_1},
-		{"title2",	LINE_TITLE_2},
-		{"title3",	LINE_TITLE_3},
-		{"item",	LINE_ITEM},
-		{"quote",	LINE_QUOTE},
-		{"pre.start",	LINE_PRE_START},
-		{"pre",		LINE_PRE_CONTENT},
-		{"pre.end",	LINE_PRE_END},
-	};
+	struct mapping *m;
 
 	if (!has_prefix(name, "line."))
 		return 0;
 	name += 5;
 
-	for (i = 0; i < sizeof(mappings)/sizeof(mappings[0]); ++i) {
-		if (!strcmp(name, mappings[i].label)) {
-			name += strlen(mappings[i].label);
-			p = &line_prefixes[mappings[i].id];
+	if ((m = mapping_by_name(name)) == NULL)
+		return 0;
 
-			if (cont)
-				p->prfx2 = str;
-			else
-				p->prfx1 = str;
+	p = &line_prefixes[m->linetype];
 
-			return 1;
-		}
-	}
+	if (cont)
+		p->prfx2 = str;
+	else
+		p->prfx1 = str;
 
-	return 0;
+	return 1;
 }
 
 int
@@ -135,4 +165,60 @@ config_setvars(const char *var, char *val)
 	} else
 		return 0;
 	return 1;
+}
+
+int
+config_setcolor(const char *name, int prfx, int bg, int color)
+{
+        struct mapping *m;
+	struct lineface_descr *d;
+
+	if (!has_prefix(name, "line."))
+		return 0;
+	name += 5;
+
+	if ((m = mapping_by_name(name)) == NULL)
+		return 0;
+
+	d = &linefaces_descr[m->linetype];
+
+	if (prfx) {
+		d->prfx_used = 1;
+		if (bg)
+			d->prfx_bg = color;
+		else
+			d->prfx_fg = color;
+	} else {
+		d->used = 1;
+		if (bg)
+			d->bg = color;
+		else
+			d->fg = color;
+	}
+
+	return 1;
+}
+
+void
+config_apply_colors(void)
+{
+        size_t i, len;
+	struct lineface_descr *d;
+	struct line_face *f;
+
+	len = sizeof(linefaces_descr)/sizeof(linefaces_descr[0]);
+	for (i = 0; i < len; ++i) {
+		d = &linefaces_descr[i];
+		f = &line_faces[i];
+
+		if (d->prfx_used) {
+			init_pair(d->prfx_pair, d->prfx_fg, d->prfx_bg);
+			f->prefix_prop = COLOR_PAIR(d->prfx_pair);
+		}
+
+		if (d->used) {
+			init_pair(d->pair, d->fg, d->bg);
+			f->text_prop = COLOR_PAIR(d->pair);
+		}
+	}
 }

@@ -1320,6 +1320,9 @@ ui_init(int argc, char * const *argv)
 	const char *url = NEW_TAB_URL;
 	int ch, configtest = 0, fonf = 0;
 
+	if (getenv("NO_COLOR") != NULL)
+		enable_colors = 0;
+
 	strlcpy(path, getenv("HOME"), sizeof(path));
 	strlcat(path, "/.telescope/config", sizeof(path));
 
@@ -1374,10 +1377,27 @@ ui_init(int argc, char * const *argv)
 	current_map = &global_map;
 	load_default_keys();
 
+	/* { */
+	/* 	char c; */
+	/* 	printf("proceed?"); */
+	/* 	read(0, &c, 1); */
+	/* } */
+
 	initscr();
+
+	if (enable_colors) {
+		if (has_colors()) {
+			start_color();
+			config_apply_colors();
+		} else {
+			printf("has_color failed\n");
+			enable_colors = 0;
+		}
+	} else
+		printf("color disabled\n");
+
 	raw();
 	noecho();
-
 	nonl();
 	intrflush(stdscr, FALSE);
 
