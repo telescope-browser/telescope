@@ -24,6 +24,7 @@
 char *new_tab_url = NULL;
 int fill_column = INT_MAX;
 int olivetti_mode = 0;
+int enable_colors = 1;
 
 struct lineprefix line_prefixes[] = {
 	[LINE_TEXT] =		{ "",		"" },
@@ -115,8 +116,12 @@ config_setvari(const char *var, int val)
 			fill_column = INT_MAX;
 	} else if (!strcmp(var, "olivetti-mode")) {
 		olivetti_mode = !!val;
-	} else
+	} else if (!strcmp(var, "enable-colors")) {
+		enable_colors = !!val;
+	} else {
 		return 0;
+	}
+
 	return 1;
 }
 
