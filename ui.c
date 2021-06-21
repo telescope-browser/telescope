@@ -1371,6 +1371,7 @@ ui_init(int argc, char * const *argv)
 	argc -= optind;
 	argv += optind;
 
+	config_init();
 	parseconfig(path, fonf);
 	if (configtest){
 		puts("config OK");

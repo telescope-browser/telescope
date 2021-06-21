@@ -255,6 +255,7 @@ struct keymap {
 };
 
 /* defaults.c */
+void		 config_init(void);
 int		 config_setprfx(const char *, const char *, const char *);
 int		 config_setvari(const char *, int);
 int		 config_setvars(const char *, char *);

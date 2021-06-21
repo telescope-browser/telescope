@@ -27,7 +27,6 @@ int olivetti_mode = 0;
 int enable_colors = 1;
 
 static struct lineface_descr {
-	int	used;
 	int	pp, p, tp;
 	int	prfx_bg, bg, trail_bg;
 	int	prfx_fg, fg, trail_fg;
@@ -119,6 +118,21 @@ mapping_by_name(const char *name)
 	return NULL;
 }
 
+void
+config_init(void)
+{
+	struct lineface_descr *d;
+	size_t i, len;
+
+	len = sizeof(linefaces_descr)/sizeof(linefaces_descr[0]);
+	for (i = 0; i < len; ++i) {
+		d = &linefaces_descr[i];
+
+		d->prfx_bg = d->bg = d->trail_bg = -1;
+		d->prfx_fg = d->fg = d->trail_fg = -1;
+	}
+}
+
 int
 config_setprfx(const char *name, const char *prfx, const char *cont)
 {
@@ -182,7 +196,6 @@ config_setcolor(int bg, const char *name, int prfx, int line, int trail)
 
 		d = &linefaces_descr[m->linetype];
 
-		d->used = 1;
 		if (bg) {
 			d->prfx_bg = prfx;
 			d->bg = line;
@@ -221,16 +234,14 @@ config_apply_colors(void)
 		d = &linefaces_descr[i];
 		f = &line_faces[i];
 
-		if (d->used) {
-			init_pair(d->pp, d->prfx_fg, d->prfx_bg);
-			f->prefix_prop = COLOR_PAIR(d->pp);
+		init_pair(d->pp, d->prfx_fg, d->prfx_bg);
+		f->prefix_prop = COLOR_PAIR(d->pp);
 
-			init_pair(d->p, d->fg, d->bg);
-			f->text_prop = COLOR_PAIR(d->p);
+		init_pair(d->p, d->fg, d->bg);
+		f->text_prop = COLOR_PAIR(d->p);
 
-			init_pair(d->tp, d->trail_fg, d->trail_bg);
-			f->trail_prop = COLOR_PAIR(d->tp);
-		}
+		init_pair(d->tp, d->trail_fg, d->trail_bg);
+		f->trail_prop = COLOR_PAIR(d->tp);
 	}
 
 	init_pair(PBODY, body_face.fg, body_face.bg);
