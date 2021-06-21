@@ -906,6 +906,12 @@ redraw_help(void)
 static void
 redraw_body(struct tab *tab)
 {
+	static struct tab *last_tab;
+
+	if (last_tab != tab)
+		tab->buffer.force_redraw =1;
+	last_tab = tab;
+
 	redraw_window(body, body_lines, &tab->buffer);
 }
 
