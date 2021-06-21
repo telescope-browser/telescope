@@ -81,6 +81,12 @@ struct tab_face  {
 };
 extern struct tab_face tab_face;
 
+struct body_face {
+	int bg, fg;
+	int body;
+};
+extern struct body_face body_face;
+
 struct modeline_face {
 	int background;
 };
@@ -326,7 +332,8 @@ extern int	 body_cols;
 extern int	 in_minibuffer;
 
 enum pairs {
-	PT = 1,
+	PBODY = 1,
+	PT,
 	PT_PRFX,
 	PT_TRAIL,
 	PL,

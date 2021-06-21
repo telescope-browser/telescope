@@ -76,6 +76,11 @@ struct tab_face tab_face = {
 	.current_tab	= A_NORMAL,
 };
 
+struct body_face body_face = {
+	.bg = 0,
+	.fg = 0,
+};
+
 struct modeline_face modeline_face = {
 	.background = A_REVERSE,
 };
@@ -186,6 +191,11 @@ config_setcolor(int bg, const char *name, int prfx, int line, int trail)
 			d->fg = line;
 			d->trail_fg = trail;
 		}
+	} else if (!strcmp(name, "line")) {
+		if (bg)
+			body_face.bg = prfx;
+		else
+			body_face.fg = prfx;
 	} else {
 		return 0;
 	}
@@ -216,4 +226,7 @@ config_apply_colors(void)
 			f->trail_prop = COLOR_PAIR(d->tp);
 		}
 	}
+
+	init_pair(PBODY, body_face.fg, body_face.bg);
+	body_face.body = COLOR_PAIR(PBODY);
 }

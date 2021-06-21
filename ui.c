@@ -1423,6 +1423,7 @@ ui_init(int argc, char * const *argv)
 
 	body_lines = LINES-3;
 	body_cols = COLS;
+	wbkgd(body, body_face.body);
 
 	update_x_offset();
 

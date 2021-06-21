@@ -1,5 +1,7 @@
 2021-06-21  Omar Polo  <op@omarpolo.com>
 
+	* telescope.h (enum pairs): allow changing the background color of the body window
+
 	* defaults.c (config_setvari): add enable-colors (variable)
 
 2021-06-20  Omar Polo  <op@omarpolo.com>
