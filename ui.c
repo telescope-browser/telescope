@@ -67,9 +67,9 @@ static void		 handle_clear_minibuf(int, short, void*);
 static void		 handle_resize(int, short, void*);
 static void		 handle_resize_nodelay(int, short, void*);
 static int		 wrap_page(struct buffer*, int);
-static void		 print_vline(WINDOW*, struct vline*);
+static void		 print_vline(int, int, WINDOW*, struct vline*);
 static void		 redraw_tabline(void);
-static void		 redraw_window(WINDOW*, int, struct buffer*);
+static void		 redraw_window(WINDOW*, int, int, struct buffer*);
 static void		 redraw_help(void);
 static void		 redraw_body(struct tab*);
 static void		 redraw_modeline(struct tab*);
@@ -747,12 +747,16 @@ wrap_page(struct buffer *buffer, int width)
 }
 
 static void
-print_vline(WINDOW *window, struct vline *vl)
+print_vline(int off, int width, WINDOW *window, struct vline *vl)
 {
 	const char *text = vl->line;
 	const char *prfx;
 	int prefix_face = line_faces[vl->parent->type].prefix_prop;
 	int text_face = line_faces[vl->parent->type].text_prop;
+	int i, left, x, y;
+
+	/* unused, set by wgetyx */
+	(void)y;
 
 	if (!vl->flags)
 		prfx = line_prefixes[vl->parent->type].prfx1;
@@ -762,12 +766,25 @@ print_vline(WINDOW *window, struct vline *vl)
 	if (text == NULL)
 		text = "";
 
+	/* TODO: load the pair for the default background */
+	for (i = 0; i < off; i++)
+		waddch(window, ' ');
+
 	wattron(window, prefix_face);
 	wprintw(window, "%s", prfx);
 	wattroff(window, prefix_face);
 
 	wattron(window, text_face);
 	wprintw(window, "%s", text);
+
+	getyx(window, y, x);
+
+	left = width - x;
+
+	/* draw the rest of the line with line face */
+	for (i = 0; i < left - off; ++i)
+		waddch(window, ' ');
+
 	wattroff(window, text_face);
 }
 
@@ -865,7 +882,7 @@ redraw_tabline(void)
 }
 
 static void
-redraw_window(WINDOW *win, int height, struct buffer *buffer)
+redraw_window(WINDOW *win, int height, int width, struct buffer *buffer)
 {
 	struct vline	*vl;
 	int		 l;
@@ -891,8 +908,8 @@ redraw_window(WINDOW *win, int height, struct buffer *buffer)
 	l = 0;
 	vl = nth_line(buffer, buffer->line_off);
 	for (; vl != NULL; vl = TAILQ_NEXT(vl, vlines)) {
-		wmove(win, l, x_offset);
-		print_vline(win, vl);
+		wmove(win, l, 0);
+		print_vline(x_offset, width, win, vl);
 		l++;
 		if (l == height)
 			break;
@@ -905,7 +922,7 @@ end:
 static void
 redraw_help(void)
 {
-	redraw_window(help, help_lines, &helpwin);
+	redraw_window(help, help_lines, help_cols, &helpwin);
 }
 
 static void
@@ -917,7 +934,7 @@ redraw_body(struct tab *tab)
 		tab->buffer.force_redraw =1;
 	last_tab = tab;
 
-	redraw_window(body, body_lines, &tab->buffer);
+	redraw_window(body, body_lines, body_cols, &tab->buffer);
 }
 
 static inline char
@@ -1377,24 +1394,15 @@ ui_init(int argc, char * const *argv)
 	current_map = &global_map;
 	load_default_keys();
 
-	/* { */
-	/* 	char c; */
-	/* 	printf("proceed?"); */
-	/* 	read(0, &c, 1); */
-	/* } */
-
 	initscr();
 
 	if (enable_colors) {
 		if (has_colors()) {
 			start_color();
 			config_apply_colors();
-		} else {
-			printf("has_color failed\n");
+		} else
 			enable_colors = 0;
-		}
-	} else
-		printf("color disabled\n");
+	}
 
 	raw();
 	noecho();
@@ -1418,7 +1426,7 @@ ui_init(int argc, char * const *argv)
 	update_x_offset();
 
 	keypad(body, TRUE);
-	scrollok(body, TRUE);
+	scrollok(body, FALSE);
 
 	/* non-blocking input */
 	wtimeout(body, 0);
