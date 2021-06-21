@@ -185,7 +185,6 @@ struct buffer {
 	TAILQ_HEAD(vhead, vline) head;
 };
 
-
 #define TAB_CURRENT	0x1
 #define TAB_URGENT	0x2
 
