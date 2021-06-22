@@ -1,5 +1,7 @@
 2021-06-22  Omar Polo  <op@omarpolo.com>
 
+	* parse.y (colorname): support 256 colors
+
 	* defaults.c (config_setcolor): allow changing the colors/attributes of the tabline
 
 	* parse.y (attrname): allow changing the attributes

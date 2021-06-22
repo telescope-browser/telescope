@@ -334,12 +334,30 @@ colorname(const char *name)
 		{ "white",	COLOR_WHITE },
 		{ NULL, 0 },
 	};
+	const char *errstr;
+	int n;
+
+	if (has_prefix(name, "colo")) {
+		/* people are strange */
+		if (has_prefix(name, "color"))
+			name += 5;
+		else if (has_prefix(name, "colour"))
+			name += 6;
+		else
+			goto err;
+
+		n = strtonum(name, 0, 256, &errstr);
+		if (errstr != NULL)
+			yyerror("color number is %s: %s", errstr, name);
+		return n;
+	}
 
 	for (i = colors; i->name != NULL; ++i) {
 		if (!strcmp(i->name, name))
 			return i->val;
 	}
 
+err:
 	yyerror("unknown color name \"%s\"", name);
 	return -1;
 }
