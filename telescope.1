@@ -524,13 +524,56 @@ for the closing line of a preformatted block
 .El
 .Pp
 Valid options are:
-.Bl -tag -width tenletters -compact -offset Ds
-.It Ic prefix Ar str
-Set the prefix for the given line to
-.Ar str .
-.It Ic cont Ar str
-Set the prefix for the continuation line to
-.Ar str .
+.Bl -tag -width Ds
+.It Ic attr Ar prefix Oo Ar line Op Ar trail Oc
+Sets the text attributes.
+If only one value is given,
+.Ar line
+and
+.Ar trail
+default to that; if two values are given then
+.Ar trail
+defaults to
+.Ar prefix .
+Each attribute is a comma-separated list of keywords:
+.Bl -tag -width underline -compact -offset Ds
+.It Ic normal
+no attributes.
+.It Ic standout
+best highlighting mode for the terminal.
+.It Ic underline
+underlines the text.
+.It Ic reverse
+reverses background/foreground colors.
+.It Ic blink
+makes the text blinking.
+.It Ic dim
+half bright.
+.It Ic bold
+extra bright or bold.
+.El
+.It Ic bg Ar prefix Oo Ar line Op Ar trail Oc
+Sets the background color.
+Follows the same behaviour as
+.Ic attr
+regarding the optional parameters.
+Supported colors are: default, black, red, green, yellow, blue,
+magenta, cyan and white
+.It Ic fg Ar prefix Oo Ar line Op Ar trail Oc
+Sets the foreground color.
+It behaves just like
+.Ic bg .
+.It Ic prefix Ar prfx Op Ar cont
+Sets the prefix for the given line to
+.Ar prfx
+and
+.Ar cont
+as the prefix for the continuation lines
+.Pq i.e. when a long line gets wrapped.
+If
+.Ar cont
+is not given its value will be the same of
+.Ar prfx .
 .El
 .El
 .Sh FILES
@@ -549,10 +592,11 @@ Gets written on
 and loaded on startup.
 .El
 .Sh EXAMPLES
-The following is the config file as used by me
+The following is my config file:
 .Bd -literal -offset indent
 set fill-column = 72
 set olivetti-mode = 1
+set enable-colors = 1
 
 style line.item {
 	prefix " • " "   "
@@ -560,6 +604,8 @@ style line.item {
 
 style line.link {
 	prefix "→ " "  "
+	fg blue
+	attr normal underline
 }
 
 style line.quote {
