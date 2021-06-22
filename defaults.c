@@ -30,6 +30,7 @@ static struct lineface_descr {
 	int	pp, p, tp;
 	int	prfx_bg, bg, trail_bg;
 	int	prfx_fg, fg, trail_fg;
+	int	prfx_attr, attr, trail_attr;
 } linefaces_descr[] = {
 	[LINE_TEXT] =		{.pp=PT_PRFX,		.p=PT,		.tp=PT_TRAIL},
 	[LINE_LINK] =		{.pp=PL_PRFX,		.p=PL,		.tp=PL_TRAIL},
@@ -222,6 +223,30 @@ config_setcolor(int bg, const char *name, int prfx, int line, int trail)
 	return 1;
 }
 
+int
+config_setattr(const char *name, int prfx, int line, int trail)
+{
+	struct mapping *m;
+	struct lineface_descr *d;
+
+	if (has_prefix(name, "line.")) {
+		name += 5;
+
+		if ((m = mapping_by_name(name)) == NULL)
+			return 0;
+
+		d = &linefaces_descr[m->linetype];
+
+		d->prfx_attr = prfx;
+		d->attr = line;
+		d->trail_attr = trail;
+	} else {
+		return 0;
+	}
+
+	return 1;
+}
+
 void
 config_apply_colors(void)
 {
@@ -235,13 +260,13 @@ config_apply_colors(void)
 		f = &line_faces[i];
 
 		init_pair(d->pp, d->prfx_fg, d->prfx_bg);
-		f->prefix_prop = COLOR_PAIR(d->pp);
+		f->prefix_prop = COLOR_PAIR(d->pp) | d->prfx_attr;
 
 		init_pair(d->p, d->fg, d->bg);
-		f->text_prop = COLOR_PAIR(d->p);
+		f->text_prop = COLOR_PAIR(d->p) | d->attr;
 
 		init_pair(d->tp, d->trail_fg, d->trail_bg);
-		f->trail_prop = COLOR_PAIR(d->tp);
+		f->trail_prop = COLOR_PAIR(d->tp) | d->trail_attr;
 	}
 
 	init_pair(PBODY, body_face.fg, body_face.bg);

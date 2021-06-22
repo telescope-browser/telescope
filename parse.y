@@ -57,11 +57,13 @@ static void setvari(char *, int);
 static void setvars(char *, char *);
 static int colorname(const char *);
 static void setcolor(const char *, const char *, const char *);
+static int attrname(char *);
+static void setattr(char *, char *, char *);
 
 %}
 
 %token TSET
-%token TSTYLE TPRFX TCONT TBG TFG TATTR TBOLD TUNDERLINE
+%token TSTYLE TPRFX TCONT TBG TFG TATTR
 %token TBIND TUNBIND
 
 %token <str> TSTRING
@@ -100,13 +102,17 @@ styleopt	: TPRFX TSTRING		{ setprfx($2, $2); }
 		| TPRFX TSTRING TSTRING	{ setprfx($2, $2); }
 		| TBG { color_type = TBG; } colorspec
 		| TFG { color_type = TFG; } colorspec
-		| TATTR TBOLD			{ printf("style attr setted to bold\n"); }
-		| TATTR TUNDERLINE		{ printf("style attr setted to underline\n"); }
+		| TATTR attr
 		;
 
 colorspec	: TSTRING			{ setcolor($1, $1, $1); free($1); }
 		| TSTRING TSTRING		{ setcolor($1, $2, $1); free($1); free($2); }
 		| TSTRING TSTRING TSTRING	{ setcolor($1, $2, $3); free($1); free($2); free($3); }
+		;
+
+attr		: TSTRING			{ setattr($1, $1, $1); free($1); }
+		| TSTRING TSTRING		{ setattr($1, $2, $1); free($1); free($2); }
+		| TSTRING TSTRING TSTRING	{ setattr($1, $2, $3); free($1); free($2); free($3); }
 		;
 
 bind		: TBIND TSTRING TSTRING TSTRING	{ printf("TODO: bind %s %s %s\n", $2, $3, $4); }
@@ -141,8 +147,6 @@ static struct keyword {
 	{ "bg", TBG },
 	{ "fg", TFG },
 	{ "attr", TATTR },
-	{ "bold", TBOLD },
-	{ "underline", TUNDERLINE },
 	{ "bind", TBIND },
 	{ "unbind", TUNBIND },
 };
@@ -352,6 +356,62 @@ setcolor(const char *prfx, const char *line, const char *trail)
 	t = colorname(trail);
 
 	if (!config_setcolor(color_type == TBG, current_style, p, l, t))
+		yyerror("invalid style %s", current_style);
+}
+
+static int
+attrname(char *n)
+{
+	struct {
+		const char	*name;
+		unsigned int	 val;
+	} *i, attrs[] = {
+		{ "normal",	A_NORMAL },
+		{ "standout",	A_STANDOUT },
+		{ "underline",	A_UNDERLINE },
+		{ "reverse",	A_REVERSE },
+		{ "blink",	A_BLINK },
+		{ "dim",	A_DIM },
+		{ "bold",	A_BOLD },
+		{ NULL, 0 },
+	};
+	int ret, found;
+	char *ap;
+
+	ret = 0;
+	while ((ap = strsep(&n, ",")) != NULL) {
+		if (*ap == '\0')
+			continue;
+
+		found = 0;
+		for (i = attrs; i ->name != NULL; ++i) {
+			if (strcmp(i->name, ap))
+				continue;
+			ret |= i->val;
+			found = 1;
+			break;
+		}
+
+		if (!found)
+			yyerror("unknown attribute \"%s\" at col %d",
+			    ap, yylval.colno+1);
+	}
+
+	return ret;
+}
+
+static void
+setattr(char *prfx, char *line, char *trail)
+{
+	int p, l, t;
+
+	assert(current_style != NULL);
+
+	p = attrname(prfx);
+	l = attrname(line);
+	t = attrname(trail);
+
+	if (!config_setattr(current_style, p, l, t))
 		yyerror("invalid style %s", current_style);
 }
 
