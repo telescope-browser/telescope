@@ -868,7 +868,7 @@ redraw_tabline(void)
 		}
 
 		if (current)
-			wattron(tabline, tab_face.current_tab);
+			wattron(tabline, tab_face.current);
 		else
 			wattron(tabline, tab_face.tab);
 
@@ -877,7 +877,7 @@ redraw_tabline(void)
 			wprintw(tabline, " ");
 
 		if (current)
-			wattroff(tabline, tab_face.current_tab);
+			wattroff(tabline, tab_face.current);
 		else
 			wattroff(tabline, tab_face.tab);
 	}
@@ -887,6 +887,7 @@ redraw_tabline(void)
 		waddch(tabline, ' ');
 	if (truncated)
 		mvwprintw(tabline, 0, COLS-1, ">");
+	wattroff(tabline, tab_face.background);
 }
 
 static void
@@ -1432,6 +1433,7 @@ ui_init(int argc, char * const *argv)
 
 	body_lines = LINES-3;
 	body_cols = COLS;
+
 	wbkgd(body, body_face.body);
 
 	update_x_offset();

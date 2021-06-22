@@ -77,7 +77,11 @@ struct line_face {
 extern struct line_face line_faces[];
 
 struct tab_face  {
-	int background, tab, current_tab;
+	int bg_attr, bg_bg, bg_fg;
+	int t_attr, t_bg, t_fg;
+	int c_attr, c_bg, c_fg;
+
+	int background, tab, current;
 };
 extern struct tab_face tab_face;
 
@@ -337,7 +341,11 @@ extern int	 body_cols;
 extern int	 in_minibuffer;
 
 enum pairs {
-	PBODY = 1,
+	PTL_BG = 1,
+	PTL_TAB,
+	PTL_CURR,
+
+	PBODY,
 	PBLEFT,
 	PBRIGHT,
 

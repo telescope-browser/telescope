@@ -71,9 +71,17 @@ struct line_face line_faces[] = {
 };
 
 struct tab_face tab_face = {
-	.background	= A_REVERSE,
-	.tab		= A_REVERSE,
-	.current_tab	= A_NORMAL,
+	.bg_attr = A_REVERSE, .bg_bg = -1, .bg_fg = -1,
+	.t_attr  = A_REVERSE, .t_bg  = -1, .t_fg  = -1,
+	.c_attr  = A_NORMAL,  .c_bg  = -1, .c_fg  = -1,
+
+	/*
+	 * set these so that even when enable-color=0 the bar has some
+	 * sane defaults.
+	 */
+	.background =	A_REVERSE,
+	.tab =		A_REVERSE,
+	.current =	A_NORMAL,
 };
 
 struct body_face body_face = {
@@ -189,7 +197,27 @@ config_setcolor(int bg, const char *name, int prfx, int line, int trail)
         struct mapping *m;
 	struct lineface_descr *d;
 
-	if (has_prefix(name, "line.")) {
+	if (!strcmp(name, "tabline")) {
+		if (bg)
+			tab_face.bg_bg = prfx;
+		else
+			tab_face.bg_fg = prfx;
+	} else if (has_prefix(name, "tabline.")) {
+		name += 8;
+
+		if (!strcmp(name, "tab")) {
+			if (bg)
+				tab_face.t_bg = prfx;
+			else
+				tab_face.t_fg = prfx;
+		} else if (!strcmp(name, "current")) {
+			if (bg)
+				tab_face.c_bg = prfx;
+			else
+				tab_face.c_fg = prfx;
+		} else
+			return 0;
+	} else if (has_prefix(name, "line.")) {
 		name += 5;
 
 		if ((m = mapping_by_name(name)) == NULL)
@@ -229,7 +257,18 @@ config_setattr(const char *name, int prfx, int line, int trail)
 	struct mapping *m;
 	struct lineface_descr *d;
 
-	if (has_prefix(name, "line.")) {
+	if (!strcmp(name, "tabline")) {
+		tab_face.bg_attr = prfx;
+	} else if (has_prefix(name, "tabline.")) {
+		name += 8;
+
+		if (!strcmp(name, "tab"))
+			tab_face.t_attr = prfx;
+		else if (!strcmp(name, "current"))
+			tab_face.c_attr = prfx;
+		else
+			return 0;
+	} else if (has_prefix(name, "line.")) {
 		name += 5;
 
 		if ((m = mapping_by_name(name)) == NULL)
@@ -269,6 +308,17 @@ config_apply_colors(void)
 		f->trail_prop = COLOR_PAIR(d->tp) | d->trail_attr;
 	}
 
+	/* tab line */
+	init_pair(PTL_BG, tab_face.bg_fg, tab_face.bg_bg);
+	tab_face.background = COLOR_PAIR(PTL_BG) | tab_face.bg_attr;
+
+	init_pair(PTL_TAB, tab_face.t_fg, tab_face.t_bg);
+	tab_face.tab = COLOR_PAIR(PTL_TAB) | tab_face.t_attr;
+
+	init_pair(PTL_CURR, tab_face.c_fg, tab_face.c_bg);
+	tab_face.current = COLOR_PAIR(PTL_CURR) | tab_face.c_attr;
+
+	/* body */
 	init_pair(PBODY, body_face.fg, body_face.bg);
 	body_face.body = COLOR_PAIR(PBODY);
 
