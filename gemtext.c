@@ -393,6 +393,7 @@ search_title(struct parser *p, enum line_type level)
 			if (l->line == NULL)
 				continue;
 			strlcpy(p->title, l->line, sizeof(p->title));
+			break;
 		}
 	}
 }
