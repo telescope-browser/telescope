@@ -31,6 +31,7 @@
 enum imsg_type {
 	/* ui <-> client/fs */
 	IMSG_GET,		/* data is URL, peerid the tab id */
+	IMSG_GET_RAW,		/* get but with an explicit req str */
 	IMSG_ERR,
 	IMSG_CHECK_CERT,
 	IMSG_CERT_STATUS,
@@ -212,6 +213,7 @@ struct tab {
 
 	char			*cert;
 	enum trust_state	 trust;
+	struct proxy		*proxy;
 	struct phos_uri		 uri;
 	struct histhead		 hist;
 	struct hist		*hist_cur;
@@ -242,6 +244,29 @@ struct proto {
 	 * human-friendly URL.
 	 */
 	void		 (*loadfn)(struct tab*, const char*);
+};
+
+extern TAILQ_HEAD(proxylist, proxy) proxies;
+struct proxy {
+	char	*match_proto;
+
+	char	*host;
+	char	*port;
+	int	 proto;
+
+	TAILQ_ENTRY(proxy) proxies;
+};
+
+enum {
+	PROTO_GEMINI,
+	/* ... */
+};
+
+struct get_req {
+	int		proto;
+	char		host[254];
+	char		port[16];
+	char		req[1027];
 };
 
 struct kmap {
@@ -319,6 +344,7 @@ void		 sandbox_fs_process(void);
 /* telescope.c */
 void		 load_about_url(struct tab*, const char*);
 void		 load_gemini_url(struct tab*, const char*);
+void		 load_via_proxy(struct tab *, const char *, struct proxy *);
 void		 load_url(struct tab*, const char*);
 int		 load_previous_page(struct tab*);
 int		 load_next_page(struct tab*);

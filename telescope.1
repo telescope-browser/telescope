@@ -499,6 +499,14 @@ Enable
 if non zero.
 By default is 0.
 .El
+.It Ic proxy Ar proto Ic via Ar url
+Use
+.Ar url
+as proxy for all URLs with
+protocol
+.Ar proto Ns .
+.Ar url
+must be a Gemini URI without path, query and fragment component.
 .It Ic style Ar name Ar option
 Change the styling of the element identified by
 .Ar name .
@@ -611,6 +619,16 @@ style line.link {
 style line.quote {
 	prefix " ┃ "
 }
+.Ed
+.Pp
+It's possible to browse
+.Dq the small web
+.Pq i.e. simple websites
+using programs like the duckling-proxy by defining a proxy in
+.Pa ~/.telescope/config Ns :
+.Bd -literal -offset indent
+proxy http via "gemini://localhost:1965"
+proxy https via "gemini://localhost:1965"
 .Ed
 .Sh AUTHORS
 .An -nosplit

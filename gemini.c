@@ -73,7 +73,7 @@ static void		 read_reply(int, short, void*);
 static void		 parse_reply(struct req*);
 static void		 copy_body(int, short, void*);
 
-static void		 handle_get(struct imsg*, size_t);
+static void		 handle_get_raw(struct imsg *, size_t);
 static void		 handle_cert_status(struct imsg*, size_t);
 static void		 handle_proceed(struct imsg*, size_t);
 static void		 handle_stop(struct imsg*, size_t);
@@ -84,7 +84,7 @@ static void		 handle_dispatch_imsg(int, short, void*);
 struct timeval timeout_for_handshake = { 5, 0 };
 
 static imsg_handlerfn *handlers[] = {
-	[IMSG_GET]		= handle_get,
+	[IMSG_GET_RAW]		= handle_get_raw,
 	[IMSG_CERT_STATUS]	= handle_cert_status,
 	[IMSG_PROCEED]		= handle_proceed,
 	[IMSG_STOP]		= handle_stop,
@@ -373,16 +373,10 @@ write_request(int fd, short ev, void *d)
 	struct req	*req = d;
 	ssize_t		 r;
 	size_t		 len;
-	char		 buf[1027]; /* URL + \r\n\0 */
 
-	if (!phos_serialize_uri(&req->url, buf, sizeof(buf)))
-		die();
+	len = strlen(req->buf);
 
-	len = strlcat(buf, "\r\n", sizeof(buf));
-
-	assert(len <= sizeof(buf));
-
-	switch (r = tls_write(req->ctx, buf, len)) {
+	switch (r = tls_write(req->ctx, req->buf, len)) {
 	case -1:
 		close_with_errf(req, "tls_write: %s", tls_error(req->ctx));
 		break;
@@ -507,14 +501,14 @@ copy_body(int fd, short ev, void *d)
 }
 
 static void
-handle_get(struct imsg *imsg, size_t datalen)
+handle_get_raw(struct imsg *imsg, size_t datalen)
 {
 	struct req	*req;
-	char		*data;
+	struct get_req	*r;
 
-	data = imsg->data;
+	r = imsg->data;
 
-	if (data[datalen-1] != '\0')
+	if (datalen != sizeof(*r))
 		die();
 
 	if ((req = calloc(1, sizeof(*req))) == NULL)
@@ -523,10 +517,9 @@ handle_get(struct imsg *imsg, size_t datalen)
 	req->id = imsg->hdr.peerid;
 	TAILQ_INSERT_HEAD(&reqhead, req, reqs);
 
-        if (!phos_parse_absolute_uri(data, &req->url)) {
-		close_with_err(req, "Can't parse URI");
-		return;
-	}
+	strlcpy(req->url.host, r->host, sizeof(req->url.host));
+	strlcpy(req->url.port, r->port, sizeof(req->url.port));
+	strlcpy(req->buf, r->req, sizeof(req->buf));
 
 #if HAVE_ASR_RUN
         async_conn_towards(req);

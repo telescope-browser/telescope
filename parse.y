@@ -22,6 +22,8 @@
 
 #include "telescope.h"
 
+#include <phos/phos.h>
+
 #include <assert.h>
 #include <ctype.h>
 #include <limits.h>
@@ -59,12 +61,14 @@ static int colorname(const char *);
 static void setcolor(const char *, const char *, const char *);
 static int attrname(char *);
 static void setattr(char *, char *, char *);
+static void add_proxy(char *, char *);
 
 %}
 
 %token TSET
 %token TSTYLE TPRFX TCONT TBG TFG TATTR
 %token TBIND TUNBIND
+%token TPROXY TVIA
 
 %token <str> TSTRING
 %token <num> TNUMBER
@@ -84,6 +88,7 @@ rule		: set
 		}
 		| bind
 		| unbind
+		| proxy
 		;
 
 set		: TSET TSTRING '=' TSTRING	{ setvars($2, $4); }
@@ -121,6 +126,9 @@ bind		: TBIND TSTRING TSTRING TSTRING	{ printf("TODO: bind %s %s %s\n", $2, $3, 
 unbind		: TUNBIND TSTRING TSTRING	{ printf("TODO: unbind %s %s\n", $2, $3); }
 		;
 
+proxy		: TPROXY TSTRING TVIA TSTRING { add_proxy($2, $4); free($4); }
+		;
+
 %%
 
 void
@@ -140,15 +148,17 @@ static struct keyword {
 	const char *word;
 	int token;
 } keywords[] = {
+	{ "attr", TATTR },
+	{ "bg", TBG },
+	{ "bind", TBIND },
+	{ "cont", TCONT },
+	{ "fg", TFG },
+	{ "prefix", TPRFX },
+	{ "proxy", TPROXY },
 	{ "set", TSET },
 	{ "style", TSTYLE },
-	{ "prefix", TPRFX },
-	{ "cont", TCONT },
-	{ "bg", TBG },
-	{ "fg", TFG },
-	{ "attr", TATTR },
-	{ "bind", TBIND },
 	{ "unbind", TUNBIND },
+	{ "via", TVIA },
 };
 
 int
@@ -431,6 +441,41 @@ setattr(char *prfx, char *line, char *trail)
 
 	if (!config_setattr(current_style, p, l, t))
 		yyerror("invalid style %s", current_style);
+}
+
+static void
+add_proxy(char *proto, char *proxy)
+{
+	struct proxy *p;
+	struct phos_uri uri;
+
+	if (!phos_parse_absolute_uri(proxy, &uri)) {
+		yyerror("can't parse URL: %s", proxy);
+		return;
+	}
+
+	if (*uri.path != '\0' || *uri.query != '\0' || *uri.fragment != '\0') {
+		yyerror("proxy url can't have path, query or fragments");
+		return;
+	}
+
+	if (strcmp(uri.scheme, "gemini")) {
+		yyerror("disallowed proxy protocol %s", uri.scheme);
+		return;
+	}
+
+	if ((p = calloc(1, sizeof(*p))) == NULL)
+		err(1, "calloc");
+
+	p->match_proto = proto;
+
+	if ((p->host = strdup(uri.host)) == NULL)
+		err(1, "strdup");
+
+	if ((p->port = strdup(uri.port)) == NULL)
+		err(1, "strdup");
+
+	TAILQ_INSERT_HEAD(&proxies, p, proxies);
 }
 
 void

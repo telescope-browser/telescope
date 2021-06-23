@@ -1,5 +1,7 @@
 2021-06-23  Omar Polo  <op@omarpolo.com>
 
+	* parse.y (add_proxy): add proxy support (e.g. `proxy http via gemini://localhost:1965' for the duckling proxy)
+
 	* cmd.c (cmd_previous_button): stay on the line in next-button if there is no next link, and the same for previous-button
 
 	* telescope.c (handle_imsg_buf): "humanize" byte progress (i.e. trasform XYZ bytes to something readable)

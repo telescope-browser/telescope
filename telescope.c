@@ -11,6 +11,7 @@
 
 struct event		 netev, fsev;
 struct tabshead		 tabshead;
+struct proxylist	 proxies;
 
 /* the first is also the fallback one */
 static struct proto protos[] = {
@@ -96,7 +97,7 @@ handle_imsg_err(struct imsg *imsg, size_t datalen)
 static void
 handle_imsg_check_cert(struct imsg *imsg, size_t datalen)
 {
-	const char		*hash;
+	const char		*hash, *host, *port;
 	int			 tofu_res;
 	struct tofu_entry	*e;
 	struct tab		*tab;
@@ -107,7 +108,15 @@ handle_imsg_check_cert(struct imsg *imsg, size_t datalen)
 
 	tab = tab_by_id(imsg->hdr.peerid);
 
-	if ((e = tofu_lookup(&certs, tab->uri.host, tab->uri.port)) == NULL) {
+	if (tab->proxy != NULL) {
+		host = tab->proxy->host;
+		port = tab->proxy->port;
+	} else {
+		host = tab->uri.host;
+		port = tab->uri.port;
+	}
+
+	if ((e = tofu_lookup(&certs, host, port)) == NULL) {
 		/* TODO: an update in libressl/libretls changed
 		 * significantly.  Find a better approach at storing
 		 * the certs! */
@@ -117,10 +126,10 @@ handle_imsg_check_cert(struct imsg *imsg, size_t datalen)
 		tofu_res = 1;	/* trust on first use */
 		if ((e = calloc(1, sizeof(*e))) == NULL)
 			abort();
-		strlcpy(e->domain, tab->uri.host, sizeof(e->domain));
-		if (*tab->uri.port != '\0' && strcmp(tab->uri.port, "1965")) {
+		strlcpy(e->domain, host, sizeof(e->domain));
+		if (*port != '\0' && strcmp(port, "1965")) {
 			strlcat(e->domain, ":", sizeof(e->domain));
-			strlcat(e->domain, tab->uri.port, sizeof(e->domain));
+			strlcat(e->domain, port, sizeof(e->domain));
 		}
 		strlcpy(e->hash, hash, sizeof(e->hash));
 		tofu_add(&certs, e);
@@ -170,8 +179,17 @@ handle_maybe_save_new_cert(int accept, unsigned int tabid)
 {
 	struct tab *tab;
 	struct tofu_entry *e;
+	const char *host, *port;
 
 	tab = tab_by_id(tabid);
+
+	if (tab->proxy != NULL) {
+		host = tab->proxy->host;
+		port = tab->proxy->port;
+	} else {
+		host = tab->uri.host;
+		port = tab->uri.port;
+	}
 
 	if (!accept)
 		goto end;
@@ -179,10 +197,10 @@ handle_maybe_save_new_cert(int accept, unsigned int tabid)
 	if ((e = calloc(1, sizeof(*e))) == NULL)
 		die();
 
-	strlcpy(e->domain, tab->uri.host, sizeof(e->domain));
-	if (*tab->uri.port != '\0' && strcmp(tab->uri.port, "1965")) {
+	strlcpy(e->domain, host, sizeof(e->domain));
+	if (*port != '\0' && strcmp(port, "1965")) {
 		strlcat(e->domain, ":", sizeof(e->domain));
-		strlcat(e->domain, tab->uri.port, sizeof(e->domain));
+		strlcat(e->domain, port, sizeof(e->domain));
 	}
 	strlcpy(e->hash, tab->cert, sizeof(e->hash));
 	imsg_compose(fsibuf, IMSG_UPDATE_CERT, 0, 0, -1, e, sizeof(*e));
@@ -473,16 +491,46 @@ load_about_url(struct tab *tab, const char *url)
 void
 load_gemini_url(struct tab *tab, const char *url)
 {
-	size_t		 len;
+	struct get_req	 req;
 
 	stop_tab(tab);
 	tab->id = tab_new_id();
 
-	len = sizeof(tab->hist_cur->h);
-	imsg_compose(netibuf, IMSG_GET, tab->id, 0, -1,
-	    tab->hist_cur->h, len);
+	memset(&req, 0, sizeof(req));
+	strlcpy(req.host, tab->uri.host, sizeof(req.host));
+	strlcpy(req.port, tab->uri.port, sizeof(req.host));
+
+	strlcpy(req.req, tab->hist_cur->h, sizeof(req.req));
+	strlcat(req.req, "\r\n", sizeof(req.req));
+
+	req.proto = PROTO_GEMINI;
+
+	imsg_compose(netibuf, IMSG_GET_RAW, tab->id, 0, -1,
+	    &req, sizeof(req));
 	imsg_flush(netibuf);
-	return;
+}
+
+void
+load_via_proxy(struct tab *tab, const char *url, struct proxy *p)
+{
+	struct get_req req;
+
+	stop_tab(tab);
+	tab->id = tab_new_id();
+	tab->proxy = p;
+
+	memset(&req, 0, sizeof(req));
+	strlcpy(req.host, p->host, sizeof(req.host));
+	strlcpy(req.port, p->port, sizeof(req.host));
+
+	strlcpy(req.req, tab->hist_cur->h, sizeof(req.req));
+	strlcat(req.req, "\r\n", sizeof(req.req));
+
+	req.proto = p->proto;
+
+	imsg_compose(netibuf, IMSG_GET_RAW, tab->id, 0, -1,
+	    &req, sizeof(req));
+	imsg_flush(netibuf);
 }
 
 static void
@@ -490,6 +538,7 @@ do_load_url(struct tab *tab, const char *url)
 {
 	struct phos_uri	 uri;
 	struct proto	*p;
+	struct proxy	*proxy;
 	char		*t;
 
 	if (tab->fd != -1) {
@@ -522,6 +571,13 @@ do_load_url(struct tab *tab, const char *url)
 		}
 	}
 
+	TAILQ_FOREACH(proxy, &proxies, proxies) {
+		if (!strcmp(tab->uri.scheme, proxy->match_proto)) {
+			load_via_proxy(tab, url, proxy);
+			return;
+		}
+	}
+
 	protos[0].loadfn(tab, url);
 }
 
@@ -535,6 +591,9 @@ load_url(struct tab *tab, const char *url)
 		event_loopbreak();
 		return;
 	}
+
+	tab->proxy = NULL;
+
 	hist_push(&tab->hist, tab->hist_cur);
 	do_load_url(tab, url);
 	empty_vlist(&tab->buffer);
@@ -661,6 +720,7 @@ main(int argc, char * const *argv)
 	load_certs(&certs);
 
 	TAILQ_INIT(&tabshead);
+	TAILQ_INIT(&proxies);
 
 	event_init();
 
