@@ -277,6 +277,26 @@ load_default_keys(void)
 }
 
 void
+save_excursion(struct excursion *place, struct buffer *buffer)
+{
+	place->curs_x = buffer->curs_x;
+	place->curs_y = buffer->curs_y;
+	place->line_off = buffer->line_off;
+	place->current_line = buffer->current_line;
+	place->cpoff = buffer->cpoff;
+}
+
+void
+restore_excursion(struct excursion *place, struct buffer *buffer)
+{
+	buffer->curs_x = place->curs_x;
+	buffer->curs_y = place->curs_y;
+	buffer->line_off = place->line_off;
+	buffer->current_line = place->current_line;
+	buffer->cpoff = place->cpoff;
+}
+
+void
 restore_cursor(struct buffer *buffer)
 {
 	struct vline	*vl;

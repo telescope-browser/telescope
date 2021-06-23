@@ -340,6 +340,13 @@ extern int	 body_lines;
 extern int	 body_cols;
 extern int	 in_minibuffer;
 
+struct excursion {
+	int		 curs_x, curs_y;
+	size_t		 line_off;
+	struct vline	*current_line;
+	size_t		 cpoff;
+};
+
 enum pairs {
 	PTL_BG = 1,
 	PTL_TAB,
@@ -411,6 +418,8 @@ struct ministate {
 };
 extern struct ministate ministate;
 
+void		 save_excursion(struct excursion *, struct buffer *);
+void		 restore_excursion(struct excursion *, struct buffer *);
 void		 restore_cursor(struct buffer *);
 void		 minibuffer_taint_hist(void);
 void		 eecmd_self_insert(void);
