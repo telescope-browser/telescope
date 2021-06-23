@@ -243,9 +243,14 @@ cmd_push_button_new_tab(struct buffer *buffer)
 void
 cmd_previous_button(struct buffer *buffer)
 {
+	struct excursion place;
+
+	save_excursion(&place, buffer);
+
 	do {
 		if (buffer->current_line == NULL ||
 		    buffer->current_line == TAILQ_FIRST(&buffer->head)) {
+			restore_excursion(&place, buffer);
 			message("No previous link");
 			return;
 		}
@@ -256,9 +261,14 @@ cmd_previous_button(struct buffer *buffer)
 void
 cmd_next_button(struct buffer *buffer)
 {
+	struct excursion place;
+
+	save_excursion(&place, buffer);
+
 	do {
 		if (buffer->current_line == NULL ||
 		    buffer->current_line == TAILQ_LAST(&buffer->head, vhead)) {
+			restore_excursion(&place, buffer);
 			message("No next link");
 			return;
 		}
