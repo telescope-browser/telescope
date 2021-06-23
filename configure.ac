@@ -61,6 +61,7 @@ AC_CHECK_LIB(util, imsg_init, [], [
 	AC_LIBOBJ(imsg)
 	AC_LIBOBJ(imsg-buffer)
 	AC_LIBOBJ(ohash)
+	AC_LIBOBJ(fmt_scaled)
 ])
 
 AC_CHECK_FUNCS([asr_run])

@@ -1,3 +1,7 @@
+2021-06-23  Omar Polo  <op@omarpolo.com>
+
+	* telescope.c (handle_imsg_buf): "humanize" byte progress (i.e. trasform XYZ bytes to something readable)
+
 2021-06-22  Omar Polo  <op@omarpolo.com>
 
 	* parse.y (colorname): support 256 colors

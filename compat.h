@@ -35,9 +35,12 @@
 #ifdef HAVE_LIBUTIL
 # include <imsg.h>
 # include <ohash.h>
+# include <util.h>
 #else
 # include "compat/imsg.h"
 # include "compat/ohash.h"
+# define FMT_SCALED_STRSIZE      7       /* minus sign, 4 digits, suffix, null byte */
+int		 fmt_scaled(long long, char *);
 #endif
 
 #ifndef HAVE_ASPRINTF

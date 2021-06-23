@@ -342,7 +342,7 @@ handle_imsg_buf(struct imsg *imsg, size_t datalen)
 {
 	struct tab	*tab;
 	int		 l;
-	char		*page;
+	char		*page, buf[FMT_SCALED_STRSIZE] = {0};
 
 	tab = tab_by_id(imsg->hdr.peerid);
 
@@ -353,9 +353,10 @@ handle_imsg_buf(struct imsg *imsg, size_t datalen)
 			die();
 	} else {
 		write(tab->fd, imsg->data, datalen);
-		l = asprintf(&page, "Writing \"%s\"... (%zu bytes)\n",
+		fmt_scaled(tab->bytes, buf);
+		l = asprintf(&page, "Saving to \"%s\"... (%s)\n",
 		    tab->path,
-		    tab->bytes);
+		    buf);
 		if (l == -1)
 			die();
 		load_page_from_str(tab, page);
@@ -370,7 +371,7 @@ handle_imsg_eof(struct imsg *imsg, size_t datalen)
 {
 	struct tab	*tab;
 	int		 l;
-	char		*page;
+	char		*page, buf[FMT_SCALED_STRSIZE] = {0};
 
 	tab = tab_by_id(imsg->hdr.peerid);
 
@@ -378,9 +379,10 @@ handle_imsg_eof(struct imsg *imsg, size_t datalen)
 		if (!tab->buffer.page.free(&tab->buffer.page))
 			die();
 	} else {
-		l = asprintf(&page, "Wrote %s (%zu bytes)\n",
+		fmt_scaled(tab->bytes, buf);
+		l = asprintf(&page, "Saved to \"%s\" (%s)\n",
 		    tab->path,
-		    tab->bytes);
+		    buf);
 		if (l == -1)
 			die();
 		load_page_from_str(tab, page);
