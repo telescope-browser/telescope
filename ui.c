@@ -769,12 +769,12 @@ wrap_page(struct buffer *buffer, int width)
 static void
 print_vline(int off, int width, WINDOW *window, struct vline *vl)
 {
-	const char *text = vl->line;
+	const char *text;
 	const char *prfx;
-	int prefix_face = line_faces[vl->parent->type].prefix_prop;
-	int text_face = line_faces[vl->parent->type].text_prop;
-	int trail_face = line_faces[vl->parent->type].trail_prop;
+	struct line_face *f;
 	int i, left, x, y;
+
+	f = &line_faces[vl->parent->type];
 
 	/* unused, set by getyx */
 	(void)y;
@@ -784,6 +784,7 @@ print_vline(int off, int width, WINDOW *window, struct vline *vl)
 	else
 		prfx = line_prefixes[vl->parent->type].prfx2;
 
+	text = vl->line;
 	if (text == NULL)
 		text = "";
 
@@ -792,22 +793,22 @@ print_vline(int off, int width, WINDOW *window, struct vline *vl)
 		waddch(window, ' ');
 	wattr_off(window, body_face.left, NULL);
 
-	wattr_on(window, prefix_face, NULL);
+	wattr_on(window, f->prefix, NULL);
 	wprintw(window, "%s", prfx);
-	wattr_off(window, prefix_face, NULL);
+	wattr_off(window, f->prefix, NULL);
 
-	wattr_on(window, text_face, NULL);
+	wattr_on(window, f->text, NULL);
 	wprintw(window, "%s", text);
-	wattr_off(window, text_face, NULL);
+	wattr_off(window, f->text, NULL);
 
 	getyx(window, y, x);
 
 	left = width - x;
 
-	wattr_on(window, trail_face, NULL);
+	wattr_on(window, f->trail, NULL);
 	for (i = 0; i < left - off - 1; ++i)
 		waddch(window, ' ');
-	wattr_off(window, trail_face, NULL);
+	wattr_off(window, f->trail, NULL);
 
 	wattr_on(window, body_face.right, NULL);
 	for (i = 0; i < off; i++)

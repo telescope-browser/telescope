@@ -26,24 +26,6 @@ int fill_column = 80;
 int olivetti_mode = 1;
 int enable_colors = 1;
 
-static struct lineface_descr {
-	int	pp, p, tp;
-	int	prfx_bg, bg, trail_bg;
-	int	prfx_fg, fg, trail_fg;
-	int	prfx_attr, attr, trail_attr;
-} linefaces_descr[] = {
-	[LINE_TEXT] =		{.pp=PT_PRFX,		.p=PT,		.tp=PT_TRAIL},
-	[LINE_LINK] =		{.pp=PL_PRFX,		.p=PL,		.tp=PL_TRAIL},
-	[LINE_TITLE_1] =	{.pp=PT1_PRFX,		.p=PT1,		.tp=PT1_TRAIL},
-	[LINE_TITLE_2] =	{.pp=PT2_PRFX,		.p=PT1,		.tp=PT1_TRAIL},
-	[LINE_TITLE_3] =	{.pp=PT3_PRFX,		.p=PT3,		.tp=PT3_TRAIL},
-	[LINE_ITEM] =		{.pp=PI_PRFX,		.p=PI,		.tp=PI_TRAIL},
-	[LINE_QUOTE] =		{.pp=PQ_PRFX,		.p=PQ,		.tp=PQ_TRAIL},
-	[LINE_PRE_START] =	{.pp=PPSTART_PRFX,	.p=PT,		.tp=PT_TRAIL},
-	[LINE_PRE_CONTENT] =	{.pp=PP_PRFX,		.p=PP,		.tp=PP_TRAIL},
-	[LINE_PRE_END] =	{.pp=PPEND_PRFX,	.p=PPEND,	.tp=PPEND_TRAIL},
-};
-
 struct lineprefix line_prefixes[] = {
 	[LINE_TEXT] =		{ "",		"" },
 	[LINE_LINK] =		{ "=> ",	"   " },
@@ -58,16 +40,61 @@ struct lineprefix line_prefixes[] = {
 };
 
 struct line_face line_faces[] = {
-	[LINE_TEXT] =		{ 0,		0,		0 },
-	[LINE_LINK] =		{ 0,		A_UNDERLINE,	0 },
-	[LINE_TITLE_1] =	{ A_BOLD,	A_BOLD,		0 },
-	[LINE_TITLE_2] =	{ A_BOLD,	A_BOLD,		0 },
-	[LINE_TITLE_3] =	{ A_BOLD,	A_BOLD,		0 },
-	[LINE_ITEM] =		{ 0,		0,		0 },
-	[LINE_QUOTE] =		{ 0,		A_DIM,		0 },
-	[LINE_PRE_START] =	{ 0,		0,		0 },
-	[LINE_PRE_CONTENT] =	{ 0,		0,		0 },
-	[LINE_PRE_END] =	{ 0,		0,		0 },
+	[LINE_TEXT] =		{
+		.prfx_pair = PT_PRFX,
+		.pair = PT,
+		.trail_pair = PT_TRAIL,
+	},
+	[LINE_LINK] =		{
+		.prfx_pair = PL_PRFX,
+		.pair = PL,
+		.trail_pair = PL_TRAIL,
+		.attr = A_UNDERLINE,
+	},
+	[LINE_TITLE_1] =	{
+		.prfx_pair = PT1_PRFX,
+		.pair = PT1,
+		.trail_pair = PT1_TRAIL,
+		.attr = A_BOLD,
+	},
+	[LINE_TITLE_2] =	{
+		.prfx_pair = PT2_PRFX,
+		.pair = PT2,
+		.trail_pair = PT2_TRAIL,
+		.attr = A_BOLD,
+	},
+	[LINE_TITLE_3] =	{
+		.prfx_pair = PT3_PRFX,
+		.pair = PT3,
+		.trail_pair = PT3_TRAIL,
+		.attr = A_BOLD,
+	},
+	[LINE_ITEM] =		{
+		.prfx_pair = PI_PRFX,
+		.pair = PI,
+		.trail_pair = PI_TRAIL,
+	},
+	[LINE_QUOTE] =		{
+		.prfx_pair = PQ_PRFX,
+		.pair = PQ,
+		.trail_pair = PQ_TRAIL,
+		.attr = A_DIM,
+	},
+	[LINE_PRE_START] =	{
+		.prfx_pair = PPSTART_PRFX,
+		.pair = PPSTART,
+		.trail_pair = PPSTART_TRAIL,
+	},
+	[LINE_PRE_CONTENT] =	{
+		.prfx_pair = PP_PRFX,
+		.pair = PP,
+		.trail_pair = PP_TRAIL,
+	},
+	[LINE_PRE_END] =	{
+		.prfx_pair = PPEND_PRFX,
+		.pair = PPEND,
+		.trail_pair = PPEND_TRAIL,
+	},
 };
 
 struct tab_face tab_face = {
@@ -130,15 +157,15 @@ mapping_by_name(const char *name)
 void
 config_init(void)
 {
-	struct lineface_descr *d;
+	struct line_face *f;
 	size_t i, len;
 
-	len = sizeof(linefaces_descr)/sizeof(linefaces_descr[0]);
+	len = sizeof(line_faces)/sizeof(line_faces[0]);
 	for (i = 0; i < len; ++i) {
-		d = &linefaces_descr[i];
+		f = &line_faces[i];
 
-		d->prfx_bg = d->bg = d->trail_bg = -1;
-		d->prfx_fg = d->fg = d->trail_fg = -1;
+		f->prfx_bg = f->bg = f->trail_bg = -1;
+		f->prfx_fg = f->fg = f->trail_fg = -1;
 	}
 }
 
@@ -195,7 +222,7 @@ int
 config_setcolor(int bg, const char *name, int prfx, int line, int trail)
 {
         struct mapping *m;
-	struct lineface_descr *d;
+	struct line_face *f;
 
 	if (!strcmp(name, "tabline")) {
 		if (bg)
@@ -223,16 +250,16 @@ config_setcolor(int bg, const char *name, int prfx, int line, int trail)
 		if ((m = mapping_by_name(name)) == NULL)
 			return 0;
 
-		d = &linefaces_descr[m->linetype];
+		f = &line_faces[m->linetype];
 
 		if (bg) {
-			d->prfx_bg = prfx;
-			d->bg = line;
-			d->trail_bg = trail;
+			f->prfx_bg = prfx;
+			f->bg = line;
+			f->trail_bg = trail;
 		} else {
-			d->prfx_fg = prfx;
-			d->fg = line;
-			d->trail_fg = trail;
+			f->prfx_fg = prfx;
+			f->fg = line;
+			f->trail_fg = trail;
 		}
 	} else if (!strcmp(name, "line")) {
 		if (bg) {
@@ -255,7 +282,7 @@ int
 config_setattr(const char *name, int prfx, int line, int trail)
 {
 	struct mapping *m;
-	struct lineface_descr *d;
+	struct line_face *f;
 
 	if (!strcmp(name, "tabline")) {
 		tab_face.bg_attr = prfx;
@@ -274,11 +301,11 @@ config_setattr(const char *name, int prfx, int line, int trail)
 		if ((m = mapping_by_name(name)) == NULL)
 			return 0;
 
-		d = &linefaces_descr[m->linetype];
+		f = &line_faces[m->linetype];
 
-		d->prfx_attr = prfx;
-		d->attr = line;
-		d->trail_attr = trail;
+		f->prfx_attr = prfx;
+		f->attr = line;
+		f->trail_attr = trail;
 	} else {
 		return 0;
 	}
@@ -300,24 +327,22 @@ void
 config_apply_style(void)
 {
 	size_t i, colors, len;
-	struct lineface_descr *d;
 	struct line_face *f;
 
 	colors = COLORS;
 
-	len = sizeof(linefaces_descr)/sizeof(linefaces_descr[0]);
+	len = sizeof(line_faces)/sizeof(line_faces[0]);
 	for (i = 0; i < len; ++i) {
-		d = &linefaces_descr[i];
 		f = &line_faces[i];
 
-		tl_init_pair(colors, d->pp, d->prfx_fg, d->prfx_bg);
-		f->prefix_prop = COLOR_PAIR(d->pp) | d->prfx_attr;
+		tl_init_pair(colors, f->prfx_pair, f->prfx_fg, f->prfx_bg);
+		f->prefix = COLOR_PAIR(f->prfx_pair) | f->prfx_attr;
 
-		tl_init_pair(colors, d->p, d->fg, d->bg);
-		f->text_prop = COLOR_PAIR(d->p) | d->attr;
+		tl_init_pair(colors, f->pair, f->fg, f->bg);
+		f->text = COLOR_PAIR(f->pair) | f->attr;
 
-		tl_init_pair(colors, d->tp, d->trail_fg, d->trail_bg);
-		f->trail_prop = COLOR_PAIR(d->tp) | d->trail_attr;
+		tl_init_pair(colors, f->trail_pair, f->trail_fg, f->trail_bg);
+		f->trail = COLOR_PAIR(f->trail_pair) | f->trail_attr;
 	}
 
 	/* tab line */

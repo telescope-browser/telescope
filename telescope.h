@@ -71,9 +71,12 @@ struct lineprefix {
 extern struct lineprefix line_prefixes[];
 
 struct line_face {
-	int prefix_prop;
-	int text_prop;
-	int trail_prop;
+	int prfx_pair, pair, trail_pair;
+	int prfx_bg, bg, trail_bg;
+	int prfx_fg, fg, trail_fg;
+	int prfx_attr, attr, trail_attr;
+
+	int prefix, text, trail;
 };
 extern struct line_face line_faces[];
 
