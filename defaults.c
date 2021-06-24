@@ -287,7 +287,7 @@ config_setattr(const char *name, int prfx, int line, int trail)
 }
 
 void
-config_apply_colors(void)
+config_apply_style(void)
 {
         size_t i, len;
 	struct lineface_descr *d;

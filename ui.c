@@ -1430,10 +1430,11 @@ ui_init(int argc, char * const *argv)
 		if (has_colors()) {
 			start_color();
 			use_default_colors();
-			config_apply_colors();
 		} else
 			enable_colors = 0;
 	}
+
+	config_apply_style();
 
 	raw();
 	noecho();

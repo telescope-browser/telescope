@@ -290,7 +290,7 @@ int		 config_setvari(const char *, int);
 int		 config_setvars(const char *, char *);
 int		 config_setcolor(int, const char *, int, int, int);
 int		 config_setattr(const char *, int, int, int);
-void		 config_apply_colors(void);
+void		 config_apply_style(void);
 
 /* fs.c */
 int		 fs_init(void);
