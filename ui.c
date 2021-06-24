@@ -787,32 +787,32 @@ print_vline(int off, int width, WINDOW *window, struct vline *vl)
 	if (text == NULL)
 		text = "";
 
-	wattron(window, body_face.left);
+	wattr_on(window, body_face.left, NULL);
 	for (i = 0; i < off; i++)
 		waddch(window, ' ');
-	wattroff(window, body_face.left);
+	wattr_off(window, body_face.left, NULL);
 
-	wattron(window, prefix_face);
+	wattr_on(window, prefix_face, NULL);
 	wprintw(window, "%s", prfx);
-	wattroff(window, prefix_face);
+	wattr_off(window, prefix_face, NULL);
 
-	wattron(window, text_face);
+	wattr_on(window, text_face, NULL);
 	wprintw(window, "%s", text);
-	wattroff(window, text_face);
+	wattr_off(window, text_face, NULL);
 
 	getyx(window, y, x);
 
 	left = width - x;
 
-	wattron(window, trail_face);
+	wattr_on(window, trail_face, NULL);
 	for (i = 0; i < left - off - 1; ++i)
 		waddch(window, ' ');
-	wattroff(window, trail_face);
+	wattr_off(window, trail_face, NULL);
 
-	wattron(window, body_face.right);
+	wattr_on(window, body_face.right, NULL);
 	for (i = 0; i < off; i++)
 		waddch(window, ' ');
-	wattroff(window, body_face.right);
+	wattr_off(window, body_face.right, NULL);
 
 }
 
@@ -851,9 +851,9 @@ redraw_tabline(void)
 	}
 
 	werase(tabline);
-	wattron(tabline, tab_face.background);
+	wattr_on(tabline, tab_face.background, NULL);
 	wprintw(tabline, toskip == 0 ? " " : "<");
-	wattroff(tabline, tab_face.background);
+	wattr_off(tabline, tab_face.background, NULL);
 
 	truncated = 0;
 	TAILQ_FOREACH(tab, &tabshead, tabs) {
@@ -888,26 +888,26 @@ redraw_tabline(void)
 		}
 
 		if (current)
-			wattron(tabline, tab_face.current);
+			wattr_on(tabline, tab_face.current, NULL);
 		else
-			wattron(tabline, tab_face.tab);
+			wattr_on(tabline, tab_face.tab, NULL);
 
 		wprintw(tabline, "%s", buf);
 		if (TAILQ_NEXT(tab, tabs) != NULL)
 			wprintw(tabline, " ");
 
 		if (current)
-			wattroff(tabline, tab_face.current);
+			wattr_off(tabline, tab_face.current, NULL);
 		else
-			wattroff(tabline, tab_face.tab);
+			wattr_off(tabline, tab_face.tab, NULL);
 	}
 
-	wattron(tabline, tab_face.background);
+	wattr_on(tabline, tab_face.background, NULL);
 	for (; x < (size_t)COLS; ++x)
 		waddch(tabline, ' ');
 	if (truncated)
 		mvwprintw(tabline, 0, COLS-1, ">");
-	wattroff(tabline, tab_face.background);
+	wattr_off(tabline, tab_face.background, NULL);
 }
 
 static void
@@ -987,7 +987,7 @@ redraw_modeline(struct tab *tab)
 	const char	*spin = "-\\|/";
 
 	werase(modeline);
-	wattron(modeline, modeline_face.background);
+	wattr_on(modeline, modeline_face.background, NULL);
 	wmove(modeline, 0, 0);
 
 	wprintw(modeline, "-%c%c %s ",
@@ -1020,7 +1020,7 @@ redraw_modeline(struct tab *tab)
 	for (; x < max_x; ++x)
 		waddstr(modeline, "-");
 
-	wattroff(modeline, modeline_face.background);
+	wattr_off(modeline, modeline_face.background, NULL);
 }
 
 static void
@@ -1033,7 +1033,7 @@ redraw_minibuffer(void)
 	/* unused, but set by getyx */
 	(void)off_y;
 
-	wattron(minibuf, minibuffer_face.background);
+	wattr_on(minibuf, minibuffer_face.background, NULL);
 	werase(minibuf);
 
 	if (in_minibuffer) {
@@ -1075,7 +1075,7 @@ redraw_minibuffer(void)
 	if (in_minibuffer)
 		wmove(minibuf, 0, off_x + utf8_swidth_between(start, c));
 
-	wattroff(minibuf, minibuffer_face.background);
+	wattr_off(minibuf, minibuffer_face.background, NULL);
 }
 
 static void
