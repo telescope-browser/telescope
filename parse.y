@@ -215,6 +215,9 @@ repeat:
 			if (escape)
 				continue;
 			break;
+		case '\r':
+			/* ignore \r here too */
+			continue;
 		case '\n':
 			if (quotes)
 				yyerror("unterminated quotes in column %d",
