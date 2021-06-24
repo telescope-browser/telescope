@@ -1,5 +1,7 @@
 2021-06-24  Omar Polo  <op@omarpolo.com>
 
+	* ui.c (load_default_keys): bind > to load-url
+
 	* defaults.c: enable olivetti-mode by default and set fill-mode to 80
 
 2021-06-23  Omar Polo  <op@omarpolo.com>
