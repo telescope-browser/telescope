@@ -286,45 +286,57 @@ config_setattr(const char *name, int prfx, int line, int trail)
 	return 1;
 }
 
+static inline int
+tl_init_pair(int colors, int pair, int f, int b)
+{
+	if (f >= colors || !enable_colors)
+		f = -1;
+	if (b >= colors || !enable_colors)
+		b = -1;
+	init_pair(pair, f, b);
+}
+
 void
 config_apply_style(void)
 {
-        size_t i, len;
+	size_t i, colors, len;
 	struct lineface_descr *d;
 	struct line_face *f;
+
+	colors = COLORS;
 
 	len = sizeof(linefaces_descr)/sizeof(linefaces_descr[0]);
 	for (i = 0; i < len; ++i) {
 		d = &linefaces_descr[i];
 		f = &line_faces[i];
 
-		init_pair(d->pp, d->prfx_fg, d->prfx_bg);
+		tl_init_pair(colors, d->pp, d->prfx_fg, d->prfx_bg);
 		f->prefix_prop = COLOR_PAIR(d->pp) | d->prfx_attr;
 
-		init_pair(d->p, d->fg, d->bg);
+		tl_init_pair(colors, d->p, d->fg, d->bg);
 		f->text_prop = COLOR_PAIR(d->p) | d->attr;
 
-		init_pair(d->tp, d->trail_fg, d->trail_bg);
+		tl_init_pair(colors, d->tp, d->trail_fg, d->trail_bg);
 		f->trail_prop = COLOR_PAIR(d->tp) | d->trail_attr;
 	}
 
 	/* tab line */
-	init_pair(PTL_BG, tab_face.bg_fg, tab_face.bg_bg);
+	tl_init_pair(colors, PTL_BG, tab_face.bg_fg, tab_face.bg_bg);
 	tab_face.background = COLOR_PAIR(PTL_BG) | tab_face.bg_attr;
 
-	init_pair(PTL_TAB, tab_face.t_fg, tab_face.t_bg);
+	tl_init_pair(colors, PTL_TAB, tab_face.t_fg, tab_face.t_bg);
 	tab_face.tab = COLOR_PAIR(PTL_TAB) | tab_face.t_attr;
 
-	init_pair(PTL_CURR, tab_face.c_fg, tab_face.c_bg);
+	tl_init_pair(colors, PTL_CURR, tab_face.c_fg, tab_face.c_bg);
 	tab_face.current = COLOR_PAIR(PTL_CURR) | tab_face.c_attr;
 
 	/* body */
-	init_pair(PBODY, body_face.fg, body_face.bg);
+	tl_init_pair(colors, PBODY, body_face.fg, body_face.bg);
 	body_face.body = COLOR_PAIR(PBODY);
 
-	init_pair(PBLEFT, body_face.lfg, body_face.lbg);
+	tl_init_pair(colors, PBLEFT, body_face.lfg, body_face.lbg);
 	body_face.left = COLOR_PAIR(PBLEFT);
 
-	init_pair(PBRIGHT, body_face.rfg, body_face.rbg);
+	tl_init_pair(colors, PBRIGHT, body_face.rfg, body_face.rbg);
 	body_face.right = COLOR_PAIR(PBRIGHT);
 }
