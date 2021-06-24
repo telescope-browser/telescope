@@ -286,7 +286,7 @@ config_setattr(const char *name, int prfx, int line, int trail)
 	return 1;
 }
 
-static inline int
+static inline void
 tl_init_pair(int colors, int pair, int f, int b)
 {
 	if (f >= colors || !enable_colors)
