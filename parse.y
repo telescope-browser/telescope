@@ -179,6 +179,9 @@ repeat:
 
 	/* check for special one-character constructions */
 	switch (c) {
+	case '\r':
+		/* silently eat up any \r */
+		goto repeat;
 	case '\n':
 		yylval.colno = 0;
 		yylval.lineno++;
