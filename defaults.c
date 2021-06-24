@@ -22,8 +22,8 @@
 #include <string.h>
 
 char *new_tab_url = NULL;
-int fill_column = INT_MAX;
-int olivetti_mode = 0;
+int fill_column = 80;
+int olivetti_mode = 1;
 int enable_colors = 1;
 
 static struct lineface_descr {

@@ -486,7 +486,7 @@ is not set, 0 otherwise.
 .Pq integer
 If greater than zero, lines of text will be formatted in a way that
 don't exceed the given number of columns.
-By default is -1.
+By default is 80.
 .It new-tab-url
 .Pq string
 URL for the new tab page.
@@ -497,7 +497,7 @@ By default is
 Enable
 .Ic olivetti-mode
 if non zero.
-By default is 0.
+By default is 1.
 .El
 .It Ic proxy Ar proto Ic via Ar url
 Use
@@ -602,8 +602,7 @@ and loaded on startup.
 .Sh EXAMPLES
 The following is my config file:
 .Bd -literal -offset indent
-set fill-column = 72
-set olivetti-mode = 1
+# ignore the NO_COLOR environment variable
 set enable-colors = 1
 
 style line.item {

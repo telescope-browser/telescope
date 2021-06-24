@@ -1,3 +1,7 @@
+2021-06-24  Omar Polo  <op@omarpolo.com>
+
+	* defaults.c: enable olivetti-mode by default and set fill-mode to 80
+
 2021-06-23  Omar Polo  <op@omarpolo.com>
 
 	* gemtext.c (search_title): fixed a bug where the *last* level 2 or 3 heading would be used as tab title instead of the first one.
