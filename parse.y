@@ -105,7 +105,7 @@ styleopts	: /* empty */
 		;
 
 styleopt	: TPRFX TSTRING		{ setprfx($2, $2); }
-		| TPRFX TSTRING TSTRING	{ setprfx($2, $2); }
+		| TPRFX TSTRING TSTRING	{ setprfx($2, $3); }
 		| TBG { color_type = TBG; } colorspec
 		| TFG { color_type = TFG; } colorspec
 		| TATTR attr
