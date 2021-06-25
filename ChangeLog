@@ -1,3 +1,8 @@
+2021-06-25  Omar Polo  <op@omarpolo.com>
+
+	* cmd.c (cmd_next_heading): added next-heading (C-c n)
+	(cmd_previous_heading): added previous-heading (C-c p)
+
 2021-06-24  Omar Polo  <op@omarpolo.com>
 
 	* ui.c (load_default_keys): bind > to load-url

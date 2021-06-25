@@ -168,6 +168,10 @@ kill-telescope
 clear-minibuf
 .It M-x
 execute-extended-command
+.It C-c p
+previous-heading
+.It C-c n
+next-heading
 .It >
 load-url
 .It C-x C-f
@@ -347,10 +351,14 @@ Move point at the beginning of the current (visual) line.
 Move point at the end of the current (visual) line.
 .It Ic next-button
 Move point to the next link.
+.It Ic next-heading
+Move point to the next heading.
 .It Ic next-line
 Move point to the next (visual) line, in the same column if possible.
 .It Ic previous-button
 Move point to the previous link.
+.It Ic previous-heading
+Move point to the previous heading.
 .It Ic previous-line
 Move point to the previous (visual) line.
 .El

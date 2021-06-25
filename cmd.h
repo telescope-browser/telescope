@@ -27,6 +27,8 @@ CMD(cmd_push_button);
 CMD(cmd_push_button_new_tab);
 CMD(cmd_previous_button);
 CMD(cmd_next_button);
+CMD(cmd_previous_heading);
+CMD(cmd_next_heading);
 CMD(cmd_previous_page);
 CMD(cmd_next_page);
 CMD(cmd_clear_minibuf);

@@ -276,6 +276,50 @@ cmd_next_button(struct buffer *buffer)
 	} while (buffer->current_line->parent->type != LINE_LINK);
 }
 
+static inline int
+is_heading(const struct line *l)
+{
+	return l->type == LINE_TITLE_1 ||
+		l->type == LINE_TITLE_2 ||
+		l->type == LINE_TITLE_3;
+}
+
+void
+cmd_previous_heading(struct buffer *buffer)
+{
+	struct excursion place;
+
+	save_excursion(&place, buffer);
+
+	do {
+		if (buffer->current_line == NULL ||
+		    buffer->current_line == TAILQ_FIRST(&buffer->head)) {
+			restore_excursion(&place, buffer);
+			message("No previous heading");
+			return;
+		}
+		cmd_previous_line(buffer);
+	} while (!is_heading(buffer->current_line->parent));
+}
+
+void
+cmd_next_heading(struct buffer *buffer)
+{
+	struct excursion place;
+
+	save_excursion(&place, buffer);
+
+	do {
+		if (buffer->current_line == NULL ||
+		    buffer->current_line == TAILQ_LAST(&buffer->head, vhead)) {
+			restore_excursion(&place, buffer);
+			message("No next heading");
+			return;
+		}
+		cmd_next_line(buffer);
+	} while (!is_heading(buffer->current_line->parent));
+}
+
 void
 cmd_previous_page(struct buffer *buffer)
 {
