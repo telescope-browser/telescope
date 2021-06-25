@@ -1395,6 +1395,14 @@ ui_init(int argc, char * const *argv)
 	argc -= optind;
 	argv += optind;
 
+	/* setup keys before reading the config */
+	TAILQ_INIT(&global_map.m);
+	global_map.unhandled_input = global_key_unbound;
+
+	TAILQ_INIT(&minibuffer_map.m);
+
+	load_default_keys();
+
 	config_init();
 	parseconfig(path, fonf);
 	if (configtest){
@@ -1406,11 +1414,6 @@ ui_init(int argc, char * const *argv)
 		url = argv[0];
 
 	setlocale(LC_ALL, "");
-
-	TAILQ_INIT(&global_map.m);
-	global_map.unhandled_input = global_key_unbound;
-
-	TAILQ_INIT(&minibuffer_map.m);
 
 	TAILQ_INIT(&eecmd_history.head);
 	TAILQ_INIT(&ir_history.head);
@@ -1425,7 +1428,6 @@ ui_init(int argc, char * const *argv)
 
 	base_map = &global_map;
 	current_map = &global_map;
-	load_default_keys();
 
 	initscr();
 

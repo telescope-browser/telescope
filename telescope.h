@@ -276,12 +276,15 @@ struct kmap {
 	TAILQ_HEAD(map, keymap)	m;
 	void			(*unhandled_input)(void);
 };
+extern struct kmap global_map, minibuffer_map;
+
+typedef void(interactivefn)(struct buffer *);
 
 struct keymap {
 	int			 meta;
 	int			 key;
 	struct kmap		 map;
-	void			(*fn)(struct buffer*);
+	interactivefn		 *fn;
 
 	TAILQ_ENTRY(keymap)	 keymaps;
 };

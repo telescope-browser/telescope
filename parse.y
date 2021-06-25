@@ -62,6 +62,7 @@ static void setcolor(const char *, const char *, const char *);
 static int attrname(char *);
 static void setattr(char *, char *, char *);
 static void add_proxy(char *, char *);
+static void bindkey(const char *, const char *, const char *);
 
 %}
 
@@ -120,10 +121,10 @@ attr		: TSTRING			{ setattr($1, $1, $1); free($1); }
 		| TSTRING TSTRING TSTRING	{ setattr($1, $2, $3); free($1); free($2); free($3); }
 		;
 
-bind		: TBIND TSTRING TSTRING TSTRING	{ printf("TODO: bind %s %s %s\n", $2, $3, $4); }
+bind		: TBIND TSTRING TSTRING TSTRING	{ bindkey($2, $3, $4); free($2); free($3); free($4); }
 		;
 
-unbind		: TUNBIND TSTRING TSTRING	{ printf("TODO: unbind %s %s\n", $2, $3); }
+unbind		: TUNBIND TSTRING TSTRING	{ yyerror("TODO: unbind %s %s", $2, $3); }
 		;
 
 proxy		: TPROXY TSTRING TVIA TSTRING { add_proxy($2, $4); free($4); }
@@ -482,6 +483,43 @@ add_proxy(char *proto, char *proxy)
 		err(1, "strdup");
 
 	TAILQ_INSERT_HEAD(&proxies, p, proxies);
+}
+
+static interactivefn *
+cmdname(const char *name)
+{
+	struct cmd *cmd;
+
+        for (cmd = cmds; cmd->cmd != NULL; ++cmd) {
+		if (!strcmp(cmd->cmd, name))
+			return cmd->fn;
+	}
+
+	return NULL;
+}
+
+static void
+bindkey(const char *map, const char *key, const char *cmd)
+{
+	struct kmap *kmap;
+	interactivefn *fn;
+
+	if (!strcmp(map, "global-map"))
+		kmap = &global_map;
+	else if (!strcmp(map, "minibuffer-map"))
+		kmap = &minibuffer_map;
+	else {
+		yyerror("unknown map: %s", map);
+		return;
+	}
+
+	if ((fn = cmdname(cmd)) == NULL) {
+		yyerror("unknown cmd: %s", fn);
+		return;
+	}
+
+	if (!kmap_define_key(kmap, key, fn))
+		yyerror("failed to bind %s %s %s", map, key, cmd);
 }
 
 void
