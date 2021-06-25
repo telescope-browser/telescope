@@ -23,8 +23,6 @@
  * ncurses allows you to scroll a window, but when a line goes out of
  * the visible area it's forgotten.  We keep a list of formatted lines
  * (``visual lines'') that we know fits in the window, and draw them.
- * This way is easy to scroll: just call wscrl and then render the
- * first/last line!
  *
  * This means that on every resize we have to clear our list of lines
  * and re-render everything.  A clever approach would be to do this
