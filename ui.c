@@ -31,7 +31,6 @@
  */
 
 #include "telescope.h"
-#include "cmd.gen.h"
 
 #include <assert.h>
 #include <curses.h>
@@ -396,7 +395,7 @@ eecmd_self_insert(void)
 void
 eecmd_select(void)
 {
-	struct cmds *cmd;
+	struct cmd *cmd;
 
 	for (cmd = cmds; cmd->cmd != NULL; ++cmd) {
 		if (!strcmp(cmd->cmd, ministate.buf)) {
@@ -1115,7 +1114,7 @@ static void
 emit_help_item(char *prfx, void *fn)
 {
 	struct line	*l;
-	struct cmds	*cmd;
+	struct cmd	*cmd;
 
 	for (cmd = cmds; cmd->cmd != NULL; ++cmd) {
 		if (fn == cmd->fn)

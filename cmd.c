@@ -18,7 +18,6 @@
 #include <stdlib.h>
 
 #include "telescope.h"
-#include "cmd.gen.h"
 
 void
 cmd_previous_line(struct buffer *buffer)

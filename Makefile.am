@@ -2,7 +2,7 @@ bin_PROGRAMS =		telescope
 
 telescope_SOURCES =	cmd.c		\
 			cmd.h		\
-			cmd.gen.h	\
+			cmd.gen.c	\
 			compat.h	\
 			compat/*.[ch]	\
 			defaults.c	\
@@ -30,9 +30,9 @@ telescope_SOURCES =	cmd.c		\
 telescope_SOURCES +=	phos/phos.h	\
 			phos/phos_uri.c
 
-BUILT_SOURCES =		cmd.gen.h compile_flags.txt
+BUILT_SOURCES =		cmd.gen.c compile_flags.txt
 
-CLEANFILES =		cmd.gen.h compile_flags.txt
+CLEANFILES =		cmd.gen.c compile_flags.txt
 
 LDADD =			$(LIBOBJS)
 
@@ -40,7 +40,7 @@ dist_doc_DATA =		README.md LICENSE
 
 dist_man1_MANS =	telescope.1
 
-cmd.gen.h: $(srcdir)/cmd.h $(srcdir)/gencmd.awk
+cmd.gen.c: $(srcdir)/cmd.h $(srcdir)/gencmd.awk
 	${AWK} -f $(srcdir)/gencmd.awk < $(srcdir)/cmd.h > $@
 
 compile_flags.txt:

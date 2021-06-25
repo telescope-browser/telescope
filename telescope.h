@@ -286,6 +286,12 @@ struct keymap {
 	TAILQ_ENTRY(keymap)	 keymaps;
 };
 
+struct cmd {
+	const char	*cmd;
+	void		(*fn)(struct buffer *);
+};
+extern struct cmd cmds[];
+
 /* defaults.c */
 void		 config_init(void);
 int		 config_setprfx(const char *, const char *, const char *);

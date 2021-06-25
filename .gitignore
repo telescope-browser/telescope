@@ -17,7 +17,7 @@ missing
 stamp-h1
 ylwrap
 *.o
-cmd.gen.h
+cmd.gen.c
 parse.c
 telescope
 compile_flags.txt

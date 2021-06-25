@@ -1,7 +1,9 @@
 BEGIN {
         FS = "[(,)]";
 
-        print "static struct cmds { const char *cmd; void(*fn)(struct buffer*); } cmds[] = {";
+	print "#include <telescope.h>"
+	print "#include <cmd.h>"
+	print "struct cmd cmds[] = {";
 }
 
 /^CMD/ {
