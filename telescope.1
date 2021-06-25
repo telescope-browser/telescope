@@ -478,6 +478,14 @@ used to extend comments over multiple lines.
 .Pp
 The following constructs are available:
 .Bl -tag -width Ds
+.It Ic proxy Ar proto Ic via Ar url
+Use
+.Ar url
+as proxy for all URLs with
+protocol
+.Ar proto .
+.Ar url
+must be a Gemini URI without path, query and fragment component.
 .It Ic set Ar opt No = Ar val
 Set the option
 .Ar opt
@@ -509,14 +517,6 @@ Enable
 if non zero.
 By default is 1.
 .El
-.It Ic proxy Ar proto Ic via Ar url
-Use
-.Ar url
-as proxy for all URLs with
-protocol
-.Ar proto .
-.Ar url
-must be a Gemini URI without path, query and fragment component.
 .It Ic style Ar name Ar option
 Change the styling of the element identified by
 .Ar name .
