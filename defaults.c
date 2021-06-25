@@ -167,6 +167,8 @@ config_init(void)
 		f->prfx_bg = f->bg = f->trail_bg = -1;
 		f->prfx_fg = f->fg = f->trail_fg = -1;
 	}
+
+	line_faces[LINE_LINK].fg = COLOR_BLUE;
 }
 
 int
