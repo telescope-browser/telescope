@@ -478,6 +478,24 @@ used to extend comments over multiple lines.
 .Pp
 The following constructs are available:
 .Bl -tag -width Ds
+.It Ic bind Ar map Ar key Ar cmd
+Bind
+.Ar key
+to the function
+.Ar cmd
+in the keymap
+.Ar map .
+Valid values for map are
+.Dq global-map
+.Pq i.e. when the user is viewing a page
+and
+.Dq minibuffer-map
+.Pq i.e. when the minibuffer has the focus.
+.Ar key
+follows the same syntax described in
+.Sx DEFAULT KEY BINDINGS
+and all the possible functions are listed in
+.Sx INTERACTIVE COMMANDS .
 .It Ic proxy Ar proto Ic via Ar url
 Use
 .Ar url
