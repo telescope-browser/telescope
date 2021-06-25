@@ -110,8 +110,6 @@ const char *about_help =
 	"\n"
 	"style line.link {\n"
 	"	prefix \"→ \" \"  \"\n"
-	"	fg blue\n"
-	"	attr normal underline\n"
 	"}\n"
 	"\n"
 	"style line.quote {\n"
