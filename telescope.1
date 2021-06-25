@@ -559,6 +559,12 @@ for the heading of a preformatted block.
 for the content of a preformatted block.
 .It line.pre.end
 for the closing line of a preformatted block.
+.It minibuffer
+for the minibuffer
+.Dq i.e. the last line of the window
+.It modeline
+for the modeline
+.Dq i.e. the info line right above the minibuffer
 .It tabline
 for the tabline.
 .It tabline.tab
@@ -613,7 +619,7 @@ Sets the foreground color.
 It behaves just like
 .Ic bg .
 .It Ic prefix Ar prfx Op Ar cont
-Sets the prefix for the given line to
+Sets the prefix for the current line type to
 .Ar prfx
 and
 .Ar cont
