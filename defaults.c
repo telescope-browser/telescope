@@ -118,11 +118,15 @@ struct body_face body_face = {
 };
 
 struct modeline_face modeline_face = {
-	.background = A_REVERSE,
+	.bg  = -1,
+	.fg  = -1,
+	.attr = A_REVERSE,
 };
 
 struct minibuffer_face minibuffer_face = {
-	.background = A_NORMAL,
+	.bg = -1,
+	.fg = -1,
+	.attr = A_NORMAL,
 };
 
 struct mapping {
@@ -273,6 +277,16 @@ config_setcolor(int bg, const char *name, int prfx, int line, int trail)
 			body_face.fg = line;
 			body_face.rfg = trail;
 		}
+	} else if (!strcmp(name, "minibuffer")) {
+		if (bg)
+			minibuffer_face.bg = prfx;
+		else
+			minibuffer_face.fg = prfx;
+	} else if (!strcmp(name, "modeline")) {
+		if (bg)
+			modeline_face.bg = prfx;
+		else
+			modeline_face.fg = prfx;
 	} else {
 		return 0;
 	}
@@ -308,6 +322,10 @@ config_setattr(const char *name, int prfx, int line, int trail)
 		f->prfx_attr = prfx;
 		f->attr = line;
 		f->trail_attr = trail;
+	} else if (!strcmp(name, "minibuffer")) {
+		minibuffer_face.attr = prfx;
+	} else if (!strcmp(name, "modeline")) {
+		modeline_face.attr = prfx;
 	} else {
 		return 0;
 	}
@@ -366,4 +384,13 @@ config_apply_style(void)
 
 	tl_init_pair(colors, PBRIGHT, body_face.rfg, body_face.rbg);
 	body_face.right = COLOR_PAIR(PBRIGHT);
+
+	/* modeline */
+	tl_init_pair(colors, PMODELINE, modeline_face.fg, modeline_face.bg);
+	modeline_face.background = COLOR_PAIR(PMODELINE) | modeline_face.attr;
+
+	/* minibuffer */
+	tl_init_pair(colors, PMINIBUF, minibuffer_face.fg, minibuffer_face.bg);
+	minibuffer_face.background = COLOR_PAIR(PMINIBUF) | minibuffer_face.attr;
+
 }

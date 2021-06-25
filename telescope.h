@@ -99,11 +99,13 @@ struct body_face {
 extern struct body_face body_face;
 
 struct modeline_face {
+	int bg, fg, attr;
 	int background;
 };
 extern struct modeline_face modeline_face;
 
 struct minibuffer_face {
+	int bg, fg, attr;
 	int background;
 };
 extern struct minibuffer_face minibuffer_face;
@@ -424,6 +426,10 @@ enum pairs {
 	PPEND,
 	PPEND_PRFX,
 	PPEND_TRAIL,
+
+	PMODELINE,
+
+	PMINIBUF,
 };
 
 struct thiskey {

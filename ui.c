@@ -1461,6 +1461,7 @@ ui_init(int argc, char * const *argv)
 	body_cols = COLS;
 
 	wbkgd(body, body_face.body);
+	wbkgd(minibuf, minibuffer_face.background);
 
 	update_x_offset();
 
