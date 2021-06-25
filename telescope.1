@@ -540,23 +540,31 @@ Change the styling of the element identified by
 .Ar name .
 Multiple options may be specified within curly braces.
 Valid style identifiers are:
-.Bl -tag -width 14m -compact -offset Ds
+.Bl -tag -width 16m -compact -offset Ds
+.It line
+for the area outside the lines in the body of the page.
 .It line.text
-for text lines
+for text lines.
 .It line.link
-for link lines
+for link lines.
 .It line.title1..3
-for headings
+for headingse
 .It line.item
-for item lines
+for item lines.
 .It line.quote
-for quotes
+for quotes.
 .It line.pre.start
-for the heading of a preformatted block
+for the heading of a preformatted block.
 .It line.pre
-for the content of a preformatted block
+for the content of a preformatted block.
 .It line.pre.end
-for the closing line of a preformatted block
+for the closing line of a preformatted block.
+.It tabline
+for the tabline.
+.It tabline.tab
+for the non-focused tabs.
+.It tabline.current
+for the focused tab.
 .El
 .Pp
 Valid options are:
@@ -588,6 +596,11 @@ half bright.
 .It Ic bold
 extra bright or bold.
 .El
+.Pp
+Only the styles under the
+.Dq line.
+prefix accept up to three attributes.
+The other will only use the first one given.
 .It Ic bg Ar prefix Oo Ar line Oo Ar trail Oc Oc
 Sets the background color.
 Follows the same behaviour as
@@ -630,7 +643,7 @@ and loaded on startup.
 .Sh EXAMPLES
 The following is my config file:
 .Bd -literal -offset indent
-# ignore the NO_COLOR environment variable
+# enable colors regardless of $NO_COLOR
 set enable-colors = 1
 
 style line.item {
@@ -639,8 +652,6 @@ style line.item {
 
 style line.link {
 	prefix "→ " "  "
-	fg blue
-	attr normal underline
 }
 
 style line.quote {
