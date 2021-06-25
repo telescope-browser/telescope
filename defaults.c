@@ -269,9 +269,9 @@ config_setcolor(int bg, const char *name, int prfx, int line, int trail)
 			body_face.bg  = line;
 			body_face.rbg = trail;
 		} else {
-			body_face.fg = prfx;
+			body_face.lfg = prfx;
 			body_face.fg = line;
-			body_face.fg = trail;
+			body_face.rfg = trail;
 		}
 	} else {
 		return 0;
