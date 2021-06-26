@@ -1,3 +1,7 @@
+2021-06-26  Omar Polo  <op@omarpolo.com>
+
+	* configure.ac: tagged 0.3 --- "Spaceman"
+
 2021-06-25  Omar Polo  <op@omarpolo.com>
 
 	* cmd.c (cmd_next_heading): added next-heading (C-c n)
