@@ -97,7 +97,7 @@ Please keep in mind that the main branch, from time to time, may be
 accidentally broken on some platforms.  Telescope is developed
 primarily on OpenBSD/amd64 and commits on the main branch don't get
 always tested in other OSes.  Before tagging a release however, a
-comprehensive testing on various platform is done to ensure everything
+comprehensive testing on various platforms is done to ensure everything
 is working as intended.
 
 
