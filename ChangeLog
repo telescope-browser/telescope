@@ -1,5 +1,7 @@
 2021-06-26  Omar Polo  <op@omarpolo.com>
 
+	* cmd.c (cmd_inc_fill_column): add inc-fill-column and dec-fill-column
+
 	* configure.ac: tagged 0.3 --- "Spaceman"
 
 2021-06-25  Omar Polo  <op@omarpolo.com>

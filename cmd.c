@@ -14,8 +14,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <string.h>
+#include <limits.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "telescope.h"
 
@@ -537,6 +538,30 @@ void
 cmd_toggle_help(struct buffer *buffer)
 {
 	ui_toggle_side_window();
+}
+
+void
+cmd_inc_fill_column(struct buffer *buffer)
+{
+	if (fill_column == INT_MAX)
+		return;
+
+	fill_column += 2;
+	message("fill-column: %d", fill_column);
+
+	ui_schedule_redraw();
+}
+
+void
+cmd_dec_fill_column(struct buffer *buffer)
+{
+	if (fill_column == INT_MAX || fill_column < 8)
+		return;
+
+	fill_column -= 2;
+	message("fill-column: %d", fill_column);
+
+	ui_schedule_redraw();
 }
 
 void

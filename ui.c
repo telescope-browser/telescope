@@ -177,6 +177,9 @@ load_default_keys(void)
 
 	global_set_key("M-x",		cmd_execute_extended_command);
 
+	global_set_key("C-c {",		cmd_dec_fill_column);
+	global_set_key("C-c }",		cmd_inc_fill_column);
+
 	global_set_key("C-c p",		cmd_previous_heading);
 	global_set_key("C-c n",		cmd_next_heading);
 
