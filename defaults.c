@@ -20,6 +20,7 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 char *new_tab_url = NULL;
 int fill_column = 80;
@@ -158,6 +159,154 @@ mapping_by_name(const char *name)
 	return NULL;
 }
 
+
+static inline void
+global_set_key(const char *key, void (*fn)(struct buffer*))
+{
+	if (!kmap_define_key(&global_map, key, fn))
+		_exit(1);
+}
+
+static inline void
+minibuffer_set_key(const char *key, void (*fn)(struct buffer*))
+{
+	if (!kmap_define_key(&minibuffer_map, key, fn))
+		_exit(1);
+}
+
+static void
+load_default_keys(void)
+{
+	/* === global map === */
+
+	/* emacs */
+	global_set_key("C-p",		cmd_previous_line);
+	global_set_key("C-n",		cmd_next_line);
+	global_set_key("C-f",		cmd_forward_char);
+	global_set_key("C-b",		cmd_backward_char);
+	global_set_key("M-{",		cmd_backward_paragraph);
+	global_set_key("M-}",		cmd_forward_paragraph);
+	global_set_key("C-a",		cmd_move_beginning_of_line);
+	global_set_key("C-e",		cmd_move_end_of_line);
+
+	global_set_key("M-v",		cmd_scroll_up);
+	global_set_key("C-v",		cmd_scroll_down);
+	global_set_key("M-space",	cmd_scroll_up);
+	global_set_key("space",		cmd_scroll_down);
+
+	global_set_key("M-<",		cmd_beginning_of_buffer);
+	global_set_key("M->",		cmd_end_of_buffer);
+
+	global_set_key("C-x C-c",	cmd_kill_telescope);
+
+	global_set_key("C-g",		cmd_clear_minibuf);
+
+	global_set_key("M-x",		cmd_execute_extended_command);
+
+	global_set_key("C-c {",		cmd_dec_fill_column);
+	global_set_key("C-c }",		cmd_inc_fill_column);
+
+	global_set_key("C-c p",		cmd_previous_heading);
+	global_set_key("C-c n",		cmd_next_heading);
+
+	global_set_key(">",		cmd_load_url);
+	global_set_key("C-x C-f",	cmd_load_url);
+	global_set_key("C-x M-f",	cmd_load_current_url);
+
+	global_set_key("C-x t 0",	cmd_tab_close);
+	global_set_key("C-x t 1",	cmd_tab_close_other);
+	global_set_key("C-x t 2",	cmd_tab_new);
+	global_set_key("C-x t o",	cmd_tab_next);
+	global_set_key("C-x t O",	cmd_tab_previous);
+	global_set_key("C-x t m",	cmd_tab_move);
+	global_set_key("C-x t M",	cmd_tab_move_to);
+
+	global_set_key("C-M-b",		cmd_previous_page);
+	global_set_key("C-M-f",		cmd_next_page);
+
+	global_set_key("<f7> a",	cmd_bookmark_page);
+	global_set_key("<f7> <f7>",	cmd_list_bookmarks);
+
+	/* vi/vi-like */
+	global_set_key("k",		cmd_previous_line);
+	global_set_key("j",		cmd_next_line);
+	global_set_key("l",		cmd_forward_char);
+	global_set_key("h",		cmd_backward_char);
+	global_set_key("{",		cmd_backward_paragraph);
+	global_set_key("}",		cmd_forward_paragraph);
+	global_set_key("^",		cmd_move_beginning_of_line);
+	global_set_key("$",		cmd_move_end_of_line);
+
+	global_set_key("K",		cmd_scroll_line_up);
+	global_set_key("J",		cmd_scroll_line_down);
+
+	global_set_key("g g",		cmd_beginning_of_buffer);
+	global_set_key("G",		cmd_end_of_buffer);
+
+	global_set_key("g D",		cmd_tab_close);
+	global_set_key("g N",		cmd_tab_new);
+	global_set_key("g t",		cmd_tab_next);
+	global_set_key("g T",		cmd_tab_previous);
+	global_set_key("g M-t",		cmd_tab_move);
+	global_set_key("g M-T",		cmd_tab_move_to);
+
+	global_set_key("H",		cmd_previous_page);
+	global_set_key("L",		cmd_next_page);
+
+	/* tmp */
+	global_set_key("q",		cmd_kill_telescope);
+
+	global_set_key("esc",		cmd_clear_minibuf);
+
+	global_set_key(":",		cmd_execute_extended_command);
+
+	/* cua */
+	global_set_key("<up>",		cmd_previous_line);
+	global_set_key("<down>",	cmd_next_line);
+	global_set_key("<right>",	cmd_forward_char);
+	global_set_key("<left>",	cmd_backward_char);
+	global_set_key("<prior>",	cmd_scroll_up);
+	global_set_key("<next>",	cmd_scroll_down);
+
+	global_set_key("M-<left>",	cmd_previous_page);
+	global_set_key("M-<right>",	cmd_next_page);
+
+	/* "ncurses standard" */
+	global_set_key("C-l",		cmd_redraw);
+
+	/* global */
+	global_set_key("<f1>",		cmd_toggle_help);
+	global_set_key("C-m",		cmd_push_button);
+	global_set_key("M-enter",	cmd_push_button_new_tab);
+	global_set_key("M-tab",		cmd_previous_button);
+	global_set_key("backtab",	cmd_previous_button);
+	global_set_key("tab",		cmd_next_button);
+
+	/* === minibuffer map === */
+	minibuffer_set_key("ret",		cmd_mini_complete_and_exit);
+	minibuffer_set_key("C-g",		cmd_mini_abort);
+	minibuffer_set_key("esc",		cmd_mini_abort);
+	minibuffer_set_key("C-d",		cmd_mini_delete_char);
+	minibuffer_set_key("del",		cmd_mini_delete_backward_char);
+	minibuffer_set_key("backspace",		cmd_mini_delete_backward_char);
+	minibuffer_set_key("C-h",		cmd_mini_delete_backward_char);
+
+	minibuffer_set_key("C-b",		cmd_backward_char);
+	minibuffer_set_key("C-f",		cmd_forward_char);
+	minibuffer_set_key("<left>",		cmd_backward_char);
+	minibuffer_set_key("<right>",		cmd_forward_char);
+	minibuffer_set_key("C-e",		cmd_move_end_of_line);
+	minibuffer_set_key("C-a",		cmd_move_beginning_of_line);
+	minibuffer_set_key("<end>",		cmd_move_end_of_line);
+	minibuffer_set_key("<home>",		cmd_move_beginning_of_line);
+	minibuffer_set_key("C-k",		cmd_mini_kill_line);
+
+	minibuffer_set_key("M-p",		cmd_mini_previous_history_element);
+	minibuffer_set_key("M-n",		cmd_mini_next_history_element);
+	minibuffer_set_key("<up>",		cmd_mini_previous_history_element);
+	minibuffer_set_key("<down>",		cmd_mini_next_history_element);
+}
+
 void
 config_init(void)
 {
@@ -173,6 +322,8 @@ config_init(void)
 	}
 
 	line_faces[LINE_LINK].fg = COLOR_BLUE;
+
+	load_default_keys();
 }
 
 int
