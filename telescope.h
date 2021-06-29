@@ -200,6 +200,7 @@ struct buffer {
 	int			 curs_y;
 	size_t			 line_off;
 	size_t			 line_max;
+	struct vline		*top_line;
 	struct vline		*current_line;
 	size_t			 cpoff;
 	TAILQ_HEAD(vhead, vline) head;

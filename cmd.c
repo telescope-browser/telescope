@@ -141,6 +141,7 @@ cmd_scroll_line_up(struct buffer *buffer)
 		return;
 
 	buffer->line_off--;
+	buffer->top_line = TAILQ_PREV(buffer->top_line, vhead, vlines);
 	buffer->current_line = TAILQ_PREV(buffer->current_line, vhead, vlines);
 	restore_cursor(buffer);
 }
@@ -157,7 +158,10 @@ cmd_scroll_line_down(struct buffer *buffer)
 		return;
 
 	buffer->current_line = vl;
+
+	buffer->top_line = TAILQ_NEXT(buffer->top_line, vlines);
 	buffer->line_off++;
+
 	restore_cursor(buffer);
 }
 
@@ -187,6 +191,7 @@ void
 cmd_beginning_of_buffer(struct buffer *buffer)
 {
 	buffer->current_line = TAILQ_FIRST(&buffer->head);
+	buffer->top_line = buffer->current_line;
 	buffer->line_off = 0;
 	buffer->curs_y = 0;
 	buffer->cpoff = 0;
@@ -200,6 +205,15 @@ cmd_end_of_buffer(struct buffer *buffer)
 
 	off = buffer->line_max - body_lines;
 	off = MAX(0, off);
+
+	while (buffer->line_off > (size_t)off) {
+		buffer->line_off--;
+		buffer->top_line = TAILQ_PREV(buffer->top_line, vhead, vlines);
+	}
+	while (buffer->line_off < (size_t)off) {
+		buffer->line_off++;
+		buffer->top_line = TAILQ_NEXT(buffer->top_line, vlines);
+	}
 
 	buffer->line_off = off;
 	buffer->curs_y = MIN((size_t)body_lines-1, buffer->line_max-1);

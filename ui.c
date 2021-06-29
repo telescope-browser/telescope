@@ -568,9 +568,9 @@ wrap_page(struct buffer *buffer, int width)
 	int			 pre_width;
 	const char		*prfx;
 
-	orig = buffer->current_line == NULL
-		? NULL
-		: buffer->current_line->parent;
+	orig = buffer->current_line == NULL ? NULL : buffer->current_line->parent;
+
+	buffer->top_line = NULL;
 	buffer->current_line = NULL;
 
 	buffer->force_redraw = 1;
@@ -618,6 +618,8 @@ wrap_page(struct buffer *buffer, int width)
 
         if (buffer->current_line == NULL)
 		buffer->current_line = TAILQ_FIRST(&buffer->head);
+
+	buffer->top_line = buffer->current_line;
 
 	return 1;
 }
@@ -792,8 +794,7 @@ redraw_window(WINDOW *win, int height, int width, struct buffer *buffer)
 		goto end;
 
 	l = 0;
-	vl = nth_line(buffer, buffer->line_off);
-	for (; vl != NULL; vl = TAILQ_NEXT(vl, vlines)) {
+	for (vl = buffer->top_line; vl != NULL; vl = TAILQ_NEXT(vl, vlines)) {
 		wmove(win, l, 0);
 		print_vline(x_offset, width, win, vl);
 		l++;
