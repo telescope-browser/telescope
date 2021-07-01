@@ -20,42 +20,50 @@
 
 #include "telescope.h"
 
+/* return 1 if moved, 0 otherwise */
+static inline int
+forward_line(struct buffer *buffer, int n)
+{
+	struct vline *vl;
+	int did;
+
+	if (buffer->current_line == NULL)
+		return 0;
+
+	did = 0;
+	while (n != 0) {
+		if (n > 0) {
+			vl = TAILQ_NEXT(buffer->current_line, vlines);
+			if (vl == NULL)
+				return did;
+			buffer->current_line = vl;
+			n--;
+		} else {
+			vl = TAILQ_PREV(buffer->current_line, vhead, vlines);
+			if (vl == NULL)
+				return did;
+			if (buffer->current_line == buffer->top_line)
+				buffer->top_line = vl;
+			buffer->current_line = vl;
+			n++;
+		}
+
+		did = 1;
+	}
+
+	return did;
+}
+
 void
 cmd_previous_line(struct buffer *buffer)
 {
-	struct vline	*vl;
-
-	if (buffer->current_line == NULL
-	    || (vl = TAILQ_PREV(buffer->current_line, vhead, vlines)) == NULL)
-		return;
-
-	if (--buffer->curs_y < 0) {
-		buffer->curs_y = 0;
-		cmd_scroll_line_up(buffer);
-		return;
-	}
-
-	buffer->current_line = vl;
-	restore_cursor(buffer);
+	forward_line(buffer, -1);
 }
 
 void
 cmd_next_line(struct buffer *buffer)
 {
-	struct vline	*vl;
-
-	if (buffer->current_line == NULL
-	    || (vl = TAILQ_NEXT(buffer->current_line, vlines)) == NULL)
-		return;
-
-	if (++buffer->curs_y > body_lines-1) {
-		buffer->curs_y = body_lines-1;
-		cmd_scroll_line_down(buffer);
-		return;
-	}
-
-	buffer->current_line = vl;
-	restore_cursor(buffer);
+	forward_line(buffer, +1);
 }
 
 void
@@ -63,7 +71,6 @@ cmd_backward_char(struct buffer *buffer)
 {
 	if (buffer->cpoff != 0)
 		buffer->cpoff--;
-	restore_cursor(buffer);
 }
 
 void
@@ -75,19 +82,16 @@ cmd_forward_char(struct buffer *buffer)
 		len = utf8_cplen(buffer->current_line->line);
 	if (++buffer->cpoff > len)
 		buffer->cpoff = len;
-	restore_cursor(buffer);
 }
 
 void
 cmd_backward_paragraph(struct buffer *buffer)
 {
 	do {
-		if (buffer->current_line == NULL ||
-		    buffer->current_line == TAILQ_FIRST(&buffer->head)) {
+		if (!forward_line(buffer, -1)) {
 			message("No previous paragraph");
 			return;
 		}
-		cmd_previous_line(buffer);
 	} while (buffer->current_line->line != NULL ||
 	    buffer->current_line->parent->type != LINE_TEXT);
 }
@@ -96,12 +100,10 @@ void
 cmd_forward_paragraph(struct buffer *buffer)
 {
 	do {
-		if (buffer->current_line == NULL ||
-		    buffer->current_line == TAILQ_LAST(&buffer->head, vhead)) {
+		if (!forward_line(buffer, +1)) {
 			message("No next paragraph");
 			return;
 		}
-		cmd_next_line(buffer);
 	} while (buffer->current_line->line != NULL ||
 	    buffer->current_line->parent->type != LINE_TEXT);
 }
@@ -110,7 +112,6 @@ void
 cmd_move_beginning_of_line(struct buffer *buffer)
 {
 	buffer->cpoff = 0;
-	restore_cursor(buffer);
 }
 
 void
@@ -122,7 +123,6 @@ cmd_move_end_of_line(struct buffer *buffer)
 	if (vl->line == NULL)
 		return;
 	buffer->cpoff = utf8_cplen(vl->line);
-	restore_cursor(buffer);
 }
 
 void
@@ -134,93 +134,49 @@ cmd_redraw(struct buffer *buffer)
 void
 cmd_scroll_line_up(struct buffer *buffer)
 {
-	if (buffer->current_line == NULL)
-		return;
-
-	if (buffer->line_off == 0)
+	if (!forward_line(buffer, -1))
 		return;
 
 	buffer->line_off--;
 	buffer->top_line = TAILQ_PREV(buffer->top_line, vhead, vlines);
-	buffer->current_line = TAILQ_PREV(buffer->current_line, vhead, vlines);
-	restore_cursor(buffer);
 }
 
 void
 cmd_scroll_line_down(struct buffer *buffer)
 {
-	struct vline	*vl;
-
-	if (buffer->current_line == NULL)
+	if (!forward_line(buffer, +1))
 		return;
-
-	if ((vl = TAILQ_NEXT(buffer->current_line, vlines)) == NULL)
-		return;
-
-	buffer->current_line = vl;
 
 	buffer->top_line = TAILQ_NEXT(buffer->top_line, vlines);
 	buffer->line_off++;
-
-	restore_cursor(buffer);
 }
 
 void
 cmd_scroll_up(struct buffer *buffer)
 {
-	size_t off;
-
-	off = body_lines-1;
-
-	for (; off > 0; --off)
-		cmd_scroll_line_up(buffer);
+	forward_line(buffer, -1*(body_lines-1));
 }
 
 void
 cmd_scroll_down(struct buffer *buffer)
 {
-	size_t off;
-
-	off = body_lines-1;
-
-	for (; off > 0; --off)
-		cmd_scroll_line_down(buffer);
+	forward_line(buffer, body_lines-1);
 }
 
 void
 cmd_beginning_of_buffer(struct buffer *buffer)
 {
 	buffer->current_line = TAILQ_FIRST(&buffer->head);
+	buffer->cpoff = 0;
 	buffer->top_line = buffer->current_line;
 	buffer->line_off = 0;
-	buffer->curs_y = 0;
-	buffer->cpoff = 0;
-	restore_cursor(buffer);
 }
 
 void
 cmd_end_of_buffer(struct buffer *buffer)
 {
-	ssize_t off;
-
-	off = buffer->line_max - body_lines;
-	off = MAX(0, off);
-
-	while (buffer->line_off > (size_t)off) {
-		buffer->line_off--;
-		buffer->top_line = TAILQ_PREV(buffer->top_line, vhead, vlines);
-	}
-	while (buffer->line_off < (size_t)off) {
-		buffer->line_off++;
-		buffer->top_line = TAILQ_NEXT(buffer->top_line, vlines);
-	}
-
-	buffer->line_off = off;
-	buffer->curs_y = MIN((size_t)body_lines-1, buffer->line_max-1);
-
 	buffer->current_line = TAILQ_LAST(&buffer->head, vhead);
 	buffer->cpoff = body_cols;
-	restore_cursor(buffer);
 }
 
 void
@@ -262,13 +218,11 @@ cmd_previous_button(struct buffer *buffer)
 	save_excursion(&place, buffer);
 
 	do {
-		if (buffer->current_line == NULL ||
-		    buffer->current_line == TAILQ_FIRST(&buffer->head)) {
+		if (!forward_line(buffer, -1)) {
 			restore_excursion(&place, buffer);
 			message("No previous link");
 			return;
 		}
-		cmd_previous_line(buffer);
 	} while (buffer->current_line->parent->type != LINE_LINK);
 }
 
@@ -280,13 +234,11 @@ cmd_next_button(struct buffer *buffer)
 	save_excursion(&place, buffer);
 
 	do {
-		if (buffer->current_line == NULL ||
-		    buffer->current_line == TAILQ_LAST(&buffer->head, vhead)) {
+		if (!forward_line(buffer, +1)){
 			restore_excursion(&place, buffer);
 			message("No next link");
 			return;
 		}
-		cmd_next_line(buffer);
 	} while (buffer->current_line->parent->type != LINE_LINK);
 }
 
@@ -306,13 +258,11 @@ cmd_previous_heading(struct buffer *buffer)
 	save_excursion(&place, buffer);
 
 	do {
-		if (buffer->current_line == NULL ||
-		    buffer->current_line == TAILQ_FIRST(&buffer->head)) {
+		if (!forward_line(buffer, -1)) {
 			restore_excursion(&place, buffer);
 			message("No previous heading");
 			return;
 		}
-		cmd_previous_line(buffer);
 	} while (!is_heading(buffer->current_line->parent));
 }
 
@@ -324,13 +274,11 @@ cmd_next_heading(struct buffer *buffer)
 	save_excursion(&place, buffer);
 
 	do {
-		if (buffer->current_line == NULL ||
-		    buffer->current_line == TAILQ_LAST(&buffer->head, vhead)) {
+		if (!forward_line(buffer, +1)) {
 			restore_excursion(&place, buffer);
 			message("No next heading");
 			return;
 		}
-		cmd_next_line(buffer);
 	} while (!is_heading(buffer->current_line->parent));
 }
 
