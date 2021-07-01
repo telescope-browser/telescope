@@ -53,6 +53,8 @@ empty_vlist(struct buffer *buffer)
 {
 	struct vline *vl, *t;
 
+	buffer->top_line = NULL;
+	buffer->line_off = 0;
 	buffer->current_line = NULL;
 	buffer->line_max = 0;
 
