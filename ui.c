@@ -563,11 +563,12 @@ static int
 wrap_page(struct buffer *buffer, int width)
 {
 	struct line		*l;
-	const struct line	*orig;
+	const struct line	*top_orig, *orig;
 	struct vline		*vl;
 	int			 pre_width;
 	const char		*prfx;
 
+	top_orig = buffer->top_line == NULL ? NULL : buffer->top_line->parent;
 	orig = buffer->current_line == NULL ? NULL : buffer->current_line->parent;
 
 	buffer->top_line = NULL;
@@ -602,8 +603,20 @@ wrap_page(struct buffer *buffer, int width)
 			break;
 		}
 
-		if (orig == l && buffer->current_line == NULL) {
+		if (top_orig == l && buffer->top_line == NULL) {
 			buffer->line_off = buffer->line_max-1;
+			buffer->top_line = TAILQ_LAST(&buffer->head, vhead);
+
+			while (1) {
+				vl = TAILQ_PREV(buffer->top_line, vhead, vlines);
+				if (vl == NULL || vl->parent != orig)
+					break;
+				buffer->top_line = vl;
+				buffer->line_off--;
+			}
+		}
+
+		if (orig == l && buffer->current_line == NULL) {
 			buffer->current_line = TAILQ_LAST(&buffer->head, vhead);
 
 			while (1) {
@@ -611,7 +624,6 @@ wrap_page(struct buffer *buffer, int width)
 				if (vl == NULL || vl->parent != orig)
 					break;
 				buffer->current_line = vl;
-				buffer->line_off--;
 			}
 		}
 	}
@@ -619,7 +631,8 @@ wrap_page(struct buffer *buffer, int width)
         if (buffer->current_line == NULL)
 		buffer->current_line = TAILQ_FIRST(&buffer->head);
 
-	buffer->top_line = buffer->current_line;
+	if (buffer->top_line == NULL)
+		buffer->top_line = buffer->current_line;
 
 	return 1;
 }
@@ -772,8 +785,8 @@ redraw_tabline(void)
 static void
 redraw_window(WINDOW *win, int height, int width, struct buffer *buffer)
 {
-	struct vline	*vl;
-	int		 l;
+        struct vline	*vl;
+	int		 l, onscreen;
 
 	/*
 	 * Don't bother redraw the body if nothing changed.  Cursor
@@ -784,24 +797,44 @@ redraw_window(WINDOW *win, int height, int width, struct buffer *buffer)
 	    buffer->last_line_off == buffer->line_off)
 		goto end;
 
+again:
 	werase(win);
-
-	buffer->line_off = MIN(buffer->line_max-1, buffer->line_off);
-	buffer->force_redraw = 0;
-	buffer->last_line_off = buffer->line_off;
+	buffer->curs_y = 0;
 
 	if (TAILQ_EMPTY(&buffer->head))
 		goto end;
 
 	l = 0;
+	onscreen = 0;
 	for (vl = buffer->top_line; vl != NULL; vl = TAILQ_NEXT(vl, vlines)) {
 		wmove(win, l, 0);
 		print_vline(x_offset, width, win, vl);
+
+		if (vl == buffer->current_line)
+			onscreen = 1;
+
+		if (!onscreen)
+			buffer->curs_y++;
+
 		l++;
 		if (l == height)
 			break;
 	}
 
+	if (!onscreen) {
+		for (; vl != NULL; vl = TAILQ_NEXT(vl, vlines)) {
+			if (vl == buffer->current_line)
+				break;
+			buffer->line_off++;
+			buffer->top_line = TAILQ_NEXT(buffer->top_line, vlines);
+		}
+
+		goto again;
+	}
+
+	buffer->last_line_off = buffer->line_off;
+	restore_cursor(buffer);
+	buffer->force_redraw = 0;
 end:
 	wmove(win, buffer->curs_y, buffer->curs_x);
 }
