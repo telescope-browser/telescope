@@ -467,6 +467,7 @@ handle_dispatch_imsg(int fd, short ev, void *d)
 static void
 load_page_from_str(struct tab *tab, const char *page)
 {
+	erase_buffer(&tab->buffer);
 	gemtext_initparser(&tab->buffer.page);
 	if (!tab->buffer.page.parse(&tab->buffer.page, page, strlen(page)))
 		die();
