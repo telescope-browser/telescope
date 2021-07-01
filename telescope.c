@@ -596,8 +596,7 @@ load_url(struct tab *tab, const char *url)
 
 	hist_push(&tab->hist, tab->hist_cur);
 	do_load_url(tab, url);
-	empty_vlist(&tab->buffer);
-	empty_linelist(&tab->buffer);
+	erase_buffer(&tab->buffer);
 }
 
 int

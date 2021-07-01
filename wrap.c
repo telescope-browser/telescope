@@ -36,6 +36,13 @@
  */
 
 void
+erase_buffer(struct buffer *buffer)
+{
+	empty_vlist(buffer);
+	empty_linelist(buffer);
+}
+
+void
 empty_linelist(struct buffer *buffer)
 {
 	struct line *l, *lt;

@@ -515,6 +515,7 @@ int		 unicode_isgraph(uint32_t);
 void		 dispatch_imsg(struct imsgbuf*, imsg_handlerfn**, size_t);
 
 /* wrap.c */
+void		 erase_buffer(struct buffer *);
 void		 empty_linelist(struct buffer*);
 void		 empty_vlist(struct buffer*);
 int		 wrap_text(struct buffer*, const char*, struct line*, size_t);
