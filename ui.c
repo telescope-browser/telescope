@@ -978,8 +978,6 @@ redraw_tab(struct tab *tab)
 		wnoutrefresh(help);
 	}
 
-	restore_cursor(&tab->buffer);
-
 	redraw_tabline();
 	redraw_body(tab);
 	redraw_modeline(tab);
@@ -1391,10 +1389,9 @@ void
 ui_on_tab_refresh(struct tab *tab)
 {
 	wrap_page(&tab->buffer, body_cols);
-	if (tab->flags & TAB_CURRENT) {
-		restore_cursor(&tab->buffer);
+	if (tab->flags & TAB_CURRENT)
 		redraw_tab(tab);
-	} else
+	else
 		tab->flags |= TAB_URGENT;
 }
 
