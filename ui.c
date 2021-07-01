@@ -45,6 +45,7 @@
 
 static struct event	stdioev, winchev;
 
+static void		 restore_curs_x(struct buffer *);
 static void		 global_key_unbound(void);
 static void		 minibuffer_hist_save_entry(void);
 static void		 minibuffer_self_insert(void);
@@ -152,8 +153,8 @@ restore_excursion(struct excursion *place, struct buffer *buffer)
 	buffer->cpoff = place->cpoff;
 }
 
-void
-restore_cursor(struct buffer *buffer)
+static void
+restore_curs_x(struct buffer *buffer)
 {
 	struct vline	*vl;
 	const char	*prfx;
@@ -788,16 +789,15 @@ redraw_window(WINDOW *win, int height, int width, struct buffer *buffer)
         struct vline	*vl;
 	int		 l, onscreen;
 
-	restore_cursor(buffer);
+	restore_curs_x(buffer);
 
 	/*
-	 * Don't bother redraw the body if nothing changed.  Cursor
-	 * movements count as "nothing changed" if it hasn't produced
-	 * a scroll.  Ensure that wmove is called though!
+	 * TODO: ignoring buffer->force_update and always
+	 * re-rendering.  In theory we can recompute the y position
+	 * without a re-render, and optimize here.  It's not the only
+	 * optimisation possible here, wscrl wolud also be an
+	 * interesting one.
 	 */
-	if (!buffer->force_redraw &&
-	    buffer->last_line_off == buffer->line_off)
-		goto end;
 
 again:
 	werase(win);

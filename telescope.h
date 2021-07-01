@@ -465,7 +465,6 @@ extern struct ministate ministate;
 
 void		 save_excursion(struct excursion *, struct buffer *);
 void		 restore_excursion(struct excursion *, struct buffer *);
-void		 restore_cursor(struct buffer *);
 void		 minibuffer_taint_hist(void);
 void		 eecmd_self_insert(void);
 void		 eecmd_select(void);
