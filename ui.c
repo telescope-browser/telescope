@@ -788,6 +788,8 @@ redraw_window(WINDOW *win, int height, int width, struct buffer *buffer)
         struct vline	*vl;
 	int		 l, onscreen;
 
+	restore_cursor(buffer);
+
 	/*
 	 * Don't bother redraw the body if nothing changed.  Cursor
 	 * movements count as "nothing changed" if it hasn't produced
@@ -833,7 +835,6 @@ again:
 	}
 
 	buffer->last_line_off = buffer->line_off;
-	restore_cursor(buffer);
 	buffer->force_redraw = 0;
 end:
 	wmove(win, buffer->curs_y, buffer->curs_x);
