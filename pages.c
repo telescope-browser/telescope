@@ -123,13 +123,14 @@ const char *about_new =
 	"=> " CIRCUMLUNAR_SPACE "/docs		Gemini documentation\n"
 	"=> " CIRCUMLUNAR_SPACE "/software	Gemini software\n"
 	"\n"
-	"=> gemini://geminispace.info/		Gemini Search engine\n"
+	"=> gemini://geminispace.info/		Gemini Search Engine (geminispace.info)\n"
 	"\n"
 	"Version: " VERSION "\n"
 	"Bug reports to: " PACKAGE_BUGREPORT "\n"
 	"\n"
 	"=> " PACKAGE_URL " Telescope project page\n"
-	"=> about:help Help\n"
+	"=> about:help	Help\n"
+	"=> about:about	Internal Pages\n"
 	;
 
 /* XXX: keep in sync with telescope.c:/^normalize_code/ */
