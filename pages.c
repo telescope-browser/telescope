@@ -30,7 +30,7 @@
 const char *about_about =
 	"# About pages\n"
 	"\n"
-	"Telescope has a number of \"special\" pages under `about:':\n"
+	"Telescope has a number of \"special\" built-in pages:\n"
 	"\n"
 	"=> about:about		about:about     : this page\n"
 	"=> about:blank		about:blank     : a blank page\n"
@@ -38,7 +38,6 @@ const char *about_about =
 	"=> about:help		about:help      : help page\n"
 	"=> about:new		about:new       : the default new tab page\n"
 	"\n"
-	"These pages are built-in and don't require an internet connection.\n"
 	;
 
 const char *about_blank = "\n";
