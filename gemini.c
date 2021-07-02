@@ -14,14 +14,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/*
- * TODO:
- *  - move the various
- *	imsg_compose(...);
- *	imsg_flush(...);
- *    to something more asynchronous
- */
-
 #include "telescope.h"
 
 #include <sys/types.h>
