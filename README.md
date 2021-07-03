@@ -47,7 +47,7 @@ but I'd like to finish it into a complete Gemini browser.
  - Secure: write secure code with privilege separation to mitigate the
    security risks of possible bugs.
  - Fast: it features a modern, fast, event-based asynchronous I/O
-   model, it shouldn't never lags behind the user input.
+   model.
  - Cooperation: re-use existing conventions to allow inter-operations
    and easy migrations from/to other clients.
 
@@ -70,7 +70,7 @@ Most of the time, the `trusted` level is enough, but where is
 appropriate users should be able to verify out-of-band the
 certificate.
 
-At the moment there is no support for oob-verification though.
+At the moment there is no UI for oob-verification though.
 
 
 ## Building
