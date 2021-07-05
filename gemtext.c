@@ -79,6 +79,21 @@ emit_line(struct parser *p, enum line_type type, char *line, char *alt)
 	l->line = line;
 	l->alt = alt;
 
+	switch (l->type) {
+	case LINE_PRE_START:
+	case LINE_PRE_END:
+		if (hide_pre_context)
+			l->flags = L_HIDDEN;
+		break;
+	case LINE_PRE_CONTENT:
+		if (hide_pre_blocks)
+			l->flags = L_HIDDEN;
+		break;
+	default:
+		l->flags = 0;
+		break;
+	}
+
 	if (TAILQ_EMPTY(&p->head))
 		TAILQ_INSERT_HEAD(&p->head, l, lines);
 	else

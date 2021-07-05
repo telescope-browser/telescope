@@ -63,6 +63,8 @@ extern char	*new_tab_url;
 extern int	 fill_column;
 extern int	 olivetti_mode;
 extern int	 enable_colors;
+extern int	 hide_pre_context;
+extern int	 hide_pre_blocks;
 
 struct lineprefix {
 	const char	*prfx1;

@@ -533,6 +533,14 @@ is not set, 0 otherwise.
 If greater than zero, lines of text will be formatted in a way that
 don't exceed the given number of columns.
 By default is 80.
+.It hide-pre-blocks
+If nonzero, hide by default the body of the preformatted blocks.
+.Ic push-button
+can be used to toggle the visibility per-block.
+.It hide-pre-context
+If nonzero, hide the start and end line of the preformatted blocks.
+If both hide-pre-context and hide-pre-blocks are nonzero, preformatted
+blocks are irremediably hidden.
 .It new-tab-url
 .Pq string
 URL for the new tab page.
