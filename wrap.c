@@ -73,7 +73,7 @@ empty_vlist(struct buffer *buffer)
 }
 
 static int
-push_line(struct buffer *buffer, const struct line *l, const char *buf, size_t len, int cont)
+push_line(struct buffer *buffer, const struct line *l, const char *buf, size_t len, int flags)
 {
 	struct vline *vl;
 
@@ -90,7 +90,7 @@ push_line(struct buffer *buffer, const struct line *l, const char *buf, size_t l
 	vl->parent = l;
 	if (len != 0)
 		memcpy(vl->line, buf, len);
-	vl->flags = cont;
+	vl->flags = flags;
 
 	if (TAILQ_EMPTY(&buffer->head))
 		TAILQ_INSERT_HEAD(&buffer->head, vl, vlines);
@@ -110,7 +110,7 @@ wrap_text(struct buffer *buffer, const char *prfx, struct line *l, size_t width)
 	const char	*start, *end, *line, *lastsep, *lastchar;
 	uint32_t	 cp = 0, state = 0;
 	size_t		 cur, prfxwidth, w;
-	int		 cont;
+	int		 flags;
 
 	if ((line = l->line) == NULL)
 		return push_line(buffer, l, NULL, 0, 0);
@@ -120,7 +120,7 @@ wrap_text(struct buffer *buffer, const char *prfx, struct line *l, size_t width)
 	start = line;
 	lastsep = NULL;
 	lastchar = line;
-	cont = 0;
+	flags = 0;
 	for (; *line; line++) {
 		if (utf8_decode(&state, &cp, *line))
 			continue;
@@ -129,9 +129,9 @@ wrap_text(struct buffer *buffer, const char *prfx, struct line *l, size_t width)
 			end = lastsep == NULL
 				? utf8_next_cp((char*)lastchar)
 				: utf8_next_cp((char*)lastsep);
-			if (!push_line(buffer, l, start, end - start, cont))
+			if (!push_line(buffer, l, start, end - start, flags))
 				return 0;
-			cont = 1;
+			flags = 1;
 			start = end;
 			cur = prfxwidth + utf8_swidth_between(start, lastchar);
 		} else {
@@ -143,7 +143,7 @@ wrap_text(struct buffer *buffer, const char *prfx, struct line *l, size_t width)
 		cur += w;
 	}
 
-	return push_line(buffer, l, start, line - start, cont);
+	return push_line(buffer, l, start, line - start, flags);
 }
 
 int
