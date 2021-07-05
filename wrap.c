@@ -134,9 +134,8 @@ wrap_text(struct buffer *buffer, const char *prfx, struct line *l, size_t width)
 			flags = 1;
 			start = end;
 			cur = prfxwidth + utf8_swidth_between(start, lastchar);
-		} else {
-			if (strchr(separators, *line) != NULL)
-				lastsep = line;
+		} else if (strchr(separators, *line) != NULL) {
+			lastsep = line;
 		}
 
 		lastchar = utf8_prev_cp(line, l->line);
