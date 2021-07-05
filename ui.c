@@ -783,6 +783,37 @@ redraw_tabline(void)
 	wattr_off(tabline, tab_face.background, NULL);
 }
 
+/*
+ * Compute the first visible line around vl.  Try to search forward
+ * until the end of the buffer; if a visible line is not found, search
+ * backward.  Return NULL if no viable line was found.
+ */
+static inline struct vline *
+adjust_line(struct vline *vl, struct buffer *buffer)
+{
+	struct vline *t;
+
+	if (!(vl->parent->flags & L_HIDDEN))
+		return vl;
+
+	/* search forward */
+	for (t = vl;
+	     t != NULL && t->parent->flags & L_HIDDEN;
+	     t = TAILQ_NEXT(t, vlines))
+		;		/* nop */
+
+	if (t != NULL)
+		return t;
+
+	/* search backward */
+	for (t = vl;
+	     t != NULL && t->parent->flags & L_HIDDEN;
+	     t = TAILQ_PREV(t, vhead, vlines))
+		;		/* nop */
+
+	return t;
+}
+
 static void
 redraw_window(WINDOW *win, int height, int width, struct buffer *buffer)
 {
@@ -805,6 +836,12 @@ again:
 
 	if (TAILQ_EMPTY(&buffer->head))
 		goto end;
+
+	buffer->top_line = adjust_line(buffer->top_line, buffer);
+	if (buffer->top_line == NULL)
+		goto end;
+
+	buffer->current_line = adjust_line(buffer->current_line, buffer);
 
 	l = 0;
 	onscreen = 0;
