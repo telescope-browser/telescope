@@ -1,3 +1,7 @@
+2021-07-05  Omar Polo  <op@omarpolo.com>
+
+	* cmd.c (cmd_push_button): push-button: toggle prefermatted blocks if invoked with the point on the header
+
 2021-06-26  Omar Polo  <op@omarpolo.com>
 
 	* cmd.c (cmd_inc_fill_column): add inc-fill-column and dec-fill-column

@@ -29,19 +29,24 @@ forward_line(struct buffer *buffer, int n)
 
 	if (buffer->current_line == NULL)
 		return 0;
+	vl = buffer->current_line;
 
 	did = 0;
 	while (n != 0) {
 		if (n > 0) {
-			vl = TAILQ_NEXT(buffer->current_line, vlines);
+			vl = TAILQ_NEXT(vl, vlines);
 			if (vl == NULL)
 				return did;
+			if (vl->parent->flags & L_HIDDEN)
+				continue;
 			buffer->current_line = vl;
 			n--;
 		} else {
-			vl = TAILQ_PREV(buffer->current_line, vhead, vlines);
+			vl = TAILQ_PREV(vl, vhead, vlines);
 			if (vl == NULL)
 				return did;
+			if (vl->parent->flags & L_HIDDEN)
+				continue;
 			if (buffer->current_line == buffer->top_line)
 				buffer->top_line = vl;
 			buffer->current_line = vl;
@@ -190,12 +195,24 @@ void
 cmd_push_button(struct buffer *buffer)
 {
 	struct vline	*vl;
+	struct line	*l;
 
 	vl = buffer->current_line;
-	if (vl->parent->type != LINE_LINK)
-		return;
-
-	load_url_in_tab(current_tab(), vl->parent->alt);
+	switch (vl->parent->type) {
+	case LINE_LINK:
+		load_url_in_tab(current_tab(), vl->parent->alt);
+		break;
+	case LINE_PRE_START:
+		l = TAILQ_NEXT(vl->parent, lines);
+		for (; l != NULL; l = TAILQ_NEXT(l, lines)) {
+			if (l->type == LINE_PRE_END)
+				break;
+			l->flags ^= L_HIDDEN;
+		}
+		break;
+	default:
+		break;
+	}
 }
 
 void

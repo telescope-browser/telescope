@@ -123,6 +123,12 @@ enum line_type {
 	LINE_PRE_END,
 };
 
+/* for lines: mark as hidden */
+#define L_HIDDEN	1
+
+/* for vlines: mark as continuation */
+#define L_CONTINUATION	2
+
 struct line {
 	enum line_type		 type;
 	char			*line;

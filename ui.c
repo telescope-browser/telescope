@@ -809,6 +809,9 @@ again:
 	l = 0;
 	onscreen = 0;
 	for (vl = buffer->top_line; vl != NULL; vl = TAILQ_NEXT(vl, vlines)) {
+		if (vl->parent->flags & L_HIDDEN)
+			continue;
+
 		wmove(win, l, 0);
 		print_vline(x_offset, width, win, vl);
 
@@ -827,6 +830,8 @@ again:
 		for (; vl != NULL; vl = TAILQ_NEXT(vl, vlines)) {
 			if (vl == buffer->current_line)
 				break;
+			if (vl->parent->flags & L_HIDDEN)
+				continue;
 			buffer->line_off++;
 			buffer->top_line = TAILQ_NEXT(buffer->top_line, vlines);
 		}
