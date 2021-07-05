@@ -154,13 +154,13 @@ cmd_scroll_line_down(struct buffer *buffer)
 void
 cmd_scroll_up(struct buffer *buffer)
 {
-	forward_line(buffer, -1*(body_lines-1));
+	forward_line(buffer, -1*body_lines);
 }
 
 void
 cmd_scroll_down(struct buffer *buffer)
 {
-	forward_line(buffer, body_lines-1);
+	forward_line(buffer, body_lines);
 }
 
 void
