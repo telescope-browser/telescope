@@ -75,11 +75,11 @@ parser_foreach_line(struct parser *p, const char *buf, size_t size,
 	b = p->buf;
 	len = p->len;
 
-	if (!p->in_body && len < 3)
+	if (!(p->flags & PARSER_IN_BODY) && len < 3)
 		return 1;
 
-	if (!p->in_body) {
-		p->in_body = 1;
+	if (!(p->flags & PARSER_IN_BODY)) {
+                p->flags |= PARSER_IN_BODY;
 
 		/*
 		 * drop the BOM: only UTF-8 is supported, and there

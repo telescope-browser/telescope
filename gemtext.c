@@ -362,11 +362,11 @@ gemtext_foreach_line(struct parser *p, const char *line, size_t linelen)
 {
 	enum line_type t;
 
-	t = detect_line_type(line, linelen, p->flags);
+	t = detect_line_type(line, linelen, p->flags & PARSER_IN_PRE);
 	if (t == LINE_PRE_START)
-		p->flags = 1;
+		p->flags ^= PARSER_IN_PRE;
 	if (t == LINE_PRE_END)
-		p->flags = 0;
+		p->flags ^= PARSER_IN_PRE;
 	return parsers[t](p, t, line, linelen);
 }
 
@@ -377,10 +377,11 @@ gemtext_free(struct parser *p)
 
 	/* flush the buffer */
 	if (p->len != 0) {
-		t = detect_line_type(p->buf, p->len, p->flags);
+		t = detect_line_type(p->buf, p->len, p->flags & PARSER_IN_PRE);
 		if (!parsers[t](p, t, p->buf, p->len))
 			return 0;
-		if (p->flags && !emit_line(p, LINE_PRE_END, NULL, NULL))
+		if ((p->flags & PARSER_IN_PRE) &&
+		    !emit_line(p, LINE_PRE_END, NULL, NULL))
 			return 0;
 	}
 

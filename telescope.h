@@ -158,9 +158,11 @@ struct parser {
 	const char	*name;
 	char		 title[32+1];
 	char		*buf;
-	int		 in_body; /* used to deal with BOM */
 	size_t		 len;
 	size_t		 cap;
+
+#define PARSER_IN_BODY	1
+#define PARSER_IN_PRE	2
 	int		 flags;
 	parsechunkfn	 parse;
 	parserfreefn	 free;
