@@ -75,6 +75,23 @@ parser_foreach_line(struct parser *p, const char *buf, size_t size,
 	b = p->buf;
 	len = p->len;
 
+	if (!p->in_body && len < 3)
+		return 1;
+
+	if (!p->in_body) {
+		p->in_body = 1;
+
+		/*
+		 * drop the BOM: only UTF-8 is supported, and there
+		 * it's useless; some editors may still add one
+		 * though.
+		 */
+		if (memmem(b, len, "\xEF\xBB\xBF", 3) == b) {
+			b += 3;
+			len -= 3;
+		}
+	}
+
 	/* drop every "funny" ASCII character */
 	for (i = 0; i < len; ) {
 		ch = b[i];
