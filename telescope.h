@@ -174,6 +174,7 @@ struct parser {
 enum trust_state {
 	TS_UNKNOWN,
 	TS_UNTRUSTED,
+	TS_TEMP_TRUSTED,
 	TS_TRUSTED,
 	TS_VERIFIED,
 };
@@ -383,6 +384,7 @@ void			 tofu_init(struct ohash*, unsigned int, ptrdiff_t);
 struct tofu_entry	*tofu_lookup(struct ohash*, const char*, const char*);
 void			 tofu_add(struct ohash*, struct tofu_entry*);
 void			 tofu_update(struct ohash*, struct tofu_entry*);
+void			 tofu_temp_trust(struct ohash *, const char *, const char *, const char *);
 
 /* ui.c */
 extern int	 body_lines;
@@ -499,7 +501,7 @@ void		 ui_toggle_side_window(void);
 void		 ui_schedule_redraw(void);
 void		 ui_require_input(struct tab*, int);
 void		 ui_read(const char*, void(*)(const char*, unsigned int), unsigned int);
-void		 ui_yornp(const char*, void (*)(int, unsigned int), unsigned int);
+void		 ui_yornp(const char*, void (*)(int, struct tab *), struct tab *);
 void		 ui_end(void);
 
 /* utf.8 */

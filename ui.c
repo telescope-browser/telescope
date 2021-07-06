@@ -104,8 +104,8 @@ static uint32_t		 tab_counter;
 
 static char	keybuf[64];
 
-static void (*yornp_cb)(int, unsigned int);
-static unsigned int yornp_data;
+static void (*yornp_cb)(int, struct tab *);
+static struct tab *yornp_data;
 
 static void (*read_cb)(const char*, unsigned int);
 static unsigned int read_data;
@@ -906,6 +906,7 @@ trust_status_char(enum trust_state ts)
 	switch (ts) {
 	case TS_UNKNOWN:	return 'u';
 	case TS_UNTRUSTED:	return '!';
+	case TS_TEMP_TRUSTED:	return '!';
 	case TS_TRUSTED:	return 'v';
 	case TS_VERIFIED:	return 'V';
 	default:		return 'X';
@@ -1479,8 +1480,8 @@ ui_require_input(struct tab *tab, int hide)
 }
 
 void
-ui_yornp(const char *prompt, void (*fn)(int, unsigned int),
-    unsigned int data)
+ui_yornp(const char *prompt, void (*fn)(int, struct tab *),
+    struct tab *data)
 {
 	size_t len;
 

@@ -96,3 +96,23 @@ tofu_update(struct ohash *h, struct tofu_entry *e)
 		free(e);
 	}
 }
+
+void
+tofu_temp_trust(struct ohash *h, const char *host, const char *port,
+    const char *hash)
+{
+	struct tofu_entry *e;
+
+	if ((e = calloc(1, sizeof(*e))) == NULL)
+                abort();
+
+        strlcpy(e->domain, host, sizeof(e->domain));
+	if (*port != '\0' && strcmp(port, "1965")) {
+		strlcat(e->domain, ":", sizeof(e->domain));
+		strlcat(e->domain, port, sizeof(e->domain));
+	}
+	strlcpy(e->hash, hash, sizeof(e->hash));
+	e->verified = -1;
+
+	tofu_update(h, e);
+}

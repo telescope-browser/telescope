@@ -26,11 +26,11 @@ static void		 die(void) __attribute__((__noreturn__));
 static struct tab	*tab_by_id(uint32_t);
 static void		 handle_imsg_err(struct imsg*, size_t);
 static void		 handle_imsg_check_cert(struct imsg*, size_t);
-static void		 handle_check_cert_user_choice(int, unsigned int);
-static void		 handle_maybe_save_new_cert(int, unsigned int);
+static void		 handle_check_cert_user_choice(int, struct tab *);
+static void		 handle_maybe_save_new_cert(int, struct tab *);
 static void		 handle_imsg_got_code(struct imsg*, size_t);
 static void		 handle_imsg_got_meta(struct imsg*, size_t);
-static void		 handle_maybe_save_page(int, unsigned int);
+static void		 handle_maybe_save_page(int, struct tab *);
 static void		 handle_save_page_path(const char *, unsigned int);
 static void		 handle_imsg_file_opened(struct imsg*, size_t);
 static void		 handle_imsg_buf(struct imsg*, size_t);
@@ -140,7 +140,13 @@ handle_imsg_check_cert(struct imsg *imsg, size_t datalen)
 		tofu_res = !strcmp(hash, e->hash);
 
 	if (tofu_res) {
-		tab->trust = e->verified ? TS_VERIFIED : TS_TRUSTED;
+		if (e->verified == -1)
+			tab->trust = TS_TEMP_TRUSTED;
+		else if (e->verified == 1)
+			tab->trust = TS_VERIFIED;
+		else
+			tab->trust = TS_TRUSTED;
+
 		imsg_compose(netibuf, IMSG_CERT_STATUS, imsg->hdr.peerid, 0, -1,
 		    &tofu_res, sizeof(tofu_res));
 		imsg_flush(netibuf);
@@ -150,38 +156,41 @@ handle_imsg_check_cert(struct imsg *imsg, size_t datalen)
 		if ((tab->cert = strdup(hash)) == NULL)
 			die();
 		ui_yornp("Certificate mismatch.  Proceed?",
-		    handle_check_cert_user_choice, tab->id);
+		    handle_check_cert_user_choice, tab);
 	}
 }
 
 static void
-handle_check_cert_user_choice(int accept, unsigned int tabid)
+handle_check_cert_user_choice(int accept, struct tab *tab)
 {
-	struct tab *tab;
-
-	tab = tab_by_id(tabid);
-
-	imsg_compose(netibuf, IMSG_CERT_STATUS, tabid, 0, -1,
+	imsg_compose(netibuf, IMSG_CERT_STATUS, tab->id, 0, -1,
 	    &accept, sizeof(accept));
 	imsg_flush(netibuf);
 
-	if (accept)
+	if (accept) {
+		/*
+		 * trust the certificate for this session only.  If
+		 * the page results in a redirect while we're asking
+		 * the user to save, we'll end up with an invalid
+		 * tabid (one request == one tab id) and crash.  It
+		 * also makes sense to save it for the current session
+		 * if the user accepted it.
+		 */
+		tofu_temp_trust(&certs, tab->uri.host, tab->uri.port, tab->cert);
+
 		ui_yornp("Save the new certificate?",
-		    handle_maybe_save_new_cert, tabid);
-	else {
+		    handle_maybe_save_new_cert, tab);
+	} else {
 		free(tab->cert);
 		tab->cert = NULL;
 	}
 }
 
 static void
-handle_maybe_save_new_cert(int accept, unsigned int tabid)
+handle_maybe_save_new_cert(int accept, struct tab *tab)
 {
-	struct tab *tab;
 	struct tofu_entry *e;
 	const char *host, *port;
-
-	tab = tab_by_id(tabid);
 
 	if (tab->proxy != NULL) {
 		host = tab->proxy->host;
@@ -284,7 +293,7 @@ handle_imsg_got_meta(struct imsg *imsg, size_t datalen)
 		} else {
 			load_page_from_str(tab, err_pages[UNKNOWN_TYPE_OR_CSET]);
 			ui_yornp("Can't display page, wanna save?",
-			    handle_maybe_save_page, tab->id);
+			    handle_maybe_save_page, tab);
 		}
 	} else if (tab->code < 40) { /* 3x */
 		tab->redirect_count++;
@@ -301,12 +310,12 @@ handle_imsg_got_meta(struct imsg *imsg, size_t datalen)
 }
 
 static void
-handle_maybe_save_page(int dosave, unsigned int tabid)
+handle_maybe_save_page(int dosave, struct tab *tab)
 {
 	if (dosave)
-		ui_read("Save to path", handle_save_page_path, tabid);
+		ui_read("Save to path", handle_save_page_path, tab->id);
 	else
-		stop_tab(tab_by_id(tabid));
+		stop_tab(tab);
 }
 
 static void

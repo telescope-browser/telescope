@@ -1,5 +1,7 @@
 2021-07-06  Omar Polo  <op@omarpolo.com>
 
+	* telescope.c (handle_check_cert_user_choice): fix two bug: don't crash when there's a certificate mismatch and after saving the cert, before choosing to persist it, the page gets redirected.  Now when the user accept a certificate, is treated as temporary saved for the whole session.
+
 	* defaults.c (load_default_keys): bind M-prior/next (M-pageup/pagedown) to tab-previous and tab-next
 
 2021-07-05  Omar Polo  <op@omarpolo.com>
