@@ -1,3 +1,7 @@
+2021-07-06  Omar Polo  <op@omarpolo.com>
+
+	* defaults.c (load_default_keys): bind M-prior/next (M-pageup/pagedown) to tab-previous and tab-next
+
 2021-07-05  Omar Polo  <op@omarpolo.com>
 
 	* defaults.c (config_setvari): add hide-pre-context: if nonzero hide the start and end line of a pre block (i.e. ```).  Defaults to zero.
