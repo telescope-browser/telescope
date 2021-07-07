@@ -1,3 +1,7 @@
+2021-07-07  Omar Polo  <op@omarpolo.com>
+
+	* gemtext.c (detect_line_type): fix styling of empty lines inside a pre block
+
 2021-07-06  Omar Polo  <op@omarpolo.com>
 
 	* parser.c (parser_foreach_line): deal with BOM

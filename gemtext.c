@@ -310,9 +310,6 @@ parse_pre_end(struct parser *p, enum line_type t, const char *buf, size_t len)
 static inline enum line_type
 detect_line_type(const char *buf, size_t len, int in_pre)
 {
-	if (len == 0)
-		return LINE_TEXT;
-
 	if (in_pre) {
 		if (len >= 3 &&
 		    buf[0] == '`' && buf[1] == '`' && buf[2] == '`')
@@ -320,6 +317,9 @@ detect_line_type(const char *buf, size_t len, int in_pre)
 		else
 			return LINE_PRE_CONTENT;
 	}
+
+	if (len == 0)
+		return LINE_TEXT;
 
 	switch (*buf) {
 	case '*': return LINE_ITEM;
