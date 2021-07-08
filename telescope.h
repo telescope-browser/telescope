@@ -496,7 +496,7 @@ void		 switch_to_tab(struct tab *);
 struct tab	*current_tab(void);
 struct tab	*new_tab(const char *);
 unsigned int	 tab_new_id(void);
-int		 ui_init(int, char * const*);
+int		 ui_init(void);
 void		 ui_on_tab_loaded(struct tab*);
 void		 ui_on_tab_refresh(struct tab*);
 const char	*ui_keyname(int);

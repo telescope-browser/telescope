@@ -3,6 +3,7 @@
 #include <sys/socket.h>
 
 #include <errno.h>
+#include <limits.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -673,18 +674,74 @@ save_session(void)
 	imsg_flush(fsibuf);
 }
 
+static void
+session_new_tab_cb(const char *url)
+{
+	new_tab(url);
+}
+
+static void
+usage(void)
+{
+	fprintf(stderr, "USAGE: %s [-hn] [-c config] [url]\n", getprogname());
+	fprintf(stderr, "version: " PACKAGE " " VERSION "\n");
+}
+
 int
 main(int argc, char * const *argv)
 {
-	struct imsgbuf	network_ibuf, fs_ibuf;
-	int		net_fds[2], fs_fds[2];
+	struct imsgbuf	 network_ibuf, fs_ibuf;
+	int		 net_fds[2], fs_fds[2];
+	int		 ch, configtest = 0, fail = 0;
+	int		 has_url = 0;
+	char		 path[PATH_MAX];
+	char		*url = NEW_TAB_URL;
 
 	signal(SIGCHLD, SIG_IGN);
 	signal(SIGPIPE, SIG_IGN);
 
+	if (getenv("NO_COLOR") != NULL)
+		enable_colors = 0;
+
+	strlcpy(path, getenv("HOME"), sizeof(path));
+	strlcat(path, "/.telescope/config", sizeof(path));
+
+	while ((ch = getopt(argc, argv, "c:hn")) != -1) {
+		switch (ch) {
+		case 'c':
+			fail = 1;
+			strlcpy(path, optarg, sizeof(path));
+			break;
+		case 'n':
+			configtest = 1;
+			break;
+		case 'h':
+			usage();
+			return 0;
+		default:
+			usage();
+			return 1;
+		}
+	}
+
+	argc -= optind;
+	argv += optind;
+
+	if (argc != 0) {
+		has_url = 1;
+		url = argv[0];
+	}
+
 	/* initialize part of the fs layer.  Before starting the UI
 	 * and dropping the priviledges we need to read some stuff. */
 	fs_init();
+
+	config_init();
+	parseconfig(path, fail);
+	if (configtest){
+		puts("config OK");
+		exit(0);
+	}
 
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, fs_fds) == -1)
 		err(1, "socketpair");
@@ -741,7 +798,11 @@ main(int argc, char * const *argv)
 	    handle_dispatch_imsg, fsibuf);
 	event_add(&fsev, NULL);
 
-	if (ui_init(argc, argv)) {
+	if (ui_init()) {
+		load_last_session(session_new_tab_cb);
+		if (has_url || TAILQ_EMPTY(&tabshead))
+			new_tab(url);
+
 		sandbox_ui_process();
 		event_dispatch();
 		ui_end();

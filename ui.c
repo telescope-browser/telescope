@@ -35,7 +35,6 @@
 #include <assert.h>
 #include <curses.h>
 #include <event.h>
-#include <limits.h>
 #include <locale.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -76,8 +75,6 @@ static void		 rec_compute_help(struct kmap*, char*, size_t);
 static void		 recompute_help(void);
 static void		 update_loading_anim(int, short, void*);
 static void		 stop_loading_anim(struct tab*);
-static void		 session_new_tab_cb(const char*);
-static void		 usage(void);
 
 static int		 x_offset;
 
@@ -1279,67 +1276,14 @@ new_tab(const char *url)
 	return tab;
 }
 
-static void
-session_new_tab_cb(const char *url)
-{
-	new_tab(url);
-}
-
-static void
-usage(void)
-{
-	fprintf(stderr, "USAGE: %s [-hn] [-c config] [url]\n", getprogname());
-	fprintf(stderr, "version: " PACKAGE " " VERSION "\n");
-}
-
 int
-ui_init(int argc, char * const *argv)
+ui_init()
 {
-	char path[PATH_MAX];
-	const char *url = NEW_TAB_URL;
-	int ch, configtest = 0, fonf = 0;
-
-	if (getenv("NO_COLOR") != NULL)
-		enable_colors = 0;
-
-	strlcpy(path, getenv("HOME"), sizeof(path));
-	strlcat(path, "/.telescope/config", sizeof(path));
-
-	while ((ch = getopt(argc, argv, "c:hn")) != -1) {
-		switch (ch) {
-		case 'c':
-			fonf = 1;
-			strlcpy(path, optarg, sizeof(path));
-			break;
-		case 'n':
-			configtest = 1;
-			break;
-		case 'h':
-			usage();
-			return 0;
-		default:
-			usage();
-			return 1;
-		}
-	}
-	argc -= optind;
-	argv += optind;
-
 	/* setup keys before reading the config */
 	TAILQ_INIT(&global_map.m);
 	global_map.unhandled_input = global_key_unbound;
 
 	TAILQ_INIT(&minibuffer_map.m);
-
-	config_init();
-	parseconfig(path, fonf);
-	if (configtest){
-		puts("config OK");
-		exit(0);
-	}
-
-	if (argc != 0)
-		url = argv[0];
 
 	setlocale(LC_ALL, "");
 
@@ -1406,10 +1350,6 @@ ui_init(int argc, char * const *argv)
 
 	signal_set(&winchev, SIGWINCH, handle_resize, NULL);
 	signal_add(&winchev, NULL);
-
-	load_last_session(session_new_tab_cb);
-	if (strcmp(url, NEW_TAB_URL) || TAILQ_EMPTY(&tabshead))
-		new_tab(url);
 
 	return 1;
 }
