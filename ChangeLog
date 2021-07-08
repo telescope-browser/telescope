@@ -1,6 +1,7 @@
 2021-07-08  Omar Polo  <op@omarpolo.com>
 
 	* defaults.c (load_default_keys): bind C-t to tab-new by default
+	(load_default_keys): bind C-w to tab-close by default
 
 	* telescope.c (start_child): re-exec the children processes
 

@@ -270,6 +270,7 @@ load_default_keys(void)
 	global_set_key("<prior>",	cmd_scroll_up);
 	global_set_key("<next>",	cmd_scroll_down);
 
+	global_set_key("C-w",		cmd_tab_close);
 	global_set_key("C-t",		cmd_tab_new);
 	global_set_key("M-<prior>",	cmd_tab_previous);
 	global_set_key("M-<next>",	cmd_tab_next);
