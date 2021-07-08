@@ -736,6 +736,11 @@ main(int argc, char * const *argv)
 	 * and dropping the priviledges we need to read some stuff. */
 	fs_init();
 
+	/* setup keys before reading the config */
+	TAILQ_INIT(&global_map.m);
+	global_map.unhandled_input = global_key_unbound;
+	TAILQ_INIT(&minibuffer_map.m);
+
 	config_init();
 	parseconfig(path, fail);
 	if (configtest){

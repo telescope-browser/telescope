@@ -45,7 +45,6 @@
 static struct event	stdioev, winchev;
 
 static void		 restore_curs_x(struct buffer *);
-static void		 global_key_unbound(void);
 static void		 minibuffer_hist_save_entry(void);
 static void		 minibuffer_self_insert(void);
 static void		 yornp_self_insert(void);
@@ -170,7 +169,7 @@ restore_curs_x(struct buffer *buffer)
 	}
 }
 
-static void
+void
 global_key_unbound(void)
 {
 	message("%s is undefined", keybuf);
@@ -1279,12 +1278,6 @@ new_tab(const char *url)
 int
 ui_init()
 {
-	/* setup keys before reading the config */
-	TAILQ_INIT(&global_map.m);
-	global_map.unhandled_input = global_key_unbound;
-
-	TAILQ_INIT(&minibuffer_map.m);
-
 	setlocale(LC_ALL, "");
 
 	TAILQ_INIT(&eecmd_history.head);
