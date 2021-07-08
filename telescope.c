@@ -732,8 +732,10 @@ main(int argc, char * const *argv)
 		url = argv[0];
 	}
 
-	/* initialize part of the fs layer.  Before starting the UI
-	 * and dropping the priviledges we need to read some stuff. */
+	/*
+	 * initialize part of the fs layer.  Before starting the UI
+	 * and dropping the priviledges we need to read some stuff.
+	 */
 	fs_init();
 
 	/* setup keys before reading the config */
