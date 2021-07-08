@@ -1,5 +1,7 @@
 2021-07-08  Omar Polo  <op@omarpolo.com>
 
+	* defaults.c (load_default_keys): bind C-t to tab-new by default
+
 	* telescope.c (start_child): re-exec the children processes
 
 	* ui.c (print_vline): bug: print the trailing face until the right column, not one less.  (this would leave the last column white if !olivetti-mode and a background color for some body lines)
