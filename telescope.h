@@ -321,12 +321,12 @@ void		 config_apply_style(void);
 
 /* fs.c */
 int		 fs_init(void);
-int		 fs_main(struct imsgbuf*);
+int		 fs_main(void);
 int		 load_certs(struct ohash*);
 int		 load_last_session(void(*)(const char*));
 
 /* gemini.c */
-int		 client_main(struct imsgbuf*);
+int		 client_main(void);
 
 /* gemtext.c */
 void		 gemtext_initparser(struct parser*);

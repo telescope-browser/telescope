@@ -14,6 +14,12 @@ struct event		 netev, fsev;
 struct tabshead		 tabshead;
 struct proxylist	 proxies;
 
+enum telescope_process {
+	PROC_UI,
+	PROC_FS,
+	PROC_NET,
+};
+
 /* the first is also the fallback one */
 static struct proto protos[] = {
 	{ "gemini",	load_gemini_url },
@@ -42,6 +48,7 @@ static void		 handle_imsg_update_cert_ok(struct imsg *, size_t);
 static void		 handle_dispatch_imsg(int, short, void*);
 static void		 load_page_from_str(struct tab*, const char*);
 static void		 do_load_url(struct tab*, const char*);
+static pid_t		 start_child(enum telescope_process, const char *, int);
 
 static imsg_handlerfn *handlers[] = {
 	[IMSG_ERR] = handle_imsg_err,
@@ -680,11 +687,49 @@ session_new_tab_cb(const char *url)
 	new_tab(url);
 }
 
-static void
-usage(void)
+static pid_t
+start_child(enum telescope_process p, const char *argv0, int fd)
+{
+	const char	*argv[4];
+	int		 argc = 0;
+	pid_t		 pid;
+
+	switch (pid = fork()) {
+	case -1:
+		die();
+	case 0:
+		break;
+	default:
+		close(fd);
+		return pid;
+	}
+
+	if (dup2(fd, 3) == -1)
+		err(1, "cannot setup imsg fd");
+
+	argv[argc++] = argv0;
+	switch (p) {
+	case PROC_UI:
+		errx(1, "Can't start ui process");
+	case PROC_FS:
+		argv[argc++] = "-Tf";
+		break;
+	case PROC_NET:
+		argv[argc++] = "-Tn";
+		break;
+	}
+
+	argv[argc++] = NULL;
+	execvp(argv0, (char *const *)argv);
+	err(1, "execvp(%s)", argv0);
+}
+
+static void __attribute__((noreturn))
+usage(int r)
 {
 	fprintf(stderr, "USAGE: %s [-hn] [-c config] [url]\n", getprogname());
 	fprintf(stderr, "version: " PACKAGE " " VERSION "\n");
+	exit(r);
 }
 
 int
@@ -694,8 +739,12 @@ main(int argc, char * const *argv)
 	int		 net_fds[2], fs_fds[2];
 	int		 ch, configtest = 0, fail = 0;
 	int		 has_url = 0;
+	int		 proc = -1;
 	char		 path[PATH_MAX];
-	char		*url = NEW_TAB_URL;
+	const char	*url = NEW_TAB_URL;
+	const char	*argv0;
+
+	argv0 = argv[0];
 
 	signal(SIGCHLD, SIG_IGN);
 	signal(SIGPIPE, SIG_IGN);
@@ -706,7 +755,7 @@ main(int argc, char * const *argv)
 	strlcpy(path, getenv("HOME"), sizeof(path));
 	strlcat(path, "/.telescope/config", sizeof(path));
 
-	while ((ch = getopt(argc, argv, "c:hn")) != -1) {
+	while ((ch = getopt(argc, argv, "c:hnT:")) != -1) {
 		switch (ch) {
 		case 'c':
 			fail = 1;
@@ -716,27 +765,43 @@ main(int argc, char * const *argv)
 			configtest = 1;
 			break;
 		case 'h':
-			usage();
-			return 0;
+			usage(0);
+		case 'T':
+			switch (*optarg) {
+			case 'f':
+				proc = PROC_FS;
+				break;
+			case 'n':
+				proc = PROC_NET;
+				break;
+			default:
+				errx(1, "invalid process spec %c",
+				    *optarg);
+			}
+			break;
 		default:
-			usage();
-			return 1;
+			usage(1);
 		}
 	}
 
 	argc -= optind;
 	argv += optind;
 
+	if (proc != -1) {
+		if (argc > 0)
+			usage(1);
+		else if (proc == PROC_FS)
+			return fs_main();
+		else if (proc == PROC_NET)
+			return client_main();
+		else
+			usage(1);
+	}
+
 	if (argc != 0) {
 		has_url = 1;
 		url = argv[0];
 	}
-
-	/*
-	 * initialize part of the fs layer.  Before starting the UI
-	 * and dropping the priviledges we need to read some stuff.
-	 */
-	fs_init();
 
 	/* setup keys before reading the config */
 	TAILQ_INIT(&global_map.m);
@@ -750,45 +815,23 @@ main(int argc, char * const *argv)
 		exit(0);
 	}
 
+	/* Start children. */
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, fs_fds) == -1)
 		err(1, "socketpair");
-
-	switch (fork()) {
-	case -1:
-		err(1, "fork");
-	case 0:
-		/* child */
-		setproctitle("fs");
-		close(fs_fds[0]);
-		imsg_init(&fs_ibuf, fs_fds[1]);
-		exit(fs_main(&fs_ibuf));
-	default:
-		close(fs_fds[1]);
-		imsg_init(&fs_ibuf, fs_fds[0]);
-		fsibuf = &fs_ibuf;
-	}
+	start_child(PROC_FS, argv0, fs_fds[1]);
+	imsg_init(&fs_ibuf, fs_fds[0]);
+	fsibuf = &fs_ibuf;
 
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, net_fds) == -1)
 		err(1, "socketpair");
-
-	switch (fork()) {
-	case -1:
-		err(1, "fork");
-	case 0:
-		/* child */
-		setproctitle("client");
-		close(net_fds[0]);
-		close(fs_fds[0]);
-		imsg_init(&network_ibuf, net_fds[1]);
-		exit(client_main(&network_ibuf));
-	default:
-		close(net_fds[1]);
-		imsg_init(&network_ibuf, net_fds[0]);
-		netibuf = &network_ibuf;
-	}
+	start_child(PROC_NET, argv0, net_fds[1]);
+	imsg_init(&network_ibuf, net_fds[0]);
+	netibuf = &network_ibuf;
 
 	setproctitle("ui");
 
+	/* initialize tofu & load certificates */
+	fs_init();
 	tofu_init(&certs, 5, offsetof(struct tofu_entry, domain));
 	load_certs(&certs);
 

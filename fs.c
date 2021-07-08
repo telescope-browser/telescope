@@ -350,12 +350,17 @@ fs_init(void)
 }
 
 int
-fs_main(struct imsgbuf *b)
+fs_main(void)
 {
-	ibuf = b;
+	setproctitle("fs");
+
+	fs_init();
 
 	event_init();
 
+	if ((ibuf = calloc(1, sizeof(*ibuf))) == NULL)
+		die();
+	imsg_init(ibuf, 3);
 	event_set(&imsgev, ibuf->fd, EV_READ | EV_PERSIST, handle_dispatch_imsg, ibuf);
 	event_add(&imsgev, NULL);
 

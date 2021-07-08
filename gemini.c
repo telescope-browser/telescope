@@ -569,9 +569,9 @@ handle_dispatch_imsg(int fd, short ev, void *d)
 }
 
 int
-client_main(struct imsgbuf *b)
+client_main(void)
 {
-	ibuf = b;
+	setproctitle("net");
 
 	TAILQ_INIT(&reqhead);
 
@@ -582,6 +582,10 @@ client_main(struct imsgbuf *b)
 
 	event_init();
 
+	/* Setup pipe and event handler to the main process */
+	if ((ibuf = calloc(1, sizeof(*ibuf))) == NULL)
+		die();
+	imsg_init(ibuf, 3);
 	event_set(&imsgev, ibuf->fd, EV_READ | EV_PERSIST, handle_dispatch_imsg, ibuf);
 	event_add(&imsgev, NULL);
 
