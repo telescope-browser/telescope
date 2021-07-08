@@ -678,7 +678,7 @@ print_vline(int off, int width, WINDOW *window, struct vline *vl)
 	left = width - x;
 
 	wattr_on(window, f->trail, NULL);
-	for (i = 0; i < left - off - 1; ++i)
+	for (i = 0; i < left - off; ++i)
 		waddch(window, ' ');
 	wattr_off(window, f->trail, NULL);
 
