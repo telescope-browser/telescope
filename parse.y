@@ -100,8 +100,8 @@ style		: TSTYLE TSTRING { current_style = $2; } stylespec ;
 stylespec	: styleopt | '{' styleopts '}' ;
 
 styleopts	: /* empty */
-		| styleopts '\n'
-		| styleopts styleopt '\n'
+		| styleopts optnl
+		| styleopts styleopt optnl
 		;
 
 styleopt	: TPRFX TSTRING		{ setprfx($2, $2); }
@@ -128,6 +128,10 @@ unbind		: TUNBIND TSTRING TSTRING	{ yyerror("TODO: unbind %s %s", $2, $3); }
 		;
 
 proxy		: TPROXY TSTRING TVIA TSTRING { add_proxy($2, $4); free($4); }
+		;
+
+optnl		: '\n' optnl	/* zero or more newlines */
+		| /* empty */
 		;
 
 %%
