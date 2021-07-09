@@ -1,3 +1,7 @@
+2021-07-09  Omar Polo  <op@omarpolo.com>
+
+	* parse.y: make some newline optional
+
 2021-07-08  Omar Polo  <op@omarpolo.com>
 
 	* defaults.c (load_default_keys): bind C-t to tab-new by default
