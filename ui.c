@@ -57,7 +57,7 @@ static struct vline	*nth_line(struct buffer*, size_t);
 static struct buffer	*current_buffer(void);
 static int		 readkey(void);
 static void		 dispatch_stdio(int, short, void*);
-static void		 handle_clear_minibuf(int, short, void*);
+static void		 handle_clear_echoarea(int, short, void*);
 static void		 handle_resize(int, short, void*);
 static void		 handle_resize_nodelay(int, short, void*);
 static int		 wrap_page(struct buffer*, int);
@@ -67,7 +67,7 @@ static void		 redraw_window(WINDOW*, int, int, struct buffer*);
 static void		 redraw_help(void);
 static void		 redraw_body(struct tab*);
 static void		 redraw_modeline(struct tab*);
-static void		 redraw_minibuffer(void);
+static void		 redraw_echoarea(void);
 static void		 redraw_tab(struct tab*);
 static void		 emit_help_item(char*, void*);
 static void		 rec_compute_help(struct kmap*, char*, size_t);
@@ -82,7 +82,7 @@ struct thiskey thiskey;
 static struct event	resizeev;
 static struct timeval	resize_timer = { 0, 250000 };
 
-static WINDOW	*tabline, *body, *modeline, *minibuf;
+static WINDOW	*tabline, *body, *modeline, *echoarea;
 
 int			 body_lines, body_cols;
 
@@ -92,8 +92,8 @@ static int		 help_lines, help_cols;
 
 static int		 side_window;
 
-static struct event	clminibufev;
-static struct timeval	clminibufev_timer = { 5, 0 };
+static struct event	clechoev;
+static struct timeval	clechoev_timer = { 5, 0 };
 static struct timeval	loadingev_timer = { 0, 250000 };
 
 static uint32_t		 tab_counter;
@@ -487,17 +487,17 @@ done:
 }
 
 static void
-handle_clear_minibuf(int fd, short ev, void *d)
+handle_clear_echoarea(int fd, short ev, void *d)
 {
 	free(ministate.curmesg);
 	ministate.curmesg = NULL;
 
-	redraw_minibuffer();
+	redraw_echoarea();
 	if (in_minibuffer) {
 		wrefresh(body);
-		wrefresh(minibuf);
+		wrefresh(echoarea);
 	} else {
-		wrefresh(minibuf);
+		wrefresh(echoarea);
 		wrefresh(body);
 	}
 }
@@ -523,8 +523,8 @@ handle_resize_nodelay(int s, short ev, void *d)
 
 	/* move and resize the windows, in reverse order! */
 
-	mvwin(minibuf, LINES-1, 0);
-	wresize(minibuf, 1, COLS);
+	mvwin(echoarea, LINES-1, 0);
+	wresize(echoarea, 1, COLS);
 
 	mvwin(modeline, LINES-2, 0);
 	wresize(modeline, 1, COLS);
@@ -955,7 +955,7 @@ redraw_modeline(struct tab *tab)
 }
 
 static void
-redraw_minibuffer(void)
+redraw_echoarea(void)
 {
 	struct tab *tab;
 	size_t off_y, off_x = 0;
@@ -964,17 +964,17 @@ redraw_minibuffer(void)
 	/* unused, but set by getyx */
 	(void)off_y;
 
-	wattr_on(minibuf, minibuffer_face.background, NULL);
-	werase(minibuf);
+	wattr_on(echoarea, minibuffer_face.background, NULL);
+	werase(echoarea);
 
 	if (in_minibuffer) {
-		mvwprintw(minibuf, 0, 0, "%s", ministate.prompt);
+		mvwprintw(echoarea, 0, 0, "%s", ministate.prompt);
 		if (ministate.hist_cur != NULL)
-			wprintw(minibuf, "(%zu/%zu) ",
+			wprintw(echoarea, "(%zu/%zu) ",
 			    ministate.hist_off + 1,
 			    ministate.history->len);
 
-		getyx(minibuf, off_y, off_x);
+		getyx(echoarea, off_y, off_x);
 
 		start = ministate.hist_cur != NULL
 			? ministate.hist_cur->h
@@ -985,28 +985,28 @@ redraw_minibuffer(void)
 			start = utf8_next_cp(start);
 		}
 
-		waddstr(minibuf, start);
+		waddstr(echoarea, start);
 	}
 
 	if (ministate.curmesg != NULL)
-                wprintw(minibuf, in_minibuffer ? "  [%s]" : "%s",
+                wprintw(echoarea, in_minibuffer ? "  [%s]" : "%s",
 		    ministate.curmesg);
 
 	if (!in_minibuffer && ministate.curmesg == NULL)
-		waddstr(minibuf, keybuf);
+		waddstr(echoarea, keybuf);
 
 	/* If nothing else, show the URL at point */
 	if (!in_minibuffer && ministate.curmesg == NULL && *keybuf == '\0') {
 		tab = current_tab();
 		if (tab->buffer.current_line != NULL &&
 		    tab->buffer.current_line->parent->type == LINE_LINK)
-			waddstr(minibuf, tab->buffer.current_line->parent->alt);
+			waddstr(echoarea, tab->buffer.current_line->parent->alt);
 	}
 
 	if (in_minibuffer)
-		wmove(minibuf, 0, off_x + utf8_swidth_between(start, c));
+		wmove(echoarea, 0, off_x + utf8_swidth_between(start, c));
 
-	wattr_off(minibuf, minibuffer_face.background, NULL);
+	wattr_off(echoarea, minibuffer_face.background, NULL);
 }
 
 static void
@@ -1020,16 +1020,16 @@ redraw_tab(struct tab *tab)
 	redraw_tabline();
 	redraw_body(tab);
 	redraw_modeline(tab);
-	redraw_minibuffer();
+	redraw_echoarea();
 
 	wnoutrefresh(tabline);
 	wnoutrefresh(modeline);
 
 	if (in_minibuffer) {
 		wnoutrefresh(body);
-		wnoutrefresh(minibuf);
+		wnoutrefresh(echoarea);
 	} else {
-		wnoutrefresh(minibuf);
+		wnoutrefresh(echoarea);
 		wnoutrefresh(body);
 	}
 
@@ -1101,27 +1101,27 @@ recompute_help(void)
 void
 vmessage(const char *fmt, va_list ap)
 {
-	if (evtimer_pending(&clminibufev, NULL))
-		evtimer_del(&clminibufev);
+	if (evtimer_pending(&clechoev, NULL))
+		evtimer_del(&clechoev);
 
 	free(ministate.curmesg);
 	ministate.curmesg = NULL;
 
 	if (fmt != NULL) {
-		evtimer_set(&clminibufev, handle_clear_minibuf, NULL);
-		evtimer_add(&clminibufev, &clminibufev_timer);
+		evtimer_set(&clechoev, handle_clear_echoarea, NULL);
+		evtimer_add(&clechoev, &clechoev_timer);
 
 		/* TODO: what to do if the allocation fails here? */
 		if (vasprintf(&ministate.curmesg, fmt, ap) == -1)
 			ministate.curmesg = NULL;
 	}
 
-	redraw_minibuffer();
+	redraw_echoarea();
 	if (in_minibuffer) {
 		wrefresh(body);
-		wrefresh(minibuf);
+		wrefresh(echoarea);
 	} else {
-		wrefresh(minibuf);
+		wrefresh(echoarea);
 		wrefresh(body);
 	}
 }
@@ -1158,7 +1158,7 @@ update_loading_anim(int fd, short ev, void *d)
 		wrefresh(modeline);
 		wrefresh(body);
 		if (in_minibuffer)
-			wrefresh(minibuf);
+			wrefresh(echoarea);
 	}
 
 	evtimer_add(&tab->loadingev, &loadingev_timer);
@@ -1181,7 +1181,7 @@ stop_loading_anim(struct tab *tab)
 	wrefresh(modeline);
 	wrefresh(body);
 	if (in_minibuffer)
-		wrefresh(minibuf);
+		wrefresh(echoarea);
 }
 
 void
@@ -1222,7 +1222,7 @@ enter_minibuffer(void (*self_insert_fn)(void), void (*donefn)(void),
 void
 exit_minibuffer(void)
 {
-	werase(minibuf);
+	werase(echoarea);
 
 	in_minibuffer = 0;
 	base_map = &global_map;
@@ -1317,7 +1317,7 @@ ui_init()
 		return 0;
 	if ((modeline = newwin(1, COLS, LINES-2, 0)) == NULL)
 		return 0;
-	if ((minibuf = newwin(1, COLS, LINES-1, 0)) == NULL)
+	if ((echoarea = newwin(1, COLS, LINES-1, 0)) == NULL)
 		return 0;
 	if ((help = newwin(1, 1, 1, 0)) == NULL)
 		return 0;
@@ -1326,7 +1326,7 @@ ui_init()
 	body_cols = COLS;
 
 	wbkgd(body, body_face.body);
-	wbkgd(minibuf, minibuffer_face.background);
+	wbkgd(echoarea, minibuffer_face.background);
 
 	update_x_offset();
 
@@ -1356,7 +1356,7 @@ ui_on_tab_loaded(struct tab *tab)
 	redraw_tabline();
 	wrefresh(tabline);
 	if (in_minibuffer)
-		wrefresh(minibuf);
+		wrefresh(echoarea);
 	else
 		wrefresh(body);
 }
