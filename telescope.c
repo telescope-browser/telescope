@@ -559,6 +559,8 @@ do_load_url(struct tab *tab, const char *url)
 	struct proxy	*proxy;
 	char		*t;
 
+	tab->proxy = NULL;
+
 	if (tab->fd != -1) {
 		close(tab->fd);
 		tab->fd = -1;
@@ -609,8 +611,6 @@ load_url(struct tab *tab, const char *url)
 		event_loopbreak();
 		return;
 	}
-
-	tab->proxy = NULL;
 
 	hist_push(&tab->hist, tab->hist_cur);
 	do_load_url(tab, url);
