@@ -11,8 +11,8 @@
 #include <unistd.h>
 
 struct event		 netev, fsev;
-struct tabshead		 tabshead;
-struct proxylist	 proxies;
+struct tabshead		 tabshead = TAILQ_HEAD_INITIALIZER(tabshead);
+struct proxylist	 proxies = TAILQ_HEAD_INITIALIZER(proxies);
 
 enum telescope_process {
 	PROC_UI,
@@ -834,9 +834,6 @@ main(int argc, char * const *argv)
 	fs_init();
 	tofu_init(&certs, 5, offsetof(struct tofu_entry, domain));
 	load_certs(&certs);
-
-	TAILQ_INIT(&tabshead);
-	TAILQ_INIT(&proxies);
 
 	event_init();
 
