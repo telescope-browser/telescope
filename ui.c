@@ -816,13 +816,13 @@ do_redraw_minibuffer(void)
 
 /*
  * Place the cursor in the right ncurses window.  If soft is 1, use
- * wnoutrefresh (which shouldn't cause any I/o); otherwise use
+ * wnoutrefresh (which shouldn't cause any I/O); otherwise use
  * wrefresh.
  */
 static void
 place_cursor(int soft)
 {
-        int (*touch)(WINDOW *);
+	int (*touch)(WINDOW *);
 
 	if (soft)
 		touch = wnoutrefresh;
