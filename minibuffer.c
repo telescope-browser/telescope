@@ -73,6 +73,7 @@ minibuffer_taint_hist(void)
 
 	strlcpy(ministate.buf, ministate.hist_cur->h, sizeof(ministate.buf));
 	ministate.hist_cur = NULL;
+	ministate.buffer.current_line->line = ministate.buf;
 }
 
 static void

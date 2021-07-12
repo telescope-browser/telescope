@@ -1,3 +1,7 @@
+2021-07-12  Omar Polo  <op@omarpolo.com>
+
+	* minibuffer.c (minibuffer_taint_hist): bugfix: allow editing minibuffer history
+
 2021-07-10  Omar Polo  <op@omarpolo.com>
 
 	* telescope.c (do_load_url): fix certificate mismatch when going back from a proxied page to a Gemini page.
