@@ -18,12 +18,14 @@ telescope_SOURCES =	cmd.c		\
 			pages.c		\
 			parse.y		\
 			parser.c	\
+			parser.h	\
 			sandbox.c	\
 			telescope.c	\
 			telescope.h	\
 			textplain.c	\
 			tofu.c		\
 			ui.c		\
+			ui.h		\
 			utf8.c		\
 			util.c		\
 			wrap.c
