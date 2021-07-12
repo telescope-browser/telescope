@@ -343,6 +343,15 @@ int		 kmap_define_key(struct kmap*, const char*, void(*)(struct buffer*));
 /* mime.c */
 int		 setup_parser_for(struct tab*);
 
+/* minibuffer.c */
+void		 enter_minibuffer(void(*)(void), void(*)(void), void(*)(void),
+		     struct histhead *);
+void		 exit_minibuffer(void);
+void		 yornp(const char *, void (*)(int, struct tab *), struct tab *);
+void		 completing_read(const char *,
+		     void (*)(const char *, unsigned int),
+		     unsigned int);
+
 /* pages.c */
 extern const char	*about_about;
 extern const char	*about_blank;
@@ -393,6 +402,8 @@ void			 tofu_temp_trust(struct ohash *, const char *, const char *, const char *
 extern int	 body_lines;
 extern int	 body_cols;
 extern int	 in_minibuffer;
+
+extern struct kmap global_map, minibuffer_map, *current_map, *base_map;
 
 struct excursion {
 	int		 curs_x, curs_y;
@@ -491,10 +502,9 @@ void		 vmessage(const char*, va_list);
 void		 message(const char*, ...) __attribute__((format(printf, 1, 2)));
 void		 start_loading_anim(struct tab *tab);
 void		 load_url_in_tab(struct tab *, const char *);
-void		 enter_minibuffer(void(*)(void), void(*)(void), void(*)(void), struct histhead *);
-void		 exit_minibuffer(void);
 void		 switch_to_tab(struct tab *);
 struct tab	*current_tab(void);
+struct buffer	*current_buffer(void);
 struct tab	*new_tab(const char *);
 unsigned int	 tab_new_id(void);
 int		 ui_init(void);
