@@ -30,6 +30,7 @@
  *
  */
 
+#include "minibuffer.h"
 #include "telescope.h"
 
 #include <assert.h>

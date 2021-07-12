@@ -14,6 +14,7 @@ telescope_SOURCES =	cmd.c		\
 			keymap.c	\
 			mime.c		\
 			minibuffer.c	\
+			minibuffer.h	\
 			pages.c		\
 			parse.y		\
 			parser.c	\

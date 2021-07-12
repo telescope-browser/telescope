@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "minibuffer.h"
 #include "telescope.h"
 
 /* return 1 if moved, 0 otherwise */

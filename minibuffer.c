@@ -17,7 +17,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "telescope.h"
+#include "minibuffer.h"
 
 static void		 minibuffer_hist_save_entry(void);
 static void		 minibuffer_self_insert(void);

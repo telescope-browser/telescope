@@ -343,15 +343,6 @@ int		 kmap_define_key(struct kmap*, const char*, void(*)(struct buffer*));
 /* mime.c */
 int		 setup_parser_for(struct tab*);
 
-/* minibuffer.c */
-void		 enter_minibuffer(void(*)(void), void(*)(void), void(*)(void),
-		     struct histhead *);
-void		 exit_minibuffer(void);
-void		 yornp(const char *, void (*)(int, struct tab *), struct tab *);
-void		 completing_read(const char *,
-		     void (*)(const char *, unsigned int),
-		     unsigned int);
-
 /* pages.c */
 extern const char	*about_about;
 extern const char	*about_blank;
