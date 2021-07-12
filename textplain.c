@@ -18,10 +18,11 @@
  * A streaming text/plain "parser."
  */
 
-#include "telescope.h"
-
 #include <stdlib.h>
 #include <string.h>
+
+#include "telescope.h"
+#include "parser.h"
 
 static int	textplain_parse(struct parser*, const char*, size_t);
 static int	textplain_foreach_line(struct parser*, const char*, size_t);
