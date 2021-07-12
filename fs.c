@@ -20,8 +20,6 @@
  * TODO: add some form of locking on the files
  */
 
-#include "telescope.h"
-
 #include <sys/stat.h>
 
 #include <errno.h>
@@ -31,6 +29,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#include "telescope.h"
 
 static void		 die(void) __attribute__((__noreturn__));
 static void		 serve_bookmarks(uint32_t);
