@@ -65,6 +65,7 @@ static void		 redraw_modeline(struct tab*);
 static void		 redraw_minibuffer(void);
 static void		 do_redraw_echoarea(void);
 static void		 do_redraw_minibuffer(void);
+static void		 place_cursor(int);
 static void		 redraw_tab(struct tab*);
 static void		 emit_help_item(char*, void*);
 static void		 rec_compute_help(struct kmap*, char*, size_t);
@@ -292,13 +293,7 @@ handle_clear_echoarea(int fd, short ev, void *d)
 	ministate.curmesg = NULL;
 
 	redraw_minibuffer();
-	if (in_minibuffer) {
-		wrefresh(body);
-		wrefresh(echoarea);
-	} else {
-		wrefresh(echoarea);
-		wrefresh(body);
-	}
+	place_cursor(0);
 }
 
 static void
@@ -819,6 +814,30 @@ do_redraw_minibuffer(void)
 	wmove(echoarea, 0, off_x + utf8_swidth_between(start, c));
 }
 
+/*
+ * Place the cursor in the right ncurses window.  If soft is 1, use
+ * wnoutrefresh (which shouldn't cause any I/o); otherwise use
+ * wrefresh.
+ */
+static void
+place_cursor(int soft)
+{
+        int (*touch)(WINDOW *);
+
+	if (soft)
+		touch = wnoutrefresh;
+	else
+		touch = wrefresh;
+
+	if (in_minibuffer) {
+		touch(body);
+		touch(echoarea);
+	} else {
+		touch(echoarea);
+		touch(body);
+	}
+}
+
 static void
 redraw_tab(struct tab *tab)
 {
@@ -835,13 +854,7 @@ redraw_tab(struct tab *tab)
 	wnoutrefresh(tabline);
 	wnoutrefresh(modeline);
 
-	if (in_minibuffer) {
-		wnoutrefresh(body);
-		wnoutrefresh(echoarea);
-	} else {
-		wnoutrefresh(echoarea);
-		wnoutrefresh(body);
-	}
+	place_cursor(1);
 
 	doupdate();
 }
@@ -927,13 +940,7 @@ vmessage(const char *fmt, va_list ap)
 	}
 
 	redraw_minibuffer();
-	if (in_minibuffer) {
-		wrefresh(body);
-		wrefresh(echoarea);
-	} else {
-		wrefresh(echoarea);
-		wrefresh(body);
-	}
+        place_cursor(0);
 }
 
 void
@@ -1132,10 +1139,7 @@ ui_on_tab_loaded(struct tab *tab)
 
 	redraw_tabline();
 	wrefresh(tabline);
-	if (in_minibuffer)
-		wrefresh(echoarea);
-	else
-		wrefresh(body);
+	place_cursor(0);
 }
 
 void
