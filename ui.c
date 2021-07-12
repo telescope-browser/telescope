@@ -62,7 +62,9 @@ static void		 redraw_window(WINDOW*, int, int, struct buffer*);
 static void		 redraw_help(void);
 static void		 redraw_body(struct tab*);
 static void		 redraw_modeline(struct tab*);
-static void		 redraw_echoarea(void);
+static void		 redraw_minibuffer(void);
+static void		 do_redraw_echoarea(void);
+static void		 do_redraw_minibuffer(void);
 static void		 redraw_tab(struct tab*);
 static void		 emit_help_item(char*, void*);
 static void		 rec_compute_help(struct kmap*, char*, size_t);
@@ -289,7 +291,7 @@ handle_clear_echoarea(int fd, short ev, void *d)
 	free(ministate.curmesg);
 	ministate.curmesg = NULL;
 
-	redraw_echoarea();
+	redraw_minibuffer();
 	if (in_minibuffer) {
 		wrefresh(body);
 		wrefresh(echoarea);
@@ -752,58 +754,69 @@ redraw_modeline(struct tab *tab)
 }
 
 static void
-redraw_echoarea(void)
+redraw_minibuffer(void)
 {
-	struct tab *tab;
-	size_t off_y, off_x = 0;
-	char *start = NULL, *c = NULL;
-
-	/* unused, but set by getyx */
-	(void)off_y;
-
 	wattr_on(echoarea, minibuffer_face.background, NULL);
 	werase(echoarea);
 
-	if (in_minibuffer) {
-		mvwprintw(echoarea, 0, 0, "%s", ministate.prompt);
-		if (ministate.hist_cur != NULL)
-			wprintw(echoarea, "(%zu/%zu) ",
-			    ministate.hist_off + 1,
-			    ministate.history->len);
+	if (in_minibuffer)
+		do_redraw_minibuffer();
+	else
+		do_redraw_echoarea();
 
-		getyx(echoarea, off_y, off_x);
+	wattr_off(echoarea, minibuffer_face.background, NULL);
+}
 
-		start = ministate.hist_cur != NULL
-			? ministate.hist_cur->h
-			: ministate.buf;
-		c = utf8_nth(ministate.buffer.current_line->line,
-		    ministate.buffer.cpoff);
-		while (utf8_swidth_between(start, c) > (size_t)COLS/2) {
-			start = utf8_next_cp(start);
-		}
-
-		waddstr(echoarea, start);
-	}
+static void
+do_redraw_echoarea(void)
+{
+	struct tab *tab;
 
 	if (ministate.curmesg != NULL)
-                wprintw(echoarea, in_minibuffer ? "  [%s]" : "%s",
-		    ministate.curmesg);
-
-	if (!in_minibuffer && ministate.curmesg == NULL)
+                wprintw(echoarea, "%s", ministate.curmesg);
+	else if (*keybuf != '\0')
 		waddstr(echoarea, keybuf);
-
-	/* If nothing else, show the URL at point */
-	if (!in_minibuffer && ministate.curmesg == NULL && *keybuf == '\0') {
+	else {
+		/* If nothing else, show the URL at point */
 		tab = current_tab();
 		if (tab->buffer.current_line != NULL &&
 		    tab->buffer.current_line->parent->type == LINE_LINK)
 			waddstr(echoarea, tab->buffer.current_line->parent->alt);
 	}
+}
 
-	if (in_minibuffer)
-		wmove(echoarea, 0, off_x + utf8_swidth_between(start, c));
+static void
+do_redraw_minibuffer(void)
+{
+	size_t		 off_y, off_x = 0;
+	const char	*start, *c;
 
-	wattr_off(echoarea, minibuffer_face.background, NULL);
+	/* unused, set by getyx */
+	(void)off_y;
+
+	mvwprintw(echoarea, 0, 0, "%s", ministate.prompt);
+	if (ministate.hist_cur != NULL)
+		wprintw(echoarea, "(%zu/%zu) ",
+		    ministate.hist_off + 1,
+		    ministate.history->len);
+
+	getyx(echoarea, off_y, off_x);
+
+	start = ministate.hist_cur != NULL
+		? ministate.hist_cur->h
+		: ministate.buf;
+	c = utf8_nth(ministate.buffer.current_line->line,
+	    ministate.buffer.cpoff);
+	while (utf8_swidth_between(start, c) > (size_t)COLS/2) {
+		start = utf8_next_cp(start);
+	}
+
+	waddstr(echoarea, start);
+
+	if (ministate.curmesg != NULL)
+		wprintw(echoarea, " [%s]", ministate.curmesg);
+
+	wmove(echoarea, 0, off_x + utf8_swidth_between(start, c));
 }
 
 static void
@@ -817,7 +830,7 @@ redraw_tab(struct tab *tab)
 	redraw_tabline();
 	redraw_body(tab);
 	redraw_modeline(tab);
-	redraw_echoarea();
+	redraw_minibuffer();
 
 	wnoutrefresh(tabline);
 	wnoutrefresh(modeline);
@@ -913,7 +926,7 @@ vmessage(const char *fmt, va_list ap)
 			ministate.curmesg = NULL;
 	}
 
-	redraw_echoarea();
+	redraw_minibuffer();
 	if (in_minibuffer) {
 		wrefresh(body);
 		wrefresh(echoarea);
