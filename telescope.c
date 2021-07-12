@@ -737,7 +737,7 @@ usage(int r)
 int
 main(int argc, char * const *argv)
 {
-	struct imsgbuf	 network_ibuf, fs_ibuf;
+	struct imsgbuf	 net_ibuf, fs_ibuf;
 	int		 net_fds[2], fs_fds[2];
 	int		 ch, configtest = 0, fail = 0;
 	int		 has_url = 0;
@@ -827,8 +827,8 @@ main(int argc, char * const *argv)
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, net_fds) == -1)
 		err(1, "socketpair");
 	start_child(PROC_NET, argv0, net_fds[1]);
-	imsg_init(&network_ibuf, net_fds[0]);
-	netibuf = &network_ibuf;
+	imsg_init(&net_ibuf, net_fds[0]);
+	netibuf = &net_ibuf;
 
 	setproctitle("ui");
 

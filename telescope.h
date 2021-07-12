@@ -356,7 +356,7 @@ extern const char	*err_pages[70];
 void		 parseconfig(const char *, int);
 
 /* sandbox.c */
-void		 sandbox_network_process(void);
+void		 sandbox_net_process(void);
 void		 sandbox_ui_process(void);
 void		 sandbox_fs_process(void);
 

@@ -24,7 +24,7 @@
 # include <unistd.h>
 
 void
-sandbox_network_process(void)
+sandbox_net_process(void)
 {
 	if (pledge("stdio inet dns", NULL) == -1)
 		err(1, "pledge");
@@ -64,7 +64,7 @@ sandbox_fs_process(void)
 #warning "No sandbox for this OS"
 
 void
-sandbox_network_process(void)
+sandbox_net_process(void)
 {
 	return;
 }

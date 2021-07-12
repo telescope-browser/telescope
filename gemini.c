@@ -589,7 +589,7 @@ client_main(void)
 	event_set(&imsgev, ibuf->fd, EV_READ | EV_PERSIST, handle_dispatch_imsg, ibuf);
 	event_add(&imsgev, NULL);
 
-	sandbox_network_process();
+	sandbox_net_process();
 
 	event_dispatch();
 	return 0;
