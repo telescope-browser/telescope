@@ -1,8 +1,8 @@
 bin_PROGRAMS =		telescope
 
 telescope_SOURCES =	cmd.c		\
-			cmd.h		\
 			cmd.gen.c	\
+			cmd.h		\
 			compat.h	\
 			compat/*.[ch]	\
 			defaults.c	\
