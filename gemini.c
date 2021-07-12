@@ -36,9 +36,8 @@
 # include <asr.h>
 #endif
 
-static struct event		 imsgev;
+static struct imsgev		*iev_ui;
 static struct tls_config	*tlsconf;
-static struct imsgbuf		*ibuf;
 
 struct req;
 
@@ -71,6 +70,8 @@ static void		 handle_proceed(struct imsg*, size_t);
 static void		 handle_stop(struct imsg*, size_t);
 static void		 handle_quit(struct imsg*, size_t);
 static void		 handle_dispatch_imsg(int, short, void*);
+
+static int		 net_send_ui(int, uint32_t, const void *, uint16_t);
 
 /* TODO: making this customizable */
 struct timeval timeout_for_handshake = { 5, 0 };
@@ -292,8 +293,7 @@ close_conn(int fd, short ev, void *d)
 static void
 close_with_err(struct req *req, const char *err)
 {
-	imsg_compose(ibuf, IMSG_ERR, req->id, 0, -1, err, strlen(err)+1);
-	imsg_flush(ibuf);
+	net_send_ui(IMSG_ERR, req->id, err, strlen(err)+1);
 	close_conn(0, 0, req);
 }
 
@@ -355,8 +355,7 @@ do_handshake(int fd, short ev, void *d)
 		close_with_errf(req, "handshake failed: %s", tls_error(req->ctx));
 		return;
 	}
-	imsg_compose(ibuf, IMSG_CHECK_CERT, req->id, 0, -1, hash, strlen(hash)+1);
-	imsg_flush(ibuf);
+	net_send_ui(IMSG_CHECK_CERT, req->id, hash, strlen(hash)+1);
 }
 
 static void
@@ -445,9 +444,8 @@ parse_reply(struct req *req)
 	*e = '\0';
 	e++;
 	len = e - req->buf;
-	imsg_compose(ibuf, IMSG_GOT_CODE, req->id, 0, -1, &code, sizeof(code));
-	imsg_compose(ibuf, IMSG_GOT_META, req->id, 0, -1, req->buf, len);
-	imsg_flush(ibuf);
+	net_send_ui(IMSG_GOT_CODE, req->id, &code, sizeof(code));
+	net_send_ui(IMSG_GOT_META, req->id, req->buf, len);
 
 	if (20 <= code && code < 30)
 		advance_buf(req, len+1); /* skip \n too */
@@ -468,9 +466,8 @@ copy_body(int fd, short ev, void *d)
 
 	for (;;) {
 		if (req->off != 0) {
-			imsg_compose(ibuf, IMSG_BUF, req->id, 0, -1,
+			net_send_ui(IMSG_BUF, req->id,
 			    req->buf, req->off);
-			imsg_flush(ibuf);
 			req->off = 0;
 		}
 
@@ -482,8 +479,7 @@ copy_body(int fd, short ev, void *d)
 			yield_w(req, copy_body, NULL);
 			return;
 		case 0:
-			imsg_compose(ibuf, IMSG_EOF, req->id, 0, -1, NULL, 0);
-			imsg_flush(ibuf);
+			net_send_ui(IMSG_EOF, req->id, NULL, 0);
 			close_conn(0, 0, req);
 			return;
 		default:
@@ -564,8 +560,16 @@ handle_quit(struct imsg *imsg, size_t datalen)
 static void
 handle_dispatch_imsg(int fd, short ev, void *d)
 {
-	struct imsgbuf	*ibuf = d;
-	dispatch_imsg(ibuf, handlers, sizeof(handlers));
+	struct imsgev	*iev = d;
+	dispatch_imsg(iev, ev, handlers, sizeof(handlers));
+}
+
+static int
+net_send_ui(int type, uint32_t peerid, const void *data,
+    uint16_t datalen)
+{
+	return imsg_compose_event(iev_ui, type, peerid, 0, -1,
+	    data, datalen);
 }
 
 int
@@ -583,11 +587,14 @@ client_main(void)
 	event_init();
 
 	/* Setup pipe and event handler to the main process */
-	if ((ibuf = calloc(1, sizeof(*ibuf))) == NULL)
+	if ((iev_ui = malloc(sizeof(*iev_ui))) == NULL)
 		die();
-	imsg_init(ibuf, 3);
-	event_set(&imsgev, ibuf->fd, EV_READ | EV_PERSIST, handle_dispatch_imsg, ibuf);
-	event_add(&imsgev, NULL);
+	imsg_init(&iev_ui->ibuf, 3);
+	iev_ui->handler = handle_dispatch_imsg;
+	iev_ui->events = EV_READ;
+	event_set(&iev_ui->ev, iev_ui->ibuf.fd, iev_ui->events,
+	    iev_ui->handler, iev_ui);
+	event_add(&iev_ui->ev, NULL);
 
 	sandbox_net_process();
 

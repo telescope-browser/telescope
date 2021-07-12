@@ -12,7 +12,8 @@
 #include "telescope.h"
 #include "ui.h"
 
-struct event		 netev, fsev;
+static struct imsgev	*iev_fs, *iev_net;
+
 struct tabshead		 tabshead = TAILQ_HEAD_INITIALIZER(tabshead);
 struct proxylist	 proxies = TAILQ_HEAD_INITIALIZER(proxies);
 
@@ -28,8 +29,6 @@ static struct proto protos[] = {
 	{ "about",	load_about_url },
 	{ NULL, NULL },
 };
-
-static struct imsgbuf	*netibuf, *fsibuf;
 
 static void		 die(void) __attribute__((__noreturn__));
 static struct tab	*tab_by_id(uint32_t);
@@ -51,6 +50,8 @@ static void		 handle_dispatch_imsg(int, short, void*);
 static void		 load_page_from_str(struct tab*, const char*);
 static void		 do_load_url(struct tab*, const char*);
 static pid_t		 start_child(enum telescope_process, const char *, int);
+static int		 ui_send_net(int, uint32_t, const void *, uint16_t);
+static int		 ui_send_fs(int, uint32_t, const void *, uint16_t);
 
 static imsg_handlerfn *handlers[] = {
 	[IMSG_ERR] = handle_imsg_err,
@@ -143,9 +144,7 @@ handle_imsg_check_cert(struct imsg *imsg, size_t datalen)
 		}
 		strlcpy(e->hash, hash, sizeof(e->hash));
 		tofu_add(&certs, e);
-		imsg_compose(fsibuf, IMSG_SAVE_CERT, tab->id, 0, -1,
-		    e, sizeof(*e));
-		imsg_flush(fsibuf);
+		ui_send_fs(IMSG_SAVE_CERT, tab->id, e, sizeof(*e));
 	} else
 		tofu_res = !strcmp(hash, e->hash);
 
@@ -157,9 +156,8 @@ handle_imsg_check_cert(struct imsg *imsg, size_t datalen)
 		else
 			tab->trust = TS_TRUSTED;
 
-		imsg_compose(netibuf, IMSG_CERT_STATUS, imsg->hdr.peerid, 0, -1,
+		ui_send_net(IMSG_CERT_STATUS, imsg->hdr.peerid,
 		    &tofu_res, sizeof(tofu_res));
-		imsg_flush(netibuf);
 	} else {
 		tab->trust = TS_UNTRUSTED;
 		load_page_from_str(tab, "# Certificate mismatch\n");
@@ -173,9 +171,8 @@ handle_imsg_check_cert(struct imsg *imsg, size_t datalen)
 static void
 handle_check_cert_user_choice(int accept, struct tab *tab)
 {
-	imsg_compose(netibuf, IMSG_CERT_STATUS, tab->id, 0, -1,
-	    &accept, sizeof(accept));
-	imsg_flush(netibuf);
+	ui_send_net(IMSG_CERT_STATUS, tab->id, &accept,
+	    sizeof(accept));
 
 	if (accept) {
 		/*
@@ -222,8 +219,7 @@ handle_maybe_save_new_cert(int accept, struct tab *tab)
 		strlcat(e->domain, port, sizeof(e->domain));
 	}
 	strlcpy(e->hash, tab->cert, sizeof(e->hash));
-	imsg_compose(fsibuf, IMSG_UPDATE_CERT, 0, 0, -1, e, sizeof(*e));
-	imsg_flush(fsibuf);
+	ui_send_fs(IMSG_UPDATE_CERT, 0, e, sizeof(*e));
 
 	tofu_update(&certs, e);
 
@@ -298,8 +294,7 @@ handle_imsg_got_meta(struct imsg *imsg, size_t datalen)
 		ui_require_input(tab, tab->code == 11);
 	} else if (tab->code == 20) {
 		if (setup_parser_for(tab)) {
-			imsg_compose(netibuf, IMSG_PROCEED, tab->id, 0, -1, NULL, 0);
-			imsg_flush(netibuf);
+			ui_send_net(IMSG_PROCEED, tab->id, NULL, 0);
 		} else {
 			load_page_from_str(tab, err_pages[UNKNOWN_TYPE_OR_CSET]);
 			ui_yornp("Can't display page, wanna save?",
@@ -341,8 +336,7 @@ handle_save_page_path(const char *path, unsigned int tabid)
 	tab = tab_by_id(tabid);
 	tab->path = strdup(path);
 
-	imsg_compose(fsibuf, IMSG_FILE_OPEN, tabid, 0, -1, path, strlen(path)+1);
-	imsg_flush(fsibuf);
+	ui_send_fs(IMSG_FILE_OPEN, tabid, path, strlen(path)+1);
 }
 
 static void
@@ -369,8 +363,7 @@ handle_imsg_file_opened(struct imsg *imsg, size_t datalen)
 		free(page);
 	} else {
 		tab->fd = imsg->fd;
-		imsg_compose(netibuf, IMSG_PROCEED, tab->id, 0, -1, NULL, 0);
-		imsg_flush(netibuf);
+		ui_send_net(IMSG_PROCEED, tab->id, NULL, 0);
 	}
 }
 
@@ -479,8 +472,8 @@ handle_imsg_update_cert_ok(struct imsg *imsg, size_t datalen)
 static void
 handle_dispatch_imsg(int fd, short ev, void *d)
 {
-	struct imsgbuf	*ibuf = d;
-	dispatch_imsg(ibuf, handlers, sizeof(handlers));
+	struct imsgev	*iev = d;
+	dispatch_imsg(iev, ev, handlers, sizeof(handlers));
 }
 
 static void
@@ -503,9 +496,8 @@ load_about_url(struct tab *tab, const char *url)
 
 	gemtext_initparser(&tab->buffer.page);
 
-	imsg_compose(fsibuf, IMSG_GET, tab->id, 0, -1,
+	ui_send_fs(IMSG_GET, tab->id,
 	    tab->hist_cur->h, strlen(tab->hist_cur->h)+1);
-	imsg_flush(fsibuf);
 }
 
 void
@@ -525,9 +517,8 @@ load_gemini_url(struct tab *tab, const char *url)
 
 	req.proto = PROTO_GEMINI;
 
-	imsg_compose(netibuf, IMSG_GET_RAW, tab->id, 0, -1,
+	ui_send_net(IMSG_GET_RAW, tab->id,
 	    &req, sizeof(req));
-	imsg_flush(netibuf);
 }
 
 void
@@ -548,9 +539,8 @@ load_via_proxy(struct tab *tab, const char *url, struct proxy *p)
 
 	req.proto = p->proto;
 
-	imsg_compose(netibuf, IMSG_GET_RAW, tab->id, 0, -1,
+	ui_send_net(IMSG_GET_RAW, tab->id,
 	    &req, sizeof(req));
-	imsg_flush(netibuf);
 }
 
 static void
@@ -646,8 +636,7 @@ load_next_page(struct tab *tab)
 void
 stop_tab(struct tab *tab)
 {
-	imsg_compose(netibuf, IMSG_STOP, tab->id, 0, -1, NULL, 0);
-	imsg_flush(netibuf);
+	ui_send_net(IMSG_STOP, tab->id, NULL, 0);
 
 	if (tab->fd != -1) {
 		close(tab->fd);
@@ -661,8 +650,8 @@ stop_tab(struct tab *tab)
 void
 add_to_bookmarks(const char *str)
 {
-	imsg_compose(fsibuf, IMSG_BOOKMARK_PAGE, 0, 0, -1, str, strlen(str)+1);
-	imsg_flush(fsibuf);
+	ui_send_fs(IMSG_BOOKMARK_PAGE, 0,
+	    str, strlen(str)+1);
 }
 
 void
@@ -670,17 +659,14 @@ save_session(void)
 {
 	struct tab *tab;
 
-	imsg_compose(fsibuf, IMSG_SESSION_START, 0, 0, -1, NULL, 0);
-	imsg_flush(fsibuf);
+	ui_send_fs(IMSG_SESSION_START, 0, NULL, 0);
 
 	TAILQ_FOREACH(tab, &tabshead, tabs) {
-		imsg_compose(fsibuf, IMSG_SESSION_TAB, 0, 0, -1,
+		ui_send_fs(IMSG_SESSION_TAB, 0,
 		    tab->hist_cur->h, strlen(tab->hist_cur->h)+1);
-		imsg_flush(fsibuf);
 	}
 
-	imsg_compose(fsibuf, IMSG_SESSION_END, 0, 0, -1, NULL, 0);
-	imsg_flush(fsibuf);
+	ui_send_fs(IMSG_SESSION_END, 0, NULL, 0);
 }
 
 static void
@@ -726,6 +712,21 @@ start_child(enum telescope_process p, const char *argv0, int fd)
 	err(1, "execvp(%s)", argv0);
 }
 
+static int
+ui_send_net(int type, uint32_t peerid, const void *data,
+    uint16_t datalen)
+{
+	return imsg_compose_event(iev_net, type, peerid, 0, -1, data,
+	    datalen);
+}
+
+static int
+ui_send_fs(int type, uint32_t peerid, const void *data, uint16_t datalen)
+{
+	return imsg_compose_event(iev_fs, type, peerid, 0, -1, data,
+	    datalen);
+}
+
 static void __attribute__((noreturn))
 usage(int r)
 {
@@ -737,8 +738,8 @@ usage(int r)
 int
 main(int argc, char * const *argv)
 {
-	struct imsgbuf	 net_ibuf, fs_ibuf;
-	int		 net_fds[2], fs_fds[2];
+	struct imsgev	 net_ibuf, fs_ibuf;
+	int		 pipe2net[2], pipe2fs[2];
 	int		 ch, configtest = 0, fail = 0;
 	int		 has_url = 0;
 	int		 proc = -1;
@@ -818,17 +819,19 @@ main(int argc, char * const *argv)
 	}
 
 	/* Start children. */
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, fs_fds) == -1)
+	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe2fs) == -1)
 		err(1, "socketpair");
-	start_child(PROC_FS, argv0, fs_fds[1]);
-	imsg_init(&fs_ibuf, fs_fds[0]);
-	fsibuf = &fs_ibuf;
+	start_child(PROC_FS, argv0, pipe2fs[1]);
+	imsg_init(&fs_ibuf.ibuf, pipe2fs[0]);
+	iev_fs = &fs_ibuf;
+	iev_fs->handler = handle_dispatch_imsg;
 
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, net_fds) == -1)
+	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe2net) == -1)
 		err(1, "socketpair");
-	start_child(PROC_NET, argv0, net_fds[1]);
-	imsg_init(&net_ibuf, net_fds[0]);
-	netibuf = &net_ibuf;
+	start_child(PROC_NET, argv0, pipe2net[1]);
+	imsg_init(&net_ibuf.ibuf, pipe2net[0]);
+	iev_net = &net_ibuf;
+	iev_net->handler = handle_dispatch_imsg;
 
 	setproctitle("ui");
 
@@ -839,13 +842,16 @@ main(int argc, char * const *argv)
 
 	event_init();
 
-	event_set(&netev, netibuf->fd, EV_READ | EV_PERSIST,
-	    handle_dispatch_imsg, netibuf);
-	event_add(&netev, NULL);
+	/* Setup event handlers for pipes to fs/net */
+	iev_fs->events = EV_READ;
+	event_set(&iev_fs->ev, iev_fs->ibuf.fd, iev_fs->events,
+	    iev_fs->handler, iev_fs);
+	event_add(&iev_fs->ev, NULL);
 
-	event_set(&fsev, fsibuf->fd, EV_READ | EV_PERSIST,
-	    handle_dispatch_imsg, fsibuf);
-	event_add(&fsev, NULL);
+	iev_net->events = EV_READ;
+	event_set(&iev_net->ev, iev_net->ibuf.fd, iev_net->events,
+	    iev_net->handler, iev_net);
+	event_add(&iev_net->ev, NULL);
 
 	if (ui_init()) {
 		load_last_session(session_new_tab_cb);
@@ -857,11 +863,8 @@ main(int argc, char * const *argv)
 		ui_end();
 	}
 
-	imsg_compose(netibuf, IMSG_QUIT, 0, 0, -1, NULL, 0);
-	imsg_flush(netibuf);
-
-	imsg_compose(fsibuf, IMSG_QUIT, 0, 0, -1, NULL, 0);
-	imsg_flush(fsibuf);
+	ui_send_fs(IMSG_QUIT, 0, NULL, 0);
+	ui_send_net(IMSG_QUIT, 0, NULL, 0);
 
 	return 0;
 }

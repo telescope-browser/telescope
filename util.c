@@ -22,6 +22,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+static void	 imsg_event_add(struct imsgev *);
+
 int
 mark_nonblock(int fd)
 {
@@ -61,27 +63,47 @@ unicode_isgraph(uint32_t cp)
 	return 1;
 }
 
-void
-dispatch_imsg(struct imsgbuf *ibuf, imsg_handlerfn **handlers, size_t size)
+static void
+imsg_event_add(struct imsgev *iev)
 {
-	struct imsg	imsg;
-	size_t		datalen, i;
-	ssize_t		n;
+	iev->events = EV_READ;
+	if (iev->ibuf.w.queued)
+		iev->events |= EV_WRITE;
 
-	if ((n = imsg_read(ibuf)) == -1) {
-		if (errno == EAGAIN || errno == EWOULDBLOCK)
-			return;
-                _exit(1);
+	event_del(&iev->ev);
+	event_set(&iev->ev, iev->ibuf.fd, iev->events, iev->handler, iev);
+	event_add(&iev->ev, NULL);
+}
+
+void
+dispatch_imsg(struct imsgev *iev, short event, imsg_handlerfn **handlers,
+    size_t size)
+{
+	struct imsgbuf	*ibuf;
+	struct imsg	 imsg;
+	size_t		 datalen, i;
+	ssize_t		 n;
+
+	ibuf = &iev->ibuf;
+
+	if (event & EV_READ) {
+		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
+			err(1, "imsg_read error");
+		if (n == 0)
+			err(1, "connection closed");
 	}
-
-	if (n == 0)
-		_exit(1);
+	if (event & EV_WRITE) {
+		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
+			err(1, "msgbuf_write");
+		if (n == 0)
+			err(1, "connection closed");
+	}
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
 			_exit(1);
 		if (n == 0)
-			return;
+			break;
 		datalen = imsg.hdr.len - IMSG_HEADER_SIZE;
 		i = imsg.hdr.type;
 		if (i > (size / sizeof(imsg_handlerfn*)) || handlers[i] == NULL)
@@ -89,4 +111,19 @@ dispatch_imsg(struct imsgbuf *ibuf, imsg_handlerfn **handlers, size_t size)
 		handlers[i](&imsg, datalen);
 		imsg_free(&imsg);
 	}
+
+	imsg_event_add(iev);
+}
+
+int
+imsg_compose_event(struct imsgev *iev, uint16_t type, uint32_t peerid,
+    pid_t pid, int fd, const void *data, uint16_t datalen)
+{
+	int	ret;
+
+	if ((ret = imsg_compose(&iev->ibuf, type, peerid, pid, fd, data,
+	    datalen) != -1))
+		imsg_event_add(iev);
+
+	return ret;
 }

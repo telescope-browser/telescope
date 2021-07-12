@@ -45,10 +45,9 @@ static void		 handle_session_start(struct imsg*, size_t);
 static void		 handle_session_tab(struct imsg*, size_t);
 static void		 handle_session_end(struct imsg*, size_t);
 static void		 handle_dispatch_imsg(int, short, void*);
+static int		 fs_send_ui(int, uint32_t, int, const void *, uint16_t);
 
-static struct event		 imsgev;
-static struct imsgbuf		*ibuf;
-
+static struct imsgev		*iev_ui;
 static FILE			*session;
 
 static char	bookmark_file[PATH_MAX];
@@ -85,22 +84,19 @@ serve_bookmarks(uint32_t peerid)
 		t = "# Bookmarks\n\n"
 		    "No bookmarks yet!\n"
 		    "Create ~/.telescope/bookmarks.gmi or use `bookmark-page'.\n";
-		imsg_compose(ibuf, IMSG_BUF, peerid, 0, -1, t, strlen(t));
-		imsg_compose(ibuf, IMSG_EOF, peerid, 0, -1, NULL, 0);
-		imsg_flush(ibuf);
+		fs_send_ui(IMSG_BUF, peerid, -1, t, strlen(t));
+		fs_send_ui(IMSG_EOF, peerid, -1, NULL, 0);
 		return;
 	}
 
 	for (;;) {
 		r = fread(buf, 1, sizeof(buf), f);
-		imsg_compose(ibuf, IMSG_BUF, peerid, 0, -1, buf, r);
-		imsg_flush(ibuf);
+		fs_send_ui(IMSG_BUF, peerid, -1, buf, r);
 		if (r != sizeof(buf))
 			break;
 	}
 
-	imsg_compose(ibuf, IMSG_EOF, peerid, 0, -1, NULL, 0);
-	imsg_flush(ibuf);
+	fs_send_ui(IMSG_EOF, peerid, -1, NULL, 0);
 
 	fclose(f);
 }
@@ -108,10 +104,8 @@ serve_bookmarks(uint32_t peerid)
 static void
 send_page(struct imsg *imsg, const char *page)
 {
-	imsg_compose(ibuf, IMSG_BUF, imsg->hdr.peerid, 0, -1,
-	    page, strlen(page));
-	imsg_compose(ibuf, IMSG_EOF, imsg->hdr.peerid, 0, -1, NULL, 0);
-	imsg_flush(ibuf);
+	fs_send_ui(IMSG_BUF, imsg->hdr.peerid, -1, page, strlen(page));
+	fs_send_ui(IMSG_EOF, imsg->hdr.peerid, -1, NULL, 0);
 }
 
 static void
@@ -137,9 +131,8 @@ handle_get(struct imsg *imsg, size_t datalen)
 		send_page(imsg, about_new);
 	} else {
 		p = "# not found!\n";
-		imsg_compose(ibuf, IMSG_BUF, imsg->hdr.peerid, 0, -1, p, strlen(p));
-		imsg_compose(ibuf, IMSG_EOF, imsg->hdr.peerid, 0, -1, NULL, 0);
-		imsg_flush(ibuf);
+		fs_send_ui(IMSG_BUF, imsg->hdr.peerid, -1, p, strlen(p));
+		fs_send_ui(IMSG_EOF, imsg->hdr.peerid, -1, NULL, 0);
 	}
 }
 
@@ -169,8 +162,7 @@ handle_bookmark_page(struct imsg *imsg, size_t datalen)
 
 	res = 0;
 end:
-	imsg_compose(ibuf, IMSG_BOOKMARK_OK, 0, 0, -1, &res, sizeof(res));
-	imsg_flush(ibuf);
+	fs_send_ui(IMSG_BOOKMARK_OK, 0, -1, &res, sizeof(res));
 }
 
 static void
@@ -195,9 +187,8 @@ handle_save_cert(struct imsg *imsg, size_t datalen)
 
 	res = 0;
 end:
-	imsg_compose(ibuf, IMSG_SAVE_CERT_OK, imsg->hdr.peerid, 0, -1,
+	fs_send_ui(IMSG_SAVE_CERT_OK, imsg->hdr.peerid, -1,
 	    &res, sizeof(res));
-	imsg_flush(ibuf);
 }
 
 static void
@@ -257,9 +248,8 @@ handle_update_cert(struct imsg *imsg, size_t datalen)
 	res = rename(sfn, known_hosts_file) != -1;
 
 end:
-	imsg_compose(ibuf, IMSG_UPDATE_CERT_OK, imsg->hdr.peerid, 0, -1,
+	fs_send_ui(IMSG_UPDATE_CERT_OK, imsg->hdr.peerid, -1,
 	    &res, sizeof(res));
-	imsg_flush(ibuf);
 }
 
 static void
@@ -274,13 +264,11 @@ handle_file_open(struct imsg *imsg, size_t datalen)
 
 	if ((fd = open(path, O_WRONLY | O_TRUNC | O_CREAT, 0644)) == -1) {
 		e = strerror(errno);
-		imsg_compose(ibuf, IMSG_FILE_OPENED, imsg->hdr.peerid, 0, -1,
+		fs_send_ui(IMSG_FILE_OPENED, imsg->hdr.peerid, -1,
 		    e, strlen(e)+1);
 	} else
-		imsg_compose(ibuf, IMSG_FILE_OPENED, imsg->hdr.peerid, 0, fd,
+		fs_send_ui(IMSG_FILE_OPENED, imsg->hdr.peerid, fd,
 		    NULL, 0);
-
-	imsg_flush(ibuf);
 }
 
 static void
@@ -320,8 +308,16 @@ handle_session_end(struct imsg *imsg, size_t datalen)
 static void
 handle_dispatch_imsg(int fd, short ev, void *d)
 {
-	struct imsgbuf	*ibuf = d;
-	dispatch_imsg(ibuf, handlers, sizeof(handlers));
+	struct imsgev	*iev = d;
+	dispatch_imsg(iev, ev, handlers, sizeof(handlers));
+}
+
+static int
+fs_send_ui(int type, uint32_t peerid, int fd, const void *data,
+    uint16_t datalen)
+{
+	return imsg_compose_event(iev_ui, type, peerid, 0, fd,
+	    data, datalen);
 }
 
 int
@@ -358,11 +354,15 @@ fs_main(void)
 
 	event_init();
 
-	if ((ibuf = calloc(1, sizeof(*ibuf))) == NULL)
+	/* Setup pipe and event handler to the main process */
+	if ((iev_ui = malloc(sizeof(*iev_ui))) == NULL)
 		die();
-	imsg_init(ibuf, 3);
-	event_set(&imsgev, ibuf->fd, EV_READ | EV_PERSIST, handle_dispatch_imsg, ibuf);
-	event_add(&imsgev, NULL);
+	imsg_init(&iev_ui->ibuf, 3);
+	iev_ui->handler = handle_dispatch_imsg;
+	iev_ui->events = EV_READ;
+	event_set(&iev_ui->ev, iev_ui->ibuf.fd, iev_ui->events,
+	    iev_ui->handler, iev_ui);
+	event_add(&iev_ui->ev, NULL);
 
 	sandbox_fs_process();
 
