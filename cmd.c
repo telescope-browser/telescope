@@ -21,6 +21,7 @@
 #include "minibuffer.h"
 #include "telescope.h"
 #include "ui.h"
+#include "utf8.h"
 
 /* return 1 if moved, 0 otherwise */
 static inline int

@@ -43,6 +43,7 @@
 #include "minibuffer.h"
 #include "telescope.h"
 #include "ui.h"
+#include "utf8.h"
 
 static struct event	stdioev, winchev;
 

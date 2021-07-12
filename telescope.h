@@ -378,18 +378,6 @@ void			 tofu_add(struct ohash*, struct tofu_entry*);
 void			 tofu_update(struct ohash*, struct tofu_entry*);
 void			 tofu_temp_trust(struct ohash *, const char *, const char *, const char *);
 
-/* utf.8 */
-uint32_t	 utf8_decode(uint32_t*restrict, uint32_t*restrict, uint8_t);
-size_t		 utf8_encode(uint32_t, char*);
-char		*utf8_nth(char*, size_t);
-size_t		 utf8_cplen(char*);
-size_t		 utf8_chwidth(uint32_t);
-size_t		 utf8_snwidth(const char*, size_t);
-size_t		 utf8_swidth(const char*);
-size_t		 utf8_swidth_between(const char*, const char*);
-char		*utf8_next_cp(const char*);
-char		*utf8_prev_cp(const char*, const char*);
-
 /* util.c */
 int		 mark_nonblock(int);
 int		 has_prefix(const char*, const char*);

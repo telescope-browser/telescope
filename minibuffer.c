@@ -19,6 +19,7 @@
 
 #include "minibuffer.h"
 #include "ui.h"
+#include "utf8.h"
 
 static void		 minibuffer_hist_save_entry(void);
 static void		 minibuffer_self_insert(void);

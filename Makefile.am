@@ -27,6 +27,7 @@ telescope_SOURCES =	cmd.c		\
 			ui.c		\
 			ui.h		\
 			utf8.c		\
+			utf8.h		\
 			util.c		\
 			wrap.c
 

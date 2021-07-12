@@ -14,10 +14,11 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "telescope.h"
-
 #include <stdlib.h>
 #include <string.h>
+
+#include "telescope.h"
+#include "utf8.h"
 
 /*
  * Text wrapping
