@@ -22,6 +22,7 @@
  *  - UTF8
  */
 
+#include "parser.h"
 #include "telescope.h"
 
 #include <ctype.h>

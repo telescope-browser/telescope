@@ -14,11 +14,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "telescope.h"
-
 #include <ctype.h>
 #include <fnmatch.h>
 #include <string.h>
+
+#include "parser.h"
+#include "telescope.h"
 
 static int	check_for_utf8(char*);
 

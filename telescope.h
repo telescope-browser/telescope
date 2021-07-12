@@ -328,9 +328,6 @@ int		 load_last_session(void(*)(const char*));
 /* gemini.c */
 int		 client_main(void);
 
-/* gemtext.c */
-void		 gemtext_initparser(struct parser*);
-
 /* hist.c */
 void		 hist_clear_forward(struct histhead*, struct hist*);
 void		 hist_push(struct histhead*, struct hist*);
@@ -358,11 +355,6 @@ extern const char	*err_pages[70];
 /* parse.y */
 void		 parseconfig(const char *, int);
 
-/* parser.c */
-int		 parser_append(struct parser*, const char*, size_t);
-int		 parser_set_buf(struct parser*, const char*, size_t);
-int		 parser_foreach_line(struct parser*, const char*, size_t, parsechunkfn);
-
 /* sandbox.c */
 void		 sandbox_network_process(void);
 void		 sandbox_ui_process(void);
@@ -378,9 +370,6 @@ int		 load_next_page(struct tab*);
 void		 stop_tab(struct tab*);
 void		 add_to_bookmarks(const char*);
 void		 save_session(void);
-
-/* textplain.c */
-void		 textplain_initparser(struct parser*);
 
 /* tofu.c */
 void			 tofu_init(struct ohash*, unsigned int, ptrdiff_t);
