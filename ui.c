@@ -30,9 +30,6 @@
  *
  */
 
-#include "minibuffer.h"
-#include "telescope.h"
-
 #include <assert.h>
 #include <curses.h>
 #include <event.h>
@@ -42,6 +39,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#include "minibuffer.h"
+#include "telescope.h"
+#include "ui.h"
 
 static struct event	stdioev, winchev;
 

@@ -14,13 +14,14 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "telescope.h"
-
 #include <curses.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#include "telescope.h"
+#include "ui.h"
 
 char *new_tab_url = NULL;
 int fill_column = 80;

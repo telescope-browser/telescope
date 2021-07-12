@@ -10,6 +10,7 @@
 
 #include "parser.h"
 #include "telescope.h"
+#include "ui.h"
 
 struct event		 netev, fsev;
 struct tabshead		 tabshead = TAILQ_HEAD_INITIALIZER(tabshead);

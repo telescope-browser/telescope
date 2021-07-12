@@ -18,6 +18,7 @@
 #include <string.h>
 
 #include "minibuffer.h"
+#include "ui.h"
 
 static void		 minibuffer_hist_save_entry(void);
 static void		 minibuffer_self_insert(void);
