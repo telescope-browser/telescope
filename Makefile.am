@@ -6,6 +6,7 @@ telescope_SOURCES =	cmd.c		\
 			compat.h	\
 			compat/*.[ch]	\
 			defaults.c	\
+			defaults.h	\
 			fs.c		\
 			gemini.c	\
 			gemtext.c	\

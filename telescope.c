@@ -8,6 +8,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "defaults.h"
 #include "pages.h"
 #include "parser.h"
 #include "telescope.h"

@@ -20,6 +20,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "defaults.h"
 #include "telescope.h"
 #include "ui.h"
 

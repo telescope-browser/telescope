@@ -40,6 +40,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "defaults.h"
 #include "minibuffer.h"
 #include "telescope.h"
 #include "ui.h"
