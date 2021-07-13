@@ -1202,8 +1202,8 @@ ui_yornp(const char *prompt, void (*fn)(int, struct tab *),
 }
 
 void
-ui_read(const char *prompt, void (*fn)(const char*, unsigned int),
-    unsigned int data)
+ui_read(const char *prompt, void (*fn)(const char*, struct tab *),
+    struct tab *data)
 {
 	completing_read(prompt, fn, data);
 	redraw_tab(current_tab());

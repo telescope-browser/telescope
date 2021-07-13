@@ -32,8 +32,8 @@ static void		 read_select(void);
 static void (*yornp_cb)(int, struct tab *);
 static struct tab *yornp_data;
 
-static void (*read_cb)(const char*, unsigned int);
-static unsigned int read_data;
+static void (*read_cb)(const char*, struct tab *);
+static struct tab *read_data;
 
 struct histhead eecmd_history,
 	ir_history,
@@ -284,8 +284,8 @@ yornp(const char *prompt, void (*fn)(int, struct tab*),
  * Not yet "completing", but soon maybe...
  */
 void
-completing_read(const char *prompt, void (*fn)(const char *, unsigned int),
-    unsigned int data)
+completing_read(const char *prompt, void (*fn)(const char *, struct tab *),
+    struct tab *data)
 {
 	size_t len;
 

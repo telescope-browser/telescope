@@ -24,7 +24,7 @@ void	 enter_minibuffer(void(*)(void), void(*)(void), void(*)(void),
 void	 exit_minibuffer(void);
 void	 yornp(const char *, void (*)(int, struct tab *), struct tab *);
 void	 completing_read(const char *,
-	     void (*)(const char *, unsigned int),
-	     unsigned int);
+	     void (*)(const char *, struct tab *),
+	     struct tab *);
 
 #endif

@@ -40,7 +40,7 @@ static void		 handle_maybe_save_new_cert(int, struct tab *);
 static void		 handle_imsg_got_code(struct imsg*, size_t);
 static void		 handle_imsg_got_meta(struct imsg*, size_t);
 static void		 handle_maybe_save_page(int, struct tab *);
-static void		 handle_save_page_path(const char *, unsigned int);
+static void		 handle_save_page_path(const char *, struct tab *);
 static void		 handle_imsg_file_opened(struct imsg*, size_t);
 static void		 handle_imsg_buf(struct imsg*, size_t);
 static void		 handle_imsg_eof(struct imsg*, size_t);
@@ -319,25 +319,22 @@ static void
 handle_maybe_save_page(int dosave, struct tab *tab)
 {
 	if (dosave)
-		ui_read("Save to path", handle_save_page_path, tab->id);
+		ui_read("Save to path", handle_save_page_path, tab);
 	else
 		stop_tab(tab);
 }
 
 static void
-handle_save_page_path(const char *path, unsigned int tabid)
+handle_save_page_path(const char *path, struct tab *tab)
 {
-	struct tab *tab;
-
 	if (path == NULL) {
-		stop_tab(tab_by_id(tabid));
+		stop_tab(tab);
 		return;
 	}
 
-	tab = tab_by_id(tabid);
 	tab->path = strdup(path);
 
-	ui_send_fs(IMSG_FILE_OPEN, tabid, path, strlen(path)+1);
+	ui_send_fs(IMSG_FILE_OPEN, tab->id, path, strlen(path)+1);
 }
 
 static void
