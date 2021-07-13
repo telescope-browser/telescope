@@ -254,13 +254,11 @@ dispatch_stdio(int fd, short ev, void *d)
 	if (thiskey.cp != 0) {
 		utf8_encode(thiskey.cp, tmp);
 		strlcat(keybuf, tmp, sizeof(keybuf));
+	} else if ((keyname = unkbd(thiskey.key)) != NULL) {
+		strlcat(keybuf, keyname, sizeof(keybuf));
 	} else {
-		if ((keyname = unkbd(thiskey.key)) != NULL)
-			strlcat(keybuf, keyname, sizeof(keybuf));
-		else {
-			tmp[0] = thiskey.key;
-			strlcat(keybuf, tmp, sizeof(keybuf));
-		}
+		tmp[0] = thiskey.key;
+		strlcat(keybuf, tmp, sizeof(keybuf));
 	}
 
 	TAILQ_FOREACH(k, &current_map->m, keymaps) {
