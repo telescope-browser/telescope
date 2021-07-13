@@ -347,18 +347,6 @@ int		 kmap_define_key(struct kmap*, const char*, void(*)(struct buffer*));
 /* mime.c */
 int		 setup_parser_for(struct tab*);
 
-/* pages.c */
-extern const char	*about_about;
-extern const char	*about_blank;
-extern const char	*about_help;
-extern const char	*about_new;
-
-#define CANNOT_FETCH		0
-#define TOO_MUCH_REDIRECTS	1
-#define MALFORMED_RESPONSE	2
-#define UNKNOWN_TYPE_OR_CSET	3
-extern const char	*err_pages[70];
-
 /* parse.y */
 void		 parseconfig(const char *, int);
 

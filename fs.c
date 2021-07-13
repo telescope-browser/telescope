@@ -31,6 +31,7 @@
 #include <unistd.h>
 
 #include "telescope.h"
+#include "pages.h"
 
 static void		 die(void) __attribute__((__noreturn__));
 static void		 serve_bookmarks(uint32_t);

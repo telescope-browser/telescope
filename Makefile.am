@@ -16,6 +16,7 @@ telescope_SOURCES =	cmd.c		\
 			minibuffer.c	\
 			minibuffer.h	\
 			pages.c		\
+			pages.h		\
 			parse.y		\
 			parser.c	\
 			parser.h	\

@@ -14,7 +14,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "telescope.h"
+#include "config.h"
+#include "pages.h"
 
 #define ASCII_ART							\
 	"```An Ascii art of the word \"Telescope\"\n"			\

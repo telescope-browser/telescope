@@ -8,6 +8,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "pages.h"
 #include "parser.h"
 #include "telescope.h"
 #include "ui.h"
