@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "defaults.h"
 #include "minibuffer.h"
 #include "telescope.h"
 #include "ui.h"
@@ -346,7 +347,7 @@ cmd_execute_extended_command(struct buffer *buffer)
 	}
 
 	enter_minibuffer(eecmd_self_insert, eecmd_select, exit_minibuffer,
-	    &eecmd_history);
+	    &eecmd_history, NULL, NULL);
 
 	len = sizeof(ministate.prompt);
 	strlcpy(ministate.prompt, "", len);
@@ -481,7 +482,7 @@ cmd_load_url(struct buffer *buffer)
 	}
 
 	enter_minibuffer(lu_self_insert, lu_select, exit_minibuffer,
-	    &lu_history);
+	    &lu_history, NULL, NULL);
 	strlcpy(ministate.prompt, "Load URL: ", sizeof(ministate.prompt));
 	strlcpy(ministate.buf, "gemini://", sizeof(ministate.buf));
 	cmd_move_end_of_line(&ministate.buffer);
@@ -498,7 +499,7 @@ cmd_load_current_url(struct buffer *buffer)
 	}
 
 	enter_minibuffer(lu_self_insert, lu_select, exit_minibuffer,
-	    &lu_history);
+	    &lu_history, NULL, NULL);
 	strlcpy(ministate.prompt, "Load URL: ", sizeof(ministate.prompt));
 	strlcpy(ministate.buf, tab->hist_cur->h, sizeof(ministate.buf));
 	ministate.buffer.cpoff = utf8_cplen(ministate.buf);
@@ -509,7 +510,8 @@ cmd_bookmark_page(struct buffer *buffer)
 {
 	struct tab *tab = current_tab();
 
-	enter_minibuffer(lu_self_insert, bp_select, exit_minibuffer, NULL);
+	enter_minibuffer(lu_self_insert, bp_select, exit_minibuffer, NULL,
+	    NULL, NULL);
 	strlcpy(ministate.prompt, "Bookmark URL: ", sizeof(ministate.prompt));
 	strlcpy(ministate.buf, tab->hist_cur->h, sizeof(ministate.buf));
 	ministate.buffer.cpoff = utf8_cplen(ministate.buf);

@@ -230,7 +230,8 @@ read_select(void)
 
 void
 enter_minibuffer(void (*self_insert_fn)(void), void (*donefn)(void),
-    void (*abortfn)(void), struct histhead *hist)
+    void (*abortfn)(void), struct histhead *hist,
+    complfn *complfn, void *compldata)
 {
 	in_minibuffer = 1;
 	base_map = &minibuffer_map;
@@ -273,7 +274,7 @@ yornp(const char *prompt, void (*fn)(int, struct tab*),
 	yornp_cb = fn;
 	yornp_data = data;
 	enter_minibuffer(yornp_self_insert, yornp_self_insert,
-	    yornp_abort, NULL);
+	    yornp_abort, NULL, NULL, NULL);
 
 	len = sizeof(ministate.prompt);
 	strlcpy(ministate.prompt, prompt, len);
@@ -285,7 +286,7 @@ yornp(const char *prompt, void (*fn)(int, struct tab*),
  */
 void
 completing_read(const char *prompt, void (*fn)(const char *, struct tab *),
-    struct tab *data)
+    struct tab *data, complfn *complfn, void *compldata)
 {
 	size_t len;
 
@@ -295,7 +296,7 @@ completing_read(const char *prompt, void (*fn)(const char *, struct tab *),
 	read_cb = fn;
 	read_data = data;
 	enter_minibuffer(read_self_insert, read_select, read_abort,
-	    &read_history);
+	    &read_history, complfn, compldata);
 
 	len = sizeof(ministate.prompt);
 	strlcpy(ministate.prompt, prompt, len);

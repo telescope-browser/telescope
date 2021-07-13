@@ -81,7 +81,7 @@ struct thiskey thiskey;
 static struct event	resizeev;
 static struct timeval	resize_timer = { 0, 250000 };
 
-static WINDOW	*tabline, *body, *modeline, *echoarea;
+static WINDOW	*tabline, *body, *modeline, *echoarea, *minibuffer;
 
 int			 body_lines, body_cols;
 
@@ -1107,6 +1107,8 @@ ui_init()
 		return 0;
 	if ((echoarea = newwin(1, COLS, LINES-1, 0)) == NULL)
 		return 0;
+	if ((minibuffer = newwin(1, COLS, LINES-1, 0)) == NULL)
+		return 0;
 	if ((help = newwin(1, 1, 1, 0)) == NULL)
 		return 0;
 
@@ -1191,7 +1193,7 @@ ui_require_input(struct tab *tab, int hide)
 	switch_to_tab(tab);
 
 	enter_minibuffer(ir_self_insert, ir_select, exit_minibuffer,
-	    &ir_history);
+	    &ir_history, NULL, NULL);
 	strlcpy(ministate.prompt, "Input required: ",
 	    sizeof(ministate.prompt));
 	redraw_tab(tab);
@@ -1209,7 +1211,7 @@ void
 ui_read(const char *prompt, void (*fn)(const char*, struct tab *),
     struct tab *data)
 {
-	completing_read(prompt, fn, data);
+	completing_read(prompt, fn, data, NULL, NULL);
 	redraw_tab(current_tab());
 }
 

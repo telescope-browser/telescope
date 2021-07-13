@@ -19,12 +19,29 @@
 
 #include "telescope.h"
 
+/* need to be true-ish */
+#define MB_READ		1
+#define MB_COMPREAD	2
+
+typedef char *(complfn)(void *);
+
 void	 enter_minibuffer(void(*)(void), void(*)(void), void(*)(void),
-	     struct histhead *);
+    struct histhead *,
+    complfn *, void *);
+
 void	 exit_minibuffer(void);
 void	 yornp(const char *, void (*)(int, struct tab *), struct tab *);
+
+/*
+ * completing_read asks the user for something using the minibuffer.
+ * The first argument is the string prompt.  The second and third are
+ * the callback to call when done and the data; the callback function
+ * can't be NULL.  The last two arguments are the completion function
+ * and its data; if not given, no completion will be shown.  The
+ * function providing the completion will be called asynchronously.
+ */
 void	 completing_read(const char *,
-	     void (*)(const char *, struct tab *),
-	     struct tab *);
+    void (*)(const char *, struct tab *), struct tab *,
+    complfn *, void *);
 
 #endif
