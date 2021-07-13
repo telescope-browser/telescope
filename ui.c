@@ -311,25 +311,28 @@ static void
 handle_resize_nodelay(int s, short ev, void *d)
 {
 	struct tab	*tab;
+	int		 lines;
 
 	endwin();
 	refresh();
 	clear();
 
+	lines = LINES;
+
 	/* move and resize the windows, in reverse order! */
 
-	mvwin(echoarea, LINES-1, 0);
+	mvwin(echoarea, --lines, 0);
 	wresize(echoarea, 1, COLS);
 
-	mvwin(modeline, LINES-2, 0);
+	mvwin(modeline, --lines, 0);
 	wresize(modeline, 1, COLS);
 
-	body_lines = LINES-3;
+	body_lines = --lines;
 	body_cols = COLS;
 
 	if (side_window) {
 		help_cols = 0.3 * COLS;
-		help_lines = LINES-3;
+		help_lines = lines;
 		mvwin(help, 1, 0);
 		wresize(help, help_lines, help_cols);
 
