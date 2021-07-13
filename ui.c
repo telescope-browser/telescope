@@ -74,6 +74,7 @@ static void		 recompute_help(void);
 static void		 update_loading_anim(int, short, void*);
 static void		 stop_loading_anim(struct tab*);
 
+static int		 too_small;
 static int		 x_offset;
 
 struct thiskey thiskey;
@@ -239,6 +240,10 @@ dispatch_stdio(int fd, short ev, void *d)
 	const char	*keyname;
 	char		 tmp[5] = {0};
 
+	/* TODO: schedule a redraw? */
+	if (too_small)
+		return;
+
 	if (!readkey())
 		return;
 
@@ -318,6 +323,13 @@ handle_resize_nodelay(int s, short ev, void *d)
 	clear();
 
 	lines = LINES;
+
+	if ((too_small = lines < 15)) {
+		erase();
+		printw("Window too small.");
+		refresh();
+		return;
+	}
 
 	/* move and resize the windows, in reverse order! */
 
@@ -845,6 +857,9 @@ place_cursor(int soft)
 static void
 redraw_tab(struct tab *tab)
 {
+	if (too_small)
+		return;
+
 	if (side_window) {
 		redraw_help();
 		wnoutrefresh(help);
