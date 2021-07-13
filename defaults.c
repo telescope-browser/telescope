@@ -224,7 +224,9 @@ load_default_keys(void)
 	global_set_key("C-x t m",	cmd_tab_move);
 	global_set_key("C-x t M",	cmd_tab_move_to);
 
+	global_set_key("B",		cmd_previous_page);
 	global_set_key("C-M-b",		cmd_previous_page);
+	global_set_key("F",		cmd_next_page);
 	global_set_key("C-M-f",		cmd_next_page);
 
 	global_set_key("<f7> a",	cmd_bookmark_page);

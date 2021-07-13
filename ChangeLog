@@ -1,3 +1,9 @@
+2021-07-13  Omar Polo  <op@omarpolo.com>
+
+	* pages.c: advertise B and F instead of C-M-b/C-M-f.
+
+	* defaults.c (load_default_keys): bind B/F to previous/next-page.  I'm bad at choosing keybindings...
+
 2021-07-12  Omar Polo  <op@omarpolo.com>
 
 	* util.c (dispatch_imsg): refactor: all imsgs are completely asynchronous

@@ -62,7 +62,7 @@ const char *about_help =
 	"\n"
 	"=> gemini://gemini.circumlunar.space Project Gemini Homepage\n"
 	"\n"
-	"> Tip: use `C-M-b' and `C-M-f' (or `H' and `L') to navigate "
+	"> Tip: use `B' and `F' (or `H' and `L') to navigate"
 	" forward and backward in the history.\n"
 	"\n"
 	"> Tip: move the cursor over a link and press M-RET (alt-enter) to"
