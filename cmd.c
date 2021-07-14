@@ -487,7 +487,7 @@ cmd_tab_select(struct buffer *buffer)
 		return;
 	}
 
-	enter_minibuffer(minibuffer_self_insert, ts_select, exit_minibuffer,
+	enter_minibuffer(sensible_self_insert, ts_select, exit_minibuffer,
 	    NULL, compl_ts, NULL);
 	strlcpy(ministate.prompt, "Select tab: ", sizeof(ministate.prompt));
 }
@@ -500,7 +500,7 @@ cmd_load_url(struct buffer *buffer)
 		return;
 	}
 
-	enter_minibuffer(lu_self_insert, lu_select, exit_minibuffer,
+	enter_minibuffer(sensible_self_insert, lu_select, exit_minibuffer,
 	    &lu_history, NULL, NULL);
 	strlcpy(ministate.prompt, "Load URL: ", sizeof(ministate.prompt));
 	strlcpy(ministate.buf, "gemini://", sizeof(ministate.buf));
@@ -517,7 +517,7 @@ cmd_load_current_url(struct buffer *buffer)
 		return;
 	}
 
-	enter_minibuffer(lu_self_insert, lu_select, exit_minibuffer,
+	enter_minibuffer(sensible_self_insert, lu_select, exit_minibuffer,
 	    &lu_history, NULL, NULL);
 	strlcpy(ministate.prompt, "Load URL: ", sizeof(ministate.prompt));
 	strlcpy(ministate.buf, tab->hist_cur->h, sizeof(ministate.buf));
@@ -538,7 +538,7 @@ cmd_bookmark_page(struct buffer *buffer)
 {
 	struct tab *tab = current_tab();
 
-	enter_minibuffer(lu_self_insert, bp_select, exit_minibuffer, NULL,
+	enter_minibuffer(sensible_self_insert, bp_select, exit_minibuffer, NULL,
 	    NULL, NULL);
 	strlcpy(ministate.prompt, "Bookmark URL: ", sizeof(ministate.prompt));
 	strlcpy(ministate.buf, tab->hist_cur->h, sizeof(ministate.buf));
@@ -565,7 +565,7 @@ cmd_link_select(struct buffer *buffer)
 		return;
 	}
 
-	enter_minibuffer(minibuffer_self_insert, ls_select, exit_minibuffer,
+	enter_minibuffer(sensible_self_insert, ls_select, exit_minibuffer,
 	    NULL, compl_ls, TAILQ_FIRST(&buffer->page.head));
 	strlcpy(ministate.prompt, "Select link: ", sizeof(ministate.prompt));
 }
@@ -578,7 +578,7 @@ cmd_swiper(struct buffer *buffer)
 		return;
 	}
 
-	enter_minibuffer(minibuffer_self_insert, swiper_select, exit_minibuffer,
+	enter_minibuffer(sensible_self_insert, swiper_select, exit_minibuffer,
 	    NULL, compl_swiper, TAILQ_FIRST(&buffer->page.head));
 	strlcpy(ministate.prompt, "Select line: ", sizeof(ministate.prompt));
 }

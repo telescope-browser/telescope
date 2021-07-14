@@ -136,6 +136,18 @@ minibuffer_self_insert(void)
 }
 
 void
+sensible_self_insert(void)
+{
+	if (thiskey.meta || unicode_isspace(thiskey.key) ||
+	    !unicode_isgraph(thiskey.key)) {
+		global_key_unbound();
+		return;
+	}
+
+	minibuffer_self_insert();
+}
+
+void
 eecmd_self_insert(void)
 {
 	if (thiskey.meta || unicode_isspace(thiskey.cp) ||
@@ -187,18 +199,6 @@ ir_select(void)
 	phos_uri_set_query(&uri, ministate.buf);
 	phos_serialize_uri(&uri, buf, sizeof(buf));
 	load_url_in_tab(tab, buf);
-}
-
-void
-lu_self_insert(void)
-{
-	if (thiskey.meta || unicode_isspace(thiskey.key) ||
-	    !unicode_isgraph(thiskey.key)) {
-		global_key_unbound();
-		return;
-	}
-
-	minibuffer_self_insert();
 }
 
 void
