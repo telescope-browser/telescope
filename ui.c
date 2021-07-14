@@ -59,7 +59,7 @@ static void		 handle_resize_nodelay(int, short, void*);
 static int		 wrap_page(struct buffer*, int);
 static void		 print_vline(int, int, WINDOW*, struct vline*);
 static void		 redraw_tabline(void);
-static void		 redraw_window(WINDOW*, int, int, struct buffer*);
+static void		 redraw_window(WINDOW*, int, int, int, struct buffer*);
 static void		 redraw_help(void);
 static void		 redraw_body(struct tab*);
 static void		 redraw_modeline(struct tab*);
@@ -417,12 +417,8 @@ wrap_page(struct buffer *buffer, int width)
 			break;
 		case LINE_COMPL:
 		case LINE_COMPL_CURRENT:
-			/*
-			 * TODO: should be width, but will break the
-			 * rendering.  Fix when unlocking completions
-			 * buffer from olivetti-mode.
-			 */
-			wrap_one(buffer, prfx, l, MIN(fill_column, width));
+			wrap_one(buffer, prfx, l, width);
+			break;
 		}
 
 		if (top_orig == l && buffer->top_line == NULL) {
@@ -639,7 +635,7 @@ adjust_line(struct vline *vl, struct buffer *buffer)
 }
 
 static void
-redraw_window(WINDOW *win, int height, int width, struct buffer *buffer)
+redraw_window(WINDOW *win, int off, int height, int width, struct buffer *buffer)
 {
         struct vline	*vl;
 	int		 l, onscreen;
@@ -677,7 +673,7 @@ again:
 			continue;
 
 		wmove(win, l, 0);
-		print_vline(x_offset, width, win, vl);
+		print_vline(off, width, win, vl);
 
 		if (vl == buffer->current_line)
 			onscreen = 1;
@@ -713,7 +709,7 @@ end:
 static void
 redraw_help(void)
 {
-	redraw_window(help, help_lines, help_cols, &helpwin);
+	redraw_window(help, 0, help_lines, help_cols, &helpwin);
 }
 
 static void
@@ -725,7 +721,7 @@ redraw_body(struct tab *tab)
 		tab->buffer.force_redraw =1;
 	last_tab = tab;
 
-	redraw_window(body, body_lines, body_cols, &tab->buffer);
+	redraw_window(body, x_offset, body_lines, body_cols, &tab->buffer);
 }
 
 static inline char
@@ -859,7 +855,7 @@ do_redraw_minibuffer(void)
 static void
 do_redraw_minibuffer_compl(void)
 {
-	redraw_window(minibuffer, 10, body_cols,
+	redraw_window(minibuffer, 0, 10, body_cols,
 	    &ministate.compl.buffer);
 }
 
