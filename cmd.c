@@ -691,3 +691,54 @@ cmd_mini_next_history_element(struct buffer *buffer)
 	if (ministate.hist_cur != NULL)
 		buffer->current_line->line = ministate.hist_cur->h;
 }
+
+void
+cmd_previous_completion(struct buffer *buffer)
+{
+	if (in_minibuffer != MB_COMPREAD)
+		return;
+
+	buffer = &ministate.compl.buffer;
+
+	if (buffer->current_line != NULL)
+		buffer->current_line->parent->type = LINE_COMPL;
+
+	forward_line(buffer, -1);
+
+	if (buffer->current_line != NULL)
+		buffer->current_line->parent->type = LINE_COMPL_CURRENT;
+}
+
+void
+cmd_next_completion(struct buffer *buffer)
+{
+	if (in_minibuffer != MB_COMPREAD)
+		return;
+
+	buffer = &ministate.compl.buffer;
+
+	if (buffer->current_line != NULL)
+		buffer->current_line->parent->type = LINE_COMPL;
+
+	forward_line(buffer, +1);
+
+	if (buffer->current_line != NULL)
+		buffer->current_line->parent->type = LINE_COMPL_CURRENT;
+}
+
+void
+cmd_insert_current_candidate(struct buffer *buffer)
+{
+	struct vline *vl;
+
+	if (in_minibuffer != MB_COMPREAD)
+		return;
+
+	buffer = &ministate.compl.buffer;
+	if ((vl = buffer->current_line) == NULL)
+		return;
+
+	minibuffer_taint_hist();
+	strlcpy(ministate.buf, vl->parent->line, sizeof(ministate.buf));
+	ministate.buffer.cpoff = utf8_cplen(ministate.buf);
+}

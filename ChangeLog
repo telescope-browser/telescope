@@ -1,3 +1,11 @@
+2021-07-14  Omar Polo  <op@omarpolo.com>
+
+	* cmd.c (cmd_previous_completion): add previous-completion
+	(cmd_next_completion): add next-completion
+	(cmd_insert_current_candidate): add insert-current-candidate
+
+	* minibuffer.c (enter_minibuffer): support completions in minibuffer
+
 2021-07-13  Omar Polo  <op@omarpolo.com>
 
 	* pages.c: advertise B and F instead of C-M-b/C-M-f.

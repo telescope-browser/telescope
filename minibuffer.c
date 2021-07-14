@@ -52,11 +52,15 @@ void
 recompute_completions(int add)
 {
 	struct line	*l;
+	struct vline	*vl;
+	struct buffer	*b;
 
 	if (in_minibuffer != MB_COMPREAD)
 		return;
 
-	TAILQ_FOREACH(l, &ministate.compl.buffer.page.head, lines) {
+	b = &ministate.compl.buffer;
+	TAILQ_FOREACH(l, &b->page.head, lines) {
+		l->type = LINE_COMPL;
 		if (add && l->flags & L_HIDDEN)
 			continue;
 		if (strstr(l->line, ministate.buf) != NULL)
@@ -64,6 +68,13 @@ recompute_completions(int add)
 		else
 			l->flags |= L_HIDDEN;
 	}
+
+	if (b->current_line == NULL)
+		b->current_line = TAILQ_FIRST(&b->head);
+	b->current_line = adjust_line(b->current_line, b);
+	vl = b->current_line;
+	if (vl != NULL)
+		vl->parent->type = LINE_COMPL_CURRENT;
 }
 
 static void
@@ -255,23 +266,6 @@ read_select(void)
 }
 
 /*
- * Just like erase_buffer, but don't call free(l->line);
- */
-static inline void
-erase_compl_buffer(struct buffer *buffer)
-{
-	struct line *l, *lt;
-
-	empty_vlist(buffer);
-
-	TAILQ_FOREACH_SAFE(l, &buffer->page.head, lines, lt) {
-		TAILQ_REMOVE(&buffer->page.head, l, lines);
-		/* don't free l->line! */
-		free(l);
-	}
-}
-
-/*
  * TODO: we should collect this asynchronously...
  */
 static inline void
@@ -289,14 +283,18 @@ populate_compl_buffer(complfn *fn, void *data)
 		if ((l = calloc(1, sizeof(*l))) == NULL)
 			abort();
 
-		l->type = LINE_TEXT;
-		l->line = s;
+		l->type = LINE_COMPL;
+		if ((l->line = strdup(s)) == NULL)
+			abort();
 
 		if (TAILQ_EMPTY(&p->head))
 			TAILQ_INSERT_HEAD(&p->head, l, lines);
 		else
 			TAILQ_INSERT_TAIL(&p->head, l, lines);
 	}
+
+	if ((l = TAILQ_FIRST(&p->head)) != NULL)
+		l->type = LINE_COMPL_CURRENT;
 }
 
 void
@@ -307,8 +305,6 @@ enter_minibuffer(void (*self_insert_fn)(void), void (*donefn)(void),
 	in_minibuffer = complfn == NULL ? MB_READ : MB_COMPREAD;
 	if (in_minibuffer == MB_COMPREAD) {
 		ui_schedule_redraw();
-
-		erase_compl_buffer(&ministate.compl.buffer);
 
 		ministate.compl.fn = complfn;
 		ministate.compl.data = compldata;
@@ -336,8 +332,10 @@ enter_minibuffer(void (*self_insert_fn)(void), void (*donefn)(void),
 void
 exit_minibuffer(void)
 {
-	if (in_minibuffer == MB_COMPREAD)
+	if (in_minibuffer == MB_COMPREAD) {
+		erase_buffer(&ministate.compl.buffer);
 		ui_schedule_redraw();
+	}
 
 	in_minibuffer = 0;
 	base_map = &global_map;

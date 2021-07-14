@@ -72,6 +72,14 @@ enum pairs {
 	PPEND_PRFX,
 	PPEND_TRAIL,
 
+	PCOMPL_PRFX,
+	PCOMPL,
+	PCOMPL_TRAIL,
+
+	PCOMPL_CURR_PRFX,
+	PCOMPL_CURR,
+	PCOMPL_CURR_TRAIL,
+
 	PMODELINE,
 
 	PMINIBUF,
@@ -100,6 +108,7 @@ void		 ir_select(void);
 void		 lu_self_insert(void);
 void		 lu_select(void);
 void		 bp_select(void);
+struct vline	*adjust_line(struct vline *, struct buffer *);
 void		 vmessage(const char *, va_list);
 void		 message(const char *, ...) __attribute__((format(printf, 1, 2)));
 void		 start_loading_anim(struct tab *);

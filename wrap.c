@@ -101,6 +101,32 @@ push_line(struct buffer *buffer, const struct line *l, const char *buf, size_t l
 }
 
 /*
+ * Similar to wrap_text, but emit only o vline.
+ */
+int
+wrap_one(struct buffer *buffer, const char *prfx, struct line *l, size_t width)
+{
+	struct vline *vl, *t;
+
+	/*
+	 * be lazy: call wrap_text and then discard the continuations.
+	 */
+
+	if (!wrap_text(buffer, prfx, l, width))
+		return 0;
+
+	TAILQ_FOREACH_SAFE(vl, &buffer->head, vlines, t) {
+		if (vl->flags & L_CONTINUATION) {
+			TAILQ_REMOVE(&buffer->head, vl, vlines);
+			free(vl->line);
+			free(vl);
+		}
+	}
+
+	return 1;
+}
+
+/*
  * Build a list of visual line by wrapping the given line, assuming
  * that when printed will have a leading prefix prfx.
  */

@@ -415,6 +415,14 @@ wrap_page(struct buffer *buffer, int width)
 				pre_width = width;
 			hardwrap_text(buffer, l, pre_width);
 			break;
+		case LINE_COMPL:
+		case LINE_COMPL_CURRENT:
+			/*
+			 * TODO: should be width, but will break the
+			 * rendering.  Fix when unlocking completions
+			 * buffer from olivetti-mode.
+			 */
+			wrap_one(buffer, prfx, l, MIN(fill_column, width));
 		}
 
 		if (top_orig == l && buffer->top_line == NULL) {
@@ -601,7 +609,7 @@ redraw_tabline(void)
  * until the end of the buffer; if a visible line is not found, search
  * backward.  Return NULL if no viable line was found.
  */
-static inline struct vline *
+struct vline *
 adjust_line(struct vline *vl, struct buffer *buffer)
 {
 	struct vline *t;
@@ -692,7 +700,8 @@ again:
 			buffer->top_line = TAILQ_NEXT(buffer->top_line, vlines);
 		}
 
-		goto again;
+		if (vl != NULL)
+			goto again;
 	}
 
 	buffer->last_line_off = buffer->line_off;

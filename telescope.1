@@ -338,6 +338,12 @@ mini-next-history-element
 mini-previous-history-element
 .It <down>
 mini-next-history-element
+.It C-p
+previous-completion
+.It C-n
+next-completion
+.It tab
+insert-current-candidate
 .El
 .Sh INTERACTIVE COMMANDS
 Follows the documentation for the interactive commands.
@@ -357,18 +363,24 @@ Move point to the end of the buffer.
 Move point one character forward.
 .It Ic forward-paragraph
 Move point one paragraph forward.
+.It Ic insert-current-candidate
+Copy the current selection text as minibuffer input.
 .It Ic move-beginning-of-line
 Move point at the beginning of the current (visual) line.
 .It Ic move-end-of-line
 Move point at the end of the current (visual) line.
 .It Ic next-button
 Move point to the next link.
+.It Ic next-completion
+Select the next completion.
 .It Ic next-heading
 Move point to the next heading.
 .It Ic next-line
 Move point to the next (visual) line, in the same column if possible.
 .It Ic previous-button
 Move point to the previous link.
+.It Ic previous-completion
+Select the previous completion.
 .It Ic previous-heading
 Move point to the previous heading.
 .It Ic previous-line

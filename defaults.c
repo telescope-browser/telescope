@@ -42,6 +42,9 @@ struct lineprefix line_prefixes[] = {
 	[LINE_PRE_START] =	{ "```",	"   " },
 	[LINE_PRE_CONTENT] =	{ "",		"" },
 	[LINE_PRE_END] =	{ "```",	"```" },
+
+	[LINE_COMPL] =		{"", ""},
+	[LINE_COMPL_CURRENT] =	{"", ""},
 };
 
 struct line_face line_faces[] = {
@@ -100,6 +103,18 @@ struct line_face line_faces[] = {
 		.pair = PPEND,
 		.trail_pair = PPEND_TRAIL,
 	},
+
+	/* minibuffer */
+	[LINE_COMPL] = {
+		.prfx_pair = PCOMPL_PRFX,
+		.pair = PCOMPL,
+		.trail_pair = PCOMPL_TRAIL,
+	},
+	[LINE_COMPL_CURRENT] = {
+		.prfx_pair = PCOMPL_CURR_PRFX,
+		.pair = PCOMPL_CURR,
+		.trail_pair = PCOMPL_CURR_TRAIL,
+	},
 };
 
 struct tab_face tab_face = {
@@ -148,6 +163,10 @@ struct mapping {
 	{"pre.start",	LINE_PRE_START},
 	{"pre",		LINE_PRE_CONTENT},
 	{"pre.end",	LINE_PRE_END},
+
+	/* minibuffer */
+	{"compl",	LINE_COMPL},
+	{"compl.current", LINE_COMPL_CURRENT}
 };
 
 static struct mapping *
@@ -316,6 +335,10 @@ load_default_keys(void)
 	minibuffer_set_key("M-n",		cmd_mini_next_history_element);
 	minibuffer_set_key("<up>",		cmd_mini_previous_history_element);
 	minibuffer_set_key("<down>",		cmd_mini_next_history_element);
+
+	minibuffer_set_key("C-p",		cmd_previous_completion);
+	minibuffer_set_key("C-n",		cmd_next_completion);
+	minibuffer_set_key("tab",		cmd_insert_current_candidate);
 }
 
 void
@@ -333,6 +356,10 @@ config_init(void)
 	}
 
 	line_faces[LINE_LINK].fg = COLOR_BLUE;
+
+	line_faces[LINE_COMPL_CURRENT].prfx_bg = COLOR_CYAN;
+	line_faces[LINE_COMPL_CURRENT].bg = COLOR_CYAN;
+	line_faces[LINE_COMPL_CURRENT].trail_bg = COLOR_CYAN;
 
 	load_default_keys();
 }

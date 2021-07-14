@@ -64,3 +64,7 @@ CMD(cmd_mini_abort);
 CMD(cmd_mini_complete_and_exit);
 CMD(cmd_mini_previous_history_element);
 CMD(cmd_mini_next_history_element);
+
+CMD(cmd_previous_completion);
+CMD(cmd_next_completion);
+CMD(cmd_insert_current_candidate);

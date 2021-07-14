@@ -67,6 +67,7 @@ enum imsg_type {
 };
 
 enum line_type {
+	/* text/gemini */
 	LINE_TEXT,
 	LINE_LINK,
 	LINE_TITLE_1,
@@ -77,6 +78,10 @@ enum line_type {
 	LINE_PRE_START,
 	LINE_PRE_CONTENT,
 	LINE_PRE_END,
+
+	/* minibuffer */
+	LINE_COMPL,
+	LINE_COMPL_CURRENT,
 };
 
 /* for lines: mark as hidden */
@@ -94,7 +99,7 @@ struct line {
 };
 
 struct vline {
-	const struct line	*parent;
+	struct line		*parent;
 	char			*line;
 	int			 flags;
 	TAILQ_ENTRY(vline)	 vlines;
@@ -332,6 +337,7 @@ int		 imsg_compose_event(struct imsgev *, uint16_t, uint32_t, pid_t, int, const 
 void		 erase_buffer(struct buffer *);
 void		 empty_linelist(struct buffer*);
 void		 empty_vlist(struct buffer*);
+int		 wrap_one(struct buffer *, const char *, struct line *, size_t);
 int		 wrap_text(struct buffer*, const char*, struct line*, size_t);
 int		 hardwrap_text(struct buffer*, struct line*, size_t);
 
