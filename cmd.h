@@ -49,6 +49,7 @@ CMD(cmd_tab_move);
 CMD(cmd_tab_move_to);
 CMD(cmd_load_url);
 CMD(cmd_load_current_url);
+CMD(cmd_reload_page);
 CMD(cmd_bookmark_page);
 CMD(cmd_list_bookmarks);
 CMD(cmd_toggle_help);

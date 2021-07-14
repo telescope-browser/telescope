@@ -302,6 +302,9 @@ load_default_keys(void)
 	global_set_key("M-<left>",	cmd_previous_page);
 	global_set_key("M-<right>",	cmd_next_page);
 
+	global_set_key("<f5>",		cmd_reload_page);
+	global_set_key("r",		cmd_reload_page);
+
 	/* "ncurses standard" */
 	global_set_key("C-l",		cmd_redraw);
 

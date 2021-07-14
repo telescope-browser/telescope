@@ -507,6 +507,15 @@ cmd_load_current_url(struct buffer *buffer)
 }
 
 void
+cmd_reload_page(struct buffer *buffer)
+{
+	struct tab *tab;
+
+	tab = current_tab();
+	load_url_in_tab(tab, tab->hist_cur->h);
+}
+
+void
 cmd_bookmark_page(struct buffer *buffer)
 {
 	struct tab *tab = current_tab();
