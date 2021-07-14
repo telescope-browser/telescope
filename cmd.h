@@ -47,6 +47,7 @@ DEFALIAS(tabp, cmd_tab_previous)
 
 CMD(cmd_tab_move);
 CMD(cmd_tab_move_to);
+CMD(cmd_tab_select);
 CMD(cmd_load_url);
 CMD(cmd_load_current_url);
 CMD(cmd_reload_page);

@@ -475,6 +475,19 @@ cmd_tab_move_to(struct buffer *buffer)
 }
 
 void
+cmd_tab_select(struct buffer *buffer)
+{
+	if (in_minibuffer) {
+		message("We don't have enable-recursive-minibuffers");
+		return;
+	}
+
+	enter_minibuffer(minibuffer_self_insert, ts_select, exit_minibuffer,
+	    NULL, compl_ts, NULL);
+	strlcpy(ministate.prompt, "Select tab: ", sizeof(ministate.prompt));
+}
+
+void
 cmd_load_url(struct buffer *buffer)
 {
 	if (in_minibuffer) {

@@ -17,6 +17,7 @@
 #ifndef COMPL_H
 #define COMPL_H
 
-const char	*compl_eecmd(void **);
+const char	*compl_eecmd(void **, void **);
+const char	*compl_ts(void **, void **);
 
 #endif

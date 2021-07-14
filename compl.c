@@ -20,7 +20,7 @@
 #include "telescope.h"
 
 const char *
-compl_eecmd(void **data)
+compl_eecmd(void **data, void **ret)
 {
 	struct cmd	**state = (struct cmd **)data;
 
@@ -32,4 +32,22 @@ compl_eecmd(void **data)
 		return NULL;
 
 	return (*state)++->cmd;
+}
+
+const char *
+compl_ts(void **data, void **ret)
+{
+	struct tab	**tab = (struct tab **)data;
+
+	/* first time: init the state */
+	if (*tab == NULL)
+		*tab = TAILQ_FIRST(&tabshead);
+	else if ((*tab = TAILQ_NEXT(*tab, tabs)) == NULL)
+		return NULL;
+
+	*ret = *tab;
+
+	if (*(*tab)->buffer.page.title == '\0')
+		return (*tab)->hist_cur->h;
+	return (*tab)->buffer.page.title;
 }

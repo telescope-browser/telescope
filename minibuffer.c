@@ -22,7 +22,6 @@
 #include "utf8.h"
 
 static void		 minibuffer_hist_save_entry(void);
-static void		 minibuffer_self_insert(void);
 static void		 yornp_self_insert(void);
 static void		 yornp_abort(void);
 static void		 read_self_insert(void);
@@ -113,7 +112,7 @@ minibuffer_taint_hist(void)
 	ministate.buffer.current_line->line = ministate.buf;
 }
 
-static void
+void
 minibuffer_self_insert(void)
 {
 	char	*c, tmp[5] = {0};
@@ -220,6 +219,24 @@ bp_select(void)
 		message("Abort.");
 }
 
+void
+ts_select(void)
+{
+	struct vline	*vl;
+	struct tab	*tab;
+
+	vl = ministate.compl.buffer.current_line;
+
+	if (vl == NULL || vl->parent->flags & L_HIDDEN) {
+		message("No tab selected");
+		return;
+	}
+
+	tab = vl->parent->meta.data;
+	exit_minibuffer();
+	switch_to_tab(tab);
+}
+
 static void
 yornp_self_insert(void)
 {
@@ -275,15 +292,17 @@ populate_compl_buffer(complfn *fn, void *data)
 	struct line	*l;
 	struct buffer	*b;
 	struct parser	*p;
+	void		*linedata = NULL;
 
 	b = &ministate.compl.buffer;
 	p = &b->page;
 
-	while ((s = fn(&data)) != NULL) {
+	while ((s = fn(&data, &linedata)) != NULL) {
 		if ((l = calloc(1, sizeof(*l))) == NULL)
 			abort();
 
 		l->type = LINE_COMPL;
+		l->meta.data = linedata;
 		if ((l->line = strdup(s)) == NULL)
 			abort();
 
@@ -291,6 +310,8 @@ populate_compl_buffer(complfn *fn, void *data)
 			TAILQ_INSERT_HEAD(&p->head, l, lines);
 		else
 			TAILQ_INSERT_TAIL(&p->head, l, lines);
+
+		linedata = NULL;
 	}
 
 	if ((l = TAILQ_FIRST(&p->head)) != NULL)

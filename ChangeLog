@@ -1,5 +1,9 @@
 2021-07-14  Omar Polo  <op@omarpolo.com>
 
+	* defaults.c (load_default_keys): bind M-t to tab-select
+
+	* cmd.c (cmd_tab_select): add tab-select
+
 	* defaults.c (load_default_keys): bind f5 to reload-page
 	(load_default_keys): bind r to reload-page
 
