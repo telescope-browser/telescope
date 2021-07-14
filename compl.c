@@ -19,6 +19,9 @@
 #include "compl.h"
 #include "telescope.h"
 
+/*
+ * Provide completions for execute-extended-command (eecmd).
+ */
 const char *
 compl_eecmd(void **data, void **ret)
 {
@@ -34,6 +37,9 @@ compl_eecmd(void **data, void **ret)
 	return (*state)++->cmd;
 }
 
+/*
+ * Provide completions for tab-select.
+ */
 const char *
 compl_ts(void **data, void **ret)
 {
