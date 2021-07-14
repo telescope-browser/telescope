@@ -52,8 +52,10 @@ forward_line(struct buffer *buffer, int n)
 				return did;
 			if (vl->parent->flags & L_HIDDEN)
 				continue;
-			if (buffer->current_line == buffer->top_line)
+			if (buffer->current_line == buffer->top_line) {
+				buffer->line_off--;
 				buffer->top_line = vl;
+			}
 			buffer->current_line = vl;
 			n++;
 		}
@@ -152,7 +154,6 @@ cmd_scroll_line_up(struct buffer *buffer)
 
 	forward_line(buffer, -1);
 
-	buffer->line_off--;
 	buffer->top_line = vl;
 }
 
@@ -218,6 +219,10 @@ cmd_push_button(struct buffer *buffer)
 			if (l->type == LINE_PRE_END)
 				break;
 			l->flags ^= L_HIDDEN;
+			if (l->flags & L_HIDDEN)
+				buffer->line_max--;
+			else
+				buffer->line_max++;
 		}
 		break;
 	default:

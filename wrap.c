@@ -82,7 +82,8 @@ push_line(struct buffer *buffer, struct line *l, const char *buf, size_t len, in
 {
 	struct vline *vl;
 
-	buffer->line_max++;
+	if (!(l->flags & L_HIDDEN))
+		buffer->line_max++;
 
 	if ((vl = calloc(1, sizeof(*vl))) == NULL)
 		return 0;
