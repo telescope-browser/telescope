@@ -81,6 +81,10 @@ void		*memmem(const void*, size_t, const void*, size_t);
 void		*recallocarray(void*, size_t, size_t, size_t);
 #endif
 
+#ifndef HAVE_STRCASESTR
+char		*strcasestr(const char *, const char *);
+#endif
+
 #ifndef HAVE_STRLCPY
 size_t		 strlcpy(char*, const char*, size_t);
 #endif

@@ -16,6 +16,7 @@ AC_REPLACE_FUNCS([
 	getprogname \
 	memmem \
 	recallocarray \
+	strcasestr \
 	strlcat \
 	strlcpy \
 	strsep \

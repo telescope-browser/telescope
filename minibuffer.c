@@ -62,7 +62,7 @@ recompute_completions(int add)
 		l->type = LINE_COMPL;
 		if (add && l->flags & L_HIDDEN)
 			continue;
-		if (strstr(l->line, ministate.buf) != NULL)
+		if (strcasestr(l->line, ministate.buf) != NULL)
 			l->flags &= ~L_HIDDEN;
 		else
 			l->flags |= L_HIDDEN;
