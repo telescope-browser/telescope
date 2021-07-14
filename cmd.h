@@ -55,6 +55,9 @@ CMD(cmd_bookmark_page);
 CMD(cmd_list_bookmarks);
 CMD(cmd_toggle_help);
 
+CMD(cmd_link_select);
+CMD(cmd_swiper);
+
 CMD(cmd_inc_fill_column);
 CMD(cmd_dec_fill_column);
 CMD(cmd_olivetti_mode);

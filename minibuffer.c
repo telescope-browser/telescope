@@ -237,6 +237,56 @@ ts_select(void)
 	switch_to_tab(tab);
 }
 
+void
+ls_select(void)
+{
+	struct line	*l;
+	struct vline	*vl;
+
+	vl = ministate.compl.buffer.current_line;
+
+	if (vl == NULL || vl->parent->flags & L_HIDDEN) {
+		message("No link selected");
+		return;
+	}
+
+	l = vl->parent->meta.data;
+	exit_minibuffer();
+
+	load_url_in_tab(current_tab(), l->meta.alt);
+}
+
+void
+swiper_select(void)
+{
+	struct line	*l;
+	struct vline	*vl;
+	struct tab	*tab;
+
+	vl = ministate.compl.buffer.current_line;
+
+	if (vl == NULL || vl->parent->flags & L_HIDDEN) {
+		message("No line selected");
+		return;
+	}
+
+	l = vl->parent->meta.data;
+	exit_minibuffer();
+
+	tab = current_tab();
+
+	TAILQ_FOREACH(vl, &tab->buffer.head, vlines) {
+		if (vl->parent == l)
+			break;
+	}
+
+	if (vl == NULL)
+		message("Ops, swiper error!  Please report to %s",
+		    PACKAGE_BUGREPORT);
+	else
+		tab->buffer.current_line = vl;
+}
+
 static void
 yornp_self_insert(void)
 {

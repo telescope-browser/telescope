@@ -303,6 +303,10 @@ previous-button
 next-button
 .It M-t
 tab-select
+.It M-L
+link-select
+.It M-/
+swiper
 .El
 .Ss Minibuffer-specific keys
 .Bl -tag -width xxxxxxxxxxxx -offset indent -compact
@@ -435,6 +439,8 @@ Quit
 .Nm .
 .It Ic inc-fill-column
 Increments fill-column by two.
+.It Ic link-select
+Select and visit a link using the minibuffer.
 .It Ic load-current-url
 Prompts for an URL, the minibuffer is preloaded with the current
 one.
@@ -466,6 +472,8 @@ Scroll down by one line.
 Scroll up by one line.
 .It Ic scroll-up
 Scroll up by one visual page.
+.It Ic swiper
+Jump to a line using the minibuffer.
 .It Ic toggle-help
 Toggle side window with help about available keys and their associated
 interactive command.

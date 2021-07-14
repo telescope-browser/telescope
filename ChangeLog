@@ -1,5 +1,11 @@
 2021-07-14  Omar Polo  <op@omarpolo.com>
 
+	* defaults.c (load_default_keys): bind M-L to link-select
+	(load_default_keys): bind M-/ to swiper
+
+	* cmd.c (cmd_link_select): add link-select
+	(cmd_swiper): add swiper
+
 	* defaults.c (load_default_keys): bind M-t to tab-select
 
 	* cmd.c (cmd_tab_select): add tab-select

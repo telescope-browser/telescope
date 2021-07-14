@@ -553,6 +553,32 @@ cmd_toggle_help(struct buffer *buffer)
 }
 
 void
+cmd_link_select(struct buffer *buffer)
+{
+	if (in_minibuffer) {
+		message("We don't have enable-recursive-minibuffers");
+		return;
+	}
+
+	enter_minibuffer(minibuffer_self_insert, ls_select, exit_minibuffer,
+	    NULL, compl_ls, TAILQ_FIRST(&buffer->page.head));
+	strlcpy(ministate.prompt, "Select link: ", sizeof(ministate.prompt));
+}
+
+void
+cmd_swiper(struct buffer *buffer)
+{
+	if (in_minibuffer) {
+		message("We don't have enable-recursive-minibuffers");
+		return;
+	}
+
+	enter_minibuffer(minibuffer_self_insert, swiper_select, exit_minibuffer,
+	    NULL, compl_swiper, TAILQ_FIRST(&buffer->page.head));
+	strlcpy(ministate.prompt, "Select line: ", sizeof(ministate.prompt));
+}
+
+void
 cmd_inc_fill_column(struct buffer *buffer)
 {
 	if (fill_column == INT_MAX)

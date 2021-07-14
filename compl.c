@@ -57,3 +57,48 @@ compl_ts(void **data, void **ret)
 		return (*tab)->hist_cur->h;
 	return (*tab)->buffer.page.title;
 }
+
+/*
+ * Provide completions for link-select.
+ */
+const char *
+compl_ls(void **data, void **ret)
+{
+	struct line	**line = (struct line **)data;
+	struct line	*l;
+	const char	*link;
+
+	l = *line;
+	while (l != NULL && l->type != LINE_LINK)
+		l = TAILQ_NEXT(l, lines);
+
+	/* end of buffer */
+	if (l == NULL)
+		return NULL;
+
+	link = l->line;
+	*ret = l;
+	*line = TAILQ_NEXT(l, lines);
+	return link;
+}
+
+/*
+ * Provide completinos for swiper.
+ */
+const char *
+compl_swiper(void **data, void **ret)
+{
+	struct line	**line = (struct line **)data;
+	const char	*text;
+
+	while (*line != NULL && (*line)->line == NULL)
+		*line = TAILQ_NEXT(*line, lines);
+
+	if (*line == NULL)
+		return NULL;
+
+	text = (*line)->line;
+	*ret = *line;
+	*line = TAILQ_NEXT(*line, lines);
+	return text;
+}
