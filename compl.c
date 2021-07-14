@@ -31,6 +31,5 @@ compl_eecmd(void **data)
 	if ((*state)->cmd == NULL)
 		return NULL;
 
-	(*state)++;
-	return (*state)->cmd;
+	return (*state)++->cmd;
 }
