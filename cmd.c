@@ -661,7 +661,7 @@ cmd_mini_previous_history_element(struct buffer *buffer)
 		ministate.hist_cur = TAILQ_LAST(&ministate.history->head, mhisthead);
 		ministate.hist_off = ministate.history->len - 1;
 		if (ministate.hist_cur == NULL)
-			message("No prev item");
+			message("No prev history item");
 	} else {
 		ministate.hist_off--;
 	}
@@ -683,7 +683,7 @@ cmd_mini_next_history_element(struct buffer *buffer)
 		ministate.hist_cur = TAILQ_FIRST(&ministate.history->head);
 		ministate.hist_off = 0;
 		if (ministate.hist_cur == NULL)
-			message("No next item");
+			message("No next history item");
 	} else {
 		ministate.hist_off++;
 	}
