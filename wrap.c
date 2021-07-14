@@ -51,7 +51,11 @@ empty_linelist(struct buffer *buffer)
 	TAILQ_FOREACH_SAFE(l, &buffer->page.head, lines, lt) {
 		TAILQ_REMOVE(&buffer->page.head, l, lines);
 		free(l->line);
-		free(l->alt);
+
+		if (l->type != LINE_COMPL &&
+		    l->type != LINE_COMPL_CURRENT)
+			free(l->meta.alt);
+
 		free(l);
 	}
 }

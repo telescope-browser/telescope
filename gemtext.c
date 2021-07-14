@@ -79,7 +79,7 @@ emit_line(struct parser *p, enum line_type type, char *line, char *alt)
 
 	l->type = type;
 	l->line = line;
-	l->alt = alt;
+	l->meta.alt = alt;
 
 	switch (l->type) {
 	case LINE_PRE_START:

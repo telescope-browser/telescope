@@ -814,7 +814,8 @@ do_redraw_echoarea(void)
 		tab = current_tab();
 		if (tab->buffer.current_line != NULL &&
 		    tab->buffer.current_line->parent->type == LINE_LINK)
-			waddstr(echoarea, tab->buffer.current_line->parent->alt);
+			waddstr(echoarea,
+			    tab->buffer.current_line->parent->meta.alt);
 	}
 }
 
@@ -926,7 +927,7 @@ emit_help_item(char *prfx, void *fn)
 		abort();
 
 	l->type = LINE_TEXT;
-	l->alt = NULL;
+	l->meta.alt = NULL;
 
 	asprintf(&l->line, "%s %s", prfx, cmd->cmd);
 
