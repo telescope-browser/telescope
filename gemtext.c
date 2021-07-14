@@ -47,16 +47,13 @@ static void	search_title(struct parser*, enum line_type);
 typedef int (parselinefn)(struct parser*, enum line_type, const char*, size_t);
 
 static parselinefn *parsers[] = {
-	parse_text,		/* LINE_TEXT */
-	parse_link,		/* LINE_LINK */
-	parse_title,		/* LINE_TITLE_1 */
-	parse_title,		/* LINE_TITLE_2 */
-	parse_title,		/* LINE_TITLE_3 */
-	parse_item,		/* LINE_ITEM */
-	parse_quote,		/* LINE_QUOTE */
-	parse_pre_start,	/* LINE_PRE_START */
-	parse_pre_cnt,		/* LINE_PRE_CONTENT */
-	parse_pre_end,		/* LINE_PRE_END */
+	[LINE_TEXT]		= parse_text,
+	[LINE_LINK]		= parse_link,
+	[LINE_TITLE_1]		= parse_title,
+	[LINE_TITLE_3]		= parse_title,
+	[LINE_QUOTE]		= parse_quote,
+	[LINE_PRE_START]	= parse_pre_start,
+	[LINE_PRE_END]		= parse_pre_end,
 };
 
 void
