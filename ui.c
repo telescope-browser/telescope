@@ -758,7 +758,8 @@ redraw_modeline(struct tab *tab)
 	    trust_status_char(tab->trust),
 	    mode == NULL ? "(none)" : mode);
 
-	pct = (tab->buffer.line_off + tab->buffer.curs_y) * 100.0 / tab->buffer.line_max;
+	pct = (tab->buffer.line_off + tab->buffer.curs_y) * 100.0
+		/ tab->buffer.line_max;
 
 	if (tab->buffer.line_max <= (size_t)body_lines)
                 wprintw(modeline, "All ");
