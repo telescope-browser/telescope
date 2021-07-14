@@ -1,6 +1,7 @@
 2021-07-14  Omar Polo  <op@omarpolo.com>
 
 	* defaults.c (load_default_keys): <up> and <down> are now bound to previous/next-completion instead of previous/next-history-item
+	(load_default_keys): bind < to load-current-url
 
 	* cmd.c (cmd_previous_completion): add previous-completion
 	(cmd_next_completion): add next-completion

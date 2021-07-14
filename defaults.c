@@ -233,6 +233,7 @@ load_default_keys(void)
 	global_set_key("C-c n",		cmd_next_heading);
 
 	global_set_key(">",		cmd_load_url);
+	global_set_key("<",		cmd_load_current_url);
 	global_set_key("C-x C-f",	cmd_load_url);
 	global_set_key("C-x M-f",	cmd_load_current_url);
 
