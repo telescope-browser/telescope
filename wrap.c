@@ -78,7 +78,7 @@ empty_vlist(struct buffer *buffer)
 }
 
 static int
-push_line(struct buffer *buffer, const struct line *l, const char *buf, size_t len, int flags)
+push_line(struct buffer *buffer, struct line *l, const char *buf, size_t len, int flags)
 {
 	struct vline *vl;
 
