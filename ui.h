@@ -100,16 +100,6 @@ extern struct histhead eecmd_history,
 void		 save_excursion(struct excursion *, struct buffer *);
 void		 restore_excursion(struct excursion *, struct buffer *);
 void		 global_key_unbound(void);
-void		 minibuffer_taint_hist(void);
-void		 minibuffer_self_insert(void);
-void		 eecmd_self_insert(void);
-void		 eecmd_select(void);
-void		 ir_self_insert(void);
-void		 ir_select(void);
-void		 lu_self_insert(void);
-void		 lu_select(void);
-void		 bp_select(void);
-void		 ts_select(void);
 struct vline	*adjust_line(struct vline *, struct buffer *);
 void		 vmessage(const char *, va_list);
 void		 message(const char *, ...) __attribute__((format(printf, 1, 2)));

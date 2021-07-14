@@ -63,6 +63,17 @@ extern struct buffer minibufferwin;
 
 void	 recompute_completions(int);
 
+void	 minibuffer_taint_hist(void);
+void	 minibuffer_self_insert(void);
+void	 eecmd_self_insert(void);
+void	 eecmd_select(void);
+void	 ir_self_insert(void);
+void	 ir_select(void);
+void	 lu_self_insert(void);
+void	 lu_select(void);
+void	 bp_select(void);
+void	 ts_select(void);
+
 void	 enter_minibuffer(void(*)(void), void(*)(void), void(*)(void),
     struct histhead *,
     complfn *, void *);
