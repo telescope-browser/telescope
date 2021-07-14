@@ -89,24 +89,6 @@ extern struct histhead eecmd_history,
 	lu_history,
 	read_history;
 
-struct ministate {
-	char		*curmesg;
-
-	char		 prompt[64];
-	void		 (*donefn)(void);
-	void		 (*abortfn)(void);
-
-	char		 buf[1025];
-	struct line	 line;
-	struct vline	 vline;
-	struct buffer	 buffer;
-
-	struct histhead	*history;
-	struct hist	*hist_cur;
-	size_t		 hist_off;
-};
-extern struct ministate ministate;
-
 void		 save_excursion(struct excursion *, struct buffer *);
 void		 restore_excursion(struct excursion *, struct buffer *);
 void		 global_key_unbound(void);

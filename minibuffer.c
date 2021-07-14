@@ -42,6 +42,30 @@ struct histhead eecmd_history,
 
 struct ministate ministate;
 
+struct buffer minibufferwin;
+
+/*
+ * Recompute the visible completions.  If add is 1, don't consider the
+ * ones already hidden.
+ */
+void
+recompute_completions(int add)
+{
+	struct line	*l;
+
+	if (in_minibuffer != MB_COMPREAD)
+		return;
+
+	TAILQ_FOREACH(l, &ministate.compl.buffer.page.head, lines) {
+		if (add && l->flags & L_HIDDEN)
+			continue;
+		if (strstr(l->line, ministate.buf) != NULL)
+			l->flags &= ~L_HIDDEN;
+		else
+			l->flags |= L_HIDDEN;
+	}
+}
+
 static void
 minibuffer_hist_save_entry(void)
 {
@@ -97,6 +121,8 @@ minibuffer_self_insert(void)
 	memmove(c + len, c, strlen(c)+1);
 	memcpy(c, tmp, len);
 	ministate.buffer.cpoff++;
+
+	recompute_completions(1);
 }
 
 void
@@ -228,12 +254,67 @@ read_select(void)
 	read_cb(ministate.buf, read_data);
 }
 
+/*
+ * Just like erase_buffer, but don't call free(l->line);
+ */
+static inline void
+erase_compl_buffer(struct buffer *buffer)
+{
+	struct line *l, *lt;
+
+	empty_vlist(buffer);
+
+	TAILQ_FOREACH_SAFE(l, &buffer->page.head, lines, lt) {
+		TAILQ_REMOVE(&buffer->page.head, l, lines);
+		/* don't free l->line! */
+		free(l);
+	}
+}
+
+/*
+ * TODO: we should collect this asynchronously...
+ */
+static inline void
+populate_compl_buffer(complfn *fn, void *data)
+{
+	const char	*s;
+	struct line	*l;
+	struct buffer	*b;
+	struct parser	*p;
+
+	b = &ministate.compl.buffer;
+	p = &b->page;
+
+	while ((s = fn(&data)) != NULL) {
+		if ((l = calloc(1, sizeof(*l))) == NULL)
+			abort();
+
+		l->type = LINE_TEXT;
+		l->line = s;
+
+		if (TAILQ_EMPTY(&p->head))
+			TAILQ_INSERT_HEAD(&p->head, l, lines);
+		else
+			TAILQ_INSERT_TAIL(&p->head, l, lines);
+	}
+}
+
 void
 enter_minibuffer(void (*self_insert_fn)(void), void (*donefn)(void),
     void (*abortfn)(void), struct histhead *hist,
     complfn *complfn, void *compldata)
 {
-	in_minibuffer = 1;
+	in_minibuffer = complfn == NULL ? MB_READ : MB_COMPREAD;
+	if (in_minibuffer == MB_COMPREAD) {
+		ui_schedule_redraw();
+
+		erase_compl_buffer(&ministate.compl.buffer);
+
+		ministate.compl.fn = complfn;
+		ministate.compl.data = compldata;
+		populate_compl_buffer(complfn, compldata);
+	}
+
 	base_map = &minibuffer_map;
 	current_map = &minibuffer_map;
 
@@ -255,6 +336,9 @@ enter_minibuffer(void (*self_insert_fn)(void), void (*donefn)(void),
 void
 exit_minibuffer(void)
 {
+	if (in_minibuffer == MB_COMPREAD)
+		ui_schedule_redraw();
+
 	in_minibuffer = 0;
 	base_map = &global_map;
 	current_map = &global_map;
@@ -286,7 +370,7 @@ yornp(const char *prompt, void (*fn)(int, struct tab*),
  */
 void
 completing_read(const char *prompt, void (*fn)(const char *, struct tab *),
-    struct tab *data, complfn *complfn, void *compldata)
+    struct tab *data)
 {
 	size_t len;
 
@@ -296,7 +380,7 @@ completing_read(const char *prompt, void (*fn)(const char *, struct tab *),
 	read_cb = fn;
 	read_data = data;
 	enter_minibuffer(read_self_insert, read_select, read_abort,
-	    &read_history, complfn, compldata);
+	    &read_history, NULL, NULL);
 
 	len = sizeof(ministate.prompt);
 	strlcpy(ministate.prompt, prompt, len);

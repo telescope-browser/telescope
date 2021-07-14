@@ -5,6 +5,8 @@ telescope_SOURCES =	cmd.c		\
 			cmd.h		\
 			compat.h	\
 			compat/*.[ch]	\
+			compl.c		\
+			compl.h		\
 			defaults.c	\
 			defaults.h	\
 			fs.c		\

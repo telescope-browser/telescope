@@ -66,6 +66,7 @@ static void		 redraw_modeline(struct tab*);
 static void		 redraw_minibuffer(void);
 static void		 do_redraw_echoarea(void);
 static void		 do_redraw_minibuffer(void);
+static void		 do_redraw_minibuffer_compl(void);
 static void		 place_cursor(int);
 static void		 redraw_tab(struct tab*);
 static void		 emit_help_item(char*, void*);
@@ -330,6 +331,14 @@ handle_resize_nodelay(int s, short ev, void *d)
 	}
 
 	/* move and resize the windows, in reverse order! */
+
+	if (in_minibuffer == MB_COMPREAD) {
+		mvwin(minibuffer, lines-10, 0);
+		wresize(minibuffer, 10, COLS);
+		lines -= 10;
+
+		wrap_page(&ministate.compl.buffer, COLS);
+	}
 
 	mvwin(echoarea, --lines, 0);
 	wresize(echoarea, 1, COLS);
@@ -597,6 +606,9 @@ adjust_line(struct vline *vl, struct buffer *buffer)
 {
 	struct vline *t;
 
+	if (vl == NULL)
+		return NULL;
+
 	if (!(vl->parent->flags & L_HIDDEN))
 		return vl;
 
@@ -640,6 +652,9 @@ again:
 
 	if (TAILQ_EMPTY(&buffer->head))
 		goto end;
+
+	if (buffer->top_line == NULL)
+		buffer->top_line = TAILQ_FIRST(&buffer->head);
 
 	buffer->top_line = adjust_line(buffer->top_line, buffer);
 	if (buffer->top_line == NULL)
@@ -773,6 +788,9 @@ redraw_minibuffer(void)
 	else
 		do_redraw_echoarea();
 
+	if (in_minibuffer == MB_COMPREAD)
+		do_redraw_minibuffer_compl();
+
 	wattr_off(echoarea, minibuffer_face.background, NULL);
 }
 
@@ -828,6 +846,13 @@ do_redraw_minibuffer(void)
 	wmove(echoarea, 0, off_x + utf8_swidth_between(start, c));
 }
 
+static void
+do_redraw_minibuffer_compl(void)
+{
+	redraw_window(minibuffer, 10, body_cols,
+	    &ministate.compl.buffer);
+}
+
 /*
  * Place the cursor in the right ncurses window.  If soft is 1, use
  * wnoutrefresh (which shouldn't cause any I/O); otherwise use
@@ -870,6 +895,9 @@ redraw_tab(struct tab *tab)
 
 	wnoutrefresh(tabline);
 	wnoutrefresh(modeline);
+
+	if (in_minibuffer == MB_COMPREAD)
+		wnoutrefresh(minibuffer);
 
 	place_cursor(1);
 
@@ -1196,7 +1224,13 @@ ui_toggle_side_window(void)
 void
 ui_schedule_redraw(void)
 {
-	handle_resize_nodelay(0, 0, NULL);
+	struct timeval tv = {0, 0};
+
+	if (event_pending(&resizeev, EV_TIMEOUT, NULL))
+		event_del(&resizeev);
+
+	evtimer_set(&resizeev, handle_resize_nodelay, NULL);
+	evtimer_add(&resizeev, &tv);
 }
 
 void
@@ -1224,7 +1258,7 @@ void
 ui_read(const char *prompt, void (*fn)(const char*, struct tab *),
     struct tab *data)
 {
-	completing_read(prompt, fn, data, NULL, NULL);
+	completing_read(prompt, fn, data);
 	redraw_tab(current_tab());
 }
 

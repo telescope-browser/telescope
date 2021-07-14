@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "compl.h"
 #include "defaults.h"
 #include "minibuffer.h"
 #include "telescope.h"
@@ -347,7 +348,7 @@ cmd_execute_extended_command(struct buffer *buffer)
 	}
 
 	enter_minibuffer(eecmd_self_insert, eecmd_select, exit_minibuffer,
-	    &eecmd_history, NULL, NULL);
+	    &eecmd_history, compl_eecmd, NULL);
 
 	len = sizeof(ministate.prompt);
 	strlcpy(ministate.prompt, "", len);
@@ -583,6 +584,8 @@ cmd_mini_delete_char(struct buffer *buffer)
 	n = utf8_next_cp(c);
 
 	memmove(c, n, strlen(n)+1);
+
+	recompute_completions(0);
 }
 
 void
@@ -605,6 +608,8 @@ cmd_mini_delete_backward_char(struct buffer *buffer)
 
 	memmove(p, c, strlen(c)+1);
 	buffer->cpoff--;
+
+	recompute_completions(0);
 }
 
 void
@@ -620,6 +625,8 @@ cmd_mini_kill_line(struct buffer *buffer)
 	minibuffer_taint_hist();
 	c = utf8_nth(buffer->current_line->line, buffer->cpoff);
 	*c = '\0';
+
+	recompute_completions(0);
 }
 
 void

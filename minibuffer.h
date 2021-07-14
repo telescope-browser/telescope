@@ -23,7 +23,43 @@
 #define MB_READ		1
 #define MB_COMPREAD	2
 
-typedef char *(complfn)(void *);
+/*
+ * Completion provider function.  These functions are called
+ * asynchronously.  The function should compute the next completion
+ * using the given parameter `state' and modify it eventually.  To
+ * signal the end of the completions, complfn should return NULL: the
+ * value of state will then be discarded and the function never called
+ * again.
+ */
+typedef const char *(complfn)(void **);
+
+struct ministate {
+	char		*curmesg;
+
+	char		 prompt[64];
+	void		 (*donefn)(void);
+	void		 (*abortfn)(void);
+
+	char		 buf[1025];
+	struct line	 line;
+	struct vline	 vline;
+	struct buffer	 buffer;
+
+	struct histhead	*history;
+	struct hist	*hist_cur;
+	size_t		 hist_off;
+
+	struct {
+		struct buffer	 buffer;
+		complfn		*fn;
+		void		*data;
+	} compl;
+};
+extern struct ministate ministate;
+
+extern struct buffer minibufferwin;
+
+void	 recompute_completions(int);
 
 void	 enter_minibuffer(void(*)(void), void(*)(void), void(*)(void),
     struct histhead *,
@@ -36,12 +72,9 @@ void	 yornp(const char *, void (*)(int, struct tab *), struct tab *);
  * completing_read asks the user for something using the minibuffer.
  * The first argument is the string prompt.  The second and third are
  * the callback to call when done and the data; the callback function
- * can't be NULL.  The last two arguments are the completion function
- * and its data; if not given, no completion will be shown.  The
- * function providing the completion will be called asynchronously.
+ * can't be NULL.
  */
 void	 completing_read(const char *,
-    void (*)(const char *, struct tab *), struct tab *,
-    complfn *, void *);
+    void (*)(const char *, struct tab *), struct tab *);
 
 #endif
