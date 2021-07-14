@@ -333,11 +333,12 @@ load_default_keys(void)
 
 	minibuffer_set_key("M-p",		cmd_mini_previous_history_element);
 	minibuffer_set_key("M-n",		cmd_mini_next_history_element);
-	minibuffer_set_key("<up>",		cmd_mini_previous_history_element);
-	minibuffer_set_key("<down>",		cmd_mini_next_history_element);
 
 	minibuffer_set_key("C-p",		cmd_previous_completion);
 	minibuffer_set_key("C-n",		cmd_next_completion);
+	minibuffer_set_key("<up>",		cmd_previous_completion);
+	minibuffer_set_key("<down>",		cmd_next_completion);
+
 	minibuffer_set_key("tab",		cmd_insert_current_candidate);
 }
 
