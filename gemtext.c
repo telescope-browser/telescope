@@ -50,9 +50,12 @@ static parselinefn *parsers[] = {
 	[LINE_TEXT]		= parse_text,
 	[LINE_LINK]		= parse_link,
 	[LINE_TITLE_1]		= parse_title,
+	[LINE_TITLE_2]		= parse_title,
 	[LINE_TITLE_3]		= parse_title,
+	[LINE_ITEM]		= parse_item,
 	[LINE_QUOTE]		= parse_quote,
 	[LINE_PRE_START]	= parse_pre_start,
+	[LINE_PRE_CONTENT]	= parse_pre_cnt,
 	[LINE_PRE_END]		= parse_pre_end,
 };
 
