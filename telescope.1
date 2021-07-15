@@ -20,7 +20,7 @@
 .Sh SYNOPSIS
 .Nm
 .Bk -words
-.Op Fl hn
+.Op Fl hnv
 .Op Fl c Pa config
 .Op Ar URL
 .Ek
@@ -32,8 +32,8 @@ It is able to process text/gemini and more in general every text/* file.
 also features tabs, bookmarks and out-of-band TOFU verification.
 .Pp
 The arguments are as follows:
-.Bl -tag -width tenletters
-.It Fl h
+.Bl -tag -width xxxxxxxxxxxxx
+.It Fl h , Fl -help
 Display version and usage.
 .It Fl n
 Configtest mode.
@@ -43,6 +43,8 @@ Specify an alternative configuration file.
 By default
 .Pa $HOME/.telescope/config
 is loaded.
+.It Fl v , Fl -version
+Display version.
 .El
 .Sh TOFU
 .Nm

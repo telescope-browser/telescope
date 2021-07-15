@@ -1,6 +1,7 @@
 #include <sys/socket.h>
 
 #include <errno.h>
+#include <getopt.h>
 #include <limits.h>
 #include <signal.h>
 #include <stdio.h>
@@ -13,6 +14,14 @@
 #include "parser.h"
 #include "telescope.h"
 #include "ui.h"
+
+static struct option longopts[] = {
+	{"help",	no_argument,	NULL,	'h'},
+	{"version",	no_argument,	NULL,	'v'},
+	{NULL,		0,		NULL,	0},
+};
+
+static const char *opts = "c:hnT:v";
 
 static struct imsgev	*iev_fs, *iev_net;
 
@@ -729,7 +738,8 @@ ui_send_fs(int type, uint32_t peerid, const void *data, uint16_t datalen)
 static void __attribute__((noreturn))
 usage(int r)
 {
-	fprintf(stderr, "USAGE: %s [-hn] [-c config] [url]\n", getprogname());
+	fprintf(stderr, "USAGE: %s [-hnv] [-c config] [url]\n",
+	    getprogname());
 	fprintf(stderr, "version: " PACKAGE " " VERSION "\n");
 	exit(r);
 }
@@ -758,7 +768,7 @@ main(int argc, char * const *argv)
 	strlcpy(path, getenv("HOME"), sizeof(path));
 	strlcat(path, "/.telescope/config", sizeof(path));
 
-	while ((ch = getopt(argc, argv, "c:hnT:")) != -1) {
+	while ((ch = getopt_long(argc, argv, opts, longopts, NULL)) != -1) {
 		switch (ch) {
 		case 'c':
 			fail = 1;
@@ -781,6 +791,10 @@ main(int argc, char * const *argv)
 				errx(1, "invalid process spec %c",
 				    *optarg);
 			}
+			break;
+		case 'v':
+			printf("%s %s\n", PACKAGE_NAME, PACKAGE_VERSION);
+			exit(0);
 			break;
 		default:
 			usage(1);
