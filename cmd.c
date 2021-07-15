@@ -848,3 +848,16 @@ cmd_suspend_telescope(struct buffer *buffer)
 	message("Zzz...");
 	ui_suspend();
 }
+
+void
+cmd_toggle_pre_wrap(struct buffer *buffer)
+{
+	dont_wrap_pre = !dont_wrap_pre;
+
+	if (dont_wrap_pre)
+		message("Don't wrap preformatted blocks");
+	else
+		message("Wrap preformatted blocks");
+
+	ui_schedule_redraw();
+}

@@ -1,5 +1,7 @@
 2021-07-15  Omar Polo  <op@omarpolo.com>
 
+	* cmd.c (cmd_toggle_pre_wrap): add toggle-pre-wrap
+
 	* defaults.c (load_default_keys): bind C-z to suspend-telescope
 	(load_default_keys): bind <home>/<end> to move-beginning/end-of-line
 	(config_setvari): add dont-wrap-pre

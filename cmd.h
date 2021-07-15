@@ -60,6 +60,7 @@ CMD(cmd_tab_previous);
 CMD(cmd_tab_select);
 CMD(cmd_toc);
 CMD(cmd_toggle_help);
+CMD(cmd_toggle_pre_wrap);
 
 DEFALIAS(q, cmd_kill_telescope)
 DEFALIAS(tabn, cmd_tab_next)
