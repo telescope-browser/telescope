@@ -123,7 +123,6 @@ const char *about_new =
 	"\n"
 	"=> " CIRCUMLUNAR_SPACE "/docs		Gemini documentation\n"
 	"=> " CIRCUMLUNAR_SPACE "/software	Gemini software\n"
-	"\n"
 	"=> gemini://geminispace.info/		Gemini Search Engine (geminispace.info)\n"
 	"\n"
 	"Version: " VERSION "\n"
