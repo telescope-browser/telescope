@@ -56,6 +56,7 @@ static void		 dispatch_stdio(int, short, void*);
 static void		 handle_clear_echoarea(int, short, void*);
 static void		 handle_resize(int, short, void*);
 static void		 handle_resize_nodelay(int, short, void*);
+static void		 rearrange_windows(void);
 static int		 wrap_page(struct buffer*, int);
 static void		 print_vline(int, int, WINDOW*, struct vline*);
 static void		 redraw_tabline(void);
@@ -75,6 +76,7 @@ static void		 recompute_help(void);
 static void		 update_loading_anim(int, short, void*);
 static void		 stop_loading_anim(struct tab*);
 
+static int		 should_rearrange_windows;
 static int		 too_small;
 static int		 x_offset;
 
@@ -288,6 +290,8 @@ done:
 	if (side_window)
 		recompute_help();
 
+	if (should_rearrange_windows)
+		rearrange_windows();
 	redraw_tab(current_tab());
 }
 
@@ -314,12 +318,20 @@ handle_resize(int sig, short ev, void *d)
 static void
 handle_resize_nodelay(int s, short ev, void *d)
 {
-	struct tab	*tab;
-	int		 lines;
-
 	endwin();
 	refresh();
 	clear();
+
+	rearrange_windows();
+}
+
+static void
+rearrange_windows(void)
+{
+	struct tab	*tab;
+	int		 lines;
+
+	should_rearrange_windows = 0;
 
 	lines = LINES;
 
@@ -1221,23 +1233,18 @@ ui_toggle_side_window(void)
 
 	/*
 	 * ugly hack, but otherwise the window doesn't get updated
-	 * until I call handle_resize a second time (i.e. C-l).  I
-	 * will be happy to know why something like this is needed.
+	 * until I call rearrange_windows a second time (e.g. via
+	 * C-l).  I will be happy to know why something like this is
+	 * needed.
 	 */
-	handle_resize_nodelay(0, 0, NULL);
-	handle_resize_nodelay(0, 0, NULL);
+	rearrange_windows();
+	rearrange_windows();
 }
 
 void
 ui_schedule_redraw(void)
 {
-	struct timeval tv = {0, 0};
-
-	if (event_pending(&resizeev, EV_TIMEOUT, NULL))
-		event_del(&resizeev);
-
-	evtimer_set(&resizeev, handle_resize_nodelay, NULL);
-	evtimer_add(&resizeev, &tv);
+	should_rearrange_windows = 1;
 }
 
 void
