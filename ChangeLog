@@ -1,5 +1,7 @@
 2021-07-15  Omar Polo  <op@omarpolo.com>
 
+	* ui.c (do_redraw_minibuffer): show the number of completions available
+
 	* parse.y (parseconfig): load alternate config file per-TERM
 
 	* telescope.c (main): added long options --help, --version and -C/--colors
