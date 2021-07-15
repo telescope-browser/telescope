@@ -101,6 +101,18 @@ comprehensive testing on various platforms is done to ensure everything
 is working as intended.
 
 
+## User files
+
+Telescope stores user files in `~/.telescope`.  The usage and contents
+of these files are described in [the man page](telescope.1), under
+"FILES".  There's no support yet for XDG-style directories.
+
+A sample config file is included in `contrib/sample.config`.  Copy it
+as `~/.telescope/config` to apply it.
+
+Only one instance of Telescope can be running at time per user.
+
+
 ## License
 
 Telescope is distributed under a BSD-style licence.  The main code is
