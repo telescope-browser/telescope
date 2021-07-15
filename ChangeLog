@@ -1,5 +1,7 @@
 2021-07-15  Omar Polo  <op@omarpolo.com>
 
+	* parse.y (parseconfig): load alternate config file per-TERM
+
 	* telescope.c (main): added long options --help, --version and -C/--colors
 
 	* defaults.h: add hide-pre-closing-line

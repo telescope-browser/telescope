@@ -63,6 +63,7 @@ static int attrname(char *);
 static void setattr(char *, char *, char *);
 static void add_proxy(char *, char *);
 static void bindkey(const char *, const char *, const char *);
+static void do_parseconfig(const char *, int);
 
 %}
 
@@ -526,8 +527,8 @@ bindkey(const char *map, const char *key, const char *cmd)
 		yyerror("failed to bind %s %s %s", map, key, cmd);
 }
 
-void
-parseconfig(const char *filename, int fonf)
+static void
+do_parseconfig(const char *filename, int fonf)
 {
 	if ((yyfp = fopen(filename, "r")) == NULL) {
 		if (fonf)
@@ -540,4 +541,24 @@ parseconfig(const char *filename, int fonf)
 	fclose(yyfp);
 	if (parse_errors)
 		exit(1);
+}
+
+void
+parseconfig(const char *filename, int fonf)
+{
+	char altconf[PATH_MAX], *term;
+
+	/* load the given config file */
+	do_parseconfig(filename, fonf);
+
+	/* then try to load file-TERM */
+
+	if ((term = getenv("TERM")) == NULL)
+		return;
+
+	strlcpy(altconf, filename, sizeof(altconf));
+	strlcat(altconf, "-", sizeof(altconf));
+	strlcat(altconf, term, sizeof(altconf));
+
+	do_parseconfig(altconf, 0);
 }
