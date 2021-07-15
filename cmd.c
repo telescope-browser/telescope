@@ -179,13 +179,30 @@ cmd_scroll_line_down(struct buffer *buffer)
 void
 cmd_scroll_up(struct buffer *buffer)
 {
-	forward_line(buffer, -1*body_lines);
+	struct vline	*vl;
+	int		 i;
+
+	for (i = 0; i < body_lines; ++i) {
+		vl = TAILQ_PREV(buffer->top_line, vhead, vlines);
+		if (vl == NULL)
+			break;
+		buffer->top_line = vl;
+		forward_line(buffer, -1);
+	}
 }
 
 void
 cmd_scroll_down(struct buffer *buffer)
 {
-	forward_line(buffer, body_lines);
+	int i;
+
+	for (i = 0; i < body_lines; ++i) {
+		if (!forward_line(buffer, +1))
+			break;
+
+		buffer->top_line = TAILQ_NEXT(buffer->top_line,
+		    vlines);
+	}
 }
 
 void
