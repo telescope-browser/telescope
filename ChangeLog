@@ -1,5 +1,10 @@
 2021-07-15  Omar Polo  <op@omarpolo.com>
 
+	* defaults.c (load_default_keys): bind C-z to suspend-telescope
+	(load_default_keys): bind <home>/<end> to move-beginning/end-of-line
+
+	* cmd.c (cmd_suspend_telescope): add suspend-telescope
+
 	* ui.c (do_redraw_minibuffer): show the number of completions available
 
 	* parse.y (parseconfig): load alternate config file per-TERM

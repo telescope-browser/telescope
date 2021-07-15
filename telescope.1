@@ -210,6 +210,8 @@ next-page
 bookmark-page
 .It <f7> <f7>
 list-bookmarks
+.It C-z
+suspend-telescope
 .El
 .Ss Xr vi 1 Ns -like keys
 .Bl -tag -width xxxxxxxxxxxx -offset indent -compact
@@ -270,6 +272,10 @@ next-line
 forward-char
 .It <left>
 backward-char
+.It <home>
+move-beginning-of-line
+.It <end>
+move-end-of-line
 .It <prior>
 scroll-up
 .It <next>
@@ -476,6 +482,10 @@ Scroll down by one line.
 Scroll up by one line.
 .It Ic scroll-up
 Scroll up by one visual page.
+.It Ic suspend-telescope
+Suspend the current
+.Nm
+session.
 .It Ic swiper
 Jump to a line using the minibuffer.
 .It Ic toc
