@@ -320,6 +320,7 @@ load_default_keys(void)
 	global_set_key("M-t",		cmd_tab_select);
 	global_set_key("M-l",		cmd_link_select);
 	global_set_key("M-/",		cmd_swiper);
+	global_set_key("t",		cmd_toc);
 
 	/* === minibuffer map === */
 	minibuffer_set_key("ret",		cmd_mini_complete_and_exit);
