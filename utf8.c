@@ -49,8 +49,9 @@ static const uint8_t utf8d[] = {
 	1,3,1,1,1,1,1,3,1,3,1,1,1,1,1,1,1,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1, // s7..s8
 };
 
-uint32_t
-utf8_decode(uint32_t* restrict state, uint32_t* restrict codep, uint8_t byte) {
+static inline uint32_t
+decode(uint32_t* restrict state, uint32_t* restrict codep, uint8_t byte)
+{
 	uint32_t type = utf8d[byte];
 
 	*codep = (*state != UTF8_ACCEPT) ?
@@ -63,6 +64,13 @@ utf8_decode(uint32_t* restrict state, uint32_t* restrict codep, uint8_t byte) {
 
 
 /* end of the converter, utility functions ahead */
+
+/* public version of decode */
+uint32_t
+utf8_decode(uint32_t* restrict state, uint32_t* restrict codep, uint8_t byte)
+{
+	return decode(state, codep, byte);
+}
 
 /* encode cp in s.  s must be at least 4 bytes wide */
 size_t
@@ -99,7 +107,7 @@ utf8_nth(char *s, size_t n)
 	uint32_t cp = 0, state = 0;
 
 	for (i = 0; *s && i < n; ++s)
-		if (!utf8_decode(&state, &cp, *s))
+		if (!decode(&state, &cp, *s))
 			++i;
 
 	if (state != UTF8_ACCEPT)
@@ -117,7 +125,7 @@ utf8_cplen(char *s)
 
 	len = 0;
 	for (; *s; ++s)
-		if (!utf8_decode(&state, &cp, *s))
+		if (!decode(&state, &cp, *s))
 			len++;
 	return len;
 }
@@ -153,7 +161,7 @@ utf8_snwidth(const char *s, size_t n)
 
 	tot = 0;
 	for (i = 0; *s && i < n; ++s)
-		if (!utf8_decode(&state, &cp, *s)) {
+		if (!decode(&state, &cp, *s)) {
 			i++;
 			tot += utf8_chwidth(cp);
 		}
@@ -169,7 +177,7 @@ utf8_swidth(const char *s)
 
 	tot = 0;
 	for (; *s; ++s)
-		if (!utf8_decode(&state, &cp, *s))
+		if (!decode(&state, &cp, *s))
 			tot += utf8_chwidth(cp);
 
 	return tot;
@@ -183,7 +191,7 @@ utf8_swidth_between(const char *str, const char *end)
 
 	tot = 0;
 	for (; *str && str < end; ++str)
-		if (!utf8_decode(&state, &cp, *str))
+		if (!decode(&state, &cp, *str))
 			tot += utf8_chwidth(cp);
 	return tot;
 }
@@ -194,7 +202,7 @@ utf8_next_cp(const char *s)
 	uint32_t cp = 0, state = 0;
 
 	for (; *s; ++s)
-		if (!utf8_decode(&state, &cp, *s))
+		if (!decode(&state, &cp, *s))
 			break;
 	return (char*)s+1;
 }
