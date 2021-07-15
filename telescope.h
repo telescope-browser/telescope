@@ -284,6 +284,7 @@ void		 config_apply_style(void);
 /* fs.c */
 int		 fs_init(void);
 int		 fs_main(void);
+int		 lock_session(void);
 int		 load_certs(struct ohash*);
 int		 load_last_session(void(*)(const char*));
 

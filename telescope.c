@@ -742,6 +742,7 @@ main(int argc, char * const *argv)
 	int		 ch, configtest = 0, fail = 0;
 	int		 has_url = 0;
 	int		 proc = -1;
+	int		 sessionfd;
 	char		 path[PATH_MAX];
 	const char	*url = NEW_TAB_URL;
 	const char	*argv0;
@@ -817,6 +818,11 @@ main(int argc, char * const *argv)
 		exit(0);
 	}
 
+	fs_init();
+	if ((sessionfd = lock_session()) == -1)
+		errx(1, "can't lock session, is another instance of "
+		    "telescope already running?");
+
 	/* Start children. */
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe2fs) == -1)
 		err(1, "socketpair");
@@ -835,7 +841,6 @@ main(int argc, char * const *argv)
 	setproctitle("ui");
 
 	/* initialize tofu & load certificates */
-	fs_init();
 	tofu_init(&certs, 5, offsetof(struct tofu_entry, domain));
 	load_certs(&certs);
 
@@ -865,6 +870,8 @@ main(int argc, char * const *argv)
 	ui_send_fs(IMSG_QUIT, 0, NULL, 0);
 	ui_send_net(IMSG_QUIT, 0, NULL, 0);
 	imsg_flush(&iev_fs->ibuf);
+
+	close(sessionfd);
 
 	return 0;
 }

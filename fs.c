@@ -51,6 +51,7 @@ static int		 fs_send_ui(int, uint32_t, int, const void *, uint16_t);
 static struct imsgev		*iev_ui;
 static FILE			*session;
 
+static char	lockfile_path[PATH_MAX];
 static char	bookmark_file[PATH_MAX];
 static char	known_hosts_file[PATH_MAX], known_hosts_tmp[PATH_MAX];
 static char	session_file[PATH_MAX];
@@ -330,6 +331,9 @@ fs_init(void)
 	strlcat(dir, "/.telescope", sizeof(dir));
 	mkdir(dir, 0700);
 
+	strlcpy(lockfile_path, getenv("HOME"), sizeof(lockfile_path));
+	strlcat(lockfile_path, "/.telescope/lock", sizeof(lockfile_path));
+
 	strlcpy(bookmark_file, getenv("HOME"), sizeof(bookmark_file));
 	strlcat(bookmark_file, "/.telescope/bookmarks.gmi", sizeof(bookmark_file));
 
@@ -372,6 +376,28 @@ fs_main(void)
 }
 
 
+
+int
+lock_session(void)
+{
+	struct flock	lock;
+	int		fd;
+
+	if ((fd = open(lockfile_path, O_WRONLY|O_CREAT, 0600)) == -1)
+		return -1;
+
+	lock.l_start = 0;
+	lock.l_len = 0;
+	lock.l_type = F_WRLCK;
+	lock.l_whence = SEEK_SET;
+
+	if (fcntl(fd, F_SETLK, &lock) == -1) {
+		close(fd);
+		return -1;
+	}
+
+	return fd;
+}
 
 static int
 parse_khost_line(char *line, char *tmp[3])

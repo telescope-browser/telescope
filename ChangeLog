@@ -1,5 +1,7 @@
 2021-07-15  Omar Polo  <op@omarpolo.com>
 
+	* fs.c (lock_session): use a lockfile to prevent multiple instance of telescope to run at the same time
+
 	* defaults.c (load_default_keys): bind t to toc
 	(load_default_keys): change key for link-select: M-l
 
