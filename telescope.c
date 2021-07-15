@@ -16,12 +16,13 @@
 #include "ui.h"
 
 static struct option longopts[] = {
+	{"colors",	no_argument,	NULL,	'c'},
 	{"help",	no_argument,	NULL,	'h'},
 	{"version",	no_argument,	NULL,	'v'},
 	{NULL,		0,		NULL,	0},
 };
 
-static const char *opts = "c:hnT:v";
+static const char *opts = "Cc:hnT:v";
 
 static struct imsgev	*iev_fs, *iev_net;
 
@@ -770,6 +771,8 @@ main(int argc, char * const *argv)
 
 	while ((ch = getopt_long(argc, argv, opts, longopts, NULL)) != -1) {
 		switch (ch) {
+		case 'C':
+			exit(ui_print_colors());
 		case 'c':
 			fail = 1;
 			strlcpy(path, optarg, sizeof(path));

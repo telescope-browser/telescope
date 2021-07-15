@@ -110,6 +110,7 @@ struct tab	*current_tab(void);
 struct buffer	*current_buffer(void);
 struct tab	*new_tab(const char *);
 unsigned int	 tab_new_id(void);
+int		 ui_print_colors(void);
 int		 ui_init(void);
 void		 ui_on_tab_loaded(struct tab *);
 void		 ui_on_tab_refresh(struct tab *);
