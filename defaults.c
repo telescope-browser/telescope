@@ -114,6 +114,8 @@ struct line_face line_faces[] = {
 		.prfx_pair = PCOMPL_CURR_PRFX,
 		.pair = PCOMPL_CURR,
 		.trail_pair = PCOMPL_CURR_TRAIL,
+		.attr = A_REVERSE,
+		.trail_attr = A_REVERSE,
 	},
 };
 
@@ -364,10 +366,6 @@ config_init(void)
 	}
 
 	line_faces[LINE_LINK].fg = COLOR_BLUE;
-
-	line_faces[LINE_COMPL_CURRENT].prfx_bg = COLOR_CYAN;
-	line_faces[LINE_COMPL_CURRENT].bg = COLOR_CYAN;
-	line_faces[LINE_COMPL_CURRENT].trail_bg = COLOR_CYAN;
 
 	load_default_keys();
 }
