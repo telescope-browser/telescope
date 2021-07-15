@@ -559,10 +559,21 @@ cmd_toggle_help(struct buffer *buffer)
 void
 cmd_link_select(struct buffer *buffer)
 {
+	struct line *l;
+
 	GUARD_RECURSIVE_MINIBUFFER();
 
+	l = TAILQ_FIRST(&buffer->page.head);
+	while (l != NULL && l->type != LINE_LINK)
+		l = TAILQ_NEXT(l, lines);
+
+	if (l == NULL) {
+		message("No links found");
+		return;
+	}
+
 	enter_minibuffer(sensible_self_insert, ls_select, exit_minibuffer,
-	    NULL, compl_ls, TAILQ_FIRST(&buffer->page.head));
+	    NULL, compl_ls, l);
 	strlcpy(ministate.prompt, "Select link: ", sizeof(ministate.prompt));
 }
 
@@ -579,10 +590,24 @@ cmd_swiper(struct buffer *buffer)
 void
 cmd_toc(struct buffer *buffer)
 {
+	struct line *l;
+
 	GUARD_RECURSIVE_MINIBUFFER();
 
+	l = TAILQ_FIRST(&buffer->page.head);
+	while (l != NULL &&
+	    l->type != LINE_TITLE_1 &&
+	    l->type != LINE_TITLE_2 &&
+	    l->type != LINE_TITLE_3)
+		l = TAILQ_NEXT(l, lines);
+
+	if (l == NULL) {
+		message("No headings found");
+		return;
+	}
+
 	enter_minibuffer(sensible_self_insert, toc_select, exit_minibuffer,
-	    NULL, compl_toc, TAILQ_FIRST(&buffer->page.head));
+	    NULL, compl_toc, l);
 	strlcpy(ministate.prompt, "Select heading: ",
 	    sizeof(ministate.prompt));
 }
