@@ -125,6 +125,7 @@ wrap_one(struct buffer *buffer, const char *prfx, struct line *l, size_t width)
 			TAILQ_REMOVE(&buffer->head, vl, vlines);
 			free(vl->line);
 			free(vl);
+			buffer->line_max--;
 		}
 	}
 
