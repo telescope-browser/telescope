@@ -30,6 +30,7 @@ int olivetti_mode = 1;
 int enable_colors = 1;
 int hide_pre_context = 0;
 int hide_pre_blocks = 0;
+int hide_pre_closing_line = 0;
 
 struct lineprefix line_prefixes[] = {
 	[LINE_TEXT] =		{ "",		"" },
@@ -405,7 +406,9 @@ config_setvari(const char *var, int val)
 		hide_pre_context = !!val;
 	} else if (!strcmp(var, "hide-pre-blocks")) {
 		hide_pre_blocks = !!val;
-	} else {
+	} else if (!strcmp(var, "hide-pre-closing-line")) {
+		hide_pre_closing_line = !!val;
+	}else {
 		return 0;
 	}
 

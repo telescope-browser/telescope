@@ -86,6 +86,9 @@ emit_line(struct parser *p, enum line_type type, char *line, char *alt)
 	case LINE_PRE_END:
 		if (hide_pre_context)
 			l->flags = L_HIDDEN;
+		if (l->type == LINE_PRE_END &&
+		    hide_pre_closing_line)
+			l->flags = L_HIDDEN;
 		break;
 	case LINE_PRE_CONTENT:
 		if (hide_pre_blocks)

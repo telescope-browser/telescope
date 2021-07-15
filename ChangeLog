@@ -1,5 +1,7 @@
 2021-07-15  Omar Polo  <op@omarpolo.com>
 
+	* defaults.h: add hide-pre-closing-line
+
 	* ui.c (rearrange_windows): don't flash the screen when entering the minibuffer
 
 	* fs.c (lock_session): use a lockfile to prevent multiple instance of telescope to run at the same time

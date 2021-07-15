@@ -23,6 +23,7 @@ extern int	 olivetti_mode;
 extern int	 enable_colors;
 extern int	 hide_pre_context;
 extern int	 hide_pre_blocks;
+extern int	 hide_pre_closing_line;
 
 struct lineprefix {
 	const char	*prfx1;
