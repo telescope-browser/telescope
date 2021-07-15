@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "defaults.h"
 #include "telescope.h"
 #include "utf8.h"
 
@@ -200,7 +201,9 @@ hardwrap_text(struct buffer *buffer, struct line *l, size_t width)
 		if (cur + w >= width) {
 			if (!push_line(buffer, l, start, lastchar - start, cont))
 				return 0;
-			cont = 1;
+			cont = L_CONTINUATION;
+			if (dont_wrap_pre)
+                                return 1;
 			cur = 0;
 			start = lastchar;
 		}

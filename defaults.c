@@ -31,6 +31,7 @@ int enable_colors = 1;
 int hide_pre_context = 0;
 int hide_pre_blocks = 0;
 int hide_pre_closing_line = 0;
+int dont_wrap_pre = 0;
 
 struct lineprefix line_prefixes[] = {
 	[LINE_TEXT] =		{ "",		"" },
@@ -412,7 +413,9 @@ config_setvari(const char *var, int val)
 		hide_pre_blocks = !!val;
 	} else if (!strcmp(var, "hide-pre-closing-line")) {
 		hide_pre_closing_line = !!val;
-	}else {
+	} else if (!strcmp(var, "dont-wrap-pre")) {
+		dont_wrap_pre = !!val;
+	} else {
 		return 0;
 	}
 

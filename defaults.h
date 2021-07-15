@@ -24,6 +24,7 @@ extern int	 enable_colors;
 extern int	 hide_pre_context;
 extern int	 hide_pre_blocks;
 extern int	 hide_pre_closing_line;
+extern int	 dont_wrap_pre;
 
 struct lineprefix {
 	const char	*prfx1;

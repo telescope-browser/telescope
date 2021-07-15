@@ -2,6 +2,7 @@
 
 	* defaults.c (load_default_keys): bind C-z to suspend-telescope
 	(load_default_keys): bind <home>/<end> to move-beginning/end-of-line
+	(config_setvari): add dont-wrap-pre
 
 	* cmd.c (cmd_suspend_telescope): add suspend-telescope
 
