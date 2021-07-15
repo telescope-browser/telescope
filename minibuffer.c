@@ -21,6 +21,7 @@
 #include "ui.h"
 #include "utf8.h"
 
+static void		*minibuffer_metadata(void);
 static void		 minibuffer_hist_save_entry(void);
 static void		 yornp_self_insert(void);
 static void		 yornp_abort(void);
@@ -74,6 +75,19 @@ recompute_completions(int add)
 	vl = b->current_line;
 	if (vl != NULL)
 		vl->parent->type = LINE_COMPL_CURRENT;
+}
+
+static void *
+minibuffer_metadata(void)
+{
+	struct vline	*vl;
+
+	vl = ministate.compl.buffer.current_line;
+
+	if (vl == NULL || vl->parent->flags & L_HIDDEN)
+		return NULL;
+
+	return vl->parent->meta.data;
 }
 
 static void
@@ -222,17 +236,13 @@ bp_select(void)
 void
 ts_select(void)
 {
-	struct vline	*vl;
 	struct tab	*tab;
 
-	vl = ministate.compl.buffer.current_line;
-
-	if (vl == NULL || vl->parent->flags & L_HIDDEN) {
+	if ((tab = minibuffer_metadata()) == NULL) {
 		message("No tab selected");
 		return;
 	}
 
-	tab = vl->parent->meta.data;
 	exit_minibuffer();
 	switch_to_tab(tab);
 }
@@ -241,37 +251,21 @@ void
 ls_select(void)
 {
 	struct line	*l;
-	struct vline	*vl;
 
-	vl = ministate.compl.buffer.current_line;
-
-	if (vl == NULL || vl->parent->flags & L_HIDDEN) {
+	if ((l = minibuffer_metadata()) == NULL) {
 		message("No link selected");
 		return;
 	}
 
-	l = vl->parent->meta.data;
 	exit_minibuffer();
-
 	load_url_in_tab(current_tab(), l->meta.alt);
 }
 
-void
-swiper_select(void)
+static inline void
+jump_to_line(struct line *l)
 {
-	struct line	*l;
 	struct vline	*vl;
 	struct tab	*tab;
-
-	vl = ministate.compl.buffer.current_line;
-
-	if (vl == NULL || vl->parent->flags & L_HIDDEN) {
-		message("No line selected");
-		return;
-	}
-
-	l = vl->parent->meta.data;
-	exit_minibuffer();
 
 	tab = current_tab();
 
@@ -281,10 +275,24 @@ swiper_select(void)
 	}
 
 	if (vl == NULL)
-		message("Ops, swiper error!  Please report to %s",
-		    PACKAGE_BUGREPORT);
+		message("Ops, %s error!  Please report to %s",
+		    __func__, PACKAGE_BUGREPORT);
 	else
 		tab->buffer.current_line = vl;
+}
+
+void
+swiper_select(void)
+{
+	struct line	*l;
+
+	if ((l = minibuffer_metadata()) == NULL) {
+		message("No line selected");
+		return;
+	}
+
+	exit_minibuffer();
+	jump_to_line(l);
 }
 
 static void
