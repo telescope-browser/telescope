@@ -1329,7 +1329,7 @@ ui_suspend(void)
 {
 	endwin();
 
-	kill(getpid(), SIGTSTP);
+	kill(getpid(), SIGSTOP);
 
 	refresh();
 	clear();
