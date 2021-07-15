@@ -295,6 +295,20 @@ swiper_select(void)
 	jump_to_line(l);
 }
 
+void
+toc_select(void)
+{
+	struct line	*l;
+
+	if ((l = minibuffer_metadata()) == NULL) {
+		message("No line selected");
+		return;
+	}
+
+	exit_minibuffer();
+	jump_to_line(l);
+}
+
 static void
 yornp_self_insert(void)
 {

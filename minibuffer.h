@@ -75,6 +75,7 @@ void	 bp_select(void);
 void	 ts_select(void);
 void	 ls_select(void);
 void	 swiper_select(void);
+void	 toc_select(void);
 
 void	 enter_minibuffer(void(*)(void), void(*)(void), void(*)(void),
     struct histhead *,

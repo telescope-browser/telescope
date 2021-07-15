@@ -102,3 +102,30 @@ compl_swiper(void **data, void **ret)
 	*line = TAILQ_NEXT(*line, lines);
 	return text;
 }
+
+/*
+ * Provide completions for toc
+ */
+const char *
+compl_toc(void **data, void **ret)
+{
+	struct line	**line = (struct line **)data;
+	struct line	*l;
+	const char	*text;
+
+	l = *line;
+	while (l != NULL &&
+	    l->type != LINE_TITLE_1 &&
+	    l->type != LINE_TITLE_2 &&
+	    l->type != LINE_TITLE_3)
+		l = TAILQ_NEXT(l, lines);
+
+	/* end of buffer */
+	if (l == NULL)
+		return NULL;
+
+	text = l->line;
+	*ret = l;
+	*line = TAILQ_NEXT(l, lines);
+	return text;
+}

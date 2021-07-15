@@ -584,6 +584,20 @@ cmd_swiper(struct buffer *buffer)
 }
 
 void
+cmd_toc(struct buffer *buffer)
+{
+	if (in_minibuffer) {
+		message("We don't have enable-recursive-minibuffers");
+		return;
+	}
+
+	enter_minibuffer(sensible_self_insert, toc_select, exit_minibuffer,
+	    NULL, compl_toc, TAILQ_FIRST(&buffer->page.head));
+	strlcpy(ministate.prompt, "Select heading: ",
+	    sizeof(ministate.prompt));
+}
+
+void
 cmd_inc_fill_column(struct buffer *buffer)
 {
 	if (fill_column == INT_MAX)

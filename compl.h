@@ -21,5 +21,6 @@ const char	*compl_eecmd(void **, void **);
 const char	*compl_ts(void **, void **);
 const char	*compl_ls(void **, void **);
 const char	*compl_swiper(void **, void **);
+const char	*compl_toc(void **, void **);
 
 #endif
