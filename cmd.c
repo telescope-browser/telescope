@@ -25,6 +25,15 @@
 #include "ui.h"
 #include "utf8.h"
 
+#define GUARD_RECURSIVE_MINIBUFFER()				\
+	do {							\
+		if (in_minibuffer) {				\
+			message("enable-recursive-minibuffers " \
+			    "is not yet available.");		\
+			return;					\
+		}						\
+	} while(0)
+
 /* return 1 if moved, 0 otherwise */
 static inline int
 forward_line(struct buffer *buffer, int n)
@@ -347,10 +356,7 @@ cmd_execute_extended_command(struct buffer *buffer)
 {
 	size_t	 len;
 
-	if (in_minibuffer) {
-		message("We don't have enable-recursive-minibuffers");
-		return;
-	}
+	GUARD_RECURSIVE_MINIBUFFER();
 
 	enter_minibuffer(eecmd_self_insert, eecmd_select, exit_minibuffer,
 	    &eecmd_history, compl_eecmd, NULL);
@@ -482,10 +488,7 @@ cmd_tab_move_to(struct buffer *buffer)
 void
 cmd_tab_select(struct buffer *buffer)
 {
-	if (in_minibuffer) {
-		message("We don't have enable-recursive-minibuffers");
-		return;
-	}
+	GUARD_RECURSIVE_MINIBUFFER();
 
 	enter_minibuffer(sensible_self_insert, ts_select, exit_minibuffer,
 	    NULL, compl_ts, NULL);
@@ -495,10 +498,7 @@ cmd_tab_select(struct buffer *buffer)
 void
 cmd_load_url(struct buffer *buffer)
 {
-	if (in_minibuffer) {
-		message("We don't have enable-recursive-minibuffers");
-		return;
-	}
+	GUARD_RECURSIVE_MINIBUFFER();
 
 	enter_minibuffer(sensible_self_insert, lu_select, exit_minibuffer,
 	    &lu_history, NULL, NULL);
@@ -512,10 +512,7 @@ cmd_load_current_url(struct buffer *buffer)
 {
 	struct tab *tab = current_tab();
 
-	if (in_minibuffer) {
-		message("We don't have enable-recursive-minibuffers");
-		return;
-	}
+	GUARD_RECURSIVE_MINIBUFFER();
 
 	enter_minibuffer(sensible_self_insert, lu_select, exit_minibuffer,
 	    &lu_history, NULL, NULL);
@@ -537,6 +534,8 @@ void
 cmd_bookmark_page(struct buffer *buffer)
 {
 	struct tab *tab = current_tab();
+
+	GUARD_RECURSIVE_MINIBUFFER();
 
 	enter_minibuffer(sensible_self_insert, bp_select, exit_minibuffer, NULL,
 	    NULL, NULL);
@@ -560,10 +559,7 @@ cmd_toggle_help(struct buffer *buffer)
 void
 cmd_link_select(struct buffer *buffer)
 {
-	if (in_minibuffer) {
-		message("We don't have enable-recursive-minibuffers");
-		return;
-	}
+	GUARD_RECURSIVE_MINIBUFFER();
 
 	enter_minibuffer(sensible_self_insert, ls_select, exit_minibuffer,
 	    NULL, compl_ls, TAILQ_FIRST(&buffer->page.head));
@@ -573,10 +569,7 @@ cmd_link_select(struct buffer *buffer)
 void
 cmd_swiper(struct buffer *buffer)
 {
-	if (in_minibuffer) {
-		message("We don't have enable-recursive-minibuffers");
-		return;
-	}
+	GUARD_RECURSIVE_MINIBUFFER();
 
 	enter_minibuffer(sensible_self_insert, swiper_select, exit_minibuffer,
 	    NULL, compl_swiper, TAILQ_FIRST(&buffer->page.head));
@@ -586,10 +579,7 @@ cmd_swiper(struct buffer *buffer)
 void
 cmd_toc(struct buffer *buffer)
 {
-	if (in_minibuffer) {
-		message("We don't have enable-recursive-minibuffers");
-		return;
-	}
+	GUARD_RECURSIVE_MINIBUFFER();
 
 	enter_minibuffer(sensible_self_insert, toc_select, exit_minibuffer,
 	    NULL, compl_toc, TAILQ_FIRST(&buffer->page.head));
