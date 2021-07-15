@@ -841,3 +841,10 @@ cmd_insert_current_candidate(struct buffer *buffer)
 	strlcpy(ministate.buf, vl->parent->line, sizeof(ministate.buf));
 	ministate.buffer.cpoff = utf8_cplen(ministate.buf);
 }
+
+void
+cmd_suspend_telescope(struct buffer *buffer)
+{
+	message("Zzz...");
+	ui_suspend();
+}

@@ -1325,6 +1325,18 @@ ui_read(const char *prompt, void (*fn)(const char*, struct tab *),
 }
 
 void
+ui_suspend(void)
+{
+	endwin();
+
+	kill(getpid(), SIGTSTP);
+
+	refresh();
+	clear();
+	rearrange_windows();
+}
+
+void
 ui_end(void)
 {
 	endwin();

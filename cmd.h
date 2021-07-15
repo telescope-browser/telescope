@@ -48,6 +48,7 @@ CMD(cmd_scroll_down);
 CMD(cmd_scroll_line_down);
 CMD(cmd_scroll_line_up);
 CMD(cmd_scroll_up);
+CMD(cmd_suspend_telescope);
 CMD(cmd_swiper);
 CMD(cmd_tab_close);
 CMD(cmd_tab_close_other);

@@ -120,6 +120,7 @@ void		 ui_schedule_redraw(void);
 void		 ui_require_input(struct tab *, int);
 void		 ui_read(const char *, void (*)(const char *, struct tab *), struct tab *);
 void		 ui_yornp(const char *, void (*)(int, struct tab *), struct tab *);
+void		 ui_suspend(void);
 void		 ui_end(void);
 
 #endif
