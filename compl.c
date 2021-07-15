@@ -83,7 +83,7 @@ compl_ls(void **data, void **ret)
 }
 
 /*
- * Provide completinos for swiper.
+ * Provide completions for swiper.
  */
 const char *
 compl_swiper(void **data, void **ret)
