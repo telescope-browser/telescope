@@ -1,5 +1,5 @@
 BEGIN {
-        FS = "[(,)]";
+	FS = "[(,)]";
 
 	print "#include <telescope.h>"
 	print "#include <cmd.h>"
@@ -7,11 +7,11 @@ BEGIN {
 }
 
 /^CMD/ {
-        s = $2;
-        sub("^cmd_", "", s);
-        gsub("_", "-", s);
-        printf("\t{ \"%s\", %s },\n", s, $2);
-        next;
+	s = $2;
+	sub("^cmd_", "", s);
+	gsub("_", "-", s);
+	printf("\t{ \"%s\", %s },\n", s, $2);
+	next;
 }
 
 /^DEFALIAS/ {
@@ -22,7 +22,7 @@ BEGIN {
 }
 
 {
-        next;
+	next;
 }
 
 END {
