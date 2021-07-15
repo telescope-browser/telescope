@@ -870,6 +870,7 @@ main(int argc, char * const *argv)
 	ui_send_fs(IMSG_QUIT, 0, NULL, 0);
 	ui_send_net(IMSG_QUIT, 0, NULL, 0);
 	imsg_flush(&iev_fs->ibuf);
+	imsg_flush(&iev_net->ibuf);
 
 	close(sessionfd);
 
