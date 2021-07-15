@@ -318,7 +318,7 @@ load_default_keys(void)
 	global_set_key("backtab",	cmd_previous_button);
 	global_set_key("tab",		cmd_next_button);
 	global_set_key("M-t",		cmd_tab_select);
-	global_set_key("M-L",		cmd_link_select);
+	global_set_key("M-l",		cmd_link_select);
 	global_set_key("M-/",		cmd_swiper);
 
 	/* === minibuffer map === */
