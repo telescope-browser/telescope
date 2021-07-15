@@ -63,10 +63,15 @@ recompute_completions(int add)
 		l->type = LINE_COMPL;
 		if (add && l->flags & L_HIDDEN)
 			continue;
-		if (strcasestr(l->line, ministate.buf) != NULL)
+		if (strcasestr(l->line, ministate.buf) != NULL) {
+			if (l->flags & L_HIDDEN)
+				b->line_max++;
 			l->flags &= ~L_HIDDEN;
-		else
+		} else {
+			if (!(l->flags & L_HIDDEN))
+				b->line_max--;
 			l->flags |= L_HIDDEN;
+		}
 	}
 
 	if (b->current_line == NULL)
