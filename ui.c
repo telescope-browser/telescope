@@ -840,7 +840,13 @@ do_redraw_minibuffer(void)
 	/* unused, set by getyx */
 	(void)off_y;
 
-	mvwprintw(echoarea, 0, 0, "%s", ministate.prompt);
+	wmove(echoarea, 0, 0);
+
+	if (in_minibuffer == MB_COMPREAD)
+		wprintw(echoarea, "(%2d) ",
+		    ministate.compl.buffer.line_max);
+
+	wprintw(echoarea, "%s", ministate.prompt);
 	if (ministate.hist_cur != NULL)
 		wprintw(echoarea, "(%zu/%zu) ",
 		    ministate.hist_off + 1,
