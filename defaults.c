@@ -256,6 +256,8 @@ load_default_keys(void)
 	global_set_key("<f7> a",	cmd_bookmark_page);
 	global_set_key("<f7> <f7>",	cmd_list_bookmarks);
 
+	global_set_key("C-z",		cmd_suspend_telescope);
+
 	/* vi/vi-like */
 	global_set_key("k",		cmd_previous_line);
 	global_set_key("j",		cmd_next_line);
@@ -294,6 +296,8 @@ load_default_keys(void)
 	global_set_key("<down>",	cmd_next_line);
 	global_set_key("<right>",	cmd_forward_char);
 	global_set_key("<left>",	cmd_backward_char);
+	global_set_key("<home>",	cmd_move_beginning_of_line);
+	global_set_key("<end>",		cmd_move_end_of_line);
 	global_set_key("<prior>",	cmd_scroll_up);
 	global_set_key("<next>",	cmd_scroll_down);
 
