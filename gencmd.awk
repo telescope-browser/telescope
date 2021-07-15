@@ -1,8 +1,8 @@
 BEGIN {
 	FS = "[(,)]";
 
-	print "#include <telescope.h>"
-	print "#include <cmd.h>"
+	print "#include \"telescope.h\""
+	print "#include \"cmd.h\""
 	print "struct cmd cmds[] = {";
 }
 
