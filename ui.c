@@ -570,7 +570,7 @@ redraw_tabline(void)
 {
 	struct tab	*tab;
 	size_t		 toskip, ots, tabwidth, space, x;
-	int		 current, y, truncated;
+	int		 current, y, truncated, pair;
 	const char	*title;
 	char		 buf[25];
 
@@ -636,19 +636,15 @@ redraw_tabline(void)
 				/* nop */ ;
 		}
 
-		if (current)
-			wattr_on(tabline, tab_face.current, NULL);
-		else
-			wattr_on(tabline, tab_face.tab, NULL);
-
+		pair = current ? tab_face.current : tab_face.tab;
+		wattr_on(tabline, pair, NULL);
 		wprintw(tabline, "%s", buf);
-		if (TAILQ_NEXT(tab, tabs) != NULL)
-			wprintw(tabline, " ");
+		wattr_off(tabline, pair, NULL);
 
-		if (current)
-			wattr_off(tabline, tab_face.current, NULL);
-		else
-			wattr_off(tabline, tab_face.tab, NULL);
+		wattr_on(tabline, tab_face.background, NULL);
+		if (TAILQ_NEXT(tab, tabs) != NULL)
+			wprintw(tabline, "│");
+		wattr_off(tabline, tab_face.background, NULL);
 	}
 
 	wattr_on(tabline, tab_face.background, NULL);
