@@ -2,6 +2,8 @@
 
 	* ui.c (ui_init): fix crash on some libevent2
 
+	* defaults.c (config_setvari): add emojify-link, enabled by default
+
 2021-07-15  Omar Polo  <op@omarpolo.com>
 
 	* cmd.c (cmd_toggle_pre_wrap): add toggle-pre-wrap
