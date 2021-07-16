@@ -45,7 +45,7 @@ CLEANFILES =		cmd.gen.c compile_flags.txt
 
 LDADD =			$(LIBOBJS)
 
-dist_doc_DATA =		README.md LICENSE
+EXTRA_DIST =		ChangeLog LICENSE README.md data/emoji.txt
 
 dist_man1_MANS =	telescope.1
 
