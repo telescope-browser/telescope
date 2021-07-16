@@ -1,3 +1,7 @@
+2021-07-16  Omar Polo  <op@omarpolo.com>
+
+	* ui.c (ui_init): fix crash on some libevent2
+
 2021-07-15  Omar Polo  <op@omarpolo.com>
 
 	* cmd.c (cmd_toggle_pre_wrap): add toggle-pre-wrap

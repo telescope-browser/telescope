@@ -21,7 +21,7 @@ things that you can help develop :)
  - add other GUIs: at the moment it uses only ncurses, but telescope
    shouldn't be restricted to TTYs only!
 
-![Telescope new tab](images/about-new.png)
+[![asciicast](https://asciinema.org/a/425760.svg)](https://asciinema.org/a/425760)
 
 
 ## Why yet another browser?
