@@ -482,7 +482,7 @@ line_prefix_and_text(struct vline *vl, char *buf, size_t len,
 
 	cont = vl->flags & L_CONTINUATION;
 	type = vl->parent->type;
-	if (cont)
+	if (!cont)
 		*prfx_ret = line_prefixes[type].prfx1;
 	else
 		*prfx_ret = line_prefixes[type].prfx2;
