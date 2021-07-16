@@ -163,7 +163,7 @@ wrap_text(struct buffer *buffer, const char *prfx, struct line *l, size_t width)
 		if (utf8_decode(&state, &cp, *line))
 			continue;
 		w = utf8_chwidth(cp);
-		if (cur + w >= width -1) {
+		if (cur + w > width) {
 			end = lastsep == NULL
 				? utf8_next_cp((char*)lastchar)
 				: utf8_next_cp((char*)lastsep);
