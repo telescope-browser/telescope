@@ -1473,6 +1473,15 @@ ui_init(int argc, char * const *argv)
 
 	mvwprintw(body, 0, 0, "");
 
+	/*
+	 * Dummy so libevent2 won't complain that no event_base is set
+	 * when checking event_pending for the first time.
+	 */
+	evtimer_set(&clminibufev, handle_clear_minibuf, NULL);
+	evtimer_add(&clminibufev, &clminibufev_timer);
+	evtimer_set(&resizeev, handle_resize_nodelay, NULL);
+	evtimer_add(&resizeev, &resize_timer);
+
 	event_set(&stdioev, 0, EV_READ | EV_PERSIST, dispatch_stdio, NULL);
 	event_add(&stdioev, NULL);
 
