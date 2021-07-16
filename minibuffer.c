@@ -282,8 +282,10 @@ jump_to_line(struct line *l)
 	if (vl == NULL)
 		message("Ops, %s error!  Please report to %s",
 		    __func__, PACKAGE_BUGREPORT);
-	else
+	else {
+		tab->buffer.top_line = vl;
 		tab->buffer.current_line = vl;
+	}
 }
 
 void
