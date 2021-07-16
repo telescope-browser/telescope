@@ -26,6 +26,7 @@ extern const char	*about_new;
 #define TOO_MUCH_REDIRECTS	1
 #define MALFORMED_RESPONSE	2
 #define UNKNOWN_TYPE_OR_CSET	3
+#define UNKNOWN_PROTOCOL	4
 extern const char	*err_pages[70];
 
 #endif

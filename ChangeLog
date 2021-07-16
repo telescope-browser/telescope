@@ -1,5 +1,7 @@
 2021-07-16  Omar Polo  <op@omarpolo.com>
 
+	* telescope.c (do_load_url): handle unknown protocols gracefully
+
 	* defaults.c (load_default_keys): bind [ to tab-previous
 	(load_default_keys): bind ] to tab-next
 

@@ -139,6 +139,7 @@ const char *err_pages[70] = {
 	[TOO_MUCH_REDIRECTS]	= "# Too much redirects\n",
 	[MALFORMED_RESPONSE]	= "# Got a malformed response\n",
 	[UNKNOWN_TYPE_OR_CSET]	= "# Unsupported type or charset\n",
+	[UNKNOWN_PROTOCOL]	= "# Unknown protocol\n",
 
 	[10] = "# Input required\n",
 	[11] = "# Input required\n",

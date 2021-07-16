@@ -60,7 +60,7 @@ static void		 handle_imsg_save_cert_ok(struct imsg*, size_t);
 static void		 handle_imsg_update_cert_ok(struct imsg *, size_t);
 static void		 handle_dispatch_imsg(int, short, void*);
 static void		 load_page_from_str(struct tab*, const char*);
-static void		 do_load_url(struct tab*, const char*);
+static int		 do_load_url(struct tab*, const char*);
 static pid_t		 start_child(enum telescope_process, const char *, int);
 static int		 ui_send_net(int, uint32_t, const void *, uint16_t);
 static int		 ui_send_fs(int, uint32_t, const void *, uint16_t);
@@ -552,7 +552,14 @@ load_via_proxy(struct tab *tab, const char *url, struct proxy *p)
 	    &req, sizeof(req));
 }
 
-static void
+/*
+ * Effectively load the given url in the given tab.  Return 1 when
+ * loading the page asynchronously, and thus when an erase_buffer can
+ * be done right after this function return, or 0 when loading the
+ * page synchronously.  In this last case, erase_buffer *MUST* be
+ * called by the handling function (such as load_page_from_str).
+ */
+static int
 do_load_url(struct tab *tab, const char *url)
 {
 	struct phos_uri	 uri;
@@ -579,7 +586,7 @@ do_load_url(struct tab *tab, const char *url)
 		strlcpy(tab->hist_cur->h, url, sizeof(tab->hist_cur->h));
 		load_page_from_str(tab, t);
 		free(t);
-		return;
+		return 0;
 	}
 
 	phos_serialize_uri(&tab->uri, tab->hist_cur->h,
@@ -588,18 +595,19 @@ do_load_url(struct tab *tab, const char *url)
 	for (p = protos; p->schema != NULL; ++p) {
 		if (!strcmp(tab->uri.scheme, p->schema)) {
 			p->loadfn(tab, url);
-                        return;
+                        return 1;
 		}
 	}
 
 	TAILQ_FOREACH(proxy, &proxies, proxies) {
 		if (!strcmp(tab->uri.scheme, proxy->match_proto)) {
 			load_via_proxy(tab, url, proxy);
-			return;
+			return 1;
 		}
 	}
 
-	protos[0].loadfn(tab, url);
+	load_page_from_str(tab, err_pages[UNKNOWN_PROTOCOL]);
+	return 0;
 }
 
 void
@@ -614,8 +622,8 @@ load_url(struct tab *tab, const char *url)
 	}
 
 	hist_push(&tab->hist, tab->hist_cur);
-	do_load_url(tab, url);
-	erase_buffer(&tab->buffer);
+	if (do_load_url(tab, url))
+		erase_buffer(&tab->buffer);
 }
 
 int
