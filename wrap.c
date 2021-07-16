@@ -137,7 +137,7 @@ int
 wrap_text(struct buffer *buffer, const char *prfx, struct line *l, size_t width)
 {
 	const char	*separators = " \t-";
-	const char	*start, *end, *line, *lastsep, *lastchar;
+	const char	*start, *end, *line, *lastsep, *lastchar, *space;
 	uint32_t	 cp = 0, state = 0;
 	size_t		 cur, prfxwidth, w;
 	int		 flags;
@@ -151,6 +151,14 @@ wrap_text(struct buffer *buffer, const char *prfx, struct line *l, size_t width)
 	lastsep = NULL;
 	lastchar = line;
 	flags = 0;
+
+	if (l->type == LINE_LINK && emojify_link &&
+	    emojied_line(l->line, &space)) {
+		prfxwidth = utf8_swidth_between(l->line, space);
+		cur = prfxwidth;
+		line = space + 1;
+	}
+
 	for (; *line; line++) {
 		if (utf8_decode(&state, &cp, *line))
 			continue;
