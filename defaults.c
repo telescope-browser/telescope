@@ -325,6 +325,8 @@ load_default_keys(void)
 	global_set_key("backtab",	cmd_previous_button);
 	global_set_key("tab",		cmd_next_button);
 	global_set_key("M-t",		cmd_tab_select);
+	global_set_key("[",		cmd_tab_previous);
+	global_set_key("]",		cmd_tab_next);
 	global_set_key("M-l",		cmd_link_select);
 	global_set_key("M-/",		cmd_swiper);
 	global_set_key("t",		cmd_toc);

@@ -1,5 +1,8 @@
 2021-07-16  Omar Polo  <op@omarpolo.com>
 
+	* defaults.c (load_default_keys): bind [ to tab-previous
+	(load_default_keys): bind ] to tab-next
+
 	* ui.c (ui_init): fix crash on some libevent2
 
 	* defaults.c (config_setvari): add emojify-link, enabled by default
