@@ -9,9 +9,11 @@ telescope_SOURCES =	cmd.c		\
 			compl.h		\
 			defaults.c	\
 			defaults.h	\
+			emoji-matcher.c	\
 			fs.c		\
 			gemini.c	\
 			gemtext.c	\
+			gen-emoji-matcher.sh \
 			gencmd.awk	\
 			hist.c		\
 			keymap.c	\
@@ -39,9 +41,9 @@ telescope_SOURCES =	cmd.c		\
 telescope_SOURCES +=	phos/phos.h	\
 			phos/phos_uri.c
 
-BUILT_SOURCES =		cmd.gen.c compile_flags.txt
+BUILT_SOURCES =		cmd.gen.c compile_flags.txt emoji-matcher.c
 
-CLEANFILES =		cmd.gen.c compile_flags.txt
+CLEANFILES =		cmd.gen.c compile_flags.txt emoji-matcher.c
 
 LDADD =			$(LIBOBJS)
 
@@ -51,6 +53,9 @@ dist_man1_MANS =	telescope.1
 
 cmd.gen.c: $(srcdir)/cmd.h $(srcdir)/gencmd.awk
 	${AWK} -f $(srcdir)/gencmd.awk < $(srcdir)/cmd.h > $@
+
+emoji-matcher.c: $(srcdir)/data/emoji.txt $(srcdir)/gen-emoji-matcher.sh
+	$(srcdir)/gen-emoji-matcher.sh > $@
 
 compile_flags.txt:
 	printf "%s\n" ${CFLAGS} > compile_flags.txt

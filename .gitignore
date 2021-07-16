@@ -22,3 +22,4 @@ parse.c
 telescope
 compile_flags.txt
 telescope-*.tar.gz
+emoji-matcher.c

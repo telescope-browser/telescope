@@ -65,6 +65,8 @@ decode(uint32_t* restrict state, uint32_t* restrict codep, uint8_t byte)
 
 /* end of the converter, utility functions ahead */
 
+#define ZERO_WIDTH_SPACE 0x200B
+
 /* public version of decode */
 uint32_t
 utf8_decode(uint32_t* restrict state, uint32_t* restrict codep, uint8_t byte)
@@ -219,4 +221,25 @@ utf8_prev_cp(const char *start, const char *base)
 	}
 
 	return (char*)base;
+}
+
+int
+emojied_line(const char *s, const char **space_ret)
+{
+	uint32_t cp = 0, state = 0;
+
+	for (; *s; ++s) {
+		if (!decode(&state, &cp, *s)) {
+			if (cp == ZERO_WIDTH_SPACE)
+				continue;
+			if (cp == ' ') {
+				*space_ret = s;
+				return 1;
+			}
+			if (!is_emoji(cp))
+				return 0;
+		}
+	}
+
+	return 0;
 }

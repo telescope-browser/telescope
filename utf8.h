@@ -20,6 +20,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+/* utf8.c */
 uint32_t	 utf8_decode(uint32_t*restrict, uint32_t*restrict, uint8_t);
 size_t		 utf8_encode(uint32_t, char*);
 char		*utf8_nth(char*, size_t);
@@ -30,5 +31,9 @@ size_t		 utf8_swidth(const char*);
 size_t		 utf8_swidth_between(const char*, const char*);
 char		*utf8_next_cp(const char*);
 char		*utf8_prev_cp(const char*, const char*);
+int		 emojied_line(const char *, const char **);
+
+/* emoji-matcher.c */
+int		 is_emoji(uint32_t);
 
 #endif
