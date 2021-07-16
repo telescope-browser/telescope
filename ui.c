@@ -148,6 +148,8 @@ restore_curs_x(struct buffer *buffer)
 	vl = buffer->current_line;
 	if (vl == NULL || vl->line == NULL)
 		buffer->curs_x = buffer->cpoff = 0;
+	else if (vl->parent->data != NULL)
+		buffer->curs_x = utf8_snwidth(vl->parent->data+1, buffer->cpoff) + 1;
 	else
 		buffer->curs_x = utf8_snwidth(vl->line, buffer->cpoff);
 
@@ -467,20 +469,35 @@ wrap_page(struct buffer *buffer, int width)
 	return 1;
 }
 
+/*
+ * Core part of the rendering.  It prints a vline starting from the
+ * current cursor position.  Printing a vline consists of skipping
+ * `off' columns (for olivetti-mode), print the correct prefix (which
+ * may be the emoji in case of emojified links-lines), printing the
+ * text itself, filling until width - off and filling off columns
+ * again.
+ */
 static void
 print_vline(int off, int width, WINDOW *window, struct vline *vl)
 {
-	const char *text;
-	const char *prfx;
+	/*
+	 * Believe me or not, I've seen emoji ten code points long!
+	 * That means, to stay large, 4*10 bytes + NUL.
+	 */
+	char emojibuf[41] = {0};
+	char *space, *t;
+	const char *text, *prfx;
 	struct line_face *f;
-	int i, left, x, y;
+	int i, left, x, y, emojified, cont;
+	long len = sizeof(emojibuf);
 
 	f = &line_faces[vl->parent->type];
 
 	/* unused, set by getyx */
 	(void)y;
 
-	if (!vl->flags)
+	cont = vl->flags & L_CONTINUATION;
+	if (!cont)
 		prfx = line_prefixes[vl->parent->type].prfx1;
 	else
 		prfx = line_prefixes[vl->parent->type].prfx2;
@@ -495,11 +512,30 @@ print_vline(int off, int width, WINDOW *window, struct vline *vl)
 	wattr_off(window, body_face.left, NULL);
 
 	wattr_on(window, f->prefix, NULL);
-	wprintw(window, "%s", prfx);
+	emojified = 0;
+	space = vl->parent->data;
+	if (vl->parent->type == LINE_LINK && space != NULL) {
+		emojified = 1;
+		if (cont) {
+			len = utf8_swidth_between(vl->parent->line, space) + 1;
+			for (i = 0; i < len; ++i)
+				wprintw(window, " ");
+		} else {
+			strlcpy(emojibuf, text, sizeof(emojibuf));
+			if ((t = strchr(emojibuf, ' ')) != NULL)
+				*t = '\0';
+			wprintw(window, "%s ", emojibuf);
+		}
+	} else {
+		wprintw(window, "%s", prfx);
+	}
 	wattr_off(window, f->prefix, NULL);
 
 	wattr_on(window, f->text, NULL);
-	wprintw(window, "%s", text);
+	if (emojified && !cont)
+		wprintw(window, "%s", text + (space - vl->parent->line) + 1);
+	else
+		wprintw(window, "%s", text);
 	wattr_off(window, f->text, NULL);
 
 	getyx(window, y, x);
@@ -827,7 +863,7 @@ do_redraw_echoarea(void)
 		if (tab->buffer.current_line != NULL &&
 		    tab->buffer.current_line->parent->type == LINE_LINK)
 			waddstr(echoarea,
-			    tab->buffer.current_line->parent->meta.alt);
+			    tab->buffer.current_line->parent->alt);
 	}
 }
 
@@ -945,7 +981,7 @@ emit_help_item(char *prfx, void *fn)
 		abort();
 
 	l->type = LINE_TEXT;
-	l->meta.alt = NULL;
+	l->alt = NULL;
 
 	asprintf(&l->line, "%s %s", prfx, cmd->cmd);
 

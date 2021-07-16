@@ -92,7 +92,7 @@ minibuffer_metadata(void)
 	if (vl == NULL || vl->parent->flags & L_HIDDEN)
 		return NULL;
 
-	return vl->parent->meta.data;
+	return vl->parent->data;
 }
 
 static void
@@ -263,7 +263,7 @@ ls_select(void)
 	}
 
 	exit_minibuffer();
-	load_url_in_tab(current_tab(), l->meta.alt);
+	load_url_in_tab(current_tab(), l->alt);
 }
 
 static inline void
@@ -379,7 +379,7 @@ populate_compl_buffer(complfn *fn, void *data)
 			abort();
 
 		l->type = LINE_COMPL;
-		l->meta.data = linedata;
+		l->data = linedata;
 		if ((l->line = strdup(s)) == NULL)
 			abort();
 

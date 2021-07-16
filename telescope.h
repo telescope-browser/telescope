@@ -93,10 +93,8 @@ enum line_type {
 struct line {
 	enum line_type		 type;
 	char			*line;
-	union {
-		char		*alt;
-		void		*data;
-	} meta;
+	char			*alt;
+	void			*data;
 	int			 flags;
 	TAILQ_ENTRY(line)	 lines;
 };

@@ -237,7 +237,7 @@ cmd_push_button(struct buffer *buffer)
 	vl = buffer->current_line;
 	switch (vl->parent->type) {
 	case LINE_LINK:
-		load_url_in_tab(current_tab(), vl->parent->meta.alt);
+		load_url_in_tab(current_tab(), vl->parent->alt);
 		break;
 	case LINE_PRE_START:
 		l = TAILQ_NEXT(vl->parent, lines);
@@ -265,7 +265,7 @@ cmd_push_button_new_tab(struct buffer *buffer)
 	if (vl->parent->type != LINE_LINK)
 		return;
 
-	new_tab(vl->parent->meta.alt);
+	new_tab(vl->parent->alt);
 }
 
 void

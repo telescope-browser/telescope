@@ -25,6 +25,7 @@
 #include "defaults.h"
 #include "parser.h"
 #include "telescope.h"
+#include "utf8.h"
 
 #include <ctype.h>
 #include <string.h>
@@ -79,7 +80,7 @@ emit_line(struct parser *p, enum line_type type, char *line, char *alt)
 
 	l->type = type;
 	l->line = line;
-	l->meta.alt = alt;
+	l->alt = alt;
 
 	switch (l->type) {
 	case LINE_PRE_START:
@@ -94,8 +95,12 @@ emit_line(struct parser *p, enum line_type type, char *line, char *alt)
 		if (hide_pre_blocks)
 			l->flags = L_HIDDEN;
 		break;
+	case LINE_LINK:
+		if (emojify_link &&
+		    !emojied_line(line, (const char **)&l->data))
+			l->data = NULL;
+		break;
 	default:
-		l->flags = 0;
 		break;
 	}
 
