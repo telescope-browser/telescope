@@ -76,7 +76,9 @@ compl_ls(void **data, void **ret)
 	if (l == NULL)
 		return NULL;
 
-	link = l->line;
+	if ((link = l->line) == NULL)
+		link = l->alt;
+
 	*ret = l;
 	*line = TAILQ_NEXT(l, lines);
 	return link;
@@ -114,10 +116,10 @@ compl_toc(void **data, void **ret)
 	const char	*text;
 
 	l = *line;
-	while (l != NULL &&
-	    l->type != LINE_TITLE_1 &&
+	while (l != NULL && (l->line == NULL ||
+	    (l->type != LINE_TITLE_1 &&
 	    l->type != LINE_TITLE_2 &&
-	    l->type != LINE_TITLE_3)
+	    l->type != LINE_TITLE_3)))
 		l = TAILQ_NEXT(l, lines);
 
 	/* end of buffer */
