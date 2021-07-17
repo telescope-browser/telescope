@@ -162,7 +162,12 @@ restore_curs_x(struct buffer *buffer)
 
 	buffer->curs_x += x_offset;
 
-	if (vl != NULL) {
+	if (vl == NULL)
+		return;
+
+	if (vl->parent->data != NULL)
+		buffer->curs_x += utf8_swidth_between(vl->parent->line, vl->parent->data);
+	else {
 		prfx = line_prefixes[vl->parent->type].prfx1;
 		buffer->curs_x += utf8_swidth(prfx);
 	}
