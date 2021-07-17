@@ -1,5 +1,13 @@
 2021-07-16  Omar Polo  <op@omarpolo.com>
 
+	* ui.c (redraw_tabline): separate the tabs with a vertical bar
+
+	* defaults.c (load_default_keys): bind M-< in minibuffer for mini-goto-beginning
+	(load_default_keys): bind M-> in minibuffer for mini-goto-end
+
+	* cmd.c (cmd_mini_goto_beginning): add mini-goto-beginning
+	(cmd_mini_goto_end): add mini-goto-end
+
 	* telescope.c (do_load_url): handle unknown protocols gracefully
 
 	* defaults.c (load_default_keys): bind [ to tab-previous
