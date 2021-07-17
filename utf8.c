@@ -223,6 +223,18 @@ utf8_prev_cp(const char *start, const char *base)
 	return (char*)base;
 }
 
+/*
+ * XXX: This is not correct.  There are codepoints classified as
+ * "emoji", but these can be joined toghether to form more complex
+ * emoji.  There is an ufficial list of what these valid combinations
+ * are, but it would require a costly lookup (a trie can be used to
+ * reduce the times, but...).  The following approach is conceptually
+ * simpler: if there is a sequence of "emoji codepoints" (or ZWS) and
+ * then a space, consider everything before the space a single emoji.
+ * It needs a special check for numbers (yes, 0..9 and # are
+ * technically speaking emojis) but otherwise seems to work well in
+ * practice.
+ */
 int
 emojied_line(const char *s, const char **space_ret)
 {
