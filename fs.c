@@ -286,15 +286,15 @@ handle_session_start(struct imsg *imsg, size_t datalen)
 static void
 handle_session_tab(struct imsg *imsg, size_t datalen)
 {
+	char *url;
+
 	if (session == NULL)
 		die();
 
-	if (datalen == 0)
+	url = imsg->data;
+	if (datalen == 0 || url[datalen-1] != '\0')
 		die();
-
-	/* skip the NUL-terminator */
-        fwrite(imsg->data, 1, datalen-1, session);
-
+	fprintf(session, "%s", url);
 	fprintf(session, "\n");
 }
 
