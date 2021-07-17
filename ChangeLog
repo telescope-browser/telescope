@@ -1,5 +1,8 @@
 2021-07-17  Omar Polo  <op@omarpolo.com>
 
+	* defaults.c (line_faces): don't underline links by default
+	add set-title option
+
 	* telescope.c (load_last_session): keep track of the current tab and re-focus it during next startup
 
 2021-07-16  Omar Polo  <op@omarpolo.com>

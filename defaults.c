@@ -33,6 +33,7 @@ int hide_pre_blocks = 0;
 int hide_pre_closing_line = 0;
 int dont_wrap_pre = 0;
 int emojify_link = 1;
+int set_title = 1;
 
 struct lineprefix line_prefixes[] = {
 	[LINE_TEXT] =		{ "",		"" },
@@ -422,6 +423,8 @@ config_setvari(const char *var, int val)
 		dont_wrap_pre = !!val;
 	} else if (!strcmp(var, "emojify-link")) {
 		emojify_link = !!val;
+	} else if (!strcmp(var, "set-title")) {
+		set_title = !!val;
 	} else {
 		return 0;
 	}

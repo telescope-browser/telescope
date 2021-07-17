@@ -26,6 +26,7 @@ extern int	 hide_pre_blocks;
 extern int	 hide_pre_closing_line;
 extern int	 dont_wrap_pre;
 extern int	 emojify_link;
+extern int	 set_title;
 
 struct lineprefix {
 	const char	*prfx1;

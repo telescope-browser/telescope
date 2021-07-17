@@ -952,6 +952,10 @@ redraw_tab(struct tab *tab)
 	place_cursor(1);
 
 	doupdate();
+
+	if (set_title)
+		dprintf(1, "\033]0;%s - Telescope\a",
+		    current_tab->buffer.page.title);
 }
 
 static void
