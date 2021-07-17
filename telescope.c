@@ -61,6 +61,8 @@ static void		 handle_imsg_update_cert_ok(struct imsg *, size_t);
 static void		 handle_dispatch_imsg(int, short, void*);
 static void		 load_page_from_str(struct tab*, const char*);
 static int		 do_load_url(struct tab*, const char*);
+static void		 parse_session_line(char *, uint32_t *);
+static void		 load_last_session(void);
 static pid_t		 start_child(enum telescope_process, const char *, int);
 static int		 ui_send_net(int, uint32_t, const void *, uint16_t);
 static int		 ui_send_fs(int, uint32_t, const void *, uint16_t);
@@ -674,22 +676,83 @@ add_to_bookmarks(const char *str)
 void
 save_session(void)
 {
-	struct tab *tab;
+	struct tab	*tab;
+	int		 flags;
 
 	ui_send_fs(IMSG_SESSION_START, 0, NULL, 0);
 
 	TAILQ_FOREACH(tab, &tabshead, tabs) {
-		ui_send_fs(IMSG_SESSION_TAB, 0,
+		flags = tab->flags;
+		if (tab == current_tab)
+			flags |= TAB_CURRENT;
+		ui_send_fs(IMSG_SESSION_TAB, flags,
 		    tab->hist_cur->h, strlen(tab->hist_cur->h)+1);
 	}
 
 	ui_send_fs(IMSG_SESSION_END, 0, NULL, 0);
 }
 
+/*
+ * Parse a line of the session file.  The format is:
+ *
+ *	URL [flags,...]\n
+ */
 static void
-session_new_tab_cb(const char *url)
+parse_session_line(char *line, uint32_t *flags)
 {
-	new_tab(url);
+	char *s, *ap;
+
+	*flags = 0;
+	if ((s = strchr(line, ' ')) == NULL)
+		return;
+
+	*s++ = '\0';
+	while ((ap = strsep(&s, ",")) != NULL) {
+		if (*ap == '\0')
+			;
+		else if (!strcmp(ap, "current"))
+			*flags |= TAB_CURRENT;
+		else
+			message("unknown tab flag: %s", ap);
+	}
+}
+
+static void
+load_last_session(void)
+{
+	char		*nl, *line = NULL;
+	uint32_t	 flags;
+	size_t		 linesize = 0;
+	ssize_t		 linelen;
+	FILE		*session;
+	struct tab	*tab, *curr;
+
+	if ((session = fopen(session_file, "r")) == NULL) {
+		/* first time? */
+		current_tab = new_tab("about:help");
+		return;
+	}
+
+	while ((linelen = getline(&line, &linesize, session)) != -1) {
+                if ((nl = strchr(line, '\n')) != NULL)
+			*nl = '\0';
+		parse_session_line(line, &flags);
+		if ((tab = new_tab(line)) == NULL)
+                        err(1, "new_tab");
+		if (flags & TAB_CURRENT)
+			curr = tab;
+	}
+
+	if (ferror(session))
+		message("error reading %s: %s",
+		    session_file, strerror(errno));
+	fclose(session);
+	free(line);
+
+	if (curr != NULL)
+		switch_to_tab(curr);
+
+	return;
 }
 
 static pid_t
@@ -883,11 +946,12 @@ main(int argc, char * const *argv)
 	event_add(&iev_net->ev, NULL);
 
 	if (ui_init()) {
-		load_last_session(session_new_tab_cb);
+		load_last_session();
 		if (has_url || TAILQ_EMPTY(&tabshead))
 			new_tab(url);
 
 		sandbox_ui_process();
+		ui_refresh();
 		event_dispatch();
 		ui_end();
 	}

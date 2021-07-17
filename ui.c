@@ -1274,6 +1274,12 @@ ui_init()
 }
 
 void
+ui_refresh(void)
+{
+	redraw_tab(current_tab);
+}
+
+void
 ui_on_tab_loaded(struct tab *tab)
 {
 	stop_loading_anim(tab);

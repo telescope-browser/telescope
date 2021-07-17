@@ -22,6 +22,7 @@
 #include "phos/phos.h"
 
 #include <event.h>
+#include <limits.h>
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -178,7 +179,8 @@ struct buffer {
 	TAILQ_HEAD(vhead, vline) head;
 };
 
-#define TAB_URGENT	0x1
+#define TAB_CURRENT	0x1	/* only for save_session */
+#define TAB_URGENT	0x2
 
 #define NEW_TAB_URL	"about:new"
 
@@ -279,11 +281,12 @@ int		 config_setattr(const char *, int, int, int);
 void		 config_apply_style(void);
 
 /* fs.c */
+extern char	session_file[PATH_MAX];
+
 int		 fs_init(void);
 int		 fs_main(void);
 int		 lock_session(void);
 int		 load_certs(struct ohash*);
-int		 load_last_session(void(*)(const char*));
 
 /* gemini.c */
 int		 client_main(void);

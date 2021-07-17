@@ -54,7 +54,8 @@ static FILE			*session;
 static char	lockfile_path[PATH_MAX];
 static char	bookmark_file[PATH_MAX];
 static char	known_hosts_file[PATH_MAX], known_hosts_tmp[PATH_MAX];
-static char	session_file[PATH_MAX];
+
+char	session_file[PATH_MAX];
 
 static imsg_handlerfn *handlers[] = {
 	[IMSG_GET] = handle_get,
@@ -286,15 +287,21 @@ handle_session_start(struct imsg *imsg, size_t datalen)
 static void
 handle_session_tab(struct imsg *imsg, size_t datalen)
 {
-	char *url;
+	char		*url;
+	uint32_t	 flags;
 
 	if (session == NULL)
 		die();
 
+	flags = imsg->hdr.peerid;
 	url = imsg->data;
 	if (datalen == 0 || url[datalen-1] != '\0')
 		die();
 	fprintf(session, "%s", url);
+
+	if (flags & TAB_CURRENT)
+		fprintf(session, " current");
+
 	fprintf(session, "\n");
 }
 
@@ -453,30 +460,3 @@ load_certs(struct ohash *h)
 	return ferror(f);
 }
 
-int
-load_last_session(void (*cb)(const char*))
-{
-	char	*nl, *line = NULL;
-	int	 e;
-	size_t	 linesize = 0;
-	ssize_t	 linelen;
-	FILE	*session;
-
-	if ((session = fopen(session_file, "r")) == NULL) {
-		/* first time? */
-		cb("about:help");
-		return 0;
-	}
-
-	while ((linelen = getline(&line, &linesize, session)) != -1) {
-                if ((nl = strchr(line, '\n')) != NULL)
-			*nl = '\0';
-		cb(line);
-	}
-
-	free(line);
-	e = ferror(session);
-	fclose(session);
-
-	return !e;
-}

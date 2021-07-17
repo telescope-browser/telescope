@@ -1,3 +1,7 @@
+2021-07-17  Omar Polo  <op@omarpolo.com>
+
+	* telescope.c (load_last_session): keep track of the current tab and re-focus it during next startup
+
 2021-07-16  Omar Polo  <op@omarpolo.com>
 
 	* ui.c (redraw_tabline): separate the tabs with a vertical bar

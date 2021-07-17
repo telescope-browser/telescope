@@ -760,8 +760,11 @@ Lock file used to prevent multiple instance of
 .Nm
 from running at the same time.
 .It Pa ~/.telescope/session
-Contains the list of opened tabs in the last session, one per line.
-Gets written on
+Contains the list of tabs from the last session.
+Every line identifies a tab.
+The syntax is the full URL, followed by a space, followed by an
+optional comma-separated list of attributes.
+Is written by
 .Ic kill-telescope
 and loaded on startup.
 .El
