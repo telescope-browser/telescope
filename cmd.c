@@ -861,3 +861,52 @@ cmd_toggle_pre_wrap(struct buffer *buffer)
 
 	ui_schedule_redraw();
 }
+
+void
+cmd_mini_goto_beginning(struct buffer *buffer)
+{
+	struct vline *vl;
+
+	if (!in_minibuffer)
+		return;
+
+	buffer = &ministate.compl.buffer;
+
+	if ((vl = buffer->current_line) != NULL)
+		vl->parent->type = LINE_COMPL;
+
+	vl = TAILQ_FIRST(&buffer->head);
+	while (vl != NULL && vl->parent->flags & L_HIDDEN)
+		vl = TAILQ_NEXT(vl, vlines);
+
+	if (vl == NULL)
+		return;
+
+	vl->parent->type = LINE_COMPL_CURRENT;
+	buffer->top_line = vl;
+	buffer->current_line = vl;
+}
+
+void
+cmd_mini_goto_end(struct buffer *buffer)
+{
+	struct vline *vl;
+
+	if (!in_minibuffer)
+		return;
+
+	buffer = &ministate.compl.buffer;
+
+	if ((vl = buffer->current_line) != NULL)
+		vl->parent->type = LINE_COMPL;
+
+	vl = TAILQ_LAST(&buffer->head, vhead);
+	while (vl != NULL && vl->parent->flags & L_HIDDEN)
+		vl = TAILQ_PREV(vl, vhead, vlines);
+
+	if (vl == NULL)
+		return;
+
+	vl->parent->type = LINE_COMPL_CURRENT;
+	buffer->current_line = vl;
+}

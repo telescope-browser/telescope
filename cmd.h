@@ -24,6 +24,8 @@ CMD(cmd_mini_abort);
 CMD(cmd_mini_complete_and_exit);
 CMD(cmd_mini_delete_backward_char);
 CMD(cmd_mini_delete_char);
+CMD(cmd_mini_goto_beginning);
+CMD(cmd_mini_goto_end);
 CMD(cmd_mini_kill_line);
 CMD(cmd_mini_next_history_element);
 CMD(cmd_mini_previous_history_element);
