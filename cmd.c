@@ -237,7 +237,7 @@ cmd_push_button(struct buffer *buffer)
 	vl = buffer->current_line;
 	switch (vl->parent->type) {
 	case LINE_LINK:
-		load_url_in_tab(current_tab(), vl->parent->alt);
+		load_url_in_tab(current_tab, vl->parent->alt);
 		break;
 	case LINE_PRE_START:
 		l = TAILQ_NEXT(vl->parent, lines);
@@ -343,23 +343,19 @@ cmd_next_heading(struct buffer *buffer)
 void
 cmd_previous_page(struct buffer *buffer)
 {
-	struct tab *tab = current_tab();
-
-	if (!load_previous_page(tab))
+	if (!load_previous_page(current_tab))
 		message("No previous page");
 	else
-		start_loading_anim(tab);
+		start_loading_anim(current_tab);
 }
 
 void
 cmd_next_page(struct buffer *buffer)
 {
-	struct tab *tab = current_tab();
-
-	if (!load_next_page(tab))
+	if (!load_next_page(current_tab))
 		message("No next page");
 	else
-		start_loading_anim(tab);
+		start_loading_anim(current_tab);
 }
 
 void
@@ -395,7 +391,7 @@ cmd_tab_close(struct buffer *buffer)
 {
 	struct tab *tab, *t;
 
-	tab = current_tab();
+	tab = current_tab;
 	if (TAILQ_PREV(tab, tabshead, tabs) == NULL &&
 	    TAILQ_NEXT(tab, tabs) == NULL) {
 		message("Can't close the only tab.");
@@ -421,7 +417,7 @@ cmd_tab_close_other(struct buffer *buffer)
 	struct tab *t, *i;
 
 	TAILQ_FOREACH_SAFE(t, &tabshead, tabs, i) {
-		if (t->flags & TAB_CURRENT)
+		if (t == current_tab)
 			continue;
 
 		stop_tab(t);
@@ -444,62 +440,54 @@ cmd_tab_new(struct buffer *buffer)
 void
 cmd_tab_next(struct buffer *buffer)
 {
-	struct tab *tab, *t;
+	struct tab *t;
 
-	tab = current_tab();
-	tab->flags &= ~TAB_CURRENT;
-
-	if ((t = TAILQ_NEXT(tab, tabs)) == NULL)
+	if ((t = TAILQ_NEXT(current_tab, tabs)) == NULL)
 		t = TAILQ_FIRST(&tabshead);
-	t->flags |= TAB_CURRENT;
 	t->flags &= ~TAB_URGENT;
+	current_tab = t;
 }
 
 void
 cmd_tab_previous(struct buffer *buffer)
 {
-	struct tab *tab, *t;
+	struct tab *t;
 
-	tab = current_tab();
-	tab->flags &= ~TAB_CURRENT;
-
-	if ((t = TAILQ_PREV(tab, tabshead, tabs)) == NULL)
+	if ((t = TAILQ_PREV(current_tab, tabshead, tabs)) == NULL)
 		t = TAILQ_LAST(&tabshead, tabshead);
-	t->flags |= TAB_CURRENT;
 	t->flags &= ~TAB_URGENT;
+	current_tab = t;
 }
 
 void
 cmd_tab_move(struct buffer *buffer)
 {
-	struct tab *tab, *t;
+	struct tab *t;
 
-	tab = current_tab();
-	t = TAILQ_NEXT(tab, tabs);
-	TAILQ_REMOVE(&tabshead, tab, tabs);
+	t = TAILQ_NEXT(current_tab, tabs);
+	TAILQ_REMOVE(&tabshead, current_tab, tabs);
 
 	if (t == NULL)
-		TAILQ_INSERT_HEAD(&tabshead, tab, tabs);
+		TAILQ_INSERT_HEAD(&tabshead, current_tab, tabs);
 	else
-		TAILQ_INSERT_AFTER(&tabshead, t, tab, tabs);
+		TAILQ_INSERT_AFTER(&tabshead, t, current_tab, tabs);
 }
 
 void
 cmd_tab_move_to(struct buffer *buffer)
 {
-	struct tab *tab, *t;
+	struct tab *t;
 
-	tab = current_tab();
-	t = TAILQ_PREV(tab, tabshead, tabs);
-	TAILQ_REMOVE(&tabshead, tab, tabs);
+	t = TAILQ_PREV(current_tab, tabshead, tabs);
+	TAILQ_REMOVE(&tabshead, current_tab, tabs);
 
 	if (t == NULL) {
 		if (TAILQ_EMPTY(&tabshead))
-			TAILQ_INSERT_HEAD(&tabshead, tab, tabs);
+			TAILQ_INSERT_HEAD(&tabshead, current_tab, tabs);
 		else
-			TAILQ_INSERT_TAIL(&tabshead, tab, tabs);
+			TAILQ_INSERT_TAIL(&tabshead, current_tab, tabs);
 	} else
-		TAILQ_INSERT_BEFORE(t, tab, tabs);
+		TAILQ_INSERT_BEFORE(t, current_tab, tabs);
 }
 
 void
@@ -527,44 +515,37 @@ cmd_load_url(struct buffer *buffer)
 void
 cmd_load_current_url(struct buffer *buffer)
 {
-	struct tab *tab = current_tab();
-
 	GUARD_RECURSIVE_MINIBUFFER();
 
 	enter_minibuffer(sensible_self_insert, lu_select, exit_minibuffer,
 	    &lu_history, NULL, NULL);
 	strlcpy(ministate.prompt, "Load URL: ", sizeof(ministate.prompt));
-	strlcpy(ministate.buf, tab->hist_cur->h, sizeof(ministate.buf));
+	strlcpy(ministate.buf, current_tab->hist_cur->h, sizeof(ministate.buf));
 	ministate.buffer.cpoff = utf8_cplen(ministate.buf);
 }
 
 void
 cmd_reload_page(struct buffer *buffer)
 {
-	struct tab *tab;
-
-	tab = current_tab();
-	load_url_in_tab(tab, tab->hist_cur->h);
+	load_url_in_tab(current_tab, current_tab->hist_cur->h);
 }
 
 void
 cmd_bookmark_page(struct buffer *buffer)
 {
-	struct tab *tab = current_tab();
-
 	GUARD_RECURSIVE_MINIBUFFER();
 
 	enter_minibuffer(sensible_self_insert, bp_select, exit_minibuffer, NULL,
 	    NULL, NULL);
 	strlcpy(ministate.prompt, "Bookmark URL: ", sizeof(ministate.prompt));
-	strlcpy(ministate.buf, tab->hist_cur->h, sizeof(ministate.buf));
+	strlcpy(ministate.buf, current_tab->hist_cur->h, sizeof(ministate.buf));
 	ministate.buffer.cpoff = utf8_cplen(ministate.buf);
 }
 
 void
 cmd_list_bookmarks(struct buffer *buffer)
 {
-	load_url_in_tab(current_tab(), "about:bookmarks");
+	load_url_in_tab(current_tab, "about:bookmarks");
 }
 
 void

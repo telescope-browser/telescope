@@ -206,9 +206,7 @@ ir_select(void)
 {
 	char		 buf[1025] = {0};
 	struct phos_uri	 uri;
-	struct tab	*tab;
-
-	tab = current_tab();
+	struct tab	*tab = current_tab;
 
 	exit_minibuffer();
 	minibuffer_hist_save_entry();
@@ -225,7 +223,7 @@ lu_select(void)
 {
 	exit_minibuffer();
 	minibuffer_hist_save_entry();
-	load_url_in_tab(current_tab(), ministate.buf);
+	load_url_in_tab(current_tab, ministate.buf);
 }
 
 void
@@ -263,16 +261,14 @@ ls_select(void)
 	}
 
 	exit_minibuffer();
-	load_url_in_tab(current_tab(), l->alt);
+	load_url_in_tab(current_tab, l->alt);
 }
 
 static inline void
 jump_to_line(struct line *l)
 {
 	struct vline	*vl;
-	struct tab	*tab;
-
-	tab = current_tab();
+	struct tab	*tab = current_tab;
 
 	TAILQ_FOREACH(vl, &tab->buffer.head, vlines) {
 		if (vl->parent == l)

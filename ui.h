@@ -97,6 +97,8 @@ extern struct histhead eecmd_history,
 	lu_history,
 	read_history;
 
+extern struct tab	*current_tab;
+
 void		 save_excursion(struct excursion *, struct buffer *);
 void		 restore_excursion(struct excursion *, struct buffer *);
 void		 global_key_unbound(void);
@@ -106,7 +108,6 @@ void		 message(const char *, ...) __attribute__((format(printf, 1, 2)));
 void		 start_loading_anim(struct tab *);
 void		 load_url_in_tab(struct tab *, const char *);
 void		 switch_to_tab(struct tab *);
-struct tab	*current_tab(void);
 struct buffer	*current_buffer(void);
 struct tab	*new_tab(const char *);
 unsigned int	 tab_new_id(void);

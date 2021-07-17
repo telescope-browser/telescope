@@ -81,7 +81,8 @@ static int		 should_rearrange_windows;
 static int		 too_small;
 static int		 x_offset;
 
-struct thiskey thiskey;
+struct thiskey	 thiskey;
+struct tab	*current_tab;
 
 static struct event	resizeev;
 static struct timeval	resize_timer = { 0, 250000 };
@@ -185,26 +186,12 @@ nth_line(struct buffer *buffer, size_t n)
 	abort();
 }
 
-struct tab *
-current_tab(void)
-{
-	struct tab *t;
-
-	TAILQ_FOREACH(t, &tabshead, tabs) {
-		if (t->flags & TAB_CURRENT)
-			return t;
-	}
-
-	/* unreachable */
-	abort();
-}
-
 struct buffer *
 current_buffer(void)
 {
 	if (in_minibuffer)
 		return &ministate.buffer;
-	return &current_tab()->buffer;
+	return &current_tab->buffer;
 }
 
 static int
@@ -295,7 +282,7 @@ done:
 
 	if (should_rearrange_windows)
 		rearrange_windows();
-	redraw_tab(current_tab());
+	redraw_tab(current_tab);
 }
 
 static void
@@ -331,7 +318,6 @@ handle_resize_nodelay(int s, short ev, void *d)
 static void
 rearrange_windows(void)
 {
-	struct tab	*tab;
 	int		 lines;
 
 	should_rearrange_windows = 0;
@@ -382,10 +368,8 @@ rearrange_windows(void)
 
 	wresize(tabline, 1, COLS);
 
-	tab = current_tab();
-
-	wrap_page(&tab->buffer, body_cols);
-	redraw_tab(tab);
+	wrap_page(&current_tab->buffer, body_cols);
+	redraw_tab(current_tab);
 }
 
 static int
@@ -585,7 +569,7 @@ redraw_tabline(void)
 	toskip = 0;
 	TAILQ_FOREACH(tab, &tabshead, tabs) {
 		toskip++;
-		if (tab->flags & TAB_CURRENT)
+		if (tab == current_tab)
 			break;
 	}
 
@@ -617,7 +601,7 @@ redraw_tabline(void)
 		if (x + sizeof(buf)+2 >= (size_t)COLS)
 			truncated = 1;
 
-		current = tab->flags & TAB_CURRENT;
+		current = tab == current_tab;
 
 		if (*(title = tab->buffer.page.title) == '\0')
 			title = tab->hist_cur->h;
@@ -858,7 +842,7 @@ redraw_minibuffer(void)
 static void
 do_redraw_echoarea(void)
 {
-	struct tab *tab;
+	struct vline *vl;
 
 	if (ministate.curmesg != NULL)
                 wprintw(echoarea, "%s", ministate.curmesg);
@@ -866,11 +850,9 @@ do_redraw_echoarea(void)
 		waddstr(echoarea, keybuf);
 	else {
 		/* If nothing else, show the URL at point */
-		tab = current_tab();
-		if (tab->buffer.current_line != NULL &&
-		    tab->buffer.current_line->parent->type == LINE_LINK)
-			waddstr(echoarea,
-			    tab->buffer.current_line->parent->alt);
+		vl = current_tab->buffer.current_line;
+		if (vl != NULL && vl->parent->type == LINE_LINK)
+			waddstr(echoarea, vl->parent->alt);
 	}
 }
 
@@ -1083,7 +1065,7 @@ update_loading_anim(int fd, short ev, void *d)
 
 	tab->loading_anim_step = (tab->loading_anim_step+1)%4;
 
-	if (tab->flags & TAB_CURRENT) {
+	if (tab == current_tab) {
 		redraw_modeline(tab);
 		wrefresh(modeline);
 		wrefresh(body);
@@ -1103,7 +1085,7 @@ stop_loading_anim(struct tab *tab)
 	tab->loading_anim = 0;
 	tab->loading_anim_step = 0;
 
-	if (!(tab->flags & TAB_CURRENT))
+	if (tab != current_tab)
 		return;
 
 	redraw_modeline(tab);
@@ -1129,13 +1111,7 @@ load_url_in_tab(struct tab *tab, const char *url)
 void
 switch_to_tab(struct tab *tab)
 {
-	struct tab	*t;
-
-	TAILQ_FOREACH(t, &tabshead, tabs) {
-		t->flags &= ~TAB_CURRENT;
-	}
-
-	tab->flags |= TAB_CURRENT;
+	current_tab = tab;
 	tab->flags &= ~TAB_URGENT;
 }
 
@@ -1312,7 +1288,7 @@ void
 ui_on_tab_refresh(struct tab *tab)
 {
 	wrap_page(&tab->buffer, body_cols);
-	if (tab->flags & TAB_CURRENT)
+	if (tab == current_tab)
 		redraw_tab(tab);
 	else
 		tab->flags |= TAB_URGENT;
@@ -1365,7 +1341,7 @@ ui_yornp(const char *prompt, void (*fn)(int, struct tab *),
     struct tab *data)
 {
 	yornp(prompt, fn, data);
-	redraw_tab(current_tab());
+	redraw_tab(current_tab);
 }
 
 void
@@ -1373,7 +1349,7 @@ ui_read(const char *prompt, void (*fn)(const char*, struct tab *),
     struct tab *data)
 {
 	completing_read(prompt, fn, data);
-	redraw_tab(current_tab());
+	redraw_tab(current_tab);
 }
 
 void
