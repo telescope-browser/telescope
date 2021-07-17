@@ -179,23 +179,6 @@ global_key_unbound(void)
 	message("%s is undefined", keybuf);
 }
 
-static struct vline *
-nth_line(struct buffer *buffer, size_t n)
-{
-	struct vline	*vl;
-	size_t		 i;
-
-	i = 0;
-	TAILQ_FOREACH(vl, &buffer->head, vlines) {
-		if (i == n)
-			return vl;
-		i++;
-	}
-
-	/* unreachable */
-	abort();
-}
-
 struct buffer *
 current_buffer(void)
 {
