@@ -60,7 +60,6 @@ struct line_face line_faces[] = {
 		.prfx_pair = PL_PRFX,
 		.pair = PL,
 		.trail_pair = PL_TRAIL,
-		.attr = A_UNDERLINE,
 	},
 	[LINE_TITLE_1] =	{
 		.prfx_pair = PT1_PRFX,
