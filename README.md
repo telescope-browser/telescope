@@ -104,8 +104,8 @@ is working as intended.
 ## Contrib
 
 Any form of contribution is appreciated, not only patches or bug
-reports.  The [contrib][contrib] directory is for external things such
-as sample configuration files, themes, scripts and things like that.
+reports.  The contrib directory is for external things such as sample
+configuration files, themes, scripts and things like that.
 
 
 ## User files
