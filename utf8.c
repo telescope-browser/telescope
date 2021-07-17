@@ -227,6 +227,7 @@ int
 emojied_line(const char *s, const char **space_ret)
 {
 	uint32_t cp = 0, state = 0;
+	int only_numbers = 1;
 
 	for (; *s; ++s) {
 		if (!decode(&state, &cp, *s)) {
@@ -234,10 +235,12 @@ emojied_line(const char *s, const char **space_ret)
 				continue;
 			if (cp == ' ') {
 				*space_ret = s;
-				return 1;
+				return !only_numbers;
 			}
 			if (!is_emoji(cp))
 				return 0;
+			if (cp < '0' || cp > '9')
+				only_numbers = 0;
 		}
 	}
 
