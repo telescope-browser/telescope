@@ -113,7 +113,7 @@ struct tab	*new_tab(const char *);
 unsigned int	 tab_new_id(void);
 int		 ui_print_colors(void);
 int		 ui_init(void);
-void		 ui_refresh(void);
+void		 ui_main_loop(void);
 void		 ui_on_tab_loaded(struct tab *);
 void		 ui_on_tab_refresh(struct tab *);
 const char	*ui_keyname(int);

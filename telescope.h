@@ -181,6 +181,7 @@ struct buffer {
 
 #define TAB_CURRENT	0x1	/* only for save_session */
 #define TAB_URGENT	0x2
+#define TAB_LAZY	0x4	/* to lazy load tabs */
 
 #define NEW_TAB_URL	"about:new"
 
@@ -315,7 +316,7 @@ void		 sandbox_fs_process(void);
 void		 load_about_url(struct tab*, const char*);
 void		 load_gemini_url(struct tab*, const char*);
 void		 load_via_proxy(struct tab *, const char *, struct proxy *);
-void		 load_url(struct tab*, const char*);
+void		 load_url(struct tab *, const char *);
 int		 load_previous_page(struct tab*);
 int		 load_next_page(struct tab*);
 void		 stop_tab(struct tab*);

@@ -77,6 +77,11 @@ static void		 recompute_help(void);
 static void		 update_loading_anim(int, short, void*);
 static void		 stop_loading_anim(struct tab*);
 
+/*
+ * Used to know when we're finished loading.
+ */
+static int		 operating;
+
 static int		 should_rearrange_windows;
 static int		 too_small;
 static int		 x_offset;
@@ -1103,12 +1108,15 @@ stop_loading_anim(struct tab *tab)
 void
 load_url_in_tab(struct tab *tab, const char *url)
 {
+	if (!operating) {
+		load_url(tab, url);
+		return;
+	}
+
 	message("Loading %s...", url);
 	start_loading_anim(tab);
 	load_url(tab, url);
 
-	tab->buffer.curs_x = 0;
-	tab->buffer.curs_y = 0;
 	redraw_tab(tab);
 }
 
@@ -1117,6 +1125,9 @@ switch_to_tab(struct tab *tab)
 {
 	current_tab = tab;
 	tab->flags &= ~TAB_URGENT;
+
+	if (operating && tab->flags & TAB_LAZY)
+		load_url_in_tab(tab, tab->hist_cur->h);
 }
 
 unsigned int
@@ -1141,6 +1152,8 @@ new_tab(const char *url)
 	TAILQ_INIT(&tab->buffer.head);
 
 	tab->id = tab_new_id();
+	if (!operating)
+		tab->flags |= TAB_LAZY;
 	switch_to_tab(tab);
 
 	if (TAILQ_EMPTY(&tabshead))
@@ -1278,9 +1291,13 @@ ui_init()
 }
 
 void
-ui_refresh(void)
+ui_main_loop(void)
 {
+	operating = 1;
+	switch_to_tab(current_tab);
 	redraw_tab(current_tab);
+
+	event_dispatch();
 }
 
 void

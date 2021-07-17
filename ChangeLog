@@ -1,5 +1,7 @@
 2021-07-17  Omar Polo  <op@omarpolo.com>
 
+	* telescope.c (load_url): lazy loading for telescope: don't load all the tabs when starting up, only the current one.  Defer the loading of the others when switching to them.
+
 	* defaults.c (line_faces): don't underline links by default
 	add set-title option
 

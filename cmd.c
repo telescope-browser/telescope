@@ -444,8 +444,7 @@ cmd_tab_next(struct buffer *buffer)
 
 	if ((t = TAILQ_NEXT(current_tab, tabs)) == NULL)
 		t = TAILQ_FIRST(&tabshead);
-	t->flags &= ~TAB_URGENT;
-	current_tab = t;
+	switch_to_tab(t);
 }
 
 void
@@ -455,8 +454,7 @@ cmd_tab_previous(struct buffer *buffer)
 
 	if ((t = TAILQ_PREV(current_tab, tabshead, tabs)) == NULL)
 		t = TAILQ_LAST(&tabshead, tabshead);
-	t->flags &= ~TAB_URGENT;
-	current_tab = t;
+	switch_to_tab(t);
 }
 
 void

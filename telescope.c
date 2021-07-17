@@ -612,19 +612,43 @@ do_load_url(struct tab *tab, const char *url)
 	return 0;
 }
 
+/*
+ * Load url in tab.  If tab is marked as lazy, only prepare the url
+ * but don't load it.  If tab is lazy and a url was already prepared,
+ * do load it!
+ */
 void
 load_url(struct tab *tab, const char *url)
 {
-	if (tab->hist_cur != NULL)
-		hist_clear_forward(&tab->hist, TAILQ_NEXT(tab->hist_cur, entries));
+	int lazy;
 
-	if ((tab->hist_cur = calloc(1, sizeof(*tab->hist_cur))) == NULL) {
-		event_loopbreak();
-		return;
+	lazy = tab->flags & TAB_LAZY;
+
+	if (lazy && tab->hist_cur != NULL) {
+		lazy = 0;
+		tab->flags &= ~TAB_LAZY;
 	}
 
-	hist_push(&tab->hist, tab->hist_cur);
-	if (do_load_url(tab, url))
+	if (!lazy || tab->hist_cur == NULL) {
+		if (tab->hist_cur != NULL)
+			hist_clear_forward(&tab->hist,
+			    TAILQ_NEXT(tab->hist_cur, entries));
+
+		if ((tab->hist_cur = calloc(1, sizeof(*tab->hist_cur))) == NULL) {
+			event_loopbreak();
+			return;
+		}
+
+		strlcpy(tab->buffer.page.title, url,
+		    sizeof(tab->buffer.page.title));
+		hist_push(&tab->hist, tab->hist_cur);
+
+		if (lazy)
+			strlcpy(tab->hist_cur->h, url,
+			    sizeof(tab->hist_cur->h));
+	}
+
+	if (!lazy && do_load_url(tab, url))
 		erase_buffer(&tab->buffer);
 }
 
@@ -951,8 +975,7 @@ main(int argc, char * const *argv)
 			new_tab(url);
 
 		sandbox_ui_process();
-		ui_refresh();
-		event_dispatch();
+		ui_main_loop();
 		ui_end();
 	}
 
