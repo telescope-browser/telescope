@@ -117,7 +117,7 @@ typedef void (imsg_handlerfn)(struct imsg*, size_t);
 
 struct parser {
 	const char	*name;
-	char		 title[32+1];
+	char		 title[128+1];
 	char		*buf;
 	size_t		 len;
 	size_t		 cap;
