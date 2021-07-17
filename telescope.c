@@ -61,7 +61,7 @@ static void		 handle_imsg_update_cert_ok(struct imsg *, size_t);
 static void		 handle_dispatch_imsg(int, short, void*);
 static void		 load_page_from_str(struct tab*, const char*);
 static int		 do_load_url(struct tab*, const char*);
-static void		 parse_session_line(char *, uint32_t *);
+static void		 parse_session_line(char *, const char **, uint32_t *);
 static void		 load_last_session(void);
 static pid_t		 start_child(enum telescope_process, const char *, int);
 static int		 ui_send_net(int, uint32_t, const void *, uint16_t);
@@ -701,6 +701,7 @@ void
 save_session(void)
 {
 	struct tab	*tab;
+	char		*t;
 	int		 flags;
 
 	ui_send_fs(IMSG_SESSION_START, 0, NULL, 0);
@@ -709,8 +710,12 @@ save_session(void)
 		flags = tab->flags;
 		if (tab == current_tab)
 			flags |= TAB_CURRENT;
-		ui_send_fs(IMSG_SESSION_TAB, flags,
-		    tab->hist_cur->h, strlen(tab->hist_cur->h)+1);
+
+		t = tab->hist_cur->h;
+		ui_send_fs(IMSG_SESSION_TAB, flags, t, strlen(t)+1);
+
+		t = tab->buffer.page.title;
+		ui_send_fs(IMSG_SESSION_TAB_TITLE, 0, t, strlen(t)+1);
 	}
 
 	ui_send_fs(IMSG_SESSION_END, 0, NULL, 0);
@@ -719,18 +724,25 @@ save_session(void)
 /*
  * Parse a line of the session file.  The format is:
  *
- *	URL [flags,...]\n
+ *	URL [flags,...] [title]\n
  */
 static void
-parse_session_line(char *line, uint32_t *flags)
+parse_session_line(char *line, const char **title, uint32_t *flags)
 {
-	char *s, *ap;
+	char *s, *t, *ap;
 
+	*title = "";
 	*flags = 0;
 	if ((s = strchr(line, ' ')) == NULL)
 		return;
 
 	*s++ = '\0';
+
+        if ((t = strchr(s, ' ')) != NULL) {
+		*t++ = '\0';
+		*title = t;
+	}
+
 	while ((ap = strsep(&s, ",")) != NULL) {
 		if (*ap == '\0')
 			;
@@ -744,6 +756,7 @@ parse_session_line(char *line, uint32_t *flags)
 static void
 load_last_session(void)
 {
+	const char	*title;
 	char		*nl, *line = NULL;
 	uint32_t	 flags;
 	size_t		 linesize = 0;
@@ -760,9 +773,11 @@ load_last_session(void)
 	while ((linelen = getline(&line, &linesize, session)) != -1) {
                 if ((nl = strchr(line, '\n')) != NULL)
 			*nl = '\0';
-		parse_session_line(line, &flags);
+		parse_session_line(line, &title, &flags);
 		if ((tab = new_tab(line)) == NULL)
-                        err(1, "new_tab");
+			err(1, "new_tab");
+                strlcpy(tab->buffer.page.title, title,
+		    sizeof(tab->buffer.page.title));
 		if (flags & TAB_CURRENT)
 			curr = tab;
 	}

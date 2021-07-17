@@ -44,6 +44,7 @@ static void		 handle_update_cert(struct imsg*, size_t);
 static void		 handle_file_open(struct imsg*, size_t);
 static void		 handle_session_start(struct imsg*, size_t);
 static void		 handle_session_tab(struct imsg*, size_t);
+static void		 handle_session_tab_title(struct imsg*, size_t);
 static void		 handle_session_end(struct imsg*, size_t);
 static void		 handle_dispatch_imsg(int, short, void*);
 static int		 fs_send_ui(int, uint32_t, int, const void *, uint16_t);
@@ -66,6 +67,7 @@ static imsg_handlerfn *handlers[] = {
 	[IMSG_FILE_OPEN] = handle_file_open,
 	[IMSG_SESSION_START] = handle_session_start,
 	[IMSG_SESSION_TAB] = handle_session_tab,
+	[IMSG_SESSION_TAB_TITLE] = handle_session_tab_title,
 	[IMSG_SESSION_END] = handle_session_end,
 };
 
@@ -300,9 +302,26 @@ handle_session_tab(struct imsg *imsg, size_t datalen)
 	fprintf(session, "%s", url);
 
 	if (flags & TAB_CURRENT)
-		fprintf(session, " current");
+		fprintf(session, " current ");
+	else
+		fprintf(session, " - ");
+}
 
-	fprintf(session, "\n");
+static void
+handle_session_tab_title(struct imsg *imsg, size_t datalen)
+{
+	const char	*title;
+
+	title = imsg->data;
+	if (title == NULL) {
+		datalen = 1;
+		title = "";
+	}
+
+	if (title[datalen-1] != '\0')
+		die();
+
+	fprintf(session, "%s\n", title);
 }
 
 static void
