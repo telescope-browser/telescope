@@ -23,9 +23,10 @@
  */
 
 #include <errno.h>
+#include <stdint.h>
 #include <stdio.h>
-#include <unistd.h>
 #include <string.h>
+#include <unistd.h>
 
 const char *file;
 const char *varname;
