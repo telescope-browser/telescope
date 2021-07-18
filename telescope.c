@@ -42,6 +42,38 @@ static struct proto protos[] = {
 	{ NULL, NULL },
 };
 
+
+#define CANNOT_FETCH		0
+#define TOO_MUCH_REDIRECTS	1
+#define MALFORMED_RESPONSE	2
+#define UNKNOWN_TYPE_OR_CSET	3
+#define UNKNOWN_PROTOCOL	4
+
+/* XXX: keep in sync with telescope.c:/^normalize_code/ */
+const char *err_pages[70] = {
+	[CANNOT_FETCH]		= "# Couldn't load the page\n",
+	[TOO_MUCH_REDIRECTS]	= "# Too much redirects\n",
+	[MALFORMED_RESPONSE]	= "# Got a malformed response\n",
+	[UNKNOWN_TYPE_OR_CSET]	= "# Unsupported type or charset\n",
+	[UNKNOWN_PROTOCOL]	= "# Unknown protocol\n",
+
+	[10] = "# Input required\n",
+	[11] = "# Input required\n",
+	[40] = "# Temporary failure\n",
+	[41] = "# Server unavailable\n",
+	[42] = "# CGI error\n",
+	[43] = "# Proxy error\n",
+	[44] = "# Slow down\n",
+	[50] = "# Permanent failure\n",
+	[51] = "# Not found\n",
+	[52] = "# Gone\n",
+	[53] = "# Proxy request refused\n",
+	[59] = "# Bad request\n",
+	[60] = "# Client certificate required\n",
+	[61] = "# Certificate not authorised\n",
+	[62] = "# Certificate not valid\n"
+};
+
 static void		 die(void) __attribute__((__noreturn__));
 static struct tab	*tab_by_id(uint32_t);
 static void		 handle_imsg_err(struct imsg*, size_t);
@@ -766,7 +798,8 @@ load_last_session(void)
 
 	if ((session = fopen(session_file, "r")) == NULL) {
 		/* first time? */
-		current_tab = new_tab("about:help");
+		new_tab("about:new");
+		switch_to_tab(new_tab("about:help"));
 		return;
 	}
 

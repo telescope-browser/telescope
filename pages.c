@@ -132,28 +132,3 @@ const char *about_new =
 	"=> about:help	Help\n"
 	"=> about:about	Internal Pages\n"
 	;
-
-/* XXX: keep in sync with telescope.c:/^normalize_code/ */
-const char *err_pages[70] = {
-	[CANNOT_FETCH]		= "# Couldn't load the page\n",
-	[TOO_MUCH_REDIRECTS]	= "# Too much redirects\n",
-	[MALFORMED_RESPONSE]	= "# Got a malformed response\n",
-	[UNKNOWN_TYPE_OR_CSET]	= "# Unsupported type or charset\n",
-	[UNKNOWN_PROTOCOL]	= "# Unknown protocol\n",
-
-	[10] = "# Input required\n",
-	[11] = "# Input required\n",
-	[40] = "# Temporary failure\n",
-	[41] = "# Server unavailable\n",
-	[42] = "# CGI error\n",
-	[43] = "# Proxy error\n",
-	[44] = "# Slow down\n",
-	[50] = "# Permanent failure\n",
-	[51] = "# Not found\n",
-	[52] = "# Gone\n",
-	[53] = "# Proxy request refused\n",
-	[59] = "# Bad request\n",
-	[60] = "# Client certificate required\n",
-	[61] = "# Certificate not authorised\n",
-	[62] = "# Certificate not valid\n"
-};
