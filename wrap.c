@@ -14,6 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -82,6 +83,15 @@ static int
 push_line(struct buffer *buffer, struct line *l, const char *buf, size_t len, int flags)
 {
 	struct vline *vl;
+	const char *end;
+
+	/* omit trailing spaces */
+	if (len != 0) {
+		for (end = buf + len - 1;
+		     end > buf && isspace(*end);
+		     end--, len--)
+			;	/* nop */
+	}
 
 	if (!(l->flags & L_HIDDEN))
 		buffer->line_max++;

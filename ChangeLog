@@ -1,5 +1,7 @@
 2021-07-18  Omar Polo  <op@omarpolo.com>
 
+	* wrap.c (push_line): visually drop trailing spaces when formatting a page
+
 	* minibuffer.c (populate_compl_buffer): add an optional description to completion items.
 	(recompute_completions): filter completion results using the description too (if available)
 
