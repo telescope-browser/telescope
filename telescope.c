@@ -794,7 +794,7 @@ load_last_session(void)
 	size_t		 linesize = 0;
 	ssize_t		 linelen;
 	FILE		*session;
-	struct tab	*tab, *curr;
+	struct tab	*tab, *curr = NULL;
 
 	if ((session = fopen(session_file, "r")) == NULL) {
 		/* first time? */
