@@ -368,11 +368,13 @@ populate_compl_buffer(complfn *fn, void *data)
 	struct line	*l;
 	struct buffer	*b;
 	struct parser	*p;
-	void		*linedata = NULL;
+	void		*linedata;
 
 	b = &ministate.compl.buffer;
 	p = &b->page;
 
+	linedata = NULL;
+	descr = NULL;
 	while ((s = fn(&data, &linedata, &descr)) != NULL) {
 		if ((l = calloc(1, sizeof(*l))) == NULL)
 			abort();
