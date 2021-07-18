@@ -3,7 +3,7 @@
 Telescope has a number of “special” built-in pages:
 
 => about:about
-=> about:blanks
+=> about:blank
 => about:bookmarks
 => about:help
 => about:license
