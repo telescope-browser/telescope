@@ -218,7 +218,12 @@ void
 cmd_end_of_buffer(struct buffer *buffer)
 {
 	buffer->current_line = TAILQ_LAST(&buffer->head, vhead);
-	buffer->cpoff = body_cols;
+
+	/* deal with invisible lines */
+	if (buffer->current_line->parent->flags & L_HIDDEN)
+		forward_line(buffer, -1);
+
+	cmd_move_end_of_line(buffer);
 }
 
 void
