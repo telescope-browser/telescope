@@ -30,10 +30,11 @@
  * signal the end of the completions, complfn should return NULL: the
  * value of state will then be discarded and the function never called
  * again.  The second parameter is some extra metadata per-line; it'll
- * be available as line->meta.data on the selected line during the
- * minibuffer lifecycle.
+ * be available as line->data on the selected line during the
+ * minibuffer lifecycle.  The third parameter is an extra description
+ * field for the current item.
  */
-typedef const char *(complfn)(void **, void **);
+typedef const char *(complfn)(void **, void **, const char **);
 
 struct ministate {
 	char		*curmesg;

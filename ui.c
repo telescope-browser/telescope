@@ -485,6 +485,30 @@ line_prefix_and_text(struct vline *vl, char *buf, size_t len,
 	*prfx_ret = buf;
 }
 
+static inline void
+print_vline_descr(int width, WINDOW *window, struct vline *vl)
+{
+	int x, y, goal;
+
+	if (vl->parent->type != LINE_COMPL &&
+	    vl->parent->type != LINE_COMPL_CURRENT)
+		return;
+
+	if (vl->parent->alt == NULL)
+		return;
+
+	(void)y;
+	getyx(window, y, x);
+
+	goal = width/2;
+	if (goal <= x)
+		wprintw(window, " ");
+	for (; goal > x; ++x)
+		wprintw(window, " ");
+
+	wprintw(window, "%s", vl->parent->alt);
+}
+
 /*
  * Core part of the rendering.  It prints a vline starting from the
  * current cursor position.  Printing a vline consists of skipping
@@ -523,6 +547,7 @@ print_vline(int off, int width, WINDOW *window, struct vline *vl)
 
 	wattr_on(window, f->text, NULL);
 	wprintw(window, "%s", text);
+	print_vline_descr(width, window, vl);
 	wattr_off(window, f->text, NULL);
 
 	getyx(window, y, x);

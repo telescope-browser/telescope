@@ -17,10 +17,10 @@
 #ifndef COMPL_H
 #define COMPL_H
 
-const char	*compl_eecmd(void **, void **);
-const char	*compl_ts(void **, void **);
-const char	*compl_ls(void **, void **);
-const char	*compl_swiper(void **, void **);
-const char	*compl_toc(void **, void **);
+const char	*compl_eecmd(void **, void **, const char **);
+const char	*compl_ts(void **, void **, const char **);
+const char	*compl_ls(void **, void **, const char **);
+const char	*compl_swiper(void **, void **, const char **);
+const char	*compl_toc(void **, void **, const char **);
 
 #endif

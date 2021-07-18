@@ -270,6 +270,7 @@ struct keymap {
 struct cmd {
 	const char	*cmd;
 	void		(*fn)(struct buffer *);
+	const char	*descr;
 };
 extern struct cmd cmds[];
 

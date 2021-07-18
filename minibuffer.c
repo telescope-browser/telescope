@@ -63,7 +63,8 @@ recompute_completions(int add)
 		l->type = LINE_COMPL;
 		if (add && l->flags & L_HIDDEN)
 			continue;
-		if (strcasestr(l->line, ministate.buf) != NULL) {
+		if (strcasestr(l->line, ministate.buf) != NULL ||
+		    (l->alt != NULL && strcasestr(l->alt, ministate.buf) != NULL)) {
 			if (l->flags & L_HIDDEN)
 				b->line_max++;
 			l->flags &= ~L_HIDDEN;
@@ -363,7 +364,7 @@ read_select(void)
 static inline void
 populate_compl_buffer(complfn *fn, void *data)
 {
-	const char	*s;
+	const char	*s, *descr;
 	struct line	*l;
 	struct buffer	*b;
 	struct parser	*p;
@@ -372,12 +373,13 @@ populate_compl_buffer(complfn *fn, void *data)
 	b = &ministate.compl.buffer;
 	p = &b->page;
 
-	while ((s = fn(&data, &linedata)) != NULL) {
+	while ((s = fn(&data, &linedata, &descr)) != NULL) {
 		if ((l = calloc(1, sizeof(*l))) == NULL)
 			abort();
 
 		l->type = LINE_COMPL;
 		l->data = linedata;
+		l->alt = (char*)descr;
 		if ((l->line = strdup(s)) == NULL)
 			abort();
 
@@ -387,6 +389,7 @@ populate_compl_buffer(complfn *fn, void *data)
 			TAILQ_INSERT_TAIL(&p->head, l, lines);
 
 		linedata = NULL;
+		descr = NULL;
 	}
 
 	if ((l = TAILQ_FIRST(&p->head)) != NULL)

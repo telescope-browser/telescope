@@ -23,7 +23,7 @@
  * Provide completions for execute-extended-command (eecmd).
  */
 const char *
-compl_eecmd(void **data, void **ret)
+compl_eecmd(void **data, void **ret, const char **descr)
 {
 	struct cmd	**state = (struct cmd **)data;
 
@@ -34,6 +34,7 @@ compl_eecmd(void **data, void **ret)
 	if ((*state)->cmd == NULL)
 		return NULL;
 
+	*descr = (*state)->descr;
 	return (*state)++->cmd;
 }
 
@@ -41,7 +42,7 @@ compl_eecmd(void **data, void **ret)
  * Provide completions for tab-select.
  */
 const char *
-compl_ts(void **data, void **ret)
+compl_ts(void **data, void **ret, const char **descr)
 {
 	struct tab	**tab = (struct tab **)data;
 
@@ -55,6 +56,7 @@ compl_ts(void **data, void **ret)
 
 	if (*(*tab)->buffer.page.title == '\0')
 		return (*tab)->hist_cur->h;
+	*descr = (*tab)->hist_cur->h;
 	return (*tab)->buffer.page.title;
 }
 
@@ -62,7 +64,7 @@ compl_ts(void **data, void **ret)
  * Provide completions for link-select.
  */
 const char *
-compl_ls(void **data, void **ret)
+compl_ls(void **data, void **ret, const char **descr)
 {
 	struct line	**line = (struct line **)data;
 	struct line	*l;
@@ -76,8 +78,11 @@ compl_ls(void **data, void **ret)
 	if (l == NULL)
 		return NULL;
 
-	if ((link = l->line) == NULL)
+	if ((link = l->line) == NULL) {
 		link = l->alt;
+		*descr = NULL;
+	} else
+		*descr = l->alt;
 
 	*ret = l;
 	*line = TAILQ_NEXT(l, lines);
@@ -88,7 +93,7 @@ compl_ls(void **data, void **ret)
  * Provide completions for swiper.
  */
 const char *
-compl_swiper(void **data, void **ret)
+compl_swiper(void **data, void **ret, const char **descr)
 {
 	struct line	**line = (struct line **)data;
 	const char	*text;
@@ -109,7 +114,7 @@ compl_swiper(void **data, void **ret)
  * Provide completions for toc
  */
 const char *
-compl_toc(void **data, void **ret)
+compl_toc(void **data, void **ret, const char **descr)
 {
 	struct line	**line = (struct line **)data;
 	struct line	*l;

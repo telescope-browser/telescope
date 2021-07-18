@@ -415,7 +415,7 @@ Move point to the previous (visual) line.
 .Ss Bookmark-related commands
 .Bl -tag -width execute-extended-command -compact
 .It Ic bookmark-page
-Add a link to the bookmark file.
+Save a page in the bookmark file.
 It preloads the minibuffer with the current URL.
 .It Ic list-bookmarks
 Load the bookmarks page.
@@ -443,36 +443,34 @@ Switch to a tab using the minibuffer.
 .Ss Misc commands
 .Bl -tag -width execute-extended-command -compact
 .It Ic clear-minibuf
-Clears the echo area.
+Clear the echo area.
 .It Ic dec-fill-column
-Decrements fill-column by two.
+Decrement fill-column by two.
 .It Ic execute-extended-command
-Prompts for a command name using the minibuffer.
+Execute an internal command.
 .It Ic kill-telescope
 Quit
 .Nm .
 .It Ic inc-fill-column
-Increments fill-column by two.
+Increment fill-column by two.
 .It Ic link-select
 Select and visit a link using the minibuffer.
 .It Ic load-current-url
-Prompts for an URL, the minibuffer is preloaded with the current
-one.
+Edit the current URL.
 .It Ic load-url
-Prompts for an URL.
+Prompt for an URL.
 .It Ic next-page
-Load the next item in the history list.
+Go forward in the page history.
 .It Ic olivetti-mode
 Toggle olivetti mode (i.e. horizontal centering of the lines of the
 window.)
 .It Ic previous-page
-Load the previous item in the history list.
+Go backward in the page history.
 .It Ic push-button
-Follow the link on the current line, or toggle the visibility of the
-following preformatted block if called when the cursor is on the
-heading of the block.
+Follow link at point, or toggle the visibility of the following
+preformatted block if called when the cursor is on the heading of the block.
 .It Ic push-button-new-tab
-Follow the link on the current line on a new tab.
+Follow link at point in a new tab.
 .It Ic redraw
 Redraw the screen, useful if some background program messed up the
 display.
@@ -493,7 +491,7 @@ session.
 .It Ic swiper
 Jump to a line using the minibuffer.
 .It Ic toc
-Select and jump to a heading of the page using the minibuffer.
+Jump to a heading using the minibuffer.
 .It Ic toggle-help
 Toggle side window with help about available keys and their associated
 interactive command.
@@ -515,7 +513,7 @@ Select the first completion, if any.
 .It Ic mini-goto-end
 Select the last completion, if any.
 .It Ic mini-kill-line
-Delete from the point until the end of the line.
+Delete from point until the end of the line.
 .It Ic mini-next-history-element
 Load the previous history element.
 .It Ic mini-previous-history-element
