@@ -151,14 +151,15 @@ static void
 restore_curs_x(struct buffer *buffer)
 {
 	struct vline	*vl;
-	const char	*prfx;
+	const char	*prfx, *text;
 
 	vl = buffer->current_line;
 	if (vl == NULL || vl->line == NULL)
 		buffer->curs_x = buffer->cpoff = 0;
-	else if (vl->parent->data != NULL)
-		buffer->curs_x = utf8_snwidth(vl->parent->data+1, buffer->cpoff) + 1;
-	else
+	else if (vl->parent->data != NULL) {
+		text = vl->parent->data;
+		buffer->curs_x = utf8_snwidth(text + 1, buffer->cpoff) + 1;
+	} else
 		buffer->curs_x = utf8_snwidth(vl->line, buffer->cpoff);
 
 	buffer->curs_x += x_offset;
