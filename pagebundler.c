@@ -17,7 +17,7 @@
 /*
  * pagebundler converts the given file into a valid C program that can
  * be compiled.  The generated code provides a variable that holds the
- * original file.
+ * content of the original file and a _len variable with the size.
  *
  * Usage: pagebundler -f file -v varname > outfile
  */
@@ -62,6 +62,7 @@ main(int argc, char **argv)
 	if ((f = fopen(file, "r")) == NULL) {
 		fprintf(stderr, "%s: can't open %s: %s",
 		    argv[0], file, strerror(errno));
+		return 1;
 	}
 
         printf("const uint8_t %s[] = {\n", varname);
@@ -81,8 +82,6 @@ main(int argc, char **argv)
 			break;
 	}
 
-	len++;
-	printf("\t0x00\n");
 	printf("}; /* %s */\n", varname);
 
 	printf("size_t %s_len = %zu;\n", varname, len);
