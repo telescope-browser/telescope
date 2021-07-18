@@ -17,9 +17,19 @@
 #ifndef PAGES_H
 #define PAGES_H
 
-extern const char	*about_about;
-extern const char	*about_blank;
-extern const char	*about_help;
-extern const char	*about_new;
+#include <stddef.h>
+#include <stdint.h>
+
+extern const uint8_t	 about_about[];
+extern size_t		 about_about_len;
+
+extern const uint8_t	 about_blank[];
+extern size_t		 about_blank_len;
+
+extern const uint8_t	 about_help[];
+extern size_t		 about_help_len;
+
+extern const uint8_t	 about_new[];
+extern size_t		 about_new_len;
 
 #endif

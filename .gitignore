@@ -19,7 +19,9 @@ ylwrap
 *.o
 cmd.gen.c
 parse.c
+pages.c
 telescope
+pagebundler
 compile_flags.txt
 telescope-*.tar.gz
 emoji-matcher.c

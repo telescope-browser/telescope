@@ -1,0 +1,66 @@
+# Help
+
+Welcome to Telescope!
+
+Use the arrow keys, page up/down, hjkl or C-{b,f,n,p} to move the cursor and read the page.
+
+Use > to enter an URL, B and F (uppercase) to navigate backward and forward in the history, [ and ] to move between tabs.  C-t (control + t) opens a new tab and C-w (control + w) closes it.
+
+This page is always available as
+> $ telescope about:help
+
+## What is Gemini?
+
+Gemini is a new internet protocol which:
+
+* is heavier than gopher
+* is lighter than the web
+* will not replace either
+* strives for maximum power to weight ratio
+* takes user privacy very seriously
+
+=> gemini://gemini.circumlunar.space Project Gemini Homepage
+
+> Tip: press tab and shift-tab to jump between links
+
+> Tip: move the cursor over a link and press M-RET (alt + enter) to open it in another tab.  Then use [ and ] (or ‘g t’ and ‘g T’) to switch between tabs.
+
+## What is Telescope?
+
+Telescope is a Gemini browser written for fun, as hobbystic project in my free time.  As such, it lacks tons of features available in others, more mature Gemini browsers, but it also has some unique ones.
+
+The UI is strongly inspired from Emacs and w3m, so it’s possible to notice various familiar concepts, such as the minibuffer or the tab line.  Care has been taken to make it as familiar as possible for vi and “CUA” users too.
+
+=> gemini://telescope.omarpolo.com Telescope Project Homepage
+
+Telescope is documented carefully, so please refer to the manpage to know more about all the available keybindings, the format and location of the configuration file and more:
+
+> man telescope
+
+## Appearance
+
+Telescope is fully customizable.  The default configuration file is
+
+> ~/.telescope/config
+
+If your terminal emulator doesn’t have problems with UTF-8 glyphs, try to load Telescope with the following configuration:
+
+```Example of configuration file with some pretty defaults
+set hide-pre-closing-line = 1
+
+style line.pre.start {
+	prefix "─── " "    "
+}
+
+style line.item {
+	prefix " • " "   "
+}
+
+style line.link {
+	prefix "→ " "  "
+}
+
+style line.quote {
+	prefix " ┃ "
+}
+```

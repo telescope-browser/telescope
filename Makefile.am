@@ -41,9 +41,12 @@ telescope_SOURCES =	cmd.c		\
 telescope_SOURCES +=	phos/phos.h	\
 			phos/phos_uri.c
 
-BUILT_SOURCES =		cmd.gen.c compile_flags.txt emoji-matcher.c
+noinst_PROGRAMS =	pagebundler
+pagebundler_SOURCES =	pagebundler.c
 
-CLEANFILES =		cmd.gen.c compile_flags.txt emoji-matcher.c
+BUILT_SOURCES =		cmd.gen.c compile_flags.txt emoji-matcher.c pages.c
+
+CLEANFILES =		cmd.gen.c compile_flags.txt emoji-matcher.c pages.c
 
 LDADD =			$(LIBOBJS)
 
@@ -59,3 +62,15 @@ emoji-matcher.c: $(srcdir)/data/emoji.txt $(srcdir)/gen-emoji-matcher.sh
 
 compile_flags.txt:
 	printf "%s\n" ${CFLAGS} > compile_flags.txt
+
+PAGES =	pages/about_about.gmi	\
+	pages/about_blank.gmi	\
+	pages/about_help.gmi	\
+	pages/about_new.gmi
+pages.c: pagebundler $(srcdir)/pages.h ${PAGES}
+	echo > $@
+	echo "#include \"pages.h\"" >> $@
+	./pagebundler -f $(srcdir)/pages/about_about.gmi -v about_about >> $@
+	./pagebundler -f $(srcdir)/pages/about_blank.gmi -v about_blank >> $@
+	./pagebundler -f $(srcdir)/pages/about_help.gmi  -v about_help  >> $@
+	./pagebundler -f $(srcdir)/pages/about_new.gmi   -v about_new   >> $@

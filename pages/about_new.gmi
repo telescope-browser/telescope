@@ -1,0 +1,18 @@
+```Ascii art of the word “Telescope”
+ _______         __
+|_     _|.-----.|  |.-----.-----.----.-----.-----.-----.
+  |   |  |  -__||  ||  -__|__ --|  __|  _  |  _  |  -__|
+  |___|  |_____||__||_____|_____|____|_____|   __|_____|
+                                           |__|
+```
+
+=> gemini://gemini.circumlunar.space/docs	Gemini documentation
+=> gemini://gemini.circumlunar.space/software	Gemini software
+=> gemini://geminispace.info			Search Engine (geminispace.info)
+
+Version ${VERSION}
+Bug reports to: telescope@omarpolo.com
+
+=> gemini://telescope.omarpolo.com		Telescope project page
+=> about:help					Help
+=> about:about					Internal pages

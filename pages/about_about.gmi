@@ -1,0 +1,9 @@
+# About pages
+
+Telescope has a number of “special” built-in pages:
+
+=> about:about
+=> about:blanks
+=> about:bookmarks
+=> about:help
+=> about:new

@@ -35,7 +35,7 @@
 
 static void		 die(void) __attribute__((__noreturn__));
 static void		 serve_bookmarks(uint32_t);
-static void		 send_page(struct imsg *, const char *);
+static void		 send_page(struct imsg *, const uint8_t *, size_t);
 static void		 handle_get(struct imsg*, size_t);
 static void		 handle_quit(struct imsg*, size_t);
 static void		 handle_bookmark_page(struct imsg*, size_t);
@@ -107,38 +107,49 @@ serve_bookmarks(uint32_t peerid)
 }
 
 static void
-send_page(struct imsg *imsg, const char *page)
+send_page(struct imsg *imsg, const uint8_t *page, size_t len)
 {
-	fs_send_ui(IMSG_BUF, imsg->hdr.peerid, -1, page, strlen(page));
+	fs_send_ui(IMSG_BUF, imsg->hdr.peerid, -1, page, len);
 	fs_send_ui(IMSG_EOF, imsg->hdr.peerid, -1, NULL, 0);
 }
 
 static void
 handle_get(struct imsg *imsg, size_t datalen)
 {
-	char		*data;
-	const char	*p;
+	const char	*data, *p;
+	size_t		 i;
+	struct page {
+		const char	*name;
+		void		(*handle)(uint32_t);
+		const uint8_t	*data;
+		size_t		 len;
+	} pages[] = {
+		{"about:about",		NULL,	about_about,	about_about_len},
+		{"about:blank",		NULL,	about_blank,	about_blank_len},
+		{"about:bookmarks",	serve_bookmarks, 0,	0},
+		{"about:help",		NULL,	about_help,	about_help_len},
+		{"about:new",		NULL,	about_new,	about_new_len},
+	};
 
 	data = imsg->data;
 
 	if (data[datalen-1] != '\0')
 		die();
 
-	if (!strcmp(data, "about:about")) {
-		send_page(imsg, about_about);
-	} else if (!strcmp(data, "about:blank")) {
-		send_page(imsg, about_blank);
-	} else if (!strcmp(data, "about:bookmarks")) {
-		serve_bookmarks(imsg->hdr.peerid);
-	} else if (!strcmp(data, "about:help")) {
-		send_page(imsg, about_help);
-	} else if (!strcmp(data, "about:new")) {
-		send_page(imsg, about_new);
-	} else {
-		p = "# not found!\n";
-		fs_send_ui(IMSG_BUF, imsg->hdr.peerid, -1, p, strlen(p));
-		fs_send_ui(IMSG_EOF, imsg->hdr.peerid, -1, NULL, 0);
+	for (i = 0; i < sizeof(pages)/sizeof(pages[0]); ++i) {
+		if (strcmp(data, pages[i].name) != 0)
+			continue;
+
+		if (pages[i].handle != NULL)
+			pages[i].handle(imsg->hdr.peerid);
+		else
+			send_page(imsg, pages[i].data, pages[i].len);
+		return;
 	}
+
+	p = "# not found!\n";
+	fs_send_ui(IMSG_BUF, imsg->hdr.peerid, -1, p, strlen(p));
+	fs_send_ui(IMSG_EOF, imsg->hdr.peerid, -1, NULL, 0);
 }
 
 static void
