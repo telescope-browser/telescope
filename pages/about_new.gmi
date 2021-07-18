@@ -10,7 +10,7 @@
 => gemini://gemini.circumlunar.space/software	Gemini software
 => gemini://geminispace.info			Search Engine (geminispace.info)
 
-Version ${VERSION}
+Version 0.3
 Bug reports to: telescope@omarpolo.com
 
 => gemini://telescope.omarpolo.com		Telescope project page
