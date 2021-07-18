@@ -66,11 +66,13 @@ compile_flags.txt:
 PAGES =	pages/about_about.gmi	\
 	pages/about_blank.gmi	\
 	pages/about_help.gmi	\
+	pages/about_license.gmi	\
 	pages/about_new.gmi
 pages.c: pagebundler $(srcdir)/pages.h ${PAGES}
 	echo > $@
 	echo "#include \"pages.h\"" >> $@
-	./pagebundler -f $(srcdir)/pages/about_about.gmi -v about_about >> $@
-	./pagebundler -f $(srcdir)/pages/about_blank.gmi -v about_blank >> $@
-	./pagebundler -f $(srcdir)/pages/about_help.gmi  -v about_help  >> $@
-	./pagebundler -f $(srcdir)/pages/about_new.gmi   -v about_new   >> $@
+	./pagebundler -f $(srcdir)/pages/about_about.gmi   -v about_about   >> $@
+	./pagebundler -f $(srcdir)/pages/about_blank.gmi   -v about_blank   >> $@
+	./pagebundler -f $(srcdir)/pages/about_help.gmi    -v about_help    >> $@
+	./pagebundler -f $(srcdir)/pages/about_license.gmi -v about_license >> $@
+	./pagebundler -f $(srcdir)/pages/about_new.gmi     -v about_new     >> $@

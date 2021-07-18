@@ -29,6 +29,9 @@ extern size_t		 about_blank_len;
 extern const uint8_t	 about_help[];
 extern size_t		 about_help_len;
 
+extern const uint8_t	 about_license[];
+extern size_t		 about_license_len;
+
 extern const uint8_t	 about_new[];
 extern size_t		 about_new_len;
 

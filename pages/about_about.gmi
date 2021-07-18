@@ -6,4 +6,5 @@ Telescope has a number of “special” built-in pages:
 => about:blanks
 => about:bookmarks
 => about:help
+=> about:license
 => about:new
