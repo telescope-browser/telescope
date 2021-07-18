@@ -10,7 +10,6 @@
 #include <unistd.h>
 
 #include "defaults.h"
-#include "pages.h"
 #include "parser.h"
 #include "telescope.h"
 #include "ui.h"
