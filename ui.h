@@ -29,6 +29,7 @@ struct excursion {
 	int		 curs_x, curs_y;
 	size_t		 line_off;
 	struct vline	*current_line;
+	struct vline	*top_line;
 	size_t		 cpoff;
 };
 

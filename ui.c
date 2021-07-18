@@ -131,6 +131,7 @@ save_excursion(struct excursion *place, struct buffer *buffer)
 	place->curs_x = buffer->curs_x;
 	place->curs_y = buffer->curs_y;
 	place->line_off = buffer->line_off;
+	place->top_line = buffer->top_line;
 	place->current_line = buffer->current_line;
 	place->cpoff = buffer->cpoff;
 }
@@ -141,6 +142,7 @@ restore_excursion(struct excursion *place, struct buffer *buffer)
 	buffer->curs_x = place->curs_x;
 	buffer->curs_y = place->curs_y;
 	buffer->line_off = place->line_off;
+	buffer->top_line = place->top_line;
 	buffer->current_line = place->current_line;
 	buffer->cpoff = place->cpoff;
 }
