@@ -50,7 +50,6 @@ static struct event	stdioev, winchev;
 
 static void		 restore_curs_x(struct buffer *);
 
-static struct vline	*nth_line(struct buffer*, size_t);
 static int		 readkey(void);
 static void		 dispatch_stdio(int, short, void*);
 static void		 handle_clear_echoarea(int, short, void*);
