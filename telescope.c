@@ -136,7 +136,7 @@ die(void)
 }
 
 static struct tab *
-tab_by_id_try(uint32_t id)
+tab_by_id(uint32_t id)
 {
 	struct tab *t;
 
@@ -148,23 +148,14 @@ tab_by_id_try(uint32_t id)
 	return NULL;
 }
 
-static struct tab *
-tab_by_id(uint32_t id)
-{
-	struct tab *t;
-
-	if ((t = tab_by_id_try(id)) == NULL)
-		die();
-	return t;
-}
-
 static void
 handle_imsg_err(struct imsg *imsg, size_t datalen)
 {
 	struct tab	*tab;
 	char		*page;
 
-	tab = tab_by_id(imsg->hdr.peerid);
+	if ((tab = tab_by_id(imsg->hdr.peerid)) == NULL)
+		return;
 
 	page = imsg->data;
 	page[datalen-1] = '\0';
@@ -188,7 +179,8 @@ handle_imsg_check_cert(struct imsg *imsg, size_t datalen)
 	if (hash[datalen-1] != '\0')
 		abort();
 
-	tab = tab_by_id(imsg->hdr.peerid);
+	if ((tab = tab_by_id(imsg->hdr.peerid)) == NULL)
+		return;
 
 	if (tab->proxy != NULL) {
 		host = tab->proxy->host;
@@ -335,7 +327,8 @@ handle_imsg_got_code(struct imsg *imsg, size_t datalen)
 {
 	struct tab	*tab;
 
-	tab = tab_by_id(imsg->hdr.peerid);
+	if ((tab = tab_by_id(imsg->hdr.peerid)) == NULL)
+		return;
 
 	if (sizeof(tab->code) != datalen)
 		die();
@@ -351,7 +344,8 @@ handle_imsg_got_meta(struct imsg *imsg, size_t datalen)
 {
 	struct tab	*tab;
 
-	tab = tab_by_id(imsg->hdr.peerid);
+	if ((tab = tab_by_id(imsg->hdr.peerid)) == NULL)
+		return;
 
 	if (sizeof(tab->meta) <= datalen)
 		die();
@@ -415,7 +409,11 @@ handle_imsg_file_opened(struct imsg *imsg, size_t datalen)
 	const char	*e;
 	int		 l;
 
-	tab = tab_by_id(imsg->hdr.peerid);
+	if ((tab = tab_by_id(imsg->hdr.peerid)) == NULL) {
+		if (imsg->fd != -1)
+			close(imsg->fd);
+		return;
+	}
 
 	if (imsg->fd == -1) {
 		stop_tab(tab);
@@ -442,16 +440,8 @@ handle_imsg_buf(struct imsg *imsg, size_t datalen)
 	int		 l;
 	char		*page, buf[FMT_SCALED_STRSIZE] = {0};
 
-	if ((tab = tab_by_id(imsg->hdr.peerid)) == NULL) {
-		/*
-		 * Since messages between ui and net are asynchronous,
-		 * we could be in a case where we sent a tab_stop
-		 * command, but still receive data for the old id.  My
-		 * initial idea of crashing on invalid tab ids just
-		 * doesn't scale well in an asynchronous world.
-		 */
+	if ((tab = tab_by_id(imsg->hdr.peerid)) == NULL)
 		return;
-	}
 
 	tab->bytes += datalen;
 	if (tab->fd == -1) {
@@ -480,7 +470,8 @@ handle_imsg_eof(struct imsg *imsg, size_t datalen)
 	int		 l;
 	char		*page, buf[FMT_SCALED_STRSIZE] = {0};
 
-	tab = tab_by_id(imsg->hdr.peerid);
+	if ((tab = tab_by_id(imsg->hdr.peerid)) == NULL)
+		return;
 
 	if (tab->fd == -1) {
 		if (!tab->buffer.page.free(&tab->buffer.page))
