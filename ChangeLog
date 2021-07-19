@@ -1,3 +1,7 @@
+2021-07-19  Omar Polo  <op@omarpolo.com>
+
+	* defaults.c (line_prefixes): prettify the default settings
+
 2021-07-18  Omar Polo  <op@omarpolo.com>
 
 	* wrap.c (push_line): visually drop trailing spaces when formatting a page

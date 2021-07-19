@@ -37,15 +37,15 @@ int set_title = 1;
 
 struct lineprefix line_prefixes[] = {
 	[LINE_TEXT] =		{ "",		"" },
-	[LINE_LINK] =		{ "=> ",	"   " },
+	[LINE_LINK] =		{ "→ ",	"  " },
 	[LINE_TITLE_1] =	{ "# ",		"  " },
 	[LINE_TITLE_2] =	{ "## ",	"   " },
 	[LINE_TITLE_3] =	{ "### ",	"    " },
-	[LINE_ITEM] =		{ "* ",		"  " },
-	[LINE_QUOTE] =		{ "> ",		"  " },
-	[LINE_PRE_START] =	{ "```",	"   " },
+	[LINE_ITEM] =		{ " • ",	"   " },
+	[LINE_QUOTE] =		{ " ┃ ",	" ┃ " },
+	[LINE_PRE_START] =	{ "─── ",	"    " },
 	[LINE_PRE_CONTENT] =	{ "",		"" },
-	[LINE_PRE_END] =	{ "```",	"```" },
+	[LINE_PRE_END] =	{ "─── ",	"" },
 
 	[LINE_COMPL] =		{"", ""},
 	[LINE_COMPL_CURRENT] =	{"", ""},
@@ -61,6 +61,7 @@ struct line_face line_faces[] = {
 		.prfx_pair = PL_PRFX,
 		.pair = PL,
 		.trail_pair = PL_TRAIL,
+		.attr = A_UNDERLINE,
 	},
 	[LINE_TITLE_1] =	{
 		.prfx_pair = PT1_PRFX,
