@@ -2,14 +2,66 @@
 
 Welcome to Telescope!
 
-Use the arrow keys, page up/down, hjkl or C-{b,f,n,p} to move the cursor and read the page.
-
-Use > to enter an URL, B and F (uppercase) to navigate backward and forward in the history, [ and ] to move between tabs.  C-t (control + t) opens a new tab and C-w (control + w) closes it.
+Essential key bindings: arrow keys to move the cursor and read the page, > to enter an URL, B and F (uppercase) to navigate backward and forward in the history.  ‘q’ to quit.
 
 This page is always available as
+
 > $ telescope about:help
 
-## What is Gemini?
+
+## What is Telescope?
+
+Telescope is a Gemini browser written for fun, as hobbystic project in my free time.  As such, it lacks tons of features available in others, more mature Gemini browsers, but it also has some unique ones.
+
+The UI is strongly inspired from Emacs and w3m, so it’s possible to notice various familiar concepts, such as the minibuffer or the tab line.  Care has been taken to make it as familiar as possible for vi and “CUA” users too.
+
+=> gemini://telescope.omarpolo.com Telescope Project Homepage
+
+> Tip: move the cursor over a link and press M-RET (alt + enter) to open it in another tab.  Then use [ and ] to switch between tabs.
+
+Telescope is documented carefully, so please refer to the manual page to know more about all the available keybindings, the format and location of the configuration file and more:
+
+> man telescope
+
+
+## Operate the Telescope
+
+> Tip: on long and structured pages like this one, try to use the ‘toc’ command.  Press ‘t’ to open the table of content and jump to a specific heading.
+
+By default Telescope includes various keys inspired from either Emacs or vi.  However, knowledge of these editors is not required.  Here’s a quick list of essential commands
+
+* > to prompt for a URL;
+* arrow keys to move the cursor;
+* page up/down to scroll;
+* tab and shift-tab to jump to the next/previous link;
+* F and B (uppercase) to navigate forward and backward in the history;
+* enter to open the link under the cursor;
+* alt-enter to open the link under the cursor in a new tab;
+* [ and ] to move between tabs;
+* control + t to open a new tab;
+* control + w to close the current tab;
+* q to quit
+
+
+## Operate — Emacs version
+
+If you’re familiar with Emacs, most of the keybindings are available on Telescope by default!  C-{b,f,n,p} works as expected, as well as C-x C-c, C-x t o, C-v/M-v and even M-x!
+
+## Operate — vi version
+
+Telescope strives to be familiar for vi/vim users too!  hjkl is available by default, as well as ‘g t’, ‘g T’ etc.  :tabnew, :tabn and :wq work too!
+
+
+## Appearance
+
+Telescope is fully customizable.  The default configuration file is
+
+> ~/.telescope/config
+
+By default Telescope doesn’t use colours too much in order to adapt to both light and dark-themed terminals.  This doesn’t mean that Telescope cannot use colours though!  See for example contrib/light.config and contrib/dark.config.
+
+
+# What is Gemini?
 
 Gemini is a new internet protocol which:
 
@@ -20,47 +72,3 @@ Gemini is a new internet protocol which:
 * takes user privacy very seriously
 
 => gemini://gemini.circumlunar.space Project Gemini Homepage
-
-> Tip: press tab and shift-tab to jump between links
-
-> Tip: move the cursor over a link and press M-RET (alt + enter) to open it in another tab.  Then use [ and ] (or ‘g t’ and ‘g T’) to switch between tabs.
-
-## What is Telescope?
-
-Telescope is a Gemini browser written for fun, as hobbystic project in my free time.  As such, it lacks tons of features available in others, more mature Gemini browsers, but it also has some unique ones.
-
-The UI is strongly inspired from Emacs and w3m, so it’s possible to notice various familiar concepts, such as the minibuffer or the tab line.  Care has been taken to make it as familiar as possible for vi and “CUA” users too.
-
-=> gemini://telescope.omarpolo.com Telescope Project Homepage
-
-Telescope is documented carefully, so please refer to the manpage to know more about all the available keybindings, the format and location of the configuration file and more:
-
-> man telescope
-
-## Appearance
-
-Telescope is fully customizable.  The default configuration file is
-
-> ~/.telescope/config
-
-If your terminal emulator doesn’t have problems with UTF-8 glyphs, try to load Telescope with the following configuration:
-
-```Example of configuration file with some pretty defaults
-set hide-pre-closing-line = 1
-
-style line.pre.start {
-	prefix "─── " "    "
-}
-
-style line.item {
-	prefix " • " "   "
-}
-
-style line.link {
-	prefix "→ " "  "
-}
-
-style line.quote {
-	prefix " ┃ "
-}
-```
