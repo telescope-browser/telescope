@@ -197,6 +197,7 @@ cmd_scroll_up(struct buffer *buffer)
 		vl = TAILQ_PREV(buffer->top_line, vhead, vlines);
 		if (vl == NULL)
 			break;
+		buffer->line_off--;
 		buffer->top_line = vl;
 		forward_line(buffer, -1);
 	}
@@ -213,6 +214,7 @@ cmd_scroll_down(struct buffer *buffer)
 
 		buffer->top_line = TAILQ_NEXT(buffer->top_line,
 		    vlines);
+		buffer->line_off++;
 	}
 }
 
