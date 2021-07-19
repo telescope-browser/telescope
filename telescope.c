@@ -136,7 +136,7 @@ die(void)
 }
 
 static struct tab *
-tab_by_id(uint32_t id)
+tab_by_id_try(uint32_t id)
 {
 	struct tab *t;
 
@@ -145,7 +145,17 @@ tab_by_id(uint32_t id)
 			return t;
 	}
 
-	die();
+	return NULL;
+}
+
+static struct tab *
+tab_by_id(uint32_t id)
+{
+	struct tab *t;
+
+	if ((t = tab_by_id_try(id)) == NULL)
+		die();
+	return t;
 }
 
 static void
@@ -432,7 +442,16 @@ handle_imsg_buf(struct imsg *imsg, size_t datalen)
 	int		 l;
 	char		*page, buf[FMT_SCALED_STRSIZE] = {0};
 
-	tab = tab_by_id(imsg->hdr.peerid);
+	if ((tab = tab_by_id(imsg->hdr.peerid)) == NULL) {
+		/*
+		 * Since messages between ui and net are asynchronous,
+		 * we could be in a case where we sent a tab_stop
+		 * command, but still receive data for the old id.  My
+		 * initial idea of crashing on invalid tab ids just
+		 * doesn't scale well in an asynchronous world.
+		 */
+		return;
+	}
 
 	tab->bytes += datalen;
 	if (tab->fd == -1) {
