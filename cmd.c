@@ -222,6 +222,9 @@ cmd_end_of_buffer(struct buffer *buffer)
 {
 	buffer->current_line = TAILQ_LAST(&buffer->head, vhead);
 
+	if (buffer->current_line == NULL)
+		return;
+
 	/* deal with invisible lines */
 	if (buffer->current_line->parent->flags & L_HIDDEN)
 		forward_line(buffer, -1);
