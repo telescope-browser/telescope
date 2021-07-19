@@ -99,6 +99,9 @@ cmd_forward_char(struct buffer *buffer)
 {
 	size_t len = 0;
 
+	if (buffer->current_line == NULL)
+		return;
+
 	if (buffer->current_line->line != NULL)
 		len = utf8_cplen(buffer->current_line->line);
 	if (++buffer->cpoff > len)
