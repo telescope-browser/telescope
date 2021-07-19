@@ -34,6 +34,14 @@
 		}						\
 	} while(0)
 
+#define GUARD_READ_ONLY()				\
+	do {						\
+		if (!in_minibuffer) {			\
+			message("text is read-only");	\
+			return;				\
+		}					\
+	} while(0)
+
 /* return 1 if moved, 0 otherwise */
 static inline int
 forward_line(struct buffer *buffer, int n)
@@ -664,10 +672,7 @@ cmd_mini_delete_char(struct buffer *buffer)
 {
 	char *c, *n;
 
-	if (!in_minibuffer) {
-		message("text is read-only");
-		return;
-	}
+	GUARD_READ_ONLY();
 
 	minibuffer_taint_hist();
 
@@ -686,10 +691,7 @@ cmd_mini_delete_backward_char(struct buffer *buffer)
 {
 	char *c, *p, *start;
 
-	if (!in_minibuffer) {
-		message("text is read-only");
-		return;
-	}
+	GUARD_READ_ONLY();
 
 	minibuffer_taint_hist();
 
@@ -710,10 +712,7 @@ cmd_mini_kill_line(struct buffer *buffer)
 {
 	char *c;
 
-	if (!in_minibuffer) {
-		message("text is read-only");
-		return;
-	}
+	GUARD_READ_ONLY();
 
 	minibuffer_taint_hist();
 	c = utf8_nth(buffer->current_line->line, buffer->cpoff);
