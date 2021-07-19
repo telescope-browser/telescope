@@ -144,7 +144,7 @@ cmd_move_end_of_line(struct buffer *buffer)
 	struct vline	*vl;
 
 	vl = buffer->current_line;
-	if (vl->line == NULL)
+	if (vl == NULL || vl->line == NULL)
 		return;
 	buffer->cpoff = utf8_cplen(vl->line);
 }
@@ -243,6 +243,10 @@ cmd_push_button(struct buffer *buffer)
 	struct line	*l;
 
 	vl = buffer->current_line;
+
+	if (vl == NULL)
+		return;
+
 	switch (vl->parent->type) {
 	case LINE_LINK:
 		load_url_in_tab(current_tab, vl->parent->alt);
@@ -270,7 +274,7 @@ cmd_push_button_new_tab(struct buffer *buffer)
 	struct vline	*vl;
 
 	vl = buffer->current_line;
-	if (vl->parent->type != LINE_LINK)
+	if (vl == NULL || vl->parent->type != LINE_LINK)
 		return;
 
 	new_tab(vl->parent->alt);
