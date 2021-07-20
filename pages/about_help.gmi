@@ -31,6 +31,7 @@ Telescope is documented carefully, so please refer to the manual page to know mo
 By default Telescope includes various keys inspired from either Emacs or vi.  However, knowledge of these editors is not required.  Here’s a quick list of essential commands
 
 * > to prompt for a URL;
+* < to edit the current URL;
 * arrow keys to move the cursor;
 * page up/down to scroll;
 * tab and shift-tab to jump to the next/previous link;
