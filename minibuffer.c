@@ -158,8 +158,8 @@ minibuffer_self_insert(void)
 void
 sensible_self_insert(void)
 {
-	if (thiskey.meta || unicode_isspace(thiskey.key) ||
-	    !unicode_isgraph(thiskey.key)) {
+	if (thiskey.meta ||
+	    (unicode_isspace(thiskey.key) && thiskey.key != ' ')) {
 		global_key_unbound();
 		return;
 	}
