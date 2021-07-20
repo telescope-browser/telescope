@@ -851,6 +851,9 @@ load_last_session(void)
 	if (curr != NULL)
 		switch_to_tab(curr);
 
+	if (last_time_crashed())
+		switch_to_tab(new_tab("about:crash"));
+
 	return;
 }
 

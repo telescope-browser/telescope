@@ -437,6 +437,19 @@ fs_main(void)
 
 
 int
+last_time_crashed(void)
+{
+	int fd;
+
+	if ((fd = open(crashed_file, O_RDONLY)) == -1)
+		return 0;
+
+	close(fd);
+	unlink(crashed_file);
+	return 1;
+}
+
+int
 lock_session(void)
 {
 	struct flock	lock;
