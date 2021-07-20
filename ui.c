@@ -696,7 +696,7 @@ adjust_line(struct vline *vl, struct buffer *buffer)
 static void
 redraw_window(WINDOW *win, int off, int height, int width, struct buffer *buffer)
 {
-        struct vline	*vl;
+	struct vline	*vl;
 	int		 l, onscreen;
 
 	restore_curs_x(buffer);
