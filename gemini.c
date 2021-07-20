@@ -478,6 +478,12 @@ copy_body(int fd, short ev, void *d)
 		case TLS_WANT_POLLOUT:
 			yield_w(req, copy_body, NULL);
 			return;
+		case -1:
+			/*
+			 * XXX: should notify the user that the
+			 * download was aborted.
+			 */
+			/* fallthrough */
 		case 0:
 			net_send_ui(IMSG_EOF, req->id, NULL, 0);
 			close_conn(0, 0, req);
