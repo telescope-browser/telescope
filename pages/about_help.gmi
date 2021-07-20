@@ -55,7 +55,7 @@ Telescope strives to be familiar for vi/vim users too!  hjkl is available by def
 
 ## Appearance
 
-Telescope is fully customizable.  The default configuration file is
+Telescope is fully customizable.  The configuration file is
 
 > ~/.telescope/config
 
