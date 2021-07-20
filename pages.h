@@ -26,6 +26,9 @@ extern size_t		 about_about_len;
 extern const uint8_t	 about_blank[];
 extern size_t		 about_blank_len;
 
+extern const uint8_t	 about_crash[];
+extern size_t		 about_crash_len;
+
 extern const uint8_t	 about_help[];
 extern size_t		 about_help_len;
 

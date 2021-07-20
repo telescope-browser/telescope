@@ -88,6 +88,7 @@ AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([
 	Makefile
 	pages/about_new.gmi
+	pages/about_crash.gmi
 ])
 
 AC_OUTPUT

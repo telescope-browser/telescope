@@ -127,6 +127,7 @@ handle_get(struct imsg *imsg, size_t datalen)
 		{"about:about",		NULL,	about_about,	about_about_len},
 		{"about:blank",		NULL,	about_blank,	about_blank_len},
 		{"about:bookmarks",	serve_bookmarks, 0,	0},
+		{"about:crash",		NULL,	about_crash,	about_crash_len},
 		{"about:help",		NULL,	about_help,	about_help_len},
 		{"about:license",	NULL,	about_license,	about_license_len},
 		{"about:new",		NULL,	about_new,	about_new_len},

@@ -1,6 +1,7 @@
 TAGS
 .deps
 compat/.deps
+pages/about_crash.gmi
 pages/about_new.gmi
 phos/.deps
 phos/.dirstamp
