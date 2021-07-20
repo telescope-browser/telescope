@@ -55,6 +55,7 @@ static FILE			*session;
 static char	lockfile_path[PATH_MAX];
 static char	bookmark_file[PATH_MAX];
 static char	known_hosts_file[PATH_MAX], known_hosts_tmp[PATH_MAX];
+static char	crashed_file[PATH_MAX];
 
 char	session_file[PATH_MAX];
 
@@ -350,7 +351,23 @@ static void
 handle_dispatch_imsg(int fd, short ev, void *d)
 {
 	struct imsgev	*iev = d;
-	dispatch_imsg(iev, ev, handlers, sizeof(handlers));
+	int		 e;
+
+	if (dispatch_imsg(iev, ev, handlers, sizeof(handlers)) == -1) {
+		/*
+		 * This should leave a ~/.telescope/crashed file to
+		 * trigger about:crash on next run.  Unfortunately, if
+		 * the main process dies the fs sticks around and
+		 * doesn't notice that the fd was closed.  Why EV_READ
+		 * is not triggered when a fd is closed on the other end?
+		 */
+		e = errno;
+		if ((fd = open(crashed_file, O_CREAT|O_TRUNC|O_WRONLY, 0600))
+		    == -1)
+			err(1, "open");
+		close(fd);
+		errx(1, "connection closed: %s", strerror(e));
+	}
 }
 
 static int
@@ -385,6 +402,9 @@ fs_init(void)
 
 	strlcpy(session_file, getenv("HOME"), sizeof(session_file));
 	strlcat(session_file, "/.telescope/session", sizeof(session_file));
+
+	strlcpy(crashed_file, getenv("HOME"), sizeof(crashed_file));
+	strlcat(crashed_file, "/.telescope/crashed", sizeof(crashed_file));
 
 	return 1;
 }

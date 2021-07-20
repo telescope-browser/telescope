@@ -337,7 +337,7 @@ int		 mark_nonblock(int);
 int		 has_prefix(const char*, const char*);
 int		 unicode_isspace(uint32_t);
 int		 unicode_isgraph(uint32_t);
-void		 dispatch_imsg(struct imsgev*, short, imsg_handlerfn**, size_t);
+int		 dispatch_imsg(struct imsgev *, short, imsg_handlerfn **, size_t);
 int		 imsg_compose_event(struct imsgev *, uint16_t, uint32_t, pid_t, int, const void *, uint16_t);
 
 /* wrap.c */

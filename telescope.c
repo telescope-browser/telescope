@@ -541,7 +541,9 @@ static void
 handle_dispatch_imsg(int fd, short ev, void *d)
 {
 	struct imsgev	*iev = d;
-	dispatch_imsg(iev, ev, handlers, sizeof(handlers));
+
+	if (dispatch_imsg(iev, ev, handlers, sizeof(handlers)) == -1)
+		err(1, "connection closed");
 }
 
 static void

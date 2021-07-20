@@ -75,7 +75,7 @@ imsg_event_add(struct imsgev *iev)
 	event_add(&iev->ev, NULL);
 }
 
-void
+int
 dispatch_imsg(struct imsgev *iev, short event, imsg_handlerfn **handlers,
     size_t size)
 {
@@ -90,13 +90,13 @@ dispatch_imsg(struct imsgev *iev, short event, imsg_handlerfn **handlers,
 		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
 			err(1, "imsg_read error");
 		if (n == 0)
-			err(1, "connection closed");
+			return -1;
 	}
 	if (event & EV_WRITE) {
 		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
 			err(1, "msgbuf_write");
 		if (n == 0)
-			err(1, "connection closed");
+			return -1;
 	}
 
 	for (;;) {
@@ -113,6 +113,7 @@ dispatch_imsg(struct imsgev *iev, short event, imsg_handlerfn **handlers,
 	}
 
 	imsg_event_add(iev);
+	return 0;
 }
 
 int
