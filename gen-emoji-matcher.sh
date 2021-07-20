@@ -16,7 +16,7 @@ BEGIN {
 
 {
 	if (NF == 1) {
-                printf("%sif (cp == 0x%s)", e, $1);
+		printf("%sif (cp == 0x%s)", e, $1);
 	} else {
 		printf("%sif (cp >= 0x%s && cp <= 0x%s)", e, $1, $2);
 	}
@@ -29,5 +29,4 @@ BEGIN {
 END {
 	print "return 0; }"
 }
-
 '
