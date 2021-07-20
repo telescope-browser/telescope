@@ -107,7 +107,7 @@ static void		 handle_imsg_save_cert_ok(struct imsg*, size_t);
 static void		 handle_imsg_update_cert_ok(struct imsg *, size_t);
 static void		 handle_dispatch_imsg(int, short, void*);
 static void		 load_page_from_str(struct tab*, const char*);
-static int		 do_load_url(struct tab*, const char*);
+static int		 do_load_url(struct tab*, const char *, const char *);
 static void		 parse_session_line(char *, const char **, uint32_t *);
 static void		 load_last_session(void);
 static pid_t		 start_child(enum telescope_process, const char *, int);
@@ -373,7 +373,7 @@ handle_imsg_got_meta(struct imsg *imsg, size_t datalen)
 			load_page_from_str(tab,
 			    err_pages[TOO_MUCH_REDIRECTS]);
 		} else
-			do_load_url(tab, tab->meta);
+			do_load_url(tab, tab->meta, NULL);
 	} else { /* 4x, 5x & 6x */
 		load_page_from_str(tab, err_pages[tab->code]);
 	}
@@ -621,7 +621,7 @@ load_via_proxy(struct tab *tab, const char *url, struct proxy *p)
  * called by the handling function (such as load_page_from_str).
  */
 static int
-do_load_url(struct tab *tab, const char *url)
+do_load_url(struct tab *tab, const char *url, const char *base)
 {
 	struct phos_uri	 uri;
 	struct proto	*p;
@@ -639,7 +639,11 @@ do_load_url(struct tab *tab, const char *url)
 
 	tab->trust = TS_UNKNOWN;
 
-	memcpy(&uri, &tab->uri, sizeof(tab->uri));
+	if (base == NULL)
+		memcpy(&uri, &tab->uri, sizeof(tab->uri));
+	else
+		phos_parse_absolute_uri(base, &uri);
+
 	if (!phos_resolve_uri_from_str(&uri, url, &tab->uri)) {
                 if (asprintf(&t, "#error loading %s\n>%s\n",
 		    url, "Can't parse the URI") == -1)
@@ -677,7 +681,7 @@ do_load_url(struct tab *tab, const char *url)
  * do load it!
  */
 void
-load_url(struct tab *tab, const char *url)
+load_url(struct tab *tab, const char *url, const char *base)
 {
 	int lazy;
 
@@ -707,7 +711,7 @@ load_url(struct tab *tab, const char *url)
 			    sizeof(tab->hist_cur->h));
 	}
 
-	if (!lazy && do_load_url(tab, url))
+	if (!lazy && do_load_url(tab, url, base))
 		erase_buffer(&tab->buffer);
 }
 
@@ -719,7 +723,7 @@ load_previous_page(struct tab *tab)
 	if ((h = TAILQ_PREV(tab->hist_cur, mhisthead, entries)) == NULL)
 		return 0;
 	tab->hist_cur = h;
-	do_load_url(tab, h->h);
+	do_load_url(tab, h->h, NULL);
 	return 1;
 }
 
@@ -731,7 +735,7 @@ load_next_page(struct tab *tab)
 	if ((h = TAILQ_NEXT(tab->hist_cur, entries)) == NULL)
 		return 0;
 	tab->hist_cur = h;
-	do_load_url(tab, h->h);
+	do_load_url(tab, h->h, NULL);
 	return 1;
 }
 
@@ -825,8 +829,8 @@ load_last_session(void)
 
 	if ((session = fopen(session_file, "r")) == NULL) {
 		/* first time? */
-		new_tab("about:new");
-		switch_to_tab(new_tab("about:help"));
+		new_tab("about:new", NULL);
+		switch_to_tab(new_tab("about:help", NULL));
 		return;
 	}
 
@@ -834,7 +838,7 @@ load_last_session(void)
                 if ((nl = strchr(line, '\n')) != NULL)
 			*nl = '\0';
 		parse_session_line(line, &title, &flags);
-		if ((tab = new_tab(line)) == NULL)
+		if ((tab = new_tab(line, NULL)) == NULL)
 			err(1, "new_tab");
                 strlcpy(tab->buffer.page.title, title,
 		    sizeof(tab->buffer.page.title));
@@ -852,7 +856,7 @@ load_last_session(void)
 		switch_to_tab(curr);
 
 	if (last_time_crashed())
-		switch_to_tab(new_tab("about:crash"));
+		switch_to_tab(new_tab("about:crash", NULL));
 
 	return;
 }
@@ -1050,7 +1054,7 @@ main(int argc, char * const *argv)
 	if (ui_init()) {
 		load_last_session();
 		if (has_url || TAILQ_EMPTY(&tabshead))
-			new_tab(url);
+			new_tab(url, NULL);
 
 		sandbox_ui_process();
 		ui_main_loop();

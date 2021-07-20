@@ -262,7 +262,7 @@ cmd_push_button(struct buffer *buffer)
 
 	switch (vl->parent->type) {
 	case LINE_LINK:
-		load_url_in_tab(current_tab, vl->parent->alt);
+		load_url_in_tab(current_tab, vl->parent->alt, NULL);
 		break;
 	case LINE_PRE_START:
 		l = TAILQ_NEXT(vl->parent, lines);
@@ -290,7 +290,7 @@ cmd_push_button_new_tab(struct buffer *buffer)
 	if (vl == NULL || vl->parent->type != LINE_LINK)
 		return;
 
-	new_tab(vl->parent->alt);
+	new_tab(vl->parent->alt, current_tab->hist_cur->h);
 }
 
 void
@@ -459,7 +459,7 @@ cmd_tab_new(struct buffer *buffer)
 	if ((url = new_tab_url) == NULL)
 		url = NEW_TAB_URL;
 
-	new_tab(url);
+	new_tab(url, NULL);
 }
 
 void
@@ -550,7 +550,7 @@ cmd_load_current_url(struct buffer *buffer)
 void
 cmd_reload_page(struct buffer *buffer)
 {
-	load_url_in_tab(current_tab, current_tab->hist_cur->h);
+	load_url_in_tab(current_tab, current_tab->hist_cur->h, NULL);
 }
 
 void
@@ -568,7 +568,7 @@ cmd_bookmark_page(struct buffer *buffer)
 void
 cmd_list_bookmarks(struct buffer *buffer)
 {
-	load_url_in_tab(current_tab, "about:bookmarks");
+	load_url_in_tab(current_tab, "about:bookmarks", NULL);
 }
 
 void

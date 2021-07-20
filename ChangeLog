@@ -1,3 +1,9 @@
+2021-07-20  Omar Polo  <op@omarpolo.com>
+
+	* cmd.c (cmd_push_button_new_tab): bugfix: push-button-new-tab on relative URLs now works
+
+	* fs.c (handle_get): add about:crash
+
 2021-07-19  Omar Polo  <op@omarpolo.com>
 
 	* defaults.c (line_prefixes): prettify the default settings

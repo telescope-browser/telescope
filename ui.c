@@ -1121,16 +1121,16 @@ stop_loading_anim(struct tab *tab)
 }
 
 void
-load_url_in_tab(struct tab *tab, const char *url)
+load_url_in_tab(struct tab *tab, const char *url, const char *base)
 {
 	if (!operating) {
-		load_url(tab, url);
+		load_url(tab, url, base);
 		return;
 	}
 
 	message("Loading %s...", url);
 	start_loading_anim(tab);
-	load_url(tab, url);
+	load_url(tab, url, base);
 
 	redraw_tab(tab);
 }
@@ -1142,7 +1142,7 @@ switch_to_tab(struct tab *tab)
 	tab->flags &= ~TAB_URGENT;
 
 	if (operating && tab->flags & TAB_LAZY)
-		load_url_in_tab(tab, tab->hist_cur->h);
+		load_url_in_tab(tab, tab->hist_cur->h, NULL);
 }
 
 unsigned int
@@ -1152,7 +1152,7 @@ tab_new_id(void)
 }
 
 struct tab *
-new_tab(const char *url)
+new_tab(const char *url, const char *base)
 {
 	struct tab	*tab;
 
@@ -1176,7 +1176,7 @@ new_tab(const char *url)
 	else
 		TAILQ_INSERT_TAIL(&tabshead, tab, tabs);
 
-	load_url_in_tab(tab, url);
+	load_url_in_tab(tab, url, base);
 	return tab;
 }
 
