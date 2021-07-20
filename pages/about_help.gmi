@@ -46,6 +46,7 @@ By default Telescope includes various keys inspired from either Emacs or vi.  Ho
 
 If you’re familiar with Emacs, most of the keybindings are available on Telescope by default!  C-{b,f,n,p} works as expected, as well as C-x C-c, C-x t o, C-v/M-v and even M-x!
 
+
 ## Operate — vi version
 
 Telescope strives to be familiar for vi/vim users too!  hjkl is available by default, as well as ‘g t’, ‘g T’ etc.  :tabnew, :tabn and :wq work too!
