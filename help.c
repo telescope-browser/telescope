@@ -83,6 +83,7 @@ recompute_help(void)
 	if (last_active_map != current_map) {
 		last_active_map = current_map;
 
+		helpwin.page.name = "*Help*";
 		erase_buffer(&helpwin);
 		rec_compute_help(current_map, p, sizeof(p));
 		wrap_page(&helpwin, help_cols);
