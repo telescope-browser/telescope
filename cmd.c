@@ -175,7 +175,7 @@ cmd_scroll_line_up(struct buffer *buffer)
 		return;
 
 	forward_line(buffer, -1);
-
+	buffer->line_off--;
 	buffer->top_line = vl;
 }
 
