@@ -278,9 +278,11 @@ static inline void
 jump_to_line(struct line *l)
 {
 	struct vline	*vl;
-	struct tab	*tab = current_tab;
+	struct buffer	*buffer;
 
-	TAILQ_FOREACH(vl, &tab->buffer.head, vlines) {
+	buffer = current_buffer();
+
+	TAILQ_FOREACH(vl, &buffer->head, vlines) {
 		if (vl->parent == l)
 			break;
 	}
@@ -289,8 +291,8 @@ jump_to_line(struct line *l)
 		message("Ops, %s error!  Please report to %s",
 		    __func__, PACKAGE_BUGREPORT);
 	else {
-		tab->buffer.top_line = vl;
-		tab->buffer.current_line = vl;
+		buffer->top_line = vl;
+		buffer->current_line = vl;
 	}
 }
 
