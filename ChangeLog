@@ -1,3 +1,7 @@
+2021-07-21  Omar Polo  <op@omarpolo.com>
+
+	* cmd.c (cmd_tab_close): prefer the next tab instead of the previous as target in tab-close.
+
 2021-07-20  Omar Polo  <op@omarpolo.com>
 
 	* cmd.c (cmd_push_button_new_tab): bugfix: push-button-new-tab on relative URLs now works

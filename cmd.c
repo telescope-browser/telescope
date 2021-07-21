@@ -428,8 +428,8 @@ cmd_tab_close(struct buffer *buffer)
 
 	stop_tab(tab);
 
-	if ((t = TAILQ_PREV(tab, tabshead, tabs)) == NULL)
-		t = TAILQ_NEXT(tab, tabs);
+	if ((t = TAILQ_NEXT(tab, tabs)) == NULL)
+		t =TAILQ_PREV(tab, tabshead, tabs);
 	TAILQ_REMOVE(&tabshead, tab, tabs);
 	free(tab);
 
