@@ -896,3 +896,9 @@ cmd_mini_goto_end(struct buffer *buffer)
 	vl->parent->type = LINE_COMPL_CURRENT;
 	buffer->current_line = vl;
 }
+
+void
+cmd_other_window(struct buffer *buffer)
+{
+	ui_other_window();
+}

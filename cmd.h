@@ -37,6 +37,7 @@ CMD(cmd_next_heading,		"Move point to the next heading.");
 CMD(cmd_next_line,		"Move point to the next visual line.");
 CMD(cmd_next_page,		"Go forward in the page history.");
 CMD(cmd_olivetti_mode,		"Toggle olivetti-mode.");
+CMD(cmd_other_window,		"Select the other window.");
 CMD(cmd_previous_button,	"Move point to the previous link.");
 CMD(cmd_previous_completion,	"Select the previous completion.");
 CMD(cmd_previous_heading,	"Move point to the previous heading.");

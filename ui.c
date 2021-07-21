@@ -98,6 +98,7 @@ struct buffer		 helpwin;
 int			 help_lines, help_cols;
 
 static int		 side_window;
+static int		 in_side_window;
 
 static struct timeval	loadingev_timer = { 0, 250000 };
 
@@ -180,6 +181,8 @@ current_buffer(void)
 {
 	if (in_minibuffer)
 		return &ministate.buffer;
+	if (in_side_window)
+		return &helpwin;
 	return &current_tab->buffer;
 }
 
@@ -701,10 +704,14 @@ trust_status_char(enum trust_state ts)
 static void
 redraw_modeline(struct tab *tab)
 {
+	struct buffer	*buffer;
 	double		 pct;
 	int		 x, y, max_x, max_y;
-	const char	*mode = tab->buffer.page.name;
+	const char	*mode;
 	const char	*spin = "-\\|/";
+
+	buffer = current_buffer();
+	mode = buffer->page.name;
 
 	werase(modeline);
 	wattr_on(modeline, modeline_face.background, NULL);
@@ -715,21 +722,21 @@ redraw_modeline(struct tab *tab)
 	    trust_status_char(tab->trust),
 	    mode == NULL ? "(none)" : mode);
 
-	pct = (tab->buffer.line_off + tab->buffer.curs_y) * 100.0
-		/ tab->buffer.line_max;
+	pct = (buffer->line_off + buffer->curs_y) * 100.0
+		/ buffer->line_max;
 
-	if (tab->buffer.line_max <= (size_t)body_lines)
+	if (buffer->line_max <= (size_t)body_lines)
                 wprintw(modeline, "All ");
-	else if (tab->buffer.line_off == 0)
+	else if (buffer->line_off == 0)
                 wprintw(modeline, "Top ");
-	else if (tab->buffer.line_off + body_lines >= tab->buffer.line_max)
+	else if (buffer->line_off + body_lines >= buffer->line_max)
 		wprintw(modeline, "Bottom ");
 	else
 		wprintw(modeline, "%.0f%% ", pct);
 
 	wprintw(modeline, "%d/%d %s ",
-	    tab->buffer.line_off + tab->buffer.curs_y,
-	    tab->buffer.line_max,
+	    buffer->line_off + buffer->curs_y,
+	    buffer->line_max,
 	    tab->hist_cur->h);
 
 	getyx(modeline, y, x);
@@ -841,9 +848,17 @@ place_cursor(int soft)
 		touch = wrefresh;
 
 	if (in_minibuffer) {
+		if (side_window)
+			touch(help);
 		touch(body);
 		touch(echoarea);
+	} else if (in_side_window) {
+		touch(body);
+		touch(echoarea);
+		touch(help);
 	} else {
+		if (side_window)
+			touch(help);
 		touch(echoarea);
 		touch(body);
 	}
@@ -1086,6 +1101,7 @@ ui_init()
 
 	/* non-blocking input */
 	wtimeout(body, 0);
+	wtimeout(help, 0);
 
 	mvwprintw(body, 0, 0, "");
 
@@ -1143,6 +1159,8 @@ ui_toggle_side_window(void)
 	side_window = !side_window;
 	if (side_window)
 		recompute_help();
+	else
+		in_side_window = 0;
 
 	/*
 	 * ugly hack, but otherwise the window doesn't get updated
@@ -1194,6 +1212,15 @@ ui_read(const char *prompt, void (*fn)(const char*, struct tab *),
 {
 	minibuffer_read(prompt, fn, data);
 	redraw_tab(current_tab);
+}
+
+void
+ui_other_window(void)
+{
+	if (side_window)
+		in_side_window = !in_side_window;
+	else
+		message("No other window to select");
 }
 
 void

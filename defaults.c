@@ -245,6 +245,8 @@ load_default_keys(void)
 	global_set_key("C-x C-f",	cmd_load_url);
 	global_set_key("C-x M-f",	cmd_load_current_url);
 
+	global_set_key("C-x o",		cmd_other_window);
+
 	global_set_key("C-x t 0",	cmd_tab_close);
 	global_set_key("C-x t 1",	cmd_tab_close_other);
 	global_set_key("C-x t 2",	cmd_tab_new);

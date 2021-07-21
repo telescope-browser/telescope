@@ -1,5 +1,11 @@
 2021-07-21  Omar Polo  <op@omarpolo.com>
 
+	* defaults.c (load_default_keys): bind other-window to C-x o
+
+	* cmd.c (cmd_other_window): add other-window
+
+	* ui.c (ui_other_window): allow to focus the side window
+
 	* fs.c (handle_get): allow about: pages to be overridden by ~/.telescope/pages/about_*.gmi
 
 	* cmd.c (cmd_tab_close): prefer the next tab instead of the previous as target in tab-close.
