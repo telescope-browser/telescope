@@ -417,23 +417,14 @@ cmd_tab_close(struct buffer *buffer)
 	struct tab *tab, *t;
 
 	tab = current_tab;
-	if (TAILQ_PREV(tab, tabshead, tabs) == NULL &&
-	    TAILQ_NEXT(tab, tabs) == NULL) {
+
+	if ((t = TAILQ_NEXT(tab, tabs)) != NULL ||
+	    (t = TAILQ_PREV(tab, tabshead, tabs)) != NULL) {
+		switch_to_tab(t);
+		free_tab(tab);
+	} else
 		message("Can't close the only tab.");
-		return;
-	}
 
-	if (evtimer_pending(&tab->loadingev, NULL))
-		evtimer_del(&tab->loadingev);
-
-	stop_tab(tab);
-
-	if ((t = TAILQ_NEXT(tab, tabs)) == NULL)
-		t =TAILQ_PREV(tab, tabshead, tabs);
-	TAILQ_REMOVE(&tabshead, tab, tabs);
-	free(tab);
-
-	switch_to_tab(t);
 }
 
 void
@@ -445,9 +436,7 @@ cmd_tab_close_other(struct buffer *buffer)
 		if (t == current_tab)
 			continue;
 
-		stop_tab(t);
-		TAILQ_REMOVE(&tabshead, t, tabs);
-		free(t);
+		free_tab(t);
 	}
 }
 

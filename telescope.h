@@ -322,6 +322,7 @@ void		 load_via_proxy(struct tab *, const char *, struct proxy *);
 void		 load_url(struct tab *, const char *, const char *);
 int		 load_previous_page(struct tab*);
 int		 load_next_page(struct tab*);
+void		 free_tab(struct tab *);
 void		 stop_tab(struct tab*);
 void		 add_to_bookmarks(const char*);
 void		 save_session(void);

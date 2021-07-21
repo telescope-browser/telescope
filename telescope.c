@@ -739,6 +739,23 @@ load_next_page(struct tab *tab)
 	return 1;
 }
 
+/*
+ * Free every resource linked to the tab, including the tab itself.
+ * Removes the tab from the tablist, but doesn't update the
+ * current_tab though.
+ */
+void
+free_tab(struct tab *tab)
+{
+	stop_tab(tab);
+
+	if (evtimer_pending(&tab->loadingev, NULL))
+		evtimer_del(&tab->loadingev);
+
+	TAILQ_REMOVE(&tabshead, tab, tabs);
+	free(tab);
+}
+
 void
 stop_tab(struct tab *tab)
 {
