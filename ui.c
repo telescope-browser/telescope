@@ -110,8 +110,6 @@ struct kmap global_map,
 	*current_map,
 	*base_map;
 
-int in_minibuffer;
-
 static inline void
 update_x_offset(void)
 {

@@ -41,8 +41,6 @@ extern struct histhead eecmd_history,
 	lu_history,
 	read_history;
 
-extern struct buffer minibufferwin;
-
 struct ministate {
 	char		*curmesg;
 
@@ -65,7 +63,10 @@ struct ministate {
 		void		*data;
 	} compl;
 };
-extern struct ministate ministate;
+extern struct ministate	 ministate;
+
+extern struct buffer	 minibufferwin;
+extern int		 in_minibuffer;
 
 void	 recompute_completions(int);
 

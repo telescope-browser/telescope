@@ -51,6 +51,8 @@ struct ministate ministate;
 
 struct buffer minibufferwin;
 
+int in_minibuffer;
+
 /*
  * Recompute the visible completions.  If add is 1, don't consider the
  * ones already hidden.

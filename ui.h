@@ -21,7 +21,6 @@
 
 extern int	 body_lines;
 extern int	 body_cols;
-extern int	 in_minibuffer;
 
 extern struct kmap global_map, minibuffer_map, *current_map, *base_map;
 
