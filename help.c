@@ -78,9 +78,14 @@ rec_compute_help(struct kmap *keymap, char *prfx, size_t len)
 void
 recompute_help(void)
 {
+	static struct kmap *last_active_map = NULL;
 	char	p[32] = { 0 };
 
-	erase_buffer(&helpwin);
-	rec_compute_help(current_map, p, sizeof(p));
-	wrap_page(&helpwin, help_cols);
+	if (last_active_map != current_map) {
+		last_active_map = current_map;
+
+		erase_buffer(&helpwin);
+		rec_compute_help(current_map, p, sizeof(p));
+		wrap_page(&helpwin, help_cols);
+	}
 }
