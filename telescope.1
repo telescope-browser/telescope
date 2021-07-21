@@ -29,7 +29,8 @@
 is an interactive browser for the Gemini protocol.
 It is able to process text/gemini and more in general every text/* file.
 .Nm
-also features tabs, bookmarks and out-of-band TOFU verification.
+also features tabs, a minibuffer, bookmarks and out-of-band TOFU
+verification.
 .Pp
 The arguments are as follows:
 .Bl -tag -width xxxxxxxxxxxxx
@@ -48,18 +49,60 @@ Only check the configuration file for validity.
 .It Fl v , Fl -version
 Display version.
 .El
+.Sh UI CONCEPTS
+.Nm
+interface is divided into four areas: the tabline, the body, the
+modeline and the echoarea/minibuffer.
+.Pp
+The tabline is always at the top of the screen and displays the tabs
+separated by a vertical line.
+When there are more tabs than the size of the window allow to display,
+the characters
+.Sq \&<
+or
+.Sq \&>
+are shown at the start/end of the tabline to indicate that there are
+more tabs in that direction.
+.Pp
+The body occupies the majority of the visible area.
+It contains the current page and optionally a side window.
+.Pp
+The modeline is the second to last row of the screen.
+It shows some information about the page: a spinner when the page is
+loading, the trust level, the document type, the scroll offset and the
+URL.
+.Pp
+The echoarea is usually the last line of the screen.
+Messages are often showed there, and link addresses too.
+The echoarea is also used to obtain input from the user.
+When commands like
+.Ic swiper
+or
+.Ic link-select
+are invoked, the minibuffer area grows to show possible completions
+and navigate through them.
 .Sh TOFU
 .Nm
-aims to use the "Trust, but Verify (where appropriate)" approach.
+aims to use the
+.Dq Trust, but Verify Pq where appropriate
+approach for
+TOFU
+.Pq Dq Trust On First Use .
 The idea is to define three level of verification for a certificate:
 .Bl -tag -width 12m
 .It untrusted
-the server fingerprint does NOT match the stored value
+.Pq Sq \&!
+the server fingerprint does NOT match the stored value.
 .It trusted
-the server fingerprint matches the store one
+.Pq Sq v
+the server fingerprint matches the store one.
 .It verified
-the fingerprint matches and has been verified out-of-band
+.Pq Sq V
+the fingerprint matches and has been verified out-of-band.
 .El
+.Pp
+The trust level of the page is indicated in the modeline with the
+indicated character.
 .Pp
 Most of the time the
 .Dq trusted
@@ -68,27 +111,6 @@ verify out-of-band the certificate.
 .Pp
 At the moment, there is no built-in support for an out-of-band
 verification though.
-.Pp
-Known certificates are store in
-.Pa ~/.telescope/known_hosts
-with a format similar to the
-.Xr ssh 1 Ns '
-.Pa known_hosts
-file.
-Each line is a record and it's made up by three fields, separated by a
-single space, according to the following format:
-.Dq HOST HASH TRUSTED
-where:
-.Bl -tag -width 12m
-.It HOST
-the hostname, optionally followed by a colon (":") and a port number.
-.It HASH
-is the hash of the certificate, as outputted by
-.Xr tls_peer_cert_hash 3 .
-.It TRUSTED
-a single digit.
-0 means trusted, 1 verified.
-.El
 .Sh DEFAULT KEY BINDINGS
 The default key bindings are very similar to GNU Emacs, but care has
 been taken to include also bindings familiar for
@@ -370,6 +392,10 @@ previous-completion
 next-completion
 .It tab
 insert-current-candidate
+.It M-<
+mini-goto-beginning
+.It M->
+mini-goto-end
 .El
 .Sh INTERACTIVE COMMANDS
 Follows the documentation for the interactive commands.
@@ -547,8 +573,8 @@ will also load a file called
 where
 .Dq TERM
 is the name of the terminal type
-.Pq i.e. the TERM variable ,
-if available.
+.Pq i.e. the TERM environment variable ,
+if it exists.
 .Pp
 The format of the configuration file is fairly flexible.
 The current line can be extended over multiple ones using a
@@ -598,51 +624,52 @@ Valid options are:
 .It dont-wrap-pre
 .Pq integer
 If nonzero, don't wrap preformatted blocks.
+Defaults to 0.
 .It emojify-link
 .Pq integer
-If not zero, when the text of a link starts with an emoji followed by
-a space, use that emoji as line prefix.
+If nonzero, when the text of a link starts with an emoji followed by a
+space, use that emoji as line prefix.
 Defaults to 1.
 .It enable-colors
 .Pq integer
-If not zero, enable colours.
-By default is 1 if
+If nonzero, enable colours.
+Defaults to 0 if
 .Ev NO_COLORS
-is not set, 0 otherwise.
+is set, 1 otherwise.
 .It fill-column
 .Pq integer
 If greater than zero, lines of text will be formatted in a way that
 don't exceed the given number of columns.
-By default is 80.
+Defaults to 80.
 .It hide-pre-blocks
 .Pq integer
 If nonzero, hide by default the body of the preformatted blocks.
-By default is zero.
+Defaults to zero.
 .Ic push-button
 can be used to toggle the visibility per-block.
 .It hide-pre-closing-line
 .Pq integer
 If nonzero, hide the closing line of preformatted blocks.
+Defaults to 0.
 .It hide-pre-context
 .Pq integer
 If nonzero, hide the start and end line of the preformatted blocks.
 If both hide-pre-context and hide-pre-blocks are nonzero, preformatted
 blocks are irremediably hidden.
-By default is zero.
+Defaults to zero.
 .It new-tab-url
 .Pq string
 URL for the new tab page.
-By default is
+Defaults to
 .Dq about:new .
 .It olivetti-mode
 .Pq integer
-Enable
+If nonzero, enable
 .Ic olivetti-mode
-if non zero.
-By default is 1.
+Defaults to 1.
 .It set-title
 .Pq integer
-If nonzero, set the terminal title.
+If nonzero, set the terminal title to the page title.
 Defaults to 1.
 .El
 .It Ic style Ar name Ar option
@@ -650,41 +677,39 @@ Change the styling of the element identified by
 .Ar name .
 Multiple options may be specified within curly braces.
 Valid style identifiers are:
-.Bl -tag -width 16m -compact -offset Ds
+.Bl -tag -width line.compl.current -compact -offset Ds
 .It line
-for the area outside the lines in the body of the page.
+the area outside the lines in the body of the page.
 .It line.compl
-for the completion in the minibuffer
+the completions.
 .It line.compl.current
-for the current completion
+the current completion.
 .It line.text
-for text lines.
+text lines.
 .It line.link
-for link lines.
+link lines.
 .It line.title1..3
-for headings
+headings
 .It line.item
-for item lines.
+item lines.
 .It line.quote
-for quotes.
+quotes.
 .It line.pre.start
-for the heading of a preformatted block.
+the heading of a preformatted block.
 .It line.pre
-for the content of a preformatted block.
+the content of a preformatted block.
 .It line.pre.end
-for the closing line of a preformatted block.
+the closing line of a preformatted block.
 .It minibuffer
-for the minibuffer
-.Dq i.e. the last line of the window
+the minibuffer.
 .It modeline
-for the modeline
-.Dq i.e. the info line right above the minibuffer
+the modeline.
 .It tabline
-for the tabline.
+the tabline.
 .It tabline.tab
-for the non-focused tabs.
+the non-focused tabs.
 .It tabline.current
-for the focused tab.
+the focused tab.
 .El
 .Pp
 Valid options are:
@@ -717,7 +742,7 @@ half bright.
 extra bright or bold.
 .El
 .Pp
-Only the styles under the
+Only the style identifiers with the
 .Dq line.
 prefix accept up to three attributes.
 The other will only use the first one given.
@@ -748,15 +773,29 @@ is not given its value will be the same of
 .Ar prfx .
 .El
 .El
+.Sh ENVIRONMENT
+When
+.Nm
+is started, it inspects the following environment variables:
+.Bl -tag -width NO_COLORS
+.It Ev HOME
+The user's login directory.
+.It Ev NO_COLORS
+To decide whether to use colors or not.
+The content of the variable doesn't matter.
+.It Ev TERM
+The user's terminal name.
+.El
 .Sh FILES
 .Bl -tag -width Ds -compact
 .It Pa ~/.telescope/bookmarks.gmi
-Holds the bookmarks.
+Bookmarks file.
 .It Pa ~/.telescope/config
 Default configuration file.
 .It Pa ~/.telescope/known_hosts
-Contains a list of host keys for all the hosts the user has visited.
-See the TOFU section for more info.
+Hash of the certificates for all the known hosts.
+Each line contains three fields: hostname with optional port number,
+hash of the certificate and a numeric flag.
 .It Pa ~/.telescope/lock
 Lock file used to prevent multiple instance of
 .Nm
@@ -764,13 +803,13 @@ from running at the same time.
 .It Pa ~/.telescope/pages/about_*.gmi
 Overrides for built-in about: pages.
 .It Pa ~/.telescope/session
-Contains the list of tabs from the last session.
-Every line identifies a tab.
-The syntax is the full URL, followed by a space, followed by an
-optional comma-separated list of attributes.
+The list of tabs from the last session.
+Every line identifies a tab and contains three space-separated fields:
+the full URL, a comma-separated list of attributes and the cached
+title.
 Is written by
 .Ic kill-telescope
-and loaded on startup.
+and loaded during startup.
 .El
 .Sh EXAMPLES
 It's possible to browse
@@ -785,7 +824,7 @@ proxy https via "gemini://127.0.0.1:1965"
 .Pp
 To load
 .Nm
-without any configuration use
+without any configuration
 .Bd -literal -offset indent
 telescope -c /dev/null
 .Ed
@@ -795,3 +834,5 @@ The
 .Nm
 program was written by
 .An Omar Polo Aq Mt op@omarpolo.com .
+.Sh BUGS
+There's no UI for out-of-band certificates validation.
