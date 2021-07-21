@@ -14,6 +14,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "compat.h"
+
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -28,6 +31,10 @@ static void		 yornp_abort(void);
 static void		 read_self_insert(void);
 static void		 read_abort(void);
 static void		 read_select(void);
+static void		 handle_clear_echoarea(int, short, void *);
+
+static struct event	clechoev;
+static struct timeval	clechoev_timer = { 5, 0 };
 
 static void (*yornp_cb)(int, struct tab *);
 static struct tab *yornp_data;
@@ -464,11 +471,8 @@ yornp(const char *prompt, void (*fn)(int, struct tab*),
 	strlcat(ministate.prompt, " (y or n) ", len);
 }
 
-/*
- * Not yet "completing", but soon maybe...
- */
 void
-completing_read(const char *prompt, void (*fn)(const char *, struct tab *),
+minibuffer_read(const char *prompt, void (*fn)(const char *, struct tab *),
     struct tab *data)
 {
 	size_t len;
@@ -484,4 +488,50 @@ completing_read(const char *prompt, void (*fn)(const char *, struct tab *),
 	len = sizeof(ministate.prompt);
 	strlcpy(ministate.prompt, prompt, len);
 	strlcat(ministate.prompt, ": ", len);
+}
+
+static void
+handle_clear_echoarea(int fd, short ev, void *d)
+{
+	free(ministate.curmesg);
+	ministate.curmesg = NULL;
+
+	ui_after_message_hook();
+}
+
+void
+vmessage(const char *fmt, va_list ap)
+{
+	if (evtimer_pending(&clechoev, NULL))
+		evtimer_del(&clechoev);
+
+	free(ministate.curmesg);
+	ministate.curmesg = NULL;
+
+	if (fmt != NULL) {
+		evtimer_set(&clechoev, handle_clear_echoarea, NULL);
+		evtimer_add(&clechoev, &clechoev_timer);
+
+		/* TODO: what to do if the allocation fails here? */
+		if (vasprintf(&ministate.curmesg, fmt, ap) == -1)
+			ministate.curmesg = NULL;
+	}
+
+	ui_after_message_hook();
+}
+
+void
+message(const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	vmessage(fmt, ap);
+	va_end(ap);
+}
+
+void
+minibuffer_init(void)
+{
+	evtimer_set(&clechoev, handle_clear_echoarea, NULL);
 }

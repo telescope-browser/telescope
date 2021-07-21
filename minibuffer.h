@@ -36,6 +36,13 @@
  */
 typedef const char *(complfn)(void **, void **, const char **);
 
+extern struct histhead eecmd_history,
+	ir_history,
+	lu_history,
+	read_history;
+
+extern struct buffer minibufferwin;
+
 struct ministate {
 	char		*curmesg;
 
@@ -60,8 +67,6 @@ struct ministate {
 };
 extern struct ministate ministate;
 
-extern struct buffer minibufferwin;
-
 void	 recompute_completions(int);
 
 void	 minibuffer_taint_hist(void);
@@ -79,19 +84,22 @@ void	 swiper_select(void);
 void	 toc_select(void);
 
 void	 enter_minibuffer(void(*)(void), void(*)(void), void(*)(void),
-    struct histhead *,
-    complfn *, void *);
+    struct histhead *, complfn *, void *);
 
 void	 exit_minibuffer(void);
 void	 yornp(const char *, void (*)(int, struct tab *), struct tab *);
 
 /*
- * completing_read asks the user for something using the minibuffer.
+ * minibuffer_read asks the user for something using the minibuffer.
  * The first argument is the string prompt.  The second and third are
  * the callback to call when done and the data; the callback function
  * can't be NULL.
  */
-void	 completing_read(const char *,
+void	 minibuffer_read(const char *,
     void (*)(const char *, struct tab *), struct tab *);
+
+void	 vmessage(const char *, va_list);
+void	 message(const char *, ...) __attribute__((format(printf, 1, 2)));
+void	 minibuffer_init(void);
 
 #endif

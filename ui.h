@@ -93,11 +93,6 @@ struct thiskey {
 };
 extern struct thiskey thiskey;
 
-extern struct histhead eecmd_history,
-	ir_history,
-	lu_history,
-	read_history;
-
 extern struct tab	*current_tab;
 
 extern struct buffer	 helpwin;
@@ -107,14 +102,13 @@ void		 save_excursion(struct excursion *, struct buffer *);
 void		 restore_excursion(struct excursion *, struct buffer *);
 void		 global_key_unbound(void);
 struct vline	*adjust_line(struct vline *, struct buffer *);
-void		 vmessage(const char *, va_list);
-void		 message(const char *, ...) __attribute__((format(printf, 1, 2)));
 void		 start_loading_anim(struct tab *);
 void		 load_url_in_tab(struct tab *, const char *, const char *);
 void		 switch_to_tab(struct tab *);
 struct buffer	*current_buffer(void);
 struct tab	*new_tab(const char *, const char *base);
 unsigned int	 tab_new_id(void);
+
 int		 ui_print_colors(void);
 int		 ui_init(void);
 void		 ui_main_loop(void);
@@ -123,6 +117,7 @@ void		 ui_on_tab_refresh(struct tab *);
 const char	*ui_keyname(int);
 void		 ui_toggle_side_window(void);
 void		 ui_schedule_redraw(void);
+void		 ui_after_message_hook(void);
 void		 ui_require_input(struct tab *, int);
 void		 ui_read(const char *, void (*)(const char *, struct tab *), struct tab *);
 void		 ui_yornp(const char *, void (*)(int, struct tab *), struct tab *);

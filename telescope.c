@@ -26,6 +26,7 @@
 #include <unistd.h>
 
 #include "defaults.h"
+#include "minibuffer.h"
 #include "parser.h"
 #include "telescope.h"
 #include "ui.h"

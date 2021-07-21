@@ -52,7 +52,6 @@ static void		 restore_curs_x(struct buffer *);
 
 static int		 readkey(void);
 static void		 dispatch_stdio(int, short, void*);
-static void		 handle_clear_echoarea(int, short, void*);
 static void		 handle_resize(int, short, void*);
 static void		 handle_resize_nodelay(int, short, void*);
 static void		 rearrange_windows(void);
@@ -98,8 +97,6 @@ int			 help_lines, help_cols;
 
 static int		 side_window;
 
-static struct event	clechoev;
-static struct timeval	clechoev_timer = { 5, 0 };
 static struct timeval	loadingev_timer = { 0, 250000 };
 
 static uint32_t		 tab_counter;
@@ -275,16 +272,6 @@ done:
 	if (should_rearrange_windows)
 		rearrange_windows();
 	redraw_tab(current_tab);
-}
-
-static void
-handle_clear_echoarea(int fd, short ev, void *d)
-{
-	free(ministate.curmesg);
-	ministate.curmesg = NULL;
-
-	redraw_minibuffer();
-	place_cursor(0);
 }
 
 static void
@@ -894,38 +881,6 @@ redraw_tab(struct tab *tab)
 }
 
 void
-vmessage(const char *fmt, va_list ap)
-{
-	if (evtimer_pending(&clechoev, NULL))
-		evtimer_del(&clechoev);
-
-	free(ministate.curmesg);
-	ministate.curmesg = NULL;
-
-	if (fmt != NULL) {
-		evtimer_set(&clechoev, handle_clear_echoarea, NULL);
-		evtimer_add(&clechoev, &clechoev_timer);
-
-		/* TODO: what to do if the allocation fails here? */
-		if (vasprintf(&ministate.curmesg, fmt, ap) == -1)
-			ministate.curmesg = NULL;
-	}
-
-	redraw_minibuffer();
-        place_cursor(0);
-}
-
-void
-message(const char *fmt, ...)
-{
-	va_list ap;
-
-	va_start(ap, fmt);
-	vmessage(fmt, ap);
-	va_end(ap);
-}
-
-void
 start_loading_anim(struct tab *tab)
 {
 	if (tab->loading_anim)
@@ -1080,6 +1035,8 @@ ui_init()
 {
 	setlocale(LC_ALL, "");
 
+	minibuffer_init();
+
 	TAILQ_INIT(&eecmd_history.head);
 	TAILQ_INIT(&ir_history.head);
 	TAILQ_INIT(&lu_history.head);
@@ -1140,11 +1097,6 @@ ui_init()
 
 	mvwprintw(body, 0, 0, "");
 
-	/*
-	 * Dummy so libevent2 won't complain that no event_base is set
-	 * when checking event_pending for the first time
-	 */
-	evtimer_set(&clechoev, handle_clear_echoarea, NULL);
 	evtimer_set(&resizeev, handle_resize, NULL);
 
 	event_set(&stdioev, 0, EV_READ | EV_PERSIST, dispatch_stdio, NULL);
@@ -1230,6 +1182,13 @@ ui_require_input(struct tab *tab, int hide)
 }
 
 void
+ui_after_message_hook(void)
+{
+	redraw_minibuffer();
+	place_cursor(0);
+}
+
+void
 ui_yornp(const char *prompt, void (*fn)(int, struct tab *),
     struct tab *data)
 {
@@ -1241,7 +1200,7 @@ void
 ui_read(const char *prompt, void (*fn)(const char*, struct tab *),
     struct tab *data)
 {
-	completing_read(prompt, fn, data);
+	minibuffer_read(prompt, fn, data);
 	redraw_tab(current_tab);
 }
 
