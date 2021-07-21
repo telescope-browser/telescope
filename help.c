@@ -24,8 +24,11 @@
 #include "telescope.h"
 #include "ui.h"
 
+static void	emit_help_item(char *, interactivefn *);
+static void	rec_compute_help(struct kmap *, char *, size_t);
+
 static void
-emit_help_item(char *prfx, void *fn)
+emit_help_item(char *prfx, interactivefn *fn)
 {
 	struct line	*l;
 	struct cmd	*cmd;
