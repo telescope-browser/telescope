@@ -61,9 +61,20 @@ Telescope is fully customizable.  The configuration file is
 By default Telescope doesn’t use colours too much in order to adapt to both light and dark-themed terminals.  This doesn’t mean that Telescope cannot use colours though!  See for example contrib/light.config and contrib/dark.config.
 
 
-## Protocol Proxies
+## Custom pages
 
 > Tip: on long and structured pages like this one, try to use the ‘toc’ command.  Press ‘t’ to open the table of content and jump to a specific heading.
+
+All the ‘about:*’ pages can be locally overridden.  For example, to customise about:new create:
+
+> ~/.telescope/pages/about_new.gmi
+
+about:bookmarks is the only page that doesn’t follow this pattern; it’s located at
+
+> ~/.telescope/bookmarks.gmi
+
+
+## Protocol Proxies
 
 Telescope supports custom protocol proxies (proxies that translate between protocols).  Thanks to programs like the duckling-proxy, it’s possible to navigate the web using a Gemini browser.
 
