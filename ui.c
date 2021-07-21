@@ -828,7 +828,7 @@ do_redraw_minibuffer(void)
 static void
 do_redraw_minibuffer_compl(void)
 {
-	redraw_window(minibuffer, 0, 10, body_cols,
+	redraw_window(minibuffer, 0, 10, COLS,
 	    &ministate.compl.buffer);
 }
 
