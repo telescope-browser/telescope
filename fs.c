@@ -20,6 +20,8 @@
  * TODO: add some form of locking on the files
  */
 
+#include "compat.h"
+
 #include <sys/stat.h>
 
 #include <errno.h>

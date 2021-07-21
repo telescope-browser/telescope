@@ -14,7 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "telescope.h"
+#include "compat.h"
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -35,6 +35,8 @@
 #if HAVE_ASR_RUN
 # include <asr.h>
 #endif
+
+#include "telescope.h"
 
 static struct imsgev		*iev_ui;
 static struct tls_config	*tlsconf;

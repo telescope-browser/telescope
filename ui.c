@@ -30,6 +30,8 @@
  *
  */
 
+#include "compat.h"
+
 #include <assert.h>
 #include <curses.h>
 #include <event.h>

@@ -22,14 +22,15 @@
  *  - UTF8
  */
 
-#include "defaults.h"
-#include "parser.h"
-#include "telescope.h"
-#include "utf8.h"
+#include "compat.h"
 
 #include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
+
+#include "defaults.h"
+#include "parser.h"
+#include "utf8.h"
 
 static int	gemtext_parse(struct parser*, const char*, size_t);
 static int	gemtext_foreach_line(struct parser*, const char*, size_t);

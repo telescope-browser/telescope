@@ -14,11 +14,13 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "telescope.h"
+#include "compat.h"
 
 #include <ctype.h>
 #include <curses.h>
 #include <stdlib.h>
+
+#include "telescope.h"
 
 #define CTRL(n)	((n)&0x1F)
 

@@ -14,9 +14,11 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "telescope.h"
+#include "compat.h"
 
 #include <stdlib.h>
+
+#include "telescope.h"
 
 void
 hist_clear_forward(struct histhead *head, struct hist *h)
