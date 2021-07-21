@@ -232,3 +232,85 @@ hardwrap_text(struct buffer *buffer, struct line *l, size_t width)
 
 	return push_line(buffer, l, start, line - start, cont);
 }
+
+int
+wrap_page(struct buffer *buffer, int width)
+{
+	struct line		*l;
+	const struct line	*top_orig, *orig;
+	struct vline		*vl;
+	int			 pre_width;
+	const char		*prfx;
+
+	top_orig = buffer->top_line == NULL ? NULL : buffer->top_line->parent;
+	orig = buffer->current_line == NULL ? NULL : buffer->current_line->parent;
+
+	buffer->top_line = NULL;
+	buffer->current_line = NULL;
+
+	buffer->force_redraw = 1;
+	buffer->curs_y = 0;
+	buffer->line_off = 0;
+
+	empty_vlist(buffer);
+
+	TAILQ_FOREACH(l, &buffer->page.head, lines) {
+		prfx = line_prefixes[l->type].prfx1;
+		switch (l->type) {
+		case LINE_TEXT:
+		case LINE_LINK:
+		case LINE_TITLE_1:
+		case LINE_TITLE_2:
+		case LINE_TITLE_3:
+		case LINE_ITEM:
+		case LINE_QUOTE:
+		case LINE_PRE_START:
+		case LINE_PRE_END:
+			wrap_text(buffer, prfx, l, MIN(fill_column, width));
+			break;
+		case LINE_PRE_CONTENT:
+			if (olivetti_mode)
+				pre_width = MIN(fill_column, width);
+			else
+				pre_width = width;
+			hardwrap_text(buffer, l, pre_width);
+			break;
+		case LINE_COMPL:
+		case LINE_COMPL_CURRENT:
+			wrap_one(buffer, prfx, l, width);
+			break;
+		}
+
+		if (top_orig == l && buffer->top_line == NULL) {
+			buffer->line_off = buffer->line_max-1;
+			buffer->top_line = TAILQ_LAST(&buffer->head, vhead);
+
+			while (1) {
+				vl = TAILQ_PREV(buffer->top_line, vhead, vlines);
+				if (vl == NULL || vl->parent != orig)
+					break;
+				buffer->top_line = vl;
+				buffer->line_off--;
+			}
+		}
+
+		if (orig == l && buffer->current_line == NULL) {
+			buffer->current_line = TAILQ_LAST(&buffer->head, vhead);
+
+			while (1) {
+				vl = TAILQ_PREV(buffer->current_line, vhead, vlines);
+				if (vl == NULL || vl->parent != orig)
+					break;
+				buffer->current_line = vl;
+			}
+		}
+	}
+
+	if (buffer->current_line == NULL)
+		buffer->current_line = TAILQ_FIRST(&buffer->head);
+
+	if (buffer->top_line == NULL)
+		buffer->top_line = buffer->current_line;
+
+	return 1;
+}

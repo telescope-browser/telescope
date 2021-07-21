@@ -100,6 +100,9 @@ extern struct histhead eecmd_history,
 
 extern struct tab	*current_tab;
 
+extern struct buffer	 helpwin;
+extern int		 help_lines, help_cols;
+
 void		 save_excursion(struct excursion *, struct buffer *);
 void		 restore_excursion(struct excursion *, struct buffer *);
 void		 global_key_unbound(void);

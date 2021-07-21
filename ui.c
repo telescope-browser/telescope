@@ -56,7 +56,6 @@ static void		 handle_clear_echoarea(int, short, void*);
 static void		 handle_resize(int, short, void*);
 static void		 handle_resize_nodelay(int, short, void*);
 static void		 rearrange_windows(void);
-static int		 wrap_page(struct buffer*, int);
 static void		 line_prefix_and_text(struct vline *, char *, size_t, const char **, const char **);
 static void		 print_vline(int, int, WINDOW*, struct vline*);
 static void		 redraw_tabline(void);
@@ -70,9 +69,6 @@ static void		 do_redraw_minibuffer(void);
 static void		 do_redraw_minibuffer_compl(void);
 static void		 place_cursor(int);
 static void		 redraw_tab(struct tab*);
-static void		 emit_help_item(char*, void*);
-static void		 rec_compute_help(struct kmap*, char*, size_t);
-static void		 recompute_help(void);
 static void		 update_loading_anim(int, short, void*);
 static void		 stop_loading_anim(struct tab*);
 
@@ -96,8 +92,9 @@ static WINDOW	*tabline, *body, *modeline, *echoarea, *minibuffer;
 int			 body_lines, body_cols;
 
 static WINDOW		*help;
-static struct buffer	 helpwin;
-static int		 help_lines, help_cols;
+/* not static so we can see them from help.c */
+struct buffer		 helpwin;
+int			 help_lines, help_cols;
 
 static int		 side_window;
 
@@ -365,88 +362,6 @@ rearrange_windows(void)
 
 	wrap_page(&current_tab->buffer, body_cols);
 	redraw_tab(current_tab);
-}
-
-static int
-wrap_page(struct buffer *buffer, int width)
-{
-	struct line		*l;
-	const struct line	*top_orig, *orig;
-	struct vline		*vl;
-	int			 pre_width;
-	const char		*prfx;
-
-	top_orig = buffer->top_line == NULL ? NULL : buffer->top_line->parent;
-	orig = buffer->current_line == NULL ? NULL : buffer->current_line->parent;
-
-	buffer->top_line = NULL;
-	buffer->current_line = NULL;
-
-	buffer->force_redraw = 1;
-	buffer->curs_y = 0;
-	buffer->line_off = 0;
-
-	empty_vlist(buffer);
-
-	TAILQ_FOREACH(l, &buffer->page.head, lines) {
-		prfx = line_prefixes[l->type].prfx1;
-		switch (l->type) {
-		case LINE_TEXT:
-		case LINE_LINK:
-		case LINE_TITLE_1:
-		case LINE_TITLE_2:
-		case LINE_TITLE_3:
-		case LINE_ITEM:
-		case LINE_QUOTE:
-		case LINE_PRE_START:
-		case LINE_PRE_END:
-			wrap_text(buffer, prfx, l, MIN(fill_column, width));
-			break;
-		case LINE_PRE_CONTENT:
-			if (olivetti_mode)
-				pre_width = MIN(fill_column, width);
-			else
-				pre_width = width;
-			hardwrap_text(buffer, l, pre_width);
-			break;
-		case LINE_COMPL:
-		case LINE_COMPL_CURRENT:
-			wrap_one(buffer, prfx, l, width);
-			break;
-		}
-
-		if (top_orig == l && buffer->top_line == NULL) {
-			buffer->line_off = buffer->line_max-1;
-			buffer->top_line = TAILQ_LAST(&buffer->head, vhead);
-
-			while (1) {
-				vl = TAILQ_PREV(buffer->top_line, vhead, vlines);
-				if (vl == NULL || vl->parent != orig)
-					break;
-				buffer->top_line = vl;
-				buffer->line_off--;
-			}
-		}
-
-		if (orig == l && buffer->current_line == NULL) {
-			buffer->current_line = TAILQ_LAST(&buffer->head, vhead);
-
-			while (1) {
-				vl = TAILQ_PREV(buffer->current_line, vhead, vlines);
-				if (vl == NULL || vl->parent != orig)
-					break;
-				buffer->current_line = vl;
-			}
-		}
-	}
-
-        if (buffer->current_line == NULL)
-		buffer->current_line = TAILQ_FIRST(&buffer->head);
-
-	if (buffer->top_line == NULL)
-		buffer->top_line = buffer->current_line;
-
-	return 1;
 }
 
 static void
@@ -787,7 +702,7 @@ static inline char
 trust_status_char(enum trust_state ts)
 {
 	switch (ts) {
-	case TS_UNKNOWN:	return 'u';
+	case TS_UNKNOWN:	return '-';
 	case TS_UNTRUSTED:	return '!';
 	case TS_TEMP_TRUSTED:	return '!';
 	case TS_TRUSTED:	return 'v';
@@ -976,68 +891,6 @@ redraw_tab(struct tab *tab)
 	if (set_title)
 		dprintf(1, "\033]0;%s - Telescope\a",
 		    current_tab->buffer.page.title);
-}
-
-static void
-emit_help_item(char *prfx, void *fn)
-{
-	struct line	*l;
-	struct cmd	*cmd;
-
-	for (cmd = cmds; cmd->cmd != NULL; ++cmd) {
-		if (fn == cmd->fn)
-			break;
-	}
-	assert(cmd != NULL);
-
-	if ((l = calloc(1, sizeof(*l))) == NULL)
-		abort();
-
-	l->type = LINE_TEXT;
-	l->alt = NULL;
-
-	asprintf(&l->line, "%s %s", prfx, cmd->cmd);
-
-	if (TAILQ_EMPTY(&helpwin.page.head))
-		TAILQ_INSERT_HEAD(&helpwin.page.head, l, lines);
-	else
-		TAILQ_INSERT_TAIL(&helpwin.page.head, l, lines);
-}
-
-static void
-rec_compute_help(struct kmap *keymap, char *prfx, size_t len)
-{
-	struct keymap	*k;
-	char		 p[32];
-	const char	*kn;
-
-	TAILQ_FOREACH(k, &keymap->m, keymaps) {
-		strlcpy(p, prfx, sizeof(p));
-		if (*p != '\0')
-			strlcat(p, " ", sizeof(p));
-		if (k->meta)
-			strlcat(p, "M-", sizeof(p));
-		if ((kn = unkbd(k->key)) != NULL)
-			strlcat(p, kn, sizeof(p));
-		else
-			strlcat(p, keyname(k->key), sizeof(p));
-
-		if (k->fn == NULL)
-			rec_compute_help(&k->map, p, sizeof(p));
-		else
-			emit_help_item(p, k->fn);
-	}
-}
-
-static void
-recompute_help(void)
-{
-	char	p[32] = { 0 };
-
-	empty_vlist(&helpwin);
-	empty_linelist(&helpwin);
-	rec_compute_help(current_map, p, sizeof(p));
-	wrap_page(&helpwin, help_cols);
 }
 
 void

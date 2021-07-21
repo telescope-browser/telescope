@@ -295,6 +295,9 @@ int		 load_certs(struct ohash*);
 /* gemini.c */
 int		 client_main(void);
 
+/* help.c */
+void		 recompute_help(void);
+
 /* hist.c */
 void		 hist_clear_forward(struct histhead*, struct hist*);
 void		 hist_push(struct histhead*, struct hist*);
@@ -349,5 +352,6 @@ void		 empty_vlist(struct buffer*);
 int		 wrap_one(struct buffer *, const char *, struct line *, size_t);
 int		 wrap_text(struct buffer*, const char*, struct line*, size_t);
 int		 hardwrap_text(struct buffer*, struct line*, size_t);
+int		 wrap_page(struct buffer *, int width);
 
 #endif /* TELESCOPE_H */

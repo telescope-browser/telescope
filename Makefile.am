@@ -15,6 +15,7 @@ telescope_SOURCES =	cmd.c		\
 			gemtext.c	\
 			gen-emoji-matcher.sh \
 			gencmd.awk	\
+			help.c		\
 			hist.c		\
 			keymap.c	\
 			mime.c		\
