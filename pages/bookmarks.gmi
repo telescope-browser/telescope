@@ -1,0 +1,5 @@
+# Bookmarks
+
+No bookmarks yet!
+
+Create ~/.telescope/bookmarks.gmi or use ‘bookmark-page’.

@@ -1,5 +1,7 @@
 2021-07-21  Omar Polo  <op@omarpolo.com>
 
+	* fs.c (handle_get): allow about: pages to be overridden by ~/.telescope/pages/about_*.gmi
+
 	* cmd.c (cmd_tab_close): prefer the next tab instead of the previous as target in tab-close.
 
 2021-07-20  Omar Polo  <op@omarpolo.com>

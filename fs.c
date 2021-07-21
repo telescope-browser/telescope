@@ -34,8 +34,6 @@
 #include "pages.h"
 
 static void		 die(void) __attribute__((__noreturn__));
-static void		 serve_bookmarks(uint32_t);
-static void		 send_page(struct imsg *, const uint8_t *, size_t);
 static void		 handle_get(struct imsg*, size_t);
 static void		 handle_quit(struct imsg*, size_t);
 static void		 handle_bookmark_page(struct imsg*, size_t);
@@ -52,6 +50,7 @@ static int		 fs_send_ui(int, uint32_t, int, const void *, uint16_t);
 static struct imsgev		*iev_ui;
 static FILE			*session;
 
+static char	base_path[PATH_MAX];
 static char	lockfile_path[PATH_MAX];
 static char	bookmark_file[PATH_MAX];
 static char	known_hosts_file[PATH_MAX], known_hosts_tmp[PATH_MAX];
@@ -79,77 +78,74 @@ die(void)
 }
 
 static void
-serve_bookmarks(uint32_t peerid)
+handle_get(struct imsg *imsg, size_t datalen)
 {
-	const char	*t;
-	char		 buf[BUFSIZ];
-	size_t		 r;
+	const char	*bpath = "bookmarks.gmi";
+	char		 path[PATH_MAX], buf[BUFSIZ];
 	FILE		*f;
+	const char	*data, *p;
+	ssize_t		 r;
+	size_t		 i;
+	struct page {
+		const char	*name;
+		const char	*path;
+		const uint8_t	*data;
+		size_t		 len;
+	} pages[] = {
+		{"about",	NULL,	about_about,	about_about_len},
+		{"blank",	NULL,	about_blank,	about_blank_len},
+		{"bookmarks",	bpath,	bookmarks,	bookmarks_len},
+		{"crash",	NULL,	about_crash,	about_crash_len},
+		{"help",	NULL,	about_help,	about_help_len},
+		{"license",	NULL,	about_license,	about_license_len},
+		{"new",		NULL,	about_new,	about_new_len},
+	}, *page = NULL;
 
-	if ((f = fopen(bookmark_file, "r")) == NULL) {
-		t = "# Bookmarks\n\n"
-		    "No bookmarks yet!\n"
-		    "Create ~/.telescope/bookmarks.gmi or use `bookmark-page'.\n";
-		fs_send_ui(IMSG_BUF, peerid, -1, t, strlen(t));
-		fs_send_ui(IMSG_EOF, peerid, -1, NULL, 0);
+	data = imsg->data;
+	if (data[datalen-1] != '\0') /* make sure it's NUL-terminated */
+		die();
+	if ((data = strchr(data, ':')) == NULL)
+		goto notfound;
+	data++;
+
+	for (i = 0; i < sizeof(pages)/sizeof(pages[0]); ++i)
+		if (!strcmp(data, pages[i].name)) {
+			page = &pages[i];
+			break;
+		}
+
+	if (page == NULL)
+		goto notfound;
+
+	strlcpy(path, base_path, sizeof(path));
+	strlcat(path, "/", sizeof(path));
+	if (page->path != NULL)
+		strlcat(path, page->path, sizeof(path));
+	else {
+		strlcat(path, "pages/about_", sizeof(path));
+		strlcat(path, page->name, sizeof(path));
+		strlcat(path, ".gmi", sizeof(path));
+	}
+
+	if ((f = fopen(path, "r")) == NULL) {
+		fs_send_ui(IMSG_BUF, imsg->hdr.peerid, -1,
+		    page->data, page->len);
+		fs_send_ui(IMSG_EOF, imsg->hdr.peerid, -1,
+		    NULL, 0);
 		return;
 	}
 
 	for (;;) {
 		r = fread(buf, 1, sizeof(buf), f);
-		fs_send_ui(IMSG_BUF, peerid, -1, buf, r);
+		fs_send_ui(IMSG_BUF, imsg->hdr.peerid, -1, buf, r);
 		if (r != sizeof(buf))
 			break;
 	}
-
-	fs_send_ui(IMSG_EOF, peerid, -1, NULL, 0);
-
-	fclose(f);
-}
-
-static void
-send_page(struct imsg *imsg, const uint8_t *page, size_t len)
-{
-	fs_send_ui(IMSG_BUF, imsg->hdr.peerid, -1, page, len);
 	fs_send_ui(IMSG_EOF, imsg->hdr.peerid, -1, NULL, 0);
-}
+	fclose(f);
+	return;
 
-static void
-handle_get(struct imsg *imsg, size_t datalen)
-{
-	const char	*data, *p;
-	size_t		 i;
-	struct page {
-		const char	*name;
-		void		(*handle)(uint32_t);
-		const uint8_t	*data;
-		size_t		 len;
-	} pages[] = {
-		{"about:about",		NULL,	about_about,	about_about_len},
-		{"about:blank",		NULL,	about_blank,	about_blank_len},
-		{"about:bookmarks",	serve_bookmarks, 0,	0},
-		{"about:crash",		NULL,	about_crash,	about_crash_len},
-		{"about:help",		NULL,	about_help,	about_help_len},
-		{"about:license",	NULL,	about_license,	about_license_len},
-		{"about:new",		NULL,	about_new,	about_new_len},
-	};
-
-	data = imsg->data;
-
-	if (data[datalen-1] != '\0')
-		die();
-
-	for (i = 0; i < sizeof(pages)/sizeof(pages[0]); ++i) {
-		if (strcmp(data, pages[i].name) != 0)
-			continue;
-
-		if (pages[i].handle != NULL)
-			pages[i].handle(imsg->hdr.peerid);
-		else
-			send_page(imsg, pages[i].data, pages[i].len);
-		return;
-	}
-
+notfound:
 	p = "# not found!\n";
 	fs_send_ui(IMSG_BUF, imsg->hdr.peerid, -1, p, strlen(p));
 	fs_send_ui(IMSG_EOF, imsg->hdr.peerid, -1, NULL, 0);
@@ -381,30 +377,28 @@ fs_send_ui(int type, uint32_t peerid, int fd, const void *data,
 int
 fs_init(void)
 {
-	char	dir[PATH_MAX];
+	strlcpy(base_path, getenv("HOME"), sizeof(base_path));
+	strlcat(base_path, "/.telescope", sizeof(base_path));
+	mkdir(base_path, 0700);
 
-	strlcpy(dir, getenv("HOME"), sizeof(dir));
-	strlcat(dir, "/.telescope", sizeof(dir));
-	mkdir(dir, 0700);
+	strlcpy(lockfile_path, base_path, sizeof(lockfile_path));
+	strlcat(lockfile_path, "/lock", sizeof(lockfile_path));
 
-	strlcpy(lockfile_path, getenv("HOME"), sizeof(lockfile_path));
-	strlcat(lockfile_path, "/.telescope/lock", sizeof(lockfile_path));
+	strlcpy(bookmark_file, base_path, sizeof(bookmark_file));
+	strlcat(bookmark_file, "/bookmarks.gmi", sizeof(bookmark_file));
 
-	strlcpy(bookmark_file, getenv("HOME"), sizeof(bookmark_file));
-	strlcat(bookmark_file, "/.telescope/bookmarks.gmi", sizeof(bookmark_file));
+	strlcpy(known_hosts_file, base_path, sizeof(known_hosts_file));
+	strlcat(known_hosts_file, "/known_hosts", sizeof(known_hosts_file));
 
-	strlcpy(known_hosts_file, getenv("HOME"), sizeof(known_hosts_file));
-	strlcat(known_hosts_file, "/.telescope/known_hosts", sizeof(known_hosts_file));
-
-	strlcpy(known_hosts_tmp, getenv("HOME"), sizeof(known_hosts_tmp));
-	strlcat(known_hosts_tmp, "/.telescope/known_hosts.tmp.XXXXXXXXXX",
+	strlcpy(known_hosts_tmp, base_path, sizeof(known_hosts_tmp));
+	strlcat(known_hosts_tmp, "/known_hosts.tmp.XXXXXXXXXX",
 	    sizeof(known_hosts_file));
 
-	strlcpy(session_file, getenv("HOME"), sizeof(session_file));
-	strlcat(session_file, "/.telescope/session", sizeof(session_file));
+	strlcpy(session_file, base_path, sizeof(session_file));
+	strlcat(session_file, "/session", sizeof(session_file));
 
-	strlcpy(crashed_file, getenv("HOME"), sizeof(crashed_file));
-	strlcat(crashed_file, "/.telescope/crashed", sizeof(crashed_file));
+	strlcpy(crashed_file, base_path, sizeof(crashed_file));
+	strlcat(crashed_file, "/crashed", sizeof(crashed_file));
 
 	return 1;
 }

@@ -38,4 +38,7 @@ extern size_t		 about_license_len;
 extern const uint8_t	 about_new[];
 extern size_t		 about_new_len;
 
+extern const uint8_t	 bookmarks[];
+extern size_t		 bookmarks_len;
+
 #endif

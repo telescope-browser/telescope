@@ -77,3 +77,4 @@ pages.c: pagebundler $(srcdir)/pages.h ${PAGES}
 	./pagebundler -f $(srcdir)/pages/about_license.gmi -v about_license >> $@
 	./pagebundler -f $(srcdir)/pages/about_new.gmi     -v about_new     >> $@
 	./pagebundler -f $(srcdir)/pages/about_crash.gmi   -v about_crash   >> $@
+	./pagebundler -f $(srcdir)/pages/bookmarks.gmi     -v bookmarks     >> $@
