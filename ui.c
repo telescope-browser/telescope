@@ -1037,14 +1037,6 @@ ui_init()
 
 	minibuffer_init();
 
-	TAILQ_INIT(&eecmd_history.head);
-	TAILQ_INIT(&ir_history.head);
-	TAILQ_INIT(&lu_history.head);
-
-	ministate.line.type = LINE_TEXT;
-	ministate.vline.parent = &ministate.line;
-	ministate.buffer.current_line = &ministate.vline;
-
 	/* initialize help window */
 	TAILQ_INIT(&helpwin.head);
 
