@@ -57,7 +57,8 @@ empty_linelist(struct buffer *buffer)
 		free(l->line);
 
 		if (l->type != LINE_COMPL &&
-		    l->type != LINE_COMPL_CURRENT)
+		    l->type != LINE_COMPL_CURRENT &&
+		    l->type != LINE_HELP)
 			free(l->alt);
 
 		free(l);
@@ -279,6 +280,7 @@ wrap_page(struct buffer *buffer, int width)
 			break;
 		case LINE_COMPL:
 		case LINE_COMPL_CURRENT:
+		case LINE_HELP:
 			wrap_one(buffer, prfx, l, width);
 			break;
 		}

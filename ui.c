@@ -399,7 +399,8 @@ print_vline_descr(int width, WINDOW *window, struct vline *vl)
 	int x, y, goal;
 
 	if (vl->parent->type != LINE_COMPL &&
-	    vl->parent->type != LINE_COMPL_CURRENT)
+	    vl->parent->type != LINE_COMPL_CURRENT &&
+	    vl->parent->type != LINE_HELP)
 		return;
 
 	if (vl->parent->alt == NULL)
@@ -408,7 +409,11 @@ print_vline_descr(int width, WINDOW *window, struct vline *vl)
 	(void)y;
 	getyx(window, y, x);
 
-	goal = width/2;
+	if (vl->parent->type == LINE_HELP)
+		goal = 8;
+	else
+		goal = width/2;
+
 	if (goal <= x)
 		wprintw(window, " ");
 	for (; goal > x; ++x)

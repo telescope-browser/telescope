@@ -1,5 +1,7 @@
 2021-07-21  Omar Polo  <op@omarpolo.com>
 
+	* ui.c (print_vline_descr): pretty print help lines
+
 	* defaults.c (load_default_keys): bind other-window to C-x o
 
 	* cmd.c (cmd_other_window): add other-window

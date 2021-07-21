@@ -84,6 +84,9 @@ enum line_type {
 	/* minibuffer */
 	LINE_COMPL,
 	LINE_COMPL_CURRENT,
+
+	/* help */
+	LINE_HELP,
 };
 
 /* for lines: mark as hidden */

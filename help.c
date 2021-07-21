@@ -39,10 +39,9 @@ emit_help_item(char *prfx, void *fn)
 	if ((l = calloc(1, sizeof(*l))) == NULL)
 		abort();
 
-	l->type = LINE_TEXT;
-	l->alt = NULL;
-
-	asprintf(&l->line, "%s %s", prfx, cmd->cmd);
+	l->type = LINE_HELP;
+	l->line = strdup(prfx);
+	l->alt = (char*)cmd->cmd;
 
 	if (TAILQ_EMPTY(&helpwin.page.head))
 		TAILQ_INSERT_HEAD(&helpwin.page.head, l, lines);

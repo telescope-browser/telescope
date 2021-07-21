@@ -51,6 +51,8 @@ struct lineprefix line_prefixes[] = {
 
 	[LINE_COMPL] =		{"", ""},
 	[LINE_COMPL_CURRENT] =	{"", ""},
+
+	[LINE_HELP] =		{"", ""},
 };
 
 struct line_face line_faces[] = {
@@ -123,6 +125,13 @@ struct line_face line_faces[] = {
 		.attr = A_REVERSE,
 		.trail_attr = A_REVERSE,
 	},
+
+	/* help */
+	[LINE_HELP] = {
+		.prfx_pair = PHELP_PRFX,
+		.pair = PHELP,
+		.trail_pair = PHELP_TRAIL,
+	},
 };
 
 struct tab_face tab_face = {
@@ -174,7 +183,10 @@ struct mapping {
 
 	/* minibuffer */
 	{"compl",	LINE_COMPL},
-	{"compl.current", LINE_COMPL_CURRENT}
+	{"compl.current", LINE_COMPL_CURRENT},
+
+	/* help */
+	{"help",	LINE_HELP},
 };
 
 static struct mapping *
