@@ -1,3 +1,7 @@
+2021-07-23  Omar Polo  <op@omarpolo.com>
+
+	* ui.c (redraw_tabline): changed default tab separator character.  Suggested by Gnuserland, thanks!
+
 2021-07-21  Omar Polo  <op@omarpolo.com>
 
 	* ui.c (print_vline_descr): pretty print help lines

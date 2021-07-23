@@ -557,7 +557,7 @@ redraw_tabline(void)
 
 		wattr_on(tabline, tab_face.background, NULL);
 		if (TAILQ_NEXT(tab, tabs) != NULL)
-			wprintw(tabline, "│");
+			wprintw(tabline, "┃");
 		wattr_off(tabline, tab_face.background, NULL);
 	}
 
