@@ -60,11 +60,17 @@ static struct req	*req_by_id(uint32_t);
 static struct req	*req_by_id_try(uint32_t);
 
 static void		 setup_tls(struct req*);
-static void		 do_handshake(int, short, void*);
-static void		 write_request(int, short, void*);
-static void		 read_reply(int, short, void*);
-static void		 parse_reply(struct req*);
-static void		 copy_body(int, short, void*);
+
+static void		 net_tls_handshake(int, short, void *);
+static void		 net_tls_readcb(int, short, void *);
+static void		 net_tls_writecb(int, short, void *);
+
+static int		 gemini_parse_reply(struct req *, const char *, size_t);
+
+static void		 net_ready(struct req *req);
+static void		 net_read(struct bufferevent *, void *);
+static void		 net_write(struct bufferevent *, void *);
+static void		 net_error(struct bufferevent *, short, void *);
 
 static void		 handle_get_raw(struct imsg *, size_t);
 static void		 handle_cert_status(struct imsg*, size_t);
@@ -91,13 +97,14 @@ typedef void (*statefn)(int, short, void*);
 TAILQ_HEAD(, req) reqhead;
 /* a pending request */
 struct req {
-	struct event		 ev;
 	struct phos_uri		 url;
 	uint32_t		 id;
 	int			 fd;
 	struct tls		*ctx;
-	char			 buf[1024];
-	size_t			 off;
+	char			 req[1024];
+	size_t			 len;
+	int			 done_header;
+	struct bufferevent	*bev;
 
 	struct addrinfo		*servinfo, *p;
 #if HAVE_ASR_RUN
@@ -118,15 +125,6 @@ static inline void
 yield_w(struct req *req, statefn fn, struct timeval *tv)
 {
 	event_once(req->fd, EV_WRITE, fn, req, tv);
-}
-
-static inline void
-advance_buf(struct req *req, size_t len)
-{
-	assert(len <= req->off);
-
-	req->off -= len;
-	memmove(req->buf, req->buf + len, req->off);
 }
 
 static void __attribute__((__noreturn__))
@@ -273,6 +271,11 @@ close_conn(int fd, short ev, void *d)
 		event_asr_abort(req->asrev);
 #endif
 
+	if (req->bev != NULL) {
+		bufferevent_free(req->bev);
+		req->bev = NULL;
+	}
+
 	if (req->ctx != NULL) {
 		switch (tls_close(req->ctx)) {
 		case TLS_WANT_POLLIN:
@@ -284,6 +287,7 @@ close_conn(int fd, short ev, void *d)
 		}
 
 		tls_free(req->ctx);
+		req->ctx = NULL;
 	}
 
 	TAILQ_REMOVE(&reqhead, req, reqs);
@@ -329,26 +333,26 @@ setup_tls(struct req *req)
 		close_with_errf(req, "tls_connect_socket: %s", tls_error(req->ctx));
 		return;
 	}
-	yield_w(req, do_handshake, &timeout_for_handshake);
+	yield_w(req, net_tls_handshake, &timeout_for_handshake);
 }
 
 static void
-do_handshake(int fd, short ev, void *d)
+net_tls_handshake(int fd, short event, void *d)
 {
 	struct req	*req = d;
 	const char	*hash;
 
-	if (ev == EV_TIMEOUT) {
+	if (event == EV_TIMEOUT) {
 		close_with_err(req, "Timeout loading page");
 		return;
 	}
 
 	switch (tls_handshake(req->ctx)) {
 	case TLS_WANT_POLLIN:
-		yield_r(req, do_handshake, NULL);
+		yield_r(req, net_tls_handshake, NULL);
 		return;
 	case TLS_WANT_POLLOUT:
-		yield_w(req, do_handshake, NULL);
+		yield_w(req, net_tls_handshake, NULL);
 		return;
 	}
 
@@ -361,139 +365,240 @@ do_handshake(int fd, short ev, void *d)
 }
 
 static void
-write_request(int fd, short ev, void *d)
+net_tls_readcb(int fd, short event, void *d)
 {
-	struct req	*req = d;
-	ssize_t		 r;
-	size_t		 len;
+	struct bufferevent	*bufev = d;
+	struct req		*req = bufev->cbarg;
+	char			 buf[BUFSIZ];
+	int			 what = EVBUFFER_READ;
+	int			 howmuch = IBUF_READ_SIZE;
+	ssize_t			 ret;
+	size_t			 len;
 
-	len = strlen(req->buf);
-
-	switch (r = tls_write(req->ctx, req->buf, len)) {
-	case -1:
-		close_with_errf(req, "tls_write: %s", tls_error(req->ctx));
-		break;
-	case TLS_WANT_POLLIN:
-		yield_r(req, write_request, NULL);
-		break;
-	case TLS_WANT_POLLOUT:
-		yield_w(req, write_request, NULL);
-		break;
-	default:
-		/* assume r == len */
-		(void)r;
-		yield_r(req, read_reply, NULL);
-		break;
+	if (event == EV_TIMEOUT) {
+		what |= EVBUFFER_TIMEOUT;
+		goto err;
 	}
-}
 
-static void
-read_reply(int fd, short ev, void *d)
-{
-	struct req	*req = d;
-	size_t		 len;
-	ssize_t		 r;
-	char		*buf;
+	if (bufev->wm_read.high != 0)
+		howmuch = MIN(sizeof(buf), bufev->wm_read.high);
 
-	buf = req->buf + req->off;
-	len = sizeof(req->buf) - req->off;
-
-	switch (r = tls_read(req->ctx, buf, len)) {
-	case -1:
-		close_with_errf(req, "tls_read: %s", tls_error(req->ctx));
-		break;
+	switch (ret = tls_read(req->ctx, buf, howmuch)) {
 	case TLS_WANT_POLLIN:
-		yield_r(req, read_reply, NULL);
-		break;
 	case TLS_WANT_POLLOUT:
-		yield_w(req, read_reply, NULL);
-		break;
-	default:
-		req->off += r;
-
-		if (memmem(req->buf, req->off, "\r\n", 2) != NULL)
-			parse_reply(req);
-		else if (req->off == sizeof(req->buf))
-			close_with_err(req, "invalid response");
-		else
-			yield_r(req, read_reply, NULL);
-		break;
+		goto retry;
+	case -1:
+		what |= EVBUFFER_ERROR;
+		goto err;
 	}
-}
+	len = ret;
 
-static void
-parse_reply(struct req *req)
-{
-	int	 code;
-	char	*e;
-	size_t	 len;
-
-	if (req->off < 4)
+	if (len == 0) {
+		what |= EVBUFFER_EOF;
 		goto err;
+	}
 
-	if (!isdigit(req->buf[0]) || !isdigit(req->buf[1]))
+	if (evbuffer_add(bufev->input, buf, len) == -1) {
+		what |= EVBUFFER_ERROR;
 		goto err;
+	}
 
-	code = (req->buf[0] - '0')*10 + (req->buf[1] - '0');
+	event_add(&bufev->ev_read, NULL);
 
-	if (!isspace(req->buf[2]))
-		goto err;
+	len = EVBUFFER_LENGTH(bufev->input);
+	if (bufev->wm_read.low != 0 && len < bufev->wm_read.low)
+		return;
 
-	advance_buf(req, 3);
-	if ((e = memmem(req->buf, req->off, "\r\n", 2)) == NULL)
-		goto err;
+	if (bufev->readcb != NULL)
+		(*bufev->readcb)(bufev, bufev->cbarg);
+	return;
 
-	*e = '\0';
-	e++;
-	len = e - req->buf;
-	net_send_ui(IMSG_GOT_CODE, req->id, &code, sizeof(code));
-	net_send_ui(IMSG_GOT_META, req->id, req->buf, len);
-
-	if (20 <= code && code < 30)
-		advance_buf(req, len+1); /* skip \n too */
-	else
-		close_conn(0, 0, req);
-
+retry:
+	event_add(&bufev->ev_read, NULL);
 	return;
 
 err:
-	close_with_err(req, "malformed request");
+	(*bufev->errorcb)(bufev, what, bufev->cbarg);
 }
 
 static void
-copy_body(int fd, short ev, void *d)
+net_tls_writecb(int fd, short event, void *d)
+{
+	struct bufferevent	*bufev = d;
+	struct req		*req = bufev->cbarg;
+	ssize_t			 ret;
+	size_t			 len;
+	short			 what = EVBUFFER_WRITE;
+
+	if (event & EV_TIMEOUT) {
+		what |= EVBUFFER_TIMEOUT;
+		goto err;
+	}
+
+	if (EVBUFFER_LENGTH(bufev->output) != 0) {
+		ret = tls_write(req->ctx, EVBUFFER_DATA(bufev->output),
+		    EVBUFFER_LENGTH(bufev->output));
+		switch (ret) {
+		case TLS_WANT_POLLIN:
+		case TLS_WANT_POLLOUT:
+			goto retry;
+		case -1:
+			what |= EVBUFFER_ERROR;
+			goto err;
+		}
+		len = ret;
+		evbuffer_drain(bufev->output, len);
+	}
+
+	if (EVBUFFER_LENGTH(bufev->output) != 0)
+		event_add(&bufev->ev_write, NULL);
+
+	if (bufev->writecb != NULL &&
+	    EVBUFFER_LENGTH(bufev->output) <= bufev->wm_write.low)
+		(*bufev->writecb)(bufev, bufev->cbarg);
+	return;
+
+retry:
+	event_add(&bufev->ev_write, NULL);
+	return;
+
+err:
+	(*bufev->errorcb)(bufev, what, bufev->cbarg);
+}
+
+static int
+gemini_parse_reply(struct req *req, const char *header, size_t len)
+{
+	int		 code;
+	const char	*t;
+
+	if (len < 4)
+		return 0;
+
+	if (!isdigit(header[0]) || !isdigit(header[1]))
+		return 0;
+
+	code = (header[0] - '0')*10 + (header[1] - '0');
+	if (header[2] != ' ')
+		return 0;
+
+	t = header + 3;
+
+	net_send_ui(IMSG_GOT_CODE, req->id, &code, sizeof(code));
+	net_send_ui(IMSG_GOT_META, req->id, t, strlen(t)+1);
+
+	bufferevent_disable(req->bev, EV_READ|EV_WRITE);
+
+	if (code < 20 || code >= 30)
+		close_conn(0, 0, req);
+	return 1;
+}
+
+/* called when we're ready to read/write */
+static void
+net_ready(struct req *req)
+{
+	req->bev = bufferevent_new(req->fd, net_read, net_write, net_error,
+	    req);
+	if (req->bev == NULL)
+		die();
+
+	/* setup tls i/o layer */
+	if (req->ctx != NULL) {
+		event_set(&req->bev->ev_read, req->fd, EV_READ,
+		    net_tls_readcb, req->bev);
+		event_set(&req->bev->ev_write, req->fd, EV_WRITE,
+		    net_tls_writecb, req->bev);
+	}
+
+	/* TODO: adjust watermarks */
+	bufferevent_setwatermark(req->bev, EV_WRITE, 1, 0);
+	bufferevent_setwatermark(req->bev, EV_READ,  1, 0);
+
+	bufferevent_enable(req->bev, EV_READ|EV_WRITE);
+
+	bufferevent_write(req->bev, req->req, req->len);
+}
+
+/* called after a read has been done */
+static void
+net_read(struct bufferevent *bev, void *d)
 {
 	struct req	*req = d;
-	ssize_t		 r;
+	struct evbuffer	*src = EVBUFFER_INPUT(bev);
+	void		*data;
+	size_t		 len;
+	int		 r;
+	char		*header;
 
-	for (;;) {
-		if (req->off != 0) {
-			net_send_ui(IMSG_BUF, req->id,
-			    req->buf, req->off);
-			req->off = 0;
-		}
-
-		switch (r = tls_read(req->ctx, req->buf, sizeof(req->buf))) {
-		case TLS_WANT_POLLIN:
-			yield_r(req, copy_body, NULL);
+	if (!req->done_header) {
+		header = evbuffer_readln(src, &len, EVBUFFER_EOL_CRLF_STRICT);
+		if (header == NULL && EVBUFFER_LENGTH(src) >= 1024)
+			goto err;
+		if (header == NULL)
 			return;
-		case TLS_WANT_POLLOUT:
-			yield_w(req, copy_body, NULL);
-			return;
-		case -1:
-			/*
-			 * XXX: should notify the user that the
-			 * download was aborted.
-			 */
-			/* fallthrough */
-		case 0:
-			net_send_ui(IMSG_EOF, req->id, NULL, 0);
-			close_conn(0, 0, req);
-			return;
-		default:
-			req->off = r;
-		}
+		r = gemini_parse_reply(req, header, len);
+		free(header);
+		if (!r)
+			goto err;
+		req->done_header = 1;
+		return;
 	}
+
+	if ((len = EVBUFFER_LENGTH(src)) == 0)
+		return;
+	data = EVBUFFER_DATA(src);
+	net_send_ui(IMSG_BUF, req->id, data, len);
+	evbuffer_drain(src, len);
+	return;
+
+err:
+	(*bev->errorcb)(bev, EVBUFFER_READ, bev->cbarg);
+}
+
+/* called after a write has been done */
+static void
+net_write(struct bufferevent *bev, void *d)
+{
+	struct evbuffer	*dst = EVBUFFER_OUTPUT(bev);
+
+	if (EVBUFFER_LENGTH(dst) == 0)
+		(*bev->errorcb)(bev, EVBUFFER_WRITE, bev->cbarg);
+}
+
+static void
+net_error(struct bufferevent *bev, short error, void *d)
+{
+	struct req	*req = d;
+
+	if (error & EVBUFFER_TIMEOUT) {
+		close_with_err(req, "Timeout loading page");
+		return;
+	}
+
+	if (error & EVBUFFER_ERROR) {
+		close_with_err(req, "buffer event error");
+		return;
+	}
+
+	if (error & EVBUFFER_EOF) {
+		net_send_ui(IMSG_EOF, req->id, NULL, 0);
+		close_conn(0, 0, req);
+		return;
+	}
+
+	if (error & EVBUFFER_WRITE) {
+		/* finished sending request */
+		bufferevent_disable(bev, EV_WRITE);
+		return;
+	}
+
+	if (error & EVBUFFER_READ) {
+		close_with_err(req, "protocol error");
+		return;
+	}
+
+	close_with_errf(req, "unknown event error %x", error);
 }
 
 static void
@@ -515,7 +620,9 @@ handle_get_raw(struct imsg *imsg, size_t datalen)
 
 	strlcpy(req->url.host, r->host, sizeof(req->url.host));
 	strlcpy(req->url.port, r->port, sizeof(req->url.port));
-	strlcpy(req->buf, r->req, sizeof(req->buf));
+
+	strlcpy(req->req, r->req, sizeof(req->req));
+	req->len = strlen(r->req);
 
 #if HAVE_ASR_RUN
         async_conn_towards(req);
@@ -537,7 +644,7 @@ handle_cert_status(struct imsg *imsg, size_t datalen)
 	memcpy(&is_ok, imsg->data, sizeof(is_ok));
 
 	if (is_ok)
-		yield_w(req, write_request, NULL);
+		net_ready(req);
 	else
 		close_conn(0, 0, req);
 }
@@ -545,8 +652,12 @@ handle_cert_status(struct imsg *imsg, size_t datalen)
 static void
 handle_proceed(struct imsg *imsg, size_t datalen)
 {
-	yield_r(req_by_id(imsg->hdr.peerid),
-	    copy_body, NULL);
+	struct req *req;
+
+	if ((req = req_by_id_try(imsg->hdr.peerid)) == NULL)
+		return;
+
+	bufferevent_enable(req->bev, EV_READ);
 }
 
 static void
