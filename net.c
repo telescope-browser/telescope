@@ -45,40 +45,40 @@ struct req;
 
 static struct req	*req_by_id(uint32_t);
 
-static void		 die(void) __attribute__((__noreturn__));
+static void	 die(void) __attribute__((__noreturn__));
 
-static void		 try_to_connect(int, short, void*);
+static void	 try_to_connect(int, short, void*);
 
 #if HAVE_ASR_RUN
-static void		 query_done(struct asr_result*, void*);
-static void		 async_conn_towards(struct req*);
+static void	 query_done(struct asr_result*, void*);
+static void	 async_conn_towards(struct req*);
 #else
-static void 		 blocking_conn_towards(struct req*);
+static void	 blocking_conn_towards(struct req*);
 #endif
 
-static void		 close_with_err(struct req*, const char*);
-static void		 close_with_errf(struct req*, const char*, ...)
+static void	 close_with_err(struct req*, const char*);
+static void	 close_with_errf(struct req*, const char*, ...)
     __attribute__((format(printf, 2, 3)));
 
-static void		 net_tls_handshake(int, short, void *);
-static void		 net_tls_readcb(int, short, void *);
-static void		 net_tls_writecb(int, short, void *);
+static void	 net_tls_handshake(int, short, void *);
+static void	 net_tls_readcb(int, short, void *);
+static void	 net_tls_writecb(int, short, void *);
 
-static int		 gemini_parse_reply(struct req *, const char *, size_t);
+static int	 gemini_parse_reply(struct req *, const char *, size_t);
 
-static void		 net_ready(struct req *req);
-static void		 net_read(struct bufferevent *, void *);
-static void		 net_write(struct bufferevent *, void *);
-static void		 net_error(struct bufferevent *, short, void *);
+static void	 net_ready(struct req *req);
+static void	 net_read(struct bufferevent *, void *);
+static void	 net_write(struct bufferevent *, void *);
+static void	 net_error(struct bufferevent *, short, void *);
 
-static void		 handle_get_raw(struct imsg *, size_t);
-static void		 handle_cert_status(struct imsg*, size_t);
-static void		 handle_proceed(struct imsg*, size_t);
-static void		 handle_stop(struct imsg*, size_t);
-static void		 handle_quit(struct imsg*, size_t);
-static void		 handle_dispatch_imsg(int, short, void*);
+static void	 handle_get_raw(struct imsg *, size_t);
+static void	 handle_cert_status(struct imsg*, size_t);
+static void	 handle_proceed(struct imsg*, size_t);
+static void	 handle_stop(struct imsg*, size_t);
+static void	 handle_quit(struct imsg*, size_t);
+static void	 handle_dispatch_imsg(int, short, void*);
 
-static int		 net_send_ui(int, uint32_t, const void *, uint16_t);
+static int	 net_send_ui(int, uint32_t, const void *, uint16_t);
 
 /* TODO: making this customizable */
 struct timeval timeout_for_handshake = { 5, 0 };
