@@ -1,4 +1,4 @@
-AC_INIT([telescope], [0.4.1], [telescope@omarpolo.com], [telescope], [gemini://telescope.omarpolo.com])
+AC_INIT([telescope], [0.4.1-dev], [telescope@omarpolo.com], [telescope], [gemini://telescope.omarpolo.com])
 AC_CONFIG_LIBOBJ_DIR(compat)
 AM_INIT_AUTOMAKE([-Wall foreign subdir-objects])
 AC_PROG_CC_C99
