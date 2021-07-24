@@ -54,8 +54,8 @@ enum telescope_process {
 };
 
 static struct proto protos[] = {
-	{ "gemini",	load_gemini_url },
 	{ "about",	load_about_url },
+	{ "gemini",	load_gemini_url },
 	{ NULL, NULL },
 };
 
