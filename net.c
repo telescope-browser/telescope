@@ -720,5 +720,11 @@ net_main(void)
 	sandbox_net_process();
 
 	event_dispatch();
+
+	tls_config_free(tlsconf);
+	msgbuf_clear(&iev_ui->ibuf.w);
+	close(iev_ui->ibuf.fd);
+	free(iev_ui);
+
 	return 0;
 }
