@@ -1,5 +1,9 @@
 2021-07-24  Omar Polo  <op@omarpolo.com>
 
+	* cmd.c (cmd_scroll_line_up): don't crash on empty pages
+	(cmd_mini_scroll_up): add mini-scroll-up, bound to M-v in the minibuffer
+	(cmd_mini_scroll_down): add mini-scroll-down, bound to C-v in the minibuffer
+
 	* configure.ac: tagged 0.4.1 "buildfix" release
 
 	* Makefile.am (EXTRA_telescope_SOURCES): fix dist tarball
