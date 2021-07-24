@@ -1,5 +1,7 @@
 2021-07-24  Omar Polo  <op@omarpolo.com>
 
+	* configure.ac: tagged 0.4 --- "La faccia della luna"
+
 	* minibuffer.c (sensible_self_insert): use sensible-self-insert everywhere
 
 2021-07-23  Omar Polo  <op@omarpolo.com>
