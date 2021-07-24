@@ -1,10 +1,11 @@
 bin_PROGRAMS =		telescope
 
+EXTRA_telescope_SOURCES = compat/ohash.h compat/queue.h compat/imsg.h
+
 telescope_SOURCES =	cmd.c		\
 			cmd.gen.c	\
 			cmd.h		\
 			compat.h	\
-			compat/*.[ch]	\
 			compl.c		\
 			compl.h		\
 			defaults.c	\
@@ -47,7 +48,8 @@ pagebundler_SOURCES =	pagebundler.c
 
 BUILT_SOURCES =		cmd.gen.c compile_flags.txt emoji-matcher.c pages.c
 
-CLEANFILES =		cmd.gen.c compile_flags.txt emoji-matcher.c pages.c
+CLEANFILES =		cmd.gen.c compile_flags.txt emoji-matcher.c pages.c \
+			parse.c
 
 LDADD =			$(LIBOBJS)
 
