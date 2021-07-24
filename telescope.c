@@ -53,7 +53,6 @@ enum telescope_process {
 	PROC_NET,
 };
 
-/* the first is also the fallback one */
 static struct proto protos[] = {
 	{ "gemini",	load_gemini_url },
 	{ "about",	load_about_url },
