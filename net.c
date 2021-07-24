@@ -41,7 +41,25 @@
 static struct imsgev		*iev_ui;
 static struct tls_config	*tlsconf;
 
-struct req;
+/* a pending request */
+struct req {
+	struct phos_uri		 url;
+	uint32_t		 id;
+	int			 fd;
+	struct tls		*ctx;
+	char			 req[1024];
+	size_t			 len;
+	int			 done_header;
+	struct bufferevent	*bev;
+
+	struct addrinfo		*servinfo, *p;
+#if HAVE_ASR_RUN
+	struct addrinfo		 hints;
+	struct event_asr	*asrev;
+#endif
+
+	TAILQ_ENTRY(req)	 reqs;
+};
 
 static struct req	*req_by_id(uint32_t);
 
@@ -94,25 +112,6 @@ static imsg_handlerfn *handlers[] = {
 typedef void (*statefn)(int, short, void*);
 
 TAILQ_HEAD(, req) reqhead;
-/* a pending request */
-struct req {
-	struct phos_uri		 url;
-	uint32_t		 id;
-	int			 fd;
-	struct tls		*ctx;
-	char			 req[1024];
-	size_t			 len;
-	int			 done_header;
-	struct bufferevent	*bev;
-
-	struct addrinfo		*servinfo, *p;
-#if HAVE_ASR_RUN
-	struct addrinfo		 hints;
-	struct event_asr	*asrev;
-#endif
-
-	TAILQ_ENTRY(req)	 reqs;
-};
 
 static inline void
 yield_r(struct req *req, statefn fn, struct timeval *tv)
