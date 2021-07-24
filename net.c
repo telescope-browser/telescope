@@ -58,7 +58,6 @@ static void		 close_with_err(struct req*, const char*);
 static void		 close_with_errf(struct req*, const char*, ...)
     __attribute__((format(printf, 2, 3)));
 static struct req	*req_by_id(uint32_t);
-static struct req	*req_by_id_try(uint32_t);
 
 static void		 net_tls_handshake(int, short, void *);
 static void		 net_tls_readcb(int, short, void *);
@@ -256,16 +255,6 @@ blocking_conn_towards(struct req *req)
 
 static struct req *
 req_by_id(uint32_t id)
-{
-	struct req *r;
-
-	if ((r = req_by_id_try(id)) == NULL)
-		die();
-	return r;
-}
-
-static struct req *
-req_by_id_try(uint32_t id)
 {
 	struct req *r;
 
@@ -653,7 +642,7 @@ handle_proceed(struct imsg *imsg, size_t datalen)
 {
 	struct req *req;
 
-	if ((req = req_by_id_try(imsg->hdr.peerid)) == NULL)
+	if ((req = req_by_id(imsg->hdr.peerid)) == NULL)
 		return;
 
 	bufferevent_enable(req->bev, EV_READ);
@@ -664,7 +653,7 @@ handle_stop(struct imsg *imsg, size_t datalen)
 {
 	struct req	*req;
 
-	if ((req = req_by_id_try(imsg->hdr.peerid)) == NULL)
+	if ((req = req_by_id(imsg->hdr.peerid)) == NULL)
 		return;
 	close_conn(0, 0, req);
 }
