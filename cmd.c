@@ -398,7 +398,7 @@ cmd_execute_extended_command(struct buffer *buffer)
 
 	GUARD_RECURSIVE_MINIBUFFER();
 
-	enter_minibuffer(eecmd_self_insert, eecmd_select, exit_minibuffer,
+	enter_minibuffer(sensible_self_insert, eecmd_select, exit_minibuffer,
 	    &eecmd_history, compl_eecmd, NULL);
 
 	len = sizeof(ministate.prompt);

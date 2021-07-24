@@ -177,18 +177,6 @@ sensible_self_insert(void)
 }
 
 void
-eecmd_self_insert(void)
-{
-	if (thiskey.meta || unicode_isspace(thiskey.cp) ||
-	    !unicode_isgraph(thiskey.cp)) {
-		global_key_unbound();
-		return;
-	}
-
-	minibuffer_self_insert();
-}
-
-void
 eecmd_select(void)
 {
 	struct cmd *cmd;
@@ -203,12 +191,6 @@ eecmd_select(void)
 	}
 
 	message("No match");
-}
-
-void
-ir_self_insert(void)
-{
-	minibuffer_self_insert();
 }
 
 void
