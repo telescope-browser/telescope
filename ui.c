@@ -793,17 +793,19 @@ do_redraw_echoarea(void)
 static void
 do_redraw_minibuffer(void)
 {
+	struct buffer	*cmplbuf, *buffer;
 	size_t		 off_y, off_x = 0;
 	const char	*start, *c;
 
-	/* unused, set by getyx */
-	(void)off_y;
+	cmplbuf = &ministate.compl.buffer;
+	buffer = &ministate.buffer;
+	(void)off_y;		/* unused, set by getyx */
 
 	wmove(echoarea, 0, 0);
 
 	if (in_minibuffer == MB_COMPREAD)
 		wprintw(echoarea, "(%2d) ",
-		    ministate.compl.buffer.line_max);
+		    cmplbuf->line_max);
 
 	wprintw(echoarea, "%s", ministate.prompt);
 	if (ministate.hist_cur != NULL)
@@ -816,8 +818,7 @@ do_redraw_minibuffer(void)
 	start = ministate.hist_cur != NULL
 		? ministate.hist_cur->h
 		: ministate.buf;
-	c = utf8_nth(ministate.buffer.current_line->line,
-	    ministate.buffer.cpoff);
+	c = utf8_nth(buffer->current_line->line, buffer->cpoff);
 	while (utf8_swidth_between(start, c) > (size_t)COLS/2) {
 		start = utf8_next_cp(start);
 	}
