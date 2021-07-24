@@ -60,8 +60,6 @@ static void		 close_with_errf(struct req*, const char*, ...)
 static struct req	*req_by_id(uint32_t);
 static struct req	*req_by_id_try(uint32_t);
 
-static void		 setup_tls(struct req*);
-
 static void		 net_tls_handshake(int, short, void *);
 static void		 net_tls_readcb(int, short, void *);
 static void		 net_tls_writecb(int, short, void *);
@@ -177,7 +175,22 @@ err:
 
 done:
 	freeaddrinfo(req->servinfo);
-	setup_tls(req);
+
+	/* prepare tls */
+        if ((req->ctx = tls_client()) == NULL) {
+		close_with_errf(req, "tls_client: %s", strerror(errno));
+		return;
+	}
+	if (tls_configure(req->ctx, tlsconf) == -1) {
+		close_with_errf(req, "tls_configure: %s", tls_error(req->ctx));
+		return;
+	}
+	if (tls_connect_socket(req->ctx, req->fd, req->url.host) == -1) {
+		close_with_errf(req, "tls_connect_socket: %s",
+		    tls_error(req->ctx));
+		return;
+	}
+	yield_w(req, net_tls_handshake, &timeout_for_handshake);
 }
 
 #if HAVE_ASR_RUN
@@ -319,25 +332,6 @@ close_with_errf(struct req *req, const char *fmt, ...)
 
 	close_with_err(req, s);
 	free(s);
-}
-
-static void
-setup_tls(struct req *req)
-{
-	if ((req->ctx = tls_client()) == NULL) {
-		close_with_errf(req, "tls_client: %s", strerror(errno));
-		return;
-	}
-	if (tls_configure(req->ctx, tlsconf) == -1) {
-		close_with_errf(req, "tls_configure: %s", tls_error(req->ctx));
-		return;
-	}
-	if (tls_connect_socket(req->ctx, req->fd, req->url.host) == -1) {
-		close_with_errf(req, "tls_connect_socket: %s",
-		    tls_error(req->ctx));
-		return;
-	}
-	yield_w(req, net_tls_handshake, &timeout_for_handshake);
 }
 
 static void
