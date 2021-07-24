@@ -1,11 +1,13 @@
 #!/bin/sh
 
+file="${1:?missing input file}"
+
 sed -e '/^$/d'		\
     -e '/^#/d'		\
     -e 's/;.*//'	\
     -e 's/[ \t]*$//'	\
     -e 's/\.\./ /'	\
-    data/emoji.txt	\
+    "$file"		\
 	| awk '
 BEGIN {
 	print "#include \"utf8.h\""
