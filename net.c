@@ -43,6 +43,8 @@ static struct tls_config	*tlsconf;
 
 struct req;
 
+static struct req	*req_by_id(uint32_t);
+
 static void		 die(void) __attribute__((__noreturn__));
 
 static void		 try_to_connect(int, short, void*);
@@ -57,7 +59,6 @@ static void 		 blocking_conn_towards(struct req*);
 static void		 close_with_err(struct req*, const char*);
 static void		 close_with_errf(struct req*, const char*, ...)
     __attribute__((format(printf, 2, 3)));
-static struct req	*req_by_id(uint32_t);
 
 static void		 net_tls_handshake(int, short, void *);
 static void		 net_tls_readcb(int, short, void *);
@@ -123,6 +124,19 @@ static inline void
 yield_w(struct req *req, statefn fn, struct timeval *tv)
 {
 	event_once(req->fd, EV_WRITE, fn, req, tv);
+}
+
+static struct req *
+req_by_id(uint32_t id)
+{
+	struct req *r;
+
+	TAILQ_FOREACH(r, &reqhead, reqs) {
+		if (r->id == id)
+			return r;
+	}
+
+	return NULL;
 }
 
 static void __attribute__((__noreturn__))
@@ -252,19 +266,6 @@ blocking_conn_towards(struct req *req)
 	try_to_connect(0, 0, req);
 }
 #endif
-
-static struct req *
-req_by_id(uint32_t id)
-{
-	struct req *r;
-
-	TAILQ_FOREACH(r, &reqhead, reqs) {
-		if (r->id == id)
-			return r;
-	}
-
-	return NULL;
-}
 
 static void
 close_conn(int fd, short ev, void *d)
