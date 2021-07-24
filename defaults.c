@@ -375,6 +375,11 @@ load_default_keys(void)
 	minibuffer_set_key("<up>",		cmd_previous_completion);
 	minibuffer_set_key("<down>",		cmd_next_completion);
 
+	minibuffer_set_key("C-v",		cmd_mini_scroll_down);
+	minibuffer_set_key("M-v",		cmd_mini_scroll_up);
+	minibuffer_set_key("<next>",		cmd_mini_scroll_down);
+	minibuffer_set_key("<prior>",		cmd_mini_scroll_up);
+
 	minibuffer_set_key("M-<",		cmd_mini_goto_beginning);
 	minibuffer_set_key("M->",		cmd_mini_goto_end);
 

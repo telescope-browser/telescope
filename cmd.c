@@ -911,3 +911,33 @@ cmd_other_window(struct buffer *buffer)
 {
 	ui_other_window();
 }
+
+void
+cmd_mini_scroll_up(struct buffer *buffer)
+{
+	if (!in_minibuffer)
+		return;
+
+        buffer = &ministate.compl.buffer;
+	if (buffer->current_line == NULL)
+		return;
+
+	buffer->current_line->parent->type = LINE_COMPL;
+	cmd_scroll_up(buffer);
+	buffer->current_line->parent->type = LINE_COMPL_CURRENT;
+}
+
+void
+cmd_mini_scroll_down(struct buffer *buffer)
+{
+	if (!in_minibuffer)
+		return;
+
+        buffer = &ministate.compl.buffer;
+	if (buffer->current_line == NULL)
+		return;
+
+	buffer->current_line->parent->type = LINE_COMPL;
+	cmd_scroll_down(buffer);
+	buffer->current_line->parent->type = LINE_COMPL_CURRENT;
+}

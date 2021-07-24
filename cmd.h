@@ -29,6 +29,8 @@ CMD(cmd_mini_goto_end,		"Select the last completion.");
 CMD(cmd_mini_kill_line,		"Delete from point until the end of the line.");
 CMD(cmd_mini_next_history_element, "Load the next history element.");
 CMD(cmd_mini_previous_history_element, "Load the previous history element.");
+CMD(cmd_mini_scroll_down,	"Scroll completions up by one visual page");
+CMD(cmd_mini_scroll_up,		"Scroll completions up by one visual page");
 CMD(cmd_move_beginning_of_line,	"Move point at the beginning of the current visual line.");
 CMD(cmd_move_end_of_line,	"Move point at the end of the current visual line.");
 CMD(cmd_next_button,		"Move point to the next link.");
