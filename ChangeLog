@@ -1,5 +1,9 @@
 2021-07-24  Omar Polo  <op@omarpolo.com>
 
+	* configure.ac: tagged 0.4.1 "buildfix" release
+
+	* Makefile.am (EXTRA_telescope_SOURCES): fix dist tarball
+
 	* configure.ac: tagged 0.4 --- "La faccia della luna"
 
 	* minibuffer.c (sensible_self_insert): use sensible-self-insert everywhere
