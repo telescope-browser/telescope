@@ -1,3 +1,7 @@
+2021-07-24  Omar Polo  <op@omarpolo.com>
+
+	* minibuffer.c (sensible_self_insert): use sensible-self-insert everywhere
+
 2021-07-23  Omar Polo  <op@omarpolo.com>
 
 	* ui.c (redraw_tabline): changed default tab separator character.  Suggested by Gnuserland, thanks!
