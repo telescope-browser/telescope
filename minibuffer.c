@@ -168,7 +168,7 @@ void
 sensible_self_insert(void)
 {
 	if (thiskey.meta ||
-	    (unicode_isspace(thiskey.key) && thiskey.key != ' ')) {
+	    (!unicode_isgraph(thiskey.key) && thiskey.key != ' ')) {
 		global_key_unbound();
 		return;
 	}
