@@ -23,7 +23,7 @@ things that you can help develop :)
  - add other GUIs: at the moment it uses only ncurses, but telescope
    shouldn't be restricted to TTYs only!
 
-[![asciicast](https://asciinema.org/a/425971.svg)](https://asciinema.org/a/425971)
+[![asciicast](https://asciinema.org/a/426862.svg)](https://asciinema.org/a/426862)
 
 
 ## Why yet another browser?
