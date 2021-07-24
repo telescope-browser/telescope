@@ -295,9 +295,6 @@ int		 last_time_crashed(void);
 int		 lock_session(void);
 int		 load_certs(struct ohash*);
 
-/* gemini.c */
-int		 client_main(void);
-
 /* help.c */
 void		 recompute_help(void);
 
@@ -312,6 +309,9 @@ int		 kmap_define_key(struct kmap*, const char*, void(*)(struct buffer*));
 
 /* mime.c */
 int		 setup_parser_for(struct tab*);
+
+/* net.c */
+int		 client_main(void);
 
 /* parse.y */
 void		 parseconfig(const char *, int);

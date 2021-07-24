@@ -12,7 +12,6 @@ telescope_SOURCES =	cmd.c		\
 			defaults.h	\
 			emoji-matcher.c	\
 			fs.c		\
-			gemini.c	\
 			gemtext.c	\
 			gen-emoji-matcher.sh \
 			gencmd.awk	\
@@ -22,6 +21,7 @@ telescope_SOURCES =	cmd.c		\
 			mime.c		\
 			minibuffer.c	\
 			minibuffer.h	\
+			net.c		\
 			pages.c		\
 			pages.h		\
 			parse.y		\
