@@ -311,7 +311,7 @@ int		 kmap_define_key(struct kmap*, const char*, void(*)(struct buffer*));
 int		 setup_parser_for(struct tab*);
 
 /* net.c */
-int		 client_main(void);
+int		 net_main(void);
 
 /* parse.y */
 void		 parseconfig(const char *, int);

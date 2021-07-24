@@ -583,7 +583,7 @@ net_send_ui(int type, uint32_t peerid, const void *data,
 }
 
 int
-client_main(void)
+net_main(void)
 {
 	setproctitle("net");
 

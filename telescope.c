@@ -1010,7 +1010,7 @@ main(int argc, char * const *argv)
 		else if (proc == PROC_FS)
 			return fs_main();
 		else if (proc == PROC_NET)
-			return client_main();
+			return net_main();
 		else
 			usage(1);
 	}
