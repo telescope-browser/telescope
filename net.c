@@ -55,7 +55,8 @@ static void 		 blocking_conn_towards(struct req*);
 #endif
 
 static void		 close_with_err(struct req*, const char*);
-static void		 close_with_errf(struct req*, const char*, ...) __attribute__((format(printf, 2, 3)));
+static void		 close_with_errf(struct req*, const char*, ...)
+    __attribute__((format(printf, 2, 3)));
 static struct req	*req_by_id(uint32_t);
 static struct req	*req_by_id_try(uint32_t);
 
@@ -145,7 +146,8 @@ again:
 		goto err;
 
 	if (req->fd != -1) {
-		if (getsockopt(req->fd, SOL_SOCKET, SO_ERROR, &error, &len) == -1)
+		if (getsockopt(req->fd, SOL_SOCKET, SO_ERROR, &error,
+		    &len) == -1)
 			goto err;
 		if (error != 0) {
                         errno = error;
@@ -154,7 +156,8 @@ again:
 		goto done;
 	}
 
-	req->fd = socket(req->p->ai_family, req->p->ai_socktype, req->p->ai_protocol);
+	req->fd = socket(req->p->ai_family, req->p->ai_socktype,
+	    req->p->ai_protocol);
 	if (req->fd == -1) {
 		req->p = req->p->ai_next;
 		goto again;
@@ -330,7 +333,8 @@ setup_tls(struct req *req)
 		return;
 	}
 	if (tls_connect_socket(req->ctx, req->fd, req->url.host) == -1) {
-		close_with_errf(req, "tls_connect_socket: %s", tls_error(req->ctx));
+		close_with_errf(req, "tls_connect_socket: %s",
+		    tls_error(req->ctx));
 		return;
 	}
 	yield_w(req, net_tls_handshake, &timeout_for_handshake);
@@ -358,7 +362,8 @@ net_tls_handshake(int fd, short event, void *d)
 
 	hash = tls_peer_cert_hash(req->ctx);
 	if (hash == NULL) {
-		close_with_errf(req, "handshake failed: %s", tls_error(req->ctx));
+		close_with_errf(req, "handshake failed: %s",
+		    tls_error(req->ctx));
 		return;
 	}
 	net_send_ui(IMSG_CHECK_CERT, req->id, hash, strlen(hash)+1);
