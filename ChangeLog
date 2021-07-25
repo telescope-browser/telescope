@@ -1,5 +1,7 @@
 2021-07-25  Omar Polo  <op@omarpolo.com>
 
+	* parser_gophermap.c (gophermap_initparser): initial gophermaps support
+
 	* telescope.c (load_finger_url): add support for the finger protocol
 	(load_gopher_url): initial gopher support
 
