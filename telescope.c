@@ -116,7 +116,10 @@ static pid_t		 start_child(enum telescope_process, const char *, int);
 static int		 ui_send_net(int, uint32_t, const void *, uint16_t);
 static int		 ui_send_fs(int, uint32_t, const void *, uint16_t);
 
-static struct proto protos[] = {
+static struct proto {
+	const char	*schema;
+	void		 (*loadfn)(struct tab*, const char*);
+} protos[] = {
 	{"about",	load_about_url},
 	{"finger",	load_finger_url},
 	{"gemini",	load_gemini_url},

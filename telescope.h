@@ -218,18 +218,6 @@ struct tab {
 	char			*path;
 };
 
-struct proto {
-	const char	*schema;
-
-	/*
-	 * should load the given url in the tab.  Optionally, it may
-	 * consider the given url as relative to the one already
-	 * present in tab.  It must set tab->urlstr to a serialized
-	 * human-friendly URL.
-	 */
-	void		 (*loadfn)(struct tab*, const char*);
-};
-
 extern TAILQ_HEAD(proxylist, proxy) proxies;
 struct proxy {
 	char	*match_proto;
