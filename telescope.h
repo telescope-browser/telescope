@@ -230,8 +230,8 @@ struct proxy {
 };
 
 enum {
-	PROTO_GEMINI,
 	PROTO_FINGER,
+	PROTO_GEMINI,
 	/* ... */
 };
 
