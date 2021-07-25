@@ -525,6 +525,7 @@ minibuffer_init(void)
 
 	ministate.line.type = LINE_TEXT;
 	ministate.vline.parent = &ministate.line;
+	ministate.buffer.page.name = "*minibuffer*";
 	ministate.buffer.current_line = &ministate.vline;
 
 	evtimer_set(&clechoev, handle_clear_echoarea, NULL);
