@@ -357,7 +357,7 @@ net_tls_readcb(int fd, short event, void *d)
 {
 	struct bufferevent	*bufev = d;
 	struct req		*req = bufev->cbarg;
-	char			 buf[BUFSIZ];
+	char			 buf[IBUF_READ_SIZE];
 	int			 what = EVBUFFER_READ;
 	int			 howmuch = IBUF_READ_SIZE;
 	ssize_t			 ret;
