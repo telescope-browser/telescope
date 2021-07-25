@@ -19,15 +19,15 @@
 
 #include "telescope.h"
 
-/* gemtext.c */
-void	 gemtext_initparser(struct parser*);
-
 /* parser.c */
 int	 parser_append(struct parser*, const char*, size_t);
 int	 parser_set_buf(struct parser*, const char*, size_t);
 int	 parser_foreach_line(struct parser*, const char*, size_t, parsechunkfn);
 
-/* textplain.c */
+/* parser_gemtext.c */
+void	 gemtext_initparser(struct parser*);
+
+/* parser_textplain.c */
 void	 textplain_initparser(struct parser*);
 
 #endif
