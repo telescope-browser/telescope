@@ -105,6 +105,7 @@ static void		 load_page_from_str(struct tab*, const char*);
 static void		 load_about_url(struct tab*, const char*);
 static void		 load_finger_url(struct tab *, const char *);
 static void		 load_gemini_url(struct tab*, const char*);
+static void		 load_gopher_url(struct tab *, const char *);
 static void		 load_via_proxy(struct tab *, const char *,
 			     struct proxy *);
 static void		 make_request(struct tab *, struct get_req *, int,
@@ -124,6 +125,7 @@ static struct proto {
 	{"about",	NULL,	load_about_url},
 	{"finger",	"79",	load_finger_url},
 	{"gemini",	"1965",	load_gemini_url},
+	{"gopher",	"70",	load_gopher_url},
 	{NULL, NULL, NULL},
 };
 
@@ -629,6 +631,20 @@ load_gemini_url(struct tab *tab, const char *url)
 	strlcpy(req.port, tab->uri.port, sizeof(req.host));
 
 	make_request(tab, &req, PROTO_GEMINI, tab->hist_cur->h);
+}
+
+static void
+load_gopher_url(struct tab *tab, const char *url)
+{
+	struct get_req	req;
+
+	memset(&req, 0, sizeof(req));
+	strlcpy(req.host, tab->uri.host, sizeof(req.host));
+	strlcpy(req.port, tab->uri.port, sizeof(req.host));
+
+	/* cheat a bit by considering gophermaps text */
+	textplain_initparser(&tab->buffer.page);
+	make_request(tab, &req, PROTO_GOPHER, tab->uri.path);
 }
 
 static void

@@ -191,7 +191,8 @@ done:
 
 	switch (req->proto) {
 	case PROTO_FINGER:
-		/* finger doesn't have a header */
+	case PROTO_GOPHER:
+		/* finger and gopher don't have a header nor TLS */
 		req->done_header = 1;
 		net_ready(req);
 		break;

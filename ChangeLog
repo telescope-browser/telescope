@@ -1,6 +1,7 @@
 2021-07-25  Omar Polo  <op@omarpolo.com>
 
 	* telescope.c (load_finger_url): add support for the finger protocol
+	(load_gopher_url): initial gopher support
 
 2021-07-24  Omar Polo  <op@omarpolo.com>
 
