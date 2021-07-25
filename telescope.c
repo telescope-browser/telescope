@@ -118,12 +118,13 @@ static int		 ui_send_fs(int, uint32_t, const void *, uint16_t);
 
 static struct proto {
 	const char	*schema;
+	const char	*port;
 	void		 (*loadfn)(struct tab*, const char*);
 } protos[] = {
-	{"about",	load_about_url},
-	{"finger",	load_finger_url},
-	{"gemini",	load_gemini_url},
-	{NULL, NULL},
+	{"about",	NULL,	load_about_url},
+	{"finger",	"79",	load_finger_url},
+	{"gemini",	"1965",	load_gemini_url},
+	{NULL, NULL, NULL},
 };
 
 static imsg_handlerfn *handlers[] = {
@@ -590,10 +591,7 @@ load_finger_url(struct tab *tab, const char *url)
 	char		*at;
 
 	memset(&req, 0, sizeof(req));
-	if (*tab->uri.port != '\0')
-		strlcpy(req.port, tab->uri.port, sizeof(req.port));
-	else
-		strlcpy(req.port, "79", sizeof(req.port));
+	strlcpy(req.port, tab->uri.port, sizeof(req.port));
 
 	/*
 	 * Sometimes the finger url have the user as path component
@@ -708,6 +706,11 @@ do_load_url(struct tab *tab, const char *url, const char *base)
 
 	for (p = protos; p->schema != NULL; ++p) {
 		if (!strcmp(tab->uri.scheme, p->schema)) {
+			/* patch the port */
+			if (*tab->uri.port == '\0' && p->port != NULL)
+				strlcpy(tab->uri.port, p->port,
+				    sizeof(tab->uri.port));
+
 			p->loadfn(tab, url);
                         return 1;
 		}
