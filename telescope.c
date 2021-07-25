@@ -115,10 +115,10 @@ static int		 ui_send_net(int, uint32_t, const void *, uint16_t);
 static int		 ui_send_fs(int, uint32_t, const void *, uint16_t);
 
 static struct proto protos[] = {
-	{ "about",	load_about_url },
-	{ "finger",	load_finger_url },
-	{ "gemini",	load_gemini_url },
-	{ NULL, NULL },
+	{"about",	load_about_url},
+	{"finger",	load_finger_url},
+	{"gemini",	load_gemini_url},
+	{NULL, NULL},
 };
 
 static imsg_handlerfn *handlers[] = {
