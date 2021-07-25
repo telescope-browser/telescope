@@ -692,7 +692,7 @@ do_load_url(struct tab *tab, const char *url, const char *base)
 		phos_parse_absolute_uri(base, &uri);
 
 	if (!phos_resolve_uri_from_str(&uri, url, &tab->uri)) {
-                if (asprintf(&t, "#error loading %s\n>%s\n",
+		if (asprintf(&t, "#error loading %s\n>%s\n",
 		    url, "Can't parse the URI") == -1)
 			die();
 		strlcpy(tab->hist_cur->h, url, sizeof(tab->hist_cur->h));
