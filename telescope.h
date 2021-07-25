@@ -243,6 +243,7 @@ struct proxy {
 
 enum {
 	PROTO_GEMINI,
+	PROTO_FINGER,
 	/* ... */
 };
 
@@ -323,6 +324,7 @@ void		 sandbox_fs_process(void);
 
 /* telescope.c */
 void		 load_about_url(struct tab*, const char*);
+void		 load_finger_url(struct tab *, const char *);
 void		 load_gemini_url(struct tab*, const char*);
 void		 load_via_proxy(struct tab *, const char *, struct proxy *);
 void		 load_url(struct tab *, const char *, const char *);

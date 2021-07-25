@@ -55,6 +55,7 @@ enum telescope_process {
 
 static struct proto protos[] = {
 	{ "about",	load_about_url },
+	{ "finger",	load_finger_url },
 	{ "gemini",	load_gemini_url },
 	{ NULL, NULL },
 };
@@ -570,6 +571,52 @@ load_about_url(struct tab *tab, const char *url)
 
 	ui_send_fs(IMSG_GET, tab->id,
 	    tab->hist_cur->h, strlen(tab->hist_cur->h)+1);
+}
+
+void
+load_finger_url(struct tab *tab, const char *url)
+{
+	struct get_req	 req;
+	size_t		 len;
+	char		*at;
+
+	stop_tab(tab);
+	tab->id = tab_new_id();
+
+	memset(&req, 0, sizeof(req));
+	if (*tab->uri.port != '\0')
+		strlcpy(req.port, tab->uri.port, sizeof(req.port));
+	else
+		strlcpy(req.port, "79", sizeof(req.port));
+
+	/*
+	 * Sometimes the finger url have the user as path component
+	 * (e.g. finger://thelambdalab.xyz/plugd), sometimes as
+	 * userinfo (e.g. finger://cobradile@finger.farm).
+	 */
+	if ((at = strchr(tab->uri.host, '@')) != NULL) {
+		len = at - tab->uri.host;
+		memcpy(req.req, tab->uri.host, len);
+
+		if (len >= sizeof(req.req))
+			die();
+		req.req[len] = '\0';
+
+		strlcpy(req.host, at+1, sizeof(req.host));
+	} else {
+		strlcpy(req.host, tab->uri.host, sizeof(req.host));
+
+		/* +1 to skip the initial `/' */
+		strlcpy(req.req, tab->uri.path+1, sizeof(req.req));
+	}
+
+	strlcat(req.req, "\r\n", sizeof(req.req));
+
+	req.proto = PROTO_FINGER;
+
+	ui_send_net(IMSG_GET_RAW, tab->id, &req, sizeof(req));
+
+	textplain_initparser(&tab->buffer.page);
 }
 
 void

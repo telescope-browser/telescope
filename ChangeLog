@@ -1,3 +1,7 @@
+2021-07-25  Omar Polo  <op@omarpolo.com>
+
+	* telescope.c (load_finger_url): add support for the finger protocol
+
 2021-07-24  Omar Polo  <op@omarpolo.com>
 
 	* cmd.c (cmd_scroll_line_up): don't crash on empty pages

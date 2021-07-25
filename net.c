@@ -45,6 +45,7 @@ static struct tls_config	*tlsconf;
 struct req {
 	struct phos_uri		 url;
 	uint32_t		 id;
+	int			 proto;
 	int			 fd;
 	struct tls		*ctx;
 	char			 req[1024];
@@ -188,21 +189,37 @@ err:
 done:
 	freeaddrinfo(req->servinfo);
 
-	/* prepare tls */
-        if ((req->ctx = tls_client()) == NULL) {
-		close_with_errf(req, "tls_client: %s", strerror(errno));
-		return;
+	switch (req->proto) {
+	case PROTO_FINGER:
+		/* finger doesn't have a header */
+		req->done_header = 1;
+		net_ready(req);
+		break;
+
+	case PROTO_GEMINI:
+		/* prepare tls */
+		if ((req->ctx = tls_client()) == NULL) {
+			close_with_errf(req, "tls_client: %s",
+			    strerror(errno));
+			return;
+		}
+		if (tls_configure(req->ctx, tlsconf) == -1) {
+			close_with_errf(req, "tls_configure: %s",
+			    tls_error(req->ctx));
+			return;
+		}
+		if (tls_connect_socket(req->ctx, req->fd, req->url.host)
+		    == -1) {
+			close_with_errf(req, "tls_connect_socket: %s",
+			    tls_error(req->ctx));
+			return;
+		}
+		yield_w(req, net_tls_handshake, &timeout_for_handshake);
+		break;
+
+	default:
+		die();
 	}
-	if (tls_configure(req->ctx, tlsconf) == -1) {
-		close_with_errf(req, "tls_configure: %s", tls_error(req->ctx));
-		return;
-	}
-	if (tls_connect_socket(req->ctx, req->fd, req->url.host) == -1) {
-		close_with_errf(req, "tls_connect_socket: %s",
-		    tls_error(req->ctx));
-		return;
-	}
-	yield_w(req, net_tls_handshake, &timeout_for_handshake);
 }
 
 #if HAVE_ASR_RUN
@@ -611,6 +628,8 @@ handle_get_raw(struct imsg *imsg, size_t datalen)
 
 	strlcpy(req->req, r->req, sizeof(req->req));
 	req->len = strlen(r->req);
+
+	req->proto = r->proto;
 
 #if HAVE_ASR_RUN
         async_conn_towards(req);
