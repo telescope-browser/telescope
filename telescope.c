@@ -107,6 +107,8 @@ static void		 load_finger_url(struct tab *, const char *);
 static void		 load_gemini_url(struct tab*, const char*);
 static void		 load_via_proxy(struct tab *, const char *,
 			     struct proxy *);
+static void		 make_request(struct tab *, struct get_req *, int,
+			     const char *);
 static int		 do_load_url(struct tab*, const char *, const char *);
 static void		 parse_session_line(char *, const char **, uint32_t *);
 static void		 load_last_session(void);
@@ -584,9 +586,6 @@ load_finger_url(struct tab *tab, const char *url)
 	size_t		 len;
 	char		*at;
 
-	stop_tab(tab);
-	tab->id = tab_new_id();
-
 	memset(&req, 0, sizeof(req));
 	if (*tab->uri.port != '\0')
 		strlcpy(req.port, tab->uri.port, sizeof(req.port));
@@ -613,14 +612,10 @@ load_finger_url(struct tab *tab, const char *url)
 		/* +1 to skip the initial `/' */
 		strlcpy(req.req, tab->uri.path+1, sizeof(req.req));
 	}
-
 	strlcat(req.req, "\r\n", sizeof(req.req));
 
-	req.proto = PROTO_FINGER;
-
-	ui_send_net(IMSG_GET_RAW, tab->id, &req, sizeof(req));
-
 	textplain_initparser(&tab->buffer.page);
+	make_request(tab, &req, PROTO_FINGER, NULL);
 }
 
 static void
@@ -628,20 +623,11 @@ load_gemini_url(struct tab *tab, const char *url)
 {
 	struct get_req	 req;
 
-	stop_tab(tab);
-	tab->id = tab_new_id();
-
 	memset(&req, 0, sizeof(req));
 	strlcpy(req.host, tab->uri.host, sizeof(req.host));
 	strlcpy(req.port, tab->uri.port, sizeof(req.host));
 
-	strlcpy(req.req, tab->hist_cur->h, sizeof(req.req));
-	strlcat(req.req, "\r\n", sizeof(req.req));
-
-	req.proto = PROTO_GEMINI;
-
-	ui_send_net(IMSG_GET_RAW, tab->id,
-	    &req, sizeof(req));
+	make_request(tab, &req, PROTO_GEMINI, tab->hist_cur->h);
 }
 
 static void
@@ -649,21 +635,28 @@ load_via_proxy(struct tab *tab, const char *url, struct proxy *p)
 {
 	struct get_req req;
 
-	stop_tab(tab);
-	tab->id = tab_new_id();
-	tab->proxy = p;
-
 	memset(&req, 0, sizeof(req));
 	strlcpy(req.host, p->host, sizeof(req.host));
 	strlcpy(req.port, p->port, sizeof(req.host));
 
-	strlcpy(req.req, tab->hist_cur->h, sizeof(req.req));
-	strlcat(req.req, "\r\n", sizeof(req.req));
+	tab->proxy = p;
 
-	req.proto = p->proto;
+	make_request(tab, &req, p->proto, tab->hist_cur->h);
+}
 
-	ui_send_net(IMSG_GET_RAW, tab->id,
-	    &req, sizeof(req));
+static void
+make_request(struct tab *tab, struct get_req *req, int proto, const char *r)
+{
+	stop_tab(tab);
+	tab->id = tab_new_id();
+	req->proto = proto;
+
+	if (r != NULL) {
+		strlcpy(req->req, r, sizeof(req->req));
+		strlcat(req->req, "\r\n", sizeof(req->req));
+	}
+
+	ui_send_net(IMSG_GET_RAW, tab->id, req, sizeof(*req));
 }
 
 /*
