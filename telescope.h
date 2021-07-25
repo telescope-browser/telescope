@@ -323,10 +323,6 @@ void		 sandbox_ui_process(void);
 void		 sandbox_fs_process(void);
 
 /* telescope.c */
-void		 load_about_url(struct tab*, const char*);
-void		 load_finger_url(struct tab *, const char *);
-void		 load_gemini_url(struct tab*, const char*);
-void		 load_via_proxy(struct tab *, const char *, struct proxy *);
 void		 load_url(struct tab *, const char *, const char *);
 int		 load_previous_page(struct tab*);
 int		 load_next_page(struct tab*);

@@ -53,14 +53,6 @@ enum telescope_process {
 	PROC_NET,
 };
 
-static struct proto protos[] = {
-	{ "about",	load_about_url },
-	{ "finger",	load_finger_url },
-	{ "gemini",	load_gemini_url },
-	{ NULL, NULL },
-};
-
-
 #define CANNOT_FETCH		0
 #define TOO_MUCH_REDIRECTS	1
 #define MALFORMED_RESPONSE	2
@@ -110,12 +102,24 @@ static void		 handle_imsg_save_cert_ok(struct imsg*, size_t);
 static void		 handle_imsg_update_cert_ok(struct imsg *, size_t);
 static void		 handle_dispatch_imsg(int, short, void*);
 static void		 load_page_from_str(struct tab*, const char*);
+static void		 load_about_url(struct tab*, const char*);
+static void		 load_finger_url(struct tab *, const char *);
+static void		 load_gemini_url(struct tab*, const char*);
+static void		 load_via_proxy(struct tab *, const char *,
+			     struct proxy *);
 static int		 do_load_url(struct tab*, const char *, const char *);
 static void		 parse_session_line(char *, const char **, uint32_t *);
 static void		 load_last_session(void);
 static pid_t		 start_child(enum telescope_process, const char *, int);
 static int		 ui_send_net(int, uint32_t, const void *, uint16_t);
 static int		 ui_send_fs(int, uint32_t, const void *, uint16_t);
+
+static struct proto protos[] = {
+	{ "about",	load_about_url },
+	{ "finger",	load_finger_url },
+	{ "gemini",	load_gemini_url },
+	{ NULL, NULL },
+};
 
 static imsg_handlerfn *handlers[] = {
 	[IMSG_ERR] = handle_imsg_err,
@@ -562,7 +566,7 @@ load_page_from_str(struct tab *tab, const char *page)
 	ui_on_tab_loaded(tab);
 }
 
-void
+static void
 load_about_url(struct tab *tab, const char *url)
 {
 	tab->trust = TS_VERIFIED;
@@ -573,7 +577,7 @@ load_about_url(struct tab *tab, const char *url)
 	    tab->hist_cur->h, strlen(tab->hist_cur->h)+1);
 }
 
-void
+static void
 load_finger_url(struct tab *tab, const char *url)
 {
 	struct get_req	 req;
@@ -619,7 +623,7 @@ load_finger_url(struct tab *tab, const char *url)
 	textplain_initparser(&tab->buffer.page);
 }
 
-void
+static void
 load_gemini_url(struct tab *tab, const char *url)
 {
 	struct get_req	 req;
@@ -640,7 +644,7 @@ load_gemini_url(struct tab *tab, const char *url)
 	    &req, sizeof(req));
 }
 
-void
+static void
 load_via_proxy(struct tab *tab, const char *url, struct proxy *p)
 {
 	struct get_req req;
