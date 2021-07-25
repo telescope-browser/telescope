@@ -2,41 +2,41 @@ bin_PROGRAMS =		telescope
 
 EXTRA_telescope_SOURCES = compat/ohash.h compat/queue.h compat/imsg.h
 
-telescope_SOURCES =	cmd.c		\
-			cmd.gen.c	\
-			cmd.h		\
-			compat.h	\
-			compl.c		\
-			compl.h		\
-			defaults.c	\
-			defaults.h	\
-			emoji-matcher.c	\
-			fs.c		\
-			gen-emoji-matcher.sh \
-			gencmd.awk	\
-			help.c		\
-			hist.c		\
-			keymap.c	\
-			mime.c		\
-			minibuffer.c	\
-			minibuffer.h	\
-			net.c		\
-			pages.c		\
-			pages.h		\
-			parse.y		\
-			parser.c	\
-			parser.h	\
+telescope_SOURCES =	cmd.c			\
+			cmd.gen.c		\
+			cmd.h			\
+			compat.h		\
+			compl.c			\
+			compl.h			\
+			defaults.c		\
+			defaults.h		\
+			emoji-matcher.c		\
+			fs.c			\
+			gen-emoji-matcher.sh	\
+			gencmd.awk		\
+			help.c			\
+			hist.c			\
+			keymap.c		\
+			mime.c			\
+			minibuffer.c		\
+			minibuffer.h		\
+			net.c			\
+			pages.c			\
+			pages.h			\
+			parse.y			\
+			parser.c		\
+			parser.h		\
 			parser_gemtext.c	\
 			parser_textplain.c	\
-			sandbox.c	\
-			telescope.c	\
-			telescope.h	\
-			tofu.c		\
-			ui.c		\
-			ui.h		\
-			utf8.c		\
-			utf8.h		\
-			util.c		\
+			sandbox.c		\
+			telescope.c		\
+			telescope.h		\
+			tofu.c			\
+			ui.c			\
+			ui.h			\
+			utf8.c			\
+			utf8.h			\
+			util.c			\
 			wrap.c
 
 # phos bundled files
