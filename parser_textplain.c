@@ -36,7 +36,7 @@ emit_line(struct parser *p, const char *line, size_t len)
 	if ((l = calloc(1, sizeof(*l))) == NULL)
 		return 0;
 
-	l->type = LINE_PRE_CONTENT;
+	l->type = LINE_TEXT;
 
 	if (len != 0) {
 		if ((l->line = calloc(1, len+1)) == NULL) {
