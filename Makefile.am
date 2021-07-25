@@ -12,7 +12,6 @@ telescope_SOURCES =	cmd.c		\
 			defaults.h	\
 			emoji-matcher.c	\
 			fs.c		\
-			gemtext.c	\
 			gen-emoji-matcher.sh \
 			gencmd.awk	\
 			help.c		\
@@ -27,10 +26,11 @@ telescope_SOURCES =	cmd.c		\
 			parse.y		\
 			parser.c	\
 			parser.h	\
+			parser_gemtext.c	\
+			parser_textplain.c	\
 			sandbox.c	\
 			telescope.c	\
 			telescope.h	\
-			textplain.c	\
 			tofu.c		\
 			ui.c		\
 			ui.h		\
