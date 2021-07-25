@@ -636,15 +636,29 @@ load_gemini_url(struct tab *tab, const char *url)
 static void
 load_gopher_url(struct tab *tab, const char *url)
 {
-	struct get_req	req;
+	struct get_req	 req;
+	const char	*path;
 
 	memset(&req, 0, sizeof(req));
 	strlcpy(req.host, tab->uri.host, sizeof(req.host));
 	strlcpy(req.port, tab->uri.port, sizeof(req.host));
 
-	/* cheat a bit by considering gophermaps text */
-	textplain_initparser(&tab->buffer.page);
-	make_request(tab, &req, PROTO_GOPHER, tab->uri.path);
+	path = tab->uri.path;
+	if (!strcmp(path, "/") || *path == '\0') {
+		/* expect the top directory to be a gophermap */
+		gophermap_initparser(&tab->buffer.page);
+	} else if (has_prefix(path, "/1/")) {
+		/* gophermap menu/submenu */
+		gophermap_initparser(&tab->buffer.page);
+		path += 3;
+	} else if (has_prefix(path, "/0/")) {
+		textplain_initparser(&tab->buffer.page);
+		path += 3;
+	} else {
+		return;
+	}
+
+	make_request(tab, &req, PROTO_GOPHER, path);
 }
 
 static void

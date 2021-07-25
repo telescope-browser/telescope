@@ -27,6 +27,7 @@ telescope_SOURCES =	cmd.c			\
 			parser.c		\
 			parser.h		\
 			parser_gemtext.c	\
+			parser_gophermap.c	\
 			parser_textplain.c	\
 			sandbox.c		\
 			telescope.c		\
