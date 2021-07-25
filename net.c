@@ -576,6 +576,7 @@ static void
 net_error(struct bufferevent *bev, short error, void *d)
 {
 	struct req	*req = d;
+	struct evbuffer	*src;
 
 	if (error & EVBUFFER_TIMEOUT) {
 		close_with_err(req, "Timeout loading page");
@@ -588,6 +589,10 @@ net_error(struct bufferevent *bev, short error, void *d)
 	}
 
 	if (error & EVBUFFER_EOF) {
+                src = EVBUFFER_INPUT(req->bev);
+		if (EVBUFFER_LENGTH(src) != 0)
+			net_send_ui(IMSG_BUF, req->id, EVBUFFER_DATA(src),
+			    EVBUFFER_LENGTH(src));
 		net_send_ui(IMSG_EOF, req->id, NULL, 0);
 		close_conn(0, 0, req);
 		return;
