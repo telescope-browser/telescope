@@ -29,14 +29,14 @@ static int	textplain_foreach_line(struct parser*, const char*, size_t);
 static int	textplain_free(struct parser*);
 
 static inline int
-emit_line(struct parser *p, enum line_type type, const char *line, size_t len)
+emit_line(struct parser *p, const char *line, size_t len)
 {
 	struct line *l;
 
 	if ((l = calloc(1, sizeof(*l))) == NULL)
 		return 0;
 
-	l->type = type;
+	l->type = LINE_PRE_CONTENT;
 
 	if (len != 0) {
 		if ((l->line = calloc(1, len+1)) == NULL) {
@@ -74,13 +74,13 @@ textplain_parse(struct parser *p, const char *buf, size_t size)
 static int
 textplain_foreach_line(struct parser *p, const char *line, size_t linelen)
 {
-	return emit_line(p, LINE_PRE_CONTENT, line, linelen);
+	return emit_line(p, line, linelen);
 }
 
 static int
 textplain_free(struct parser *p)
 {
 	if (p->len != 0)
-		return emit_line(p, LINE_PRE_CONTENT, p->buf, p->len);
+		return emit_line(p, p->buf, p->len);
 	return 1;
 }
