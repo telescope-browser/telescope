@@ -1,5 +1,7 @@
 2021-07-25  Omar Polo  <op@omarpolo.com>
 
+	* parser.c (parser_free): for page without a title, use the domain name
+
 	* parser_gophermap.c (gophermap_initparser): initial gophermaps support
 
 	* telescope.c (load_finger_url): add support for the finger protocol
