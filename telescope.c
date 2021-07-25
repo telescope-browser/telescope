@@ -650,10 +650,10 @@ load_gopher_url(struct tab *tab, const char *url)
 	} else if (has_prefix(path, "/1/")) {
 		/* gophermap menu/submenu */
 		gophermap_initparser(&tab->buffer.page);
-		path += 3;
+		path += 2;
 	} else if (has_prefix(path, "/0/")) {
 		textplain_initparser(&tab->buffer.page);
-		path += 3;
+		path += 2;
 	} else {
 		return;
 	}
