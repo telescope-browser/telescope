@@ -460,8 +460,7 @@ handle_imsg_buf(struct imsg *imsg, size_t datalen)
 
 	tab->bytes += datalen;
 	if (tab->fd == -1) {
-		if (!tab->buffer.page.parse(&tab->buffer.page,
-		    imsg->data, datalen))
+		if (!parser_parse(tab, imsg->data, datalen))
 			die();
 	} else {
 		write(tab->fd, imsg->data, datalen);
@@ -489,7 +488,7 @@ handle_imsg_eof(struct imsg *imsg, size_t datalen)
 		return;
 
 	if (tab->fd == -1) {
-		if (!tab->buffer.page.free(&tab->buffer.page))
+		if (!parser_free(tab))
 			die();
 	} else {
 		fmt_scaled(tab->bytes, buf);
@@ -565,7 +564,7 @@ static void
 load_page_from_str(struct tab *tab, const char *page)
 {
 	erase_buffer(&tab->buffer);
-	gemtext_initparser(&tab->buffer.page);
+	parser_init(tab, gemtext_initparser);
 	if (!tab->buffer.page.parse(&tab->buffer.page, page, strlen(page)))
 		die();
 	if (!tab->buffer.page.free(&tab->buffer.page))
@@ -579,7 +578,7 @@ load_about_url(struct tab *tab, const char *url)
 {
 	tab->trust = TS_VERIFIED;
 
-	gemtext_initparser(&tab->buffer.page);
+	parser_init(tab, gemtext_initparser);
 
 	ui_send_fs(IMSG_GET, tab->id,
 	    tab->hist_cur->h, strlen(tab->hist_cur->h)+1);
@@ -617,7 +616,7 @@ load_finger_url(struct tab *tab, const char *url)
 	}
 	strlcat(req.req, "\r\n", sizeof(req.req));
 
-	textplain_initparser(&tab->buffer.page);
+	parser_init(tab, textplain_initparser);
 	make_request(tab, &req, PROTO_FINGER, NULL);
 }
 
@@ -646,13 +645,13 @@ load_gopher_url(struct tab *tab, const char *url)
 	path = tab->uri.path;
 	if (!strcmp(path, "/") || *path == '\0') {
 		/* expect the top directory to be a gophermap */
-		gophermap_initparser(&tab->buffer.page);
+		parser_init(tab, gophermap_initparser);
 	} else if (has_prefix(path, "/1/")) {
 		/* gophermap menu/submenu */
-		gophermap_initparser(&tab->buffer.page);
+		parser_init(tab, gophermap_initparser);
 		path += 2;
 	} else if (has_prefix(path, "/0/")) {
-		textplain_initparser(&tab->buffer.page);
+		parser_init(tab, textplain_initparser);
 		path += 2;
 	} else {
 		return;

@@ -20,6 +20,33 @@
 #include <stdlib.h>
 #include <string.h>
 
+void
+parser_init(struct tab *tab, parserfn fn)
+{
+	fn(&tab->buffer.page);
+}
+
+int
+parser_parse(struct tab *tab, const char *chunk, size_t len)
+{
+	return tab->buffer.page.parse(&tab->buffer.page, chunk, len);
+}
+
+int
+parser_free(struct tab *tab)
+{
+	int r;
+
+	r = tab->buffer.page.free(&tab->buffer.page);
+
+	/* fallback to the host as title if nothing else */
+	if (*tab->buffer.page.title == '\0')
+		strlcpy(tab->buffer.page.title, tab->uri.host,
+		    sizeof(tab->buffer.page.title));
+
+	return r;
+}
+
 int
 parser_append(struct parser *p, const char *buf, size_t len)
 {
