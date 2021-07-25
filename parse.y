@@ -480,6 +480,7 @@ add_proxy(char *proto, char *proxy)
 		err(1, "calloc");
 
 	p->match_proto = proto;
+	p->proto = PROTO_GEMINI;
 
 	if ((p->host = strdup(uri.host)) == NULL)
 		err(1, "strdup");
