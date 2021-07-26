@@ -128,7 +128,7 @@ parser_foreach_line(struct parser *p, const char *buf, size_t size,
 			++i;
 			continue;
 		}
-		memmove(&b[i], &b[i+1], len - i);
+		memmove(&b[i], &b[i+1], len - i - 1);
 		len--;
 	}
 
