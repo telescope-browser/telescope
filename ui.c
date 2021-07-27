@@ -34,7 +34,6 @@
 
 #include <assert.h>
 #include <curses.h>
-#include <event.h>
 #include <locale.h>
 #include <signal.h>
 #include <stdarg.h>
