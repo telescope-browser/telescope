@@ -457,7 +457,10 @@ net_tls_writecb(int fd, short event, void *d)
 			goto err;
 		}
 		len = ret;
+
+		evbuffer_unfreeze(bufev->output, 1);
 		evbuffer_drain(bufev->output, len);
+		evbuffer_freeze(bufev->output, 1);
 	}
 
 	if (EVBUFFER_LENGTH(bufev->output) != 0)
