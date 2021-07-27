@@ -405,9 +405,7 @@ net_tls_readcb(int fd, short event, void *d)
 		goto err;
 	}
 
-	evbuffer_unfreeze(bufev->input, 0);
 	res = evbuffer_add(bufev->input, buf, len);
-	evbuffer_freeze(bufev->input, 0);
 	if (res == -1) {
 		what |= EVBUFFER_ERROR;
 		goto err;
@@ -458,9 +456,7 @@ net_tls_writecb(int fd, short event, void *d)
 		}
 		len = ret;
 
-		evbuffer_unfreeze(bufev->output, 1);
 		evbuffer_drain(bufev->output, len);
-		evbuffer_freeze(bufev->output, 1);
 	}
 
 	if (EVBUFFER_LENGTH(bufev->output) != 0)
@@ -515,6 +511,9 @@ net_ready(struct req *req)
 	    req);
 	if (req->bev == NULL)
 		die();
+
+	evbuffer_unfreeze(req->bev->input, 0);
+	evbuffer_unfreeze(req->bev->output, 1);
 
 	/* setup tls i/o layer */
 	if (req->ctx != NULL) {
