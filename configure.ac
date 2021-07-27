@@ -1,5 +1,6 @@
 AC_INIT([telescope], [0.4.1-dev], [telescope@omarpolo.com], [telescope], [gemini://telescope.omarpolo.com])
 AC_CONFIG_LIBOBJ_DIR(compat)
+AC_CANONICAL_HOST
 AM_INIT_AUTOMAKE([-Wall foreign subdir-objects])
 AC_PROG_CC_C99
 AC_USE_SYSTEM_EXTENSIONS
@@ -54,9 +55,19 @@ AC_CHECK_LIB(tls, tls_init, [], [
 	AC_MSG_ERROR([requires libtls])
 ])
 
-AC_CHECK_LIB(event, event_init, [], [
-	AC_MSG_ERROR([requires libevent])
-])
+case "$host_os" in
+	*openbsd*)
+		AC_CHECK_LIB([event], [event_init], [],
+			[AC_MSG_ERROR([requires libevent])])
+		;;
+	*)
+		PKG_CHECK_MODULES([libevent2], [libevent_core >= 2], [
+			AC_DEFINE([HAVE_EVENT2], 1, [1 if using event2])
+			CFLAGS="$libevent2_CFLAGS $CFLAGS"
+			LIBS="$libevent2_LIBS $LIBS"
+		], [AC_MSG_ERROR([requires libevent])])
+		;;
+esac
 
 AC_CHECK_LIB(util, imsg_init, [], [
 	AC_LIBOBJ(imsg)

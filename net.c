@@ -378,6 +378,7 @@ net_tls_readcb(int fd, short event, void *d)
 	char			 buf[IBUF_READ_SIZE];
 	int			 what = EVBUFFER_READ;
 	int			 howmuch = IBUF_READ_SIZE;
+	int			 res;
 	ssize_t			 ret;
 	size_t			 len;
 
@@ -404,7 +405,10 @@ net_tls_readcb(int fd, short event, void *d)
 		goto err;
 	}
 
-	if (evbuffer_add(bufev->input, buf, len) == -1) {
+	evbuffer_unfreeze(bufev->input, 0);
+	res = evbuffer_add(bufev->input, buf, len);
+	evbuffer_freeze(bufev->input, 0);
+	if (res == -1) {
 		what |= EVBUFFER_ERROR;
 		goto err;
 	}

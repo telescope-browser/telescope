@@ -21,7 +21,6 @@
 #include "compat.h"
 #include "phos/phos.h"
 
-#include <event.h>
 #include <limits.h>
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
