@@ -11,6 +11,7 @@ PKG_PROG_PKG_CONFIG
 AC_REPLACE_FUNCS([
 	asprintf \
 	err \
+	explicit_bzero \
 	freezero \
 	getdtablecount \
 	getdtablesize \
