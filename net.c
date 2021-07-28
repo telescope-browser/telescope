@@ -512,8 +512,10 @@ net_ready(struct req *req)
 	if (req->bev == NULL)
 		die();
 
+#if HAVE_EVENT2
 	evbuffer_unfreeze(req->bev->input, 0);
 	evbuffer_unfreeze(req->bev->output, 1);
+#endif
 
 	/* setup tls i/o layer */
 	if (req->ctx != NULL) {

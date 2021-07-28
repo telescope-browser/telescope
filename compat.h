@@ -37,8 +37,6 @@
 # include <event2/bufferevent_compat.h>
 #else
 # include <event.h>
-# define evbuffer_freeze(a, b)		/* nop */
-# define evbuffer_unfreeze(a, b)	/* nop */
 #endif
 
 #ifdef HAVE_QUEUE_H
