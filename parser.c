@@ -35,12 +35,22 @@ parser_parse(struct tab *tab, const char *chunk, size_t len)
 int
 parser_free(struct tab *tab)
 {
-	int r;
+	int	 r;
+	char	*tilde, *slash;
 
 	r = tab->buffer.page.free(&tab->buffer.page);
 
 	/* fallback to the host as title if nothing else */
-	if (*tab->buffer.page.title == '\0')
+	if (*tab->buffer.page.title != '\0')
+		return r;
+
+	if ((tilde = strstr(tab->hist_cur->h, "/~")) != NULL) {
+		strlcpy(tab->buffer.page.title, tilde+1,
+		    sizeof(tab->buffer.page.title));
+
+		if ((slash = strchr(tab->buffer.page.title, '/')) != NULL)
+			*slash = '\0';
+	} else
 		strlcpy(tab->buffer.page.title, tab->uri.host,
 		    sizeof(tab->buffer.page.title));
 
