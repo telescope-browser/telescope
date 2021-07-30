@@ -170,16 +170,25 @@ cmd_scroll_line_up(struct buffer *buffer)
 {
 	struct vline	*vl;
 
-	if (buffer->top_line == NULL)
-		return;
+	for (;;) {
+		if (buffer->top_line == NULL)
+			return;
 
-	if ((vl = TAILQ_PREV(buffer->top_line, vhead, vlines))
-	    == NULL)
-		return;
+		if ((vl = TAILQ_PREV(buffer->top_line, vhead, vlines))
+		    == NULL)
+			return;
+
+		buffer->top_line = vl;
+
+		if (vl->parent->flags & L_HIDDEN)
+			continue;
+
+		break;
+	}
+
+	buffer->line_off--;
 
 	forward_line(buffer, -1);
-	buffer->line_off--;
-	buffer->top_line = vl;
 }
 
 void
@@ -188,7 +197,16 @@ cmd_scroll_line_down(struct buffer *buffer)
 	if (!forward_line(buffer, +1))
 		return;
 
-	buffer->top_line = TAILQ_NEXT(buffer->top_line, vlines);
+	for (;;) {
+		if (buffer->top_line == NULL)
+			return;
+
+		buffer->top_line = TAILQ_NEXT(buffer->top_line, vlines);
+		if (buffer->top_line->parent->flags & L_HIDDEN)
+			continue;
+		break;
+	}
+
 	buffer->line_off++;
 }
 
