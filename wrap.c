@@ -272,6 +272,11 @@ wrap_page(struct buffer *buffer, int width)
 			wrap_text(buffer, prfx, l, MIN(fill_column, width));
 			break;
 		case LINE_PRE_CONTENT:
+		case LINE_PATCH:
+		case LINE_PATCH_HDR:
+		case LINE_PATCH_HUNK_HDR:
+		case LINE_PATCH_ADD:
+		case LINE_PATCH_DEL:
 			if (olivetti_mode)
 				pre_width = MIN(fill_column, width);
 			else

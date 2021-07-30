@@ -49,6 +49,12 @@ struct lineprefix line_prefixes[] = {
 	[LINE_PRE_CONTENT] =	{ "",		"" },
 	[LINE_PRE_END] =	{ "─── ",	"" },
 
+	[LINE_PATCH] =		{"", ""},
+	[LINE_PATCH_HDR] =	{"", ""},
+	[LINE_PATCH_HUNK_HDR] =	{"", ""},
+	[LINE_PATCH_ADD] =	{"", ""},
+	[LINE_PATCH_DEL] =	{"", ""},
+
 	[LINE_COMPL] =		{"", ""},
 	[LINE_COMPL_CURRENT] =	{"", ""},
 
@@ -110,6 +116,33 @@ struct line_face line_faces[] = {
 		.prfx_pair = PPEND_PRFX,
 		.pair = PPEND,
 		.trail_pair = PPEND_TRAIL,
+	},
+
+	/* text/x-patch */
+	[LINE_PATCH] = {
+		.prfx_pair = PPATCH_PRFX,
+		.pair = PPATCH,
+		.trail_pair = PPATCH_TRAIL,
+	},
+	[LINE_PATCH_HDR] = {
+		.prfx_pair = PPATCH_HDR_PRFX,
+		.pair = PPATCH_HDR,
+		.trail_pair = PPATCH_HDR_TRAIL,
+	},
+	[LINE_PATCH_HUNK_HDR] = {
+		.prfx_pair = PPATCH_HUNK_HDR_PRFX,
+		.pair = PPATCH_HUNK_HDR,
+		.trail_pair = PPATCH_HUNK_HDR_TRAIL,
+	},
+	[LINE_PATCH_ADD] = {
+		.prfx_pair = PPATCH_ADD_PRFX,
+		.pair = PPATCH_ADD,
+		.trail_pair = PPATCH_ADD_TRAIL,
+	},
+	[LINE_PATCH_DEL] = {
+		.prfx_pair = PPATCH_DEL_PRFX,
+		.pair = PPATCH_DEL,
+		.trail_pair = PPATCH_DEL_TRAIL,
 	},
 
 	/* minibuffer */
@@ -180,6 +213,13 @@ struct mapping {
 	{"pre.start",	LINE_PRE_START},
 	{"pre",		LINE_PRE_CONTENT},
 	{"pre.end",	LINE_PRE_END},
+
+	/* text/x-patch */
+	{"patch",	LINE_PATCH},
+	{"patch.hdr",	LINE_PATCH_HDR},
+	{"patch.hunk",	LINE_PATCH_HUNK_HDR},
+	{"patch.add",	LINE_PATCH_ADD},
+	{"patch.del",	LINE_PATCH_DEL},
 
 	/* minibuffer */
 	{"compl",	LINE_COMPL},
@@ -401,6 +441,8 @@ config_init(void)
 	}
 
 	line_faces[LINE_LINK].fg = COLOR_BLUE;
+	line_faces[LINE_PATCH_ADD].fg = COLOR_GREEN;
+	line_faces[LINE_PATCH_DEL].fg = COLOR_RED;
 
 	load_default_keys();
 }

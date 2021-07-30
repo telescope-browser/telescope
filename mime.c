@@ -30,6 +30,7 @@ static struct parser_table {
 	void		(*parserinit)(struct parser*);
 } ptable[] = {
 	{ "text/gemini",	gemtext_initparser },
+	{ "text/x-patch",	textpatch_initparser },
 	{ "text/*",		textplain_initparser },
 	{ NULL, NULL}
 };

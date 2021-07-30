@@ -80,6 +80,13 @@ enum line_type {
 	LINE_PRE_CONTENT,
 	LINE_PRE_END,
 
+	/* text/x-patch */
+	LINE_PATCH,
+	LINE_PATCH_HDR,
+	LINE_PATCH_HUNK_HDR,
+	LINE_PATCH_ADD,
+	LINE_PATCH_DEL,
+
 	/* minibuffer */
 	LINE_COMPL,
 	LINE_COMPL_CURRENT,
@@ -127,6 +134,7 @@ struct parser {
 
 #define PARSER_IN_BODY	1
 #define PARSER_IN_PRE	2
+#define PARSER_IN_PATCH_HDR 4
 	int		 flags;
 	parsechunkfn	 parse;
 	parserfreefn	 free;

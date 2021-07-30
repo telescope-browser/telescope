@@ -36,6 +36,9 @@ void	 gemtext_initparser(struct parser*);
 /* parser_gophermap.c */
 void	 gophermap_initparser(struct parser *);
 
+/* parser_textpatch.c */
+void	 textpatch_initparser(struct parser *);
+
 /* parser_textplain.c */
 void	 textplain_initparser(struct parser*);
 
