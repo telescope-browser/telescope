@@ -1,5 +1,7 @@
 2021-07-30  Omar Polo  <op@omarpolo.com>
 
+	* parser.c (parser_free): tilde-heuristics for titles: use ~username as tab title if the page doesn't have any headings
+
 	* mime.c (ptable): colorize text/x-patch
 
 2021-07-25  Omar Polo  <op@omarpolo.com>
