@@ -31,6 +31,8 @@ static struct parser_table {
 } ptable[] = {
 	{ "text/gemini",	gemtext_initparser },
 	{ "text/x-patch",	textpatch_initparser },
+	{ "text/x-diff",	textpatch_initparser }
+	{ "application/x-patch",textpatch_initparser }
 	{ "text/*",		textplain_initparser },
 	{ NULL, NULL}
 };
