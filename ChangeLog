@@ -1,3 +1,7 @@
+2021-07-30  Omar Polo  <op@omarpolo.com>
+
+	* mime.c (ptable): colorize text/x-patch
+
 2021-07-25  Omar Polo  <op@omarpolo.com>
 
 	* parser.c (parser_free): for page without a title, use the domain name
