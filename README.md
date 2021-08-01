@@ -8,7 +8,8 @@
                                            |__|
 ```
 
-Telescope is a w3m-like browser for Gemini.
+Telescope is a Emacs/w3m-inspired browser for the "small internet"
+that supports Gemini, Gopher and Finger.
 
 At the moment, it's something **a bit more than a working demo**.
 However, it has already some interesting features, like streaming
