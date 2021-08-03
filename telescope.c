@@ -101,7 +101,7 @@ static void		 handle_imsg_bookmark_ok(struct imsg*, size_t);
 static void		 handle_imsg_save_cert_ok(struct imsg*, size_t);
 static void		 handle_imsg_update_cert_ok(struct imsg *, size_t);
 static void		 handle_dispatch_imsg(int, short, void*);
-static void		 load_page_from_str(struct tab*, const char*);
+static int		 load_page_from_str(struct tab*, const char*);
 static int		 load_about_url(struct tab*, const char*);
 static int		 load_finger_url(struct tab *, const char *);
 static int		 load_gemini_url(struct tab*, const char*);
@@ -560,7 +560,7 @@ handle_dispatch_imsg(int fd, short ev, void *d)
 		err(1, "connection closed");
 }
 
-static void
+static int
 load_page_from_str(struct tab *tab, const char *page)
 {
 	erase_buffer(&tab->buffer);
@@ -571,6 +571,7 @@ load_page_from_str(struct tab *tab, const char *page)
 		die();
 	ui_on_tab_refresh(tab);
 	ui_on_tab_loaded(tab);
+	return 0;
 }
 
 static int
@@ -757,8 +758,7 @@ do_load_url(struct tab *tab, const char *url, const char *base)
 			return load_via_proxy(tab, url, proxy);
 	}
 
-	load_page_from_str(tab, err_pages[UNKNOWN_PROTOCOL]);
-	return 0;
+	return load_page_from_str(tab, err_pages[UNKNOWN_PROTOCOL]);
 }
 
 /*
