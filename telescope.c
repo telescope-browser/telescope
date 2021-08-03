@@ -371,7 +371,7 @@ handle_imsg_got_meta(struct imsg *imsg, size_t datalen)
 		load_page_from_str(tab, err_pages[tab->code]);
 	} else if (tab->code < 20) {	/* 1x */
 		load_page_from_str(tab, err_pages[tab->code]);
-		ui_require_input(tab, tab->code == 11);
+		ui_require_input(tab, tab->code == 11, PROTO_GEMINI);
 	} else if (tab->code == 20) {
 		if (setup_parser_for(tab)) {
 			ui_send_net(IMSG_PROCEED, tab->id, NULL, 0);
@@ -656,9 +656,20 @@ load_gopher_url(struct tab *tab, const char *url)
 	} else if (has_prefix(path, "/0/")) {
 		parser_init(tab, textplain_initparser);
 		path += 2;
+	} else if (has_prefix(path, "/7/")) {
+		/* show input request if there is no query */
+		ui_require_input(tab, 0, PROTO_GOPHER);
+		return load_page_from_str(tab, err_pages[10]);
 	} else {
 		return 0;
 	}
+
+	strlcpy(req.req, path, sizeof(req.req));
+	if (*tab->uri.query != '\0') {
+		strlcat(req.req, "?", sizeof(req.req));
+		strlcat(req.req, tab->uri.query, sizeof(req.req));
+	}
+	strlcpy(req.req, "\r\n", sizeof(req.req));
 
 	return make_request(tab, &req, PROTO_GOPHER, path);
 }
@@ -696,6 +707,32 @@ make_request(struct tab *tab, struct get_req *req, int proto, const char *r)
 	 * do_load_url is happy.
 	 */
 	return 1;
+}
+
+void
+gopher_send_search_req(struct tab *tab, const char *text)
+{
+	struct get_req	req;
+
+	memset(&req, 0, sizeof(req));
+	strlcpy(req.host, tab->uri.host, sizeof(req.host));
+	strlcpy(req.port, tab->uri.port, sizeof(req.host));
+
+	/* +2 to skip /7 */
+	strlcpy(req.req, tab->uri.path+2, sizeof(req.req));
+	if (*tab->uri.query != '\0') {
+		strlcat(req.req, "?", sizeof(req.req));
+		strlcat(req.req, tab->uri.query, sizeof(req.req));
+	}
+
+	strlcat(req.req, "\t", sizeof(req.req));
+	strlcat(req.req, text, sizeof(req.req));
+	strlcat(req.req, "\r\n", sizeof(req.req));
+
+	erase_buffer(&tab->buffer);
+	parser_init(tab, gophermap_initparser);
+
+	make_request(tab, &req, PROTO_GOPHER, NULL);
 }
 
 /*

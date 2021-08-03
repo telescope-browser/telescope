@@ -137,7 +137,7 @@ const char	*ui_keyname(int);
 void		 ui_toggle_side_window(void);
 void		 ui_schedule_redraw(void);
 void		 ui_after_message_hook(void);
-void		 ui_require_input(struct tab *, int);
+void		 ui_require_input(struct tab *, int, int);
 void		 ui_yornp(const char *, void (*)(int, struct tab *), struct tab *);
 void		 ui_read(const char *, void (*)(const char *, struct tab *), struct tab *);
 void		 ui_other_window(void);

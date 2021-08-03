@@ -194,7 +194,7 @@ eecmd_select(void)
 }
 
 void
-ir_select(void)
+ir_select_gemini(void)
 {
 	char		 buf[1025] = {0};
 	struct phos_uri	 uri;
@@ -208,6 +208,15 @@ ir_select(void)
 	phos_uri_set_query(&uri, ministate.buf);
 	phos_serialize_uri(&uri, buf, sizeof(buf));
 	load_url_in_tab(tab, buf, NULL);
+}
+
+void
+ir_select_gopher(void)
+{
+	exit_minibuffer();
+	minibuffer_hist_save_entry();
+
+	gopher_send_search_req(current_tab, ministate.buf);
 }
 
 void

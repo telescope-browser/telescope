@@ -1184,12 +1184,21 @@ ui_schedule_redraw(void)
 }
 
 void
-ui_require_input(struct tab *tab, int hide)
+ui_require_input(struct tab *tab, int hide, int proto)
 {
+	void (*fn)(void);
+
+	if (proto == PROTO_GEMINI)
+		fn = ir_select_gemini;
+	else if (proto == PROTO_GOPHER)
+		fn = ir_select_gopher;
+	else
+		abort();
+
 	/* TODO: hard-switching to another tab is ugly */
 	switch_to_tab(tab);
 
-	enter_minibuffer(sensible_self_insert, ir_select, exit_minibuffer,
+	enter_minibuffer(sensible_self_insert, fn, exit_minibuffer,
 	    &ir_history, NULL, NULL);
 	strlcpy(ministate.prompt, "Input required: ",
 	    sizeof(ministate.prompt));
