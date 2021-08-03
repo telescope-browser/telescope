@@ -110,6 +110,32 @@ verify out-of-band the certificate.
 .Pp
 At the moment, there is no built-in support for an out-of-band
 verification though.
+.Sh FINGER SUPPORT
+.Nm
+has native support for querying finger servers.
+While this is easily doable using the
+.Xr finger 1
+utility, given that finger URLs do appear on occasion in the
+gopherspace and in the geminispace, it's nice to be able to open them
+in place.
+.Pp
+.Nm
+interprets finger:// URLs as follows:
+.Bl -bullet -compact
+.It
+the host is determined by the host name portion of the URL
+.It
+if the user portion of the URL is provided, it's interpreted as the
+user to finger, otherwise the path component will be used
+.El
+thus
+.Lk finger://user@hostname
+and
+.Lk finger://hostname/user
+are equivalent.
+.Sh GOPHER SUPPORT
+Gopher support is limited to items type 0, 1 and 7.
+All text is assumed to be encoded in UTF-8 (or ASCII).
 .Sh DEFAULT KEY BINDINGS
 The default key bindings are very similar to GNU Emacs, but care has
 been taken to include also bindings familiar for
