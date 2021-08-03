@@ -102,13 +102,13 @@ static void		 handle_imsg_save_cert_ok(struct imsg*, size_t);
 static void		 handle_imsg_update_cert_ok(struct imsg *, size_t);
 static void		 handle_dispatch_imsg(int, short, void*);
 static void		 load_page_from_str(struct tab*, const char*);
-static void		 load_about_url(struct tab*, const char*);
-static void		 load_finger_url(struct tab *, const char *);
-static void		 load_gemini_url(struct tab*, const char*);
-static void		 load_gopher_url(struct tab *, const char *);
-static void		 load_via_proxy(struct tab *, const char *,
+static int		 load_about_url(struct tab*, const char*);
+static int		 load_finger_url(struct tab *, const char *);
+static int		 load_gemini_url(struct tab*, const char*);
+static int		 load_gopher_url(struct tab *, const char *);
+static int		 load_via_proxy(struct tab *, const char *,
 			     struct proxy *);
-static void		 make_request(struct tab *, struct get_req *, int,
+static int		 make_request(struct tab *, struct get_req *, int,
 			     const char *);
 static int		 do_load_url(struct tab*, const char *, const char *);
 static void		 parse_session_line(char *, const char **, uint32_t *);
@@ -120,7 +120,7 @@ static int		 ui_send_fs(int, uint32_t, const void *, uint16_t);
 static struct proto {
 	const char	*schema;
 	const char	*port;
-	void		 (*loadfn)(struct tab*, const char*);
+	int		 (*loadfn)(struct tab*, const char*);
 } protos[] = {
 	{"about",	NULL,	load_about_url},
 	{"finger",	"79",	load_finger_url},
@@ -573,7 +573,7 @@ load_page_from_str(struct tab *tab, const char *page)
 	ui_on_tab_loaded(tab);
 }
 
-static void
+static int
 load_about_url(struct tab *tab, const char *url)
 {
 	tab->trust = TS_VERIFIED;
@@ -582,9 +582,11 @@ load_about_url(struct tab *tab, const char *url)
 
 	ui_send_fs(IMSG_GET, tab->id,
 	    tab->hist_cur->h, strlen(tab->hist_cur->h)+1);
+
+	return 1;
 }
 
-static void
+static int
 load_finger_url(struct tab *tab, const char *url)
 {
 	struct get_req	 req;
@@ -617,10 +619,10 @@ load_finger_url(struct tab *tab, const char *url)
 	strlcat(req.req, "\r\n", sizeof(req.req));
 
 	parser_init(tab, textplain_initparser);
-	make_request(tab, &req, PROTO_FINGER, NULL);
+	return make_request(tab, &req, PROTO_FINGER, NULL);
 }
 
-static void
+static int
 load_gemini_url(struct tab *tab, const char *url)
 {
 	struct get_req	 req;
@@ -629,10 +631,10 @@ load_gemini_url(struct tab *tab, const char *url)
 	strlcpy(req.host, tab->uri.host, sizeof(req.host));
 	strlcpy(req.port, tab->uri.port, sizeof(req.host));
 
-	make_request(tab, &req, PROTO_GEMINI, tab->hist_cur->h);
+	return make_request(tab, &req, PROTO_GEMINI, tab->hist_cur->h);
 }
 
-static void
+static int
 load_gopher_url(struct tab *tab, const char *url)
 {
 	struct get_req	 req;
@@ -654,13 +656,13 @@ load_gopher_url(struct tab *tab, const char *url)
 		parser_init(tab, textplain_initparser);
 		path += 2;
 	} else {
-		return;
+		return 0;
 	}
 
-	make_request(tab, &req, PROTO_GOPHER, path);
+	return make_request(tab, &req, PROTO_GOPHER, path);
 }
 
-static void
+static int
 load_via_proxy(struct tab *tab, const char *url, struct proxy *p)
 {
 	struct get_req req;
@@ -671,10 +673,10 @@ load_via_proxy(struct tab *tab, const char *url, struct proxy *p)
 
 	tab->proxy = p;
 
-	make_request(tab, &req, p->proto, tab->hist_cur->h);
+	return make_request(tab, &req, p->proto, tab->hist_cur->h);
 }
 
-static void
+static int
 make_request(struct tab *tab, struct get_req *req, int proto, const char *r)
 {
 	stop_tab(tab);
@@ -687,6 +689,12 @@ make_request(struct tab *tab, struct get_req *req, int proto, const char *r)
 	}
 
 	ui_send_net(IMSG_GET_RAW, tab->id, req, sizeof(*req));
+
+	/*
+	 * So the various load_*_url can `return make_request` and
+	 * do_load_url is happy.
+	 */
+	return 1;
 }
 
 /*
@@ -740,16 +748,13 @@ do_load_url(struct tab *tab, const char *url, const char *base)
 				strlcpy(tab->uri.port, p->port,
 				    sizeof(tab->uri.port));
 
-			p->loadfn(tab, url);
-                        return 1;
+			return p->loadfn(tab, url);
 		}
 	}
 
 	TAILQ_FOREACH(proxy, &proxies, proxies) {
-		if (!strcmp(tab->uri.scheme, proxy->match_proto)) {
-			load_via_proxy(tab, url, proxy);
-			return 1;
-		}
+		if (!strcmp(tab->uri.scheme, proxy->match_proto))
+			return load_via_proxy(tab, url, proxy);
 	}
 
 	load_page_from_str(tab, err_pages[UNKNOWN_PROTOCOL]);
