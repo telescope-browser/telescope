@@ -1,3 +1,9 @@
+2021-08-03  Omar Polo  <op@omarpolo.com>
+
+	* pages/about_new.gmi.in: add link to veronica-2.  reorder links
+
+	* telescope.c (gopher_send_search_req): initial support for gopher item type 7
+
 2021-07-30  Omar Polo  <op@omarpolo.com>
 
 	* parser.c (parser_free): tilde-heuristics for titles: use ~username as tab title if the page doesn't have any headings
