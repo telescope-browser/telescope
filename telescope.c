@@ -714,6 +714,8 @@ gopher_send_search_req(struct tab *tab, const char *text)
 {
 	struct get_req	req;
 
+	start_loading_anim(tab);
+
 	memset(&req, 0, sizeof(req));
 	strlcpy(req.host, tab->uri.host, sizeof(req.host));
 	strlcpy(req.port, tab->uri.port, sizeof(req.host));
