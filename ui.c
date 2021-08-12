@@ -1057,6 +1057,11 @@ ui_init()
 {
 	setlocale(LC_ALL, "");
 
+	if (TAILQ_EMPTY(&global_map.m)) {
+		fprintf(stderr, "no keys defined!\n");
+		return 0;
+	}
+
 	minibuffer_init();
 
 	/* initialize help window */
