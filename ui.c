@@ -105,6 +105,7 @@ static uint32_t		 tab_counter;
 
 static char	keybuf[64];
 
+/* XXX: don't forget to init these in main() */
 struct kmap global_map,
 	minibuffer_map,
 	*current_map,
@@ -993,6 +994,7 @@ new_tab(const char *url, const char *base, struct tab *after)
 	TAILQ_INIT(&tab->hist.head);
 
 	TAILQ_INIT(&tab->buffer.head);
+	TAILQ_INIT(&tab->buffer.page.head);
 
 	tab->id = tab_new_id();
 	if (!operating)
@@ -1063,6 +1065,7 @@ ui_init()
 
 	/* initialize help window */
 	TAILQ_INIT(&helpwin.head);
+	TAILQ_INIT(&helpwin.page.head);
 
 	base_map = &global_map;
 	current_map = &global_map;

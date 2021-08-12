@@ -63,6 +63,8 @@ textplain_initparser(struct parser *p)
 	p->name = "text/plain";
 	p->parse = &textplain_parse;
 	p->free = &textplain_free;
+
+	TAILQ_INIT(&p->head);
 }
 
 static int

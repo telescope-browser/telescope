@@ -39,6 +39,8 @@ textpatch_initparser(struct parser *p)
 	p->free = &tpatch_free;
 
 	p->flags = PARSER_IN_PATCH_HDR;
+
+	TAILQ_INIT(&p->head);
 }
 
 static int

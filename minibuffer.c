@@ -42,6 +42,7 @@ static struct tab *yornp_data;
 static void (*read_cb)(const char*, struct tab *);
 static struct tab *read_data;
 
+/* XXX: don't forget to init these in minibuffer_init */
 struct histhead eecmd_history,
 	ir_history,
 	lu_history,
@@ -531,6 +532,10 @@ minibuffer_init(void)
 	TAILQ_INIT(&eecmd_history.head);
 	TAILQ_INIT(&ir_history.head);
 	TAILQ_INIT(&lu_history.head);
+	TAILQ_INIT(&read_history.head);
+
+	TAILQ_INIT(&ministate.compl.buffer.head);
+	TAILQ_INIT(&ministate.compl.buffer.page.head);
 
 	ministate.line.type = LINE_TEXT;
 	ministate.vline.parent = &ministate.line;

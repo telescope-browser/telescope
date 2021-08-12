@@ -69,6 +69,8 @@ gemtext_initparser(struct parser *p)
 	p->name = "text/gemini";
 	p->parse = &gemtext_parse;
 	p->free  = &gemtext_free;
+
+	TAILQ_INIT(&p->head);
 }
 
 static inline int

@@ -44,6 +44,8 @@ gophermap_initparser(struct parser *p)
 	p->name = "gophermap";
 	p->parse = &gm_parse;
 	p->free = &gm_free;
+
+	TAILQ_INIT(&p->head);
 }
 
 static void
