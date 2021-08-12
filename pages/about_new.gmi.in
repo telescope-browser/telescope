@@ -10,7 +10,7 @@ Version @VERSION@
 Bug reports to: @PACKAGE_BUGREPORT@
 
 => gemini://geminispace.info			Gemini Search Engine (geminispace.info)
-=> gopher://gopher.floodgap.com/7/v2/vs		Gopher Search engine (Veronica-2)
+=> gopher://gopher.floodgap.com/7/v2/vs		Gopher Search Engine (Veronica-2)
 
 => gemini://gemini.circumlunar.space/docs/	Gemini documentation
 => gemini://gemini.circumlunar.space/software/	Gemini software
