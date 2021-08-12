@@ -975,8 +975,8 @@ load_last_session(void)
 
 	if ((session = fopen(session_file, "r")) == NULL) {
 		/* first time? */
-		new_tab("about:new", NULL);
-		switch_to_tab(new_tab("about:help", NULL));
+		new_tab("about:new", NULL, NULL);
+		switch_to_tab(new_tab("about:help", NULL, NULL));
 		return;
 	}
 
@@ -984,7 +984,7 @@ load_last_session(void)
                 if ((nl = strchr(line, '\n')) != NULL)
 			*nl = '\0';
 		parse_session_line(line, &title, &flags);
-		if ((tab = new_tab(line, NULL)) == NULL)
+		if ((tab = new_tab(line, NULL, NULL)) == NULL)
 			err(1, "new_tab");
                 strlcpy(tab->buffer.page.title, title,
 		    sizeof(tab->buffer.page.title));
@@ -1002,7 +1002,7 @@ load_last_session(void)
 		switch_to_tab(curr);
 
 	if (last_time_crashed())
-		switch_to_tab(new_tab("about:crash", NULL));
+		switch_to_tab(new_tab("about:crash", NULL, NULL));
 
 	return;
 }
@@ -1200,7 +1200,7 @@ main(int argc, char * const *argv)
 	if (ui_init()) {
 		load_last_session();
 		if (has_url || TAILQ_EMPTY(&tabshead))
-			new_tab(url, NULL);
+			new_tab(url, NULL, NULL);
 
 		sandbox_ui_process();
 		ui_main_loop();

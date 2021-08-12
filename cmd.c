@@ -319,7 +319,7 @@ cmd_push_button_new_tab(struct buffer *buffer)
 	if (vl == NULL || vl->parent->type != LINE_LINK)
 		return;
 
-	new_tab(vl->parent->alt, current_tab->hist_cur->h);
+	new_tab(vl->parent->alt, current_tab->hist_cur->h, current_tab);
 }
 
 void
@@ -477,7 +477,7 @@ cmd_tab_new(struct buffer *buffer)
 	if ((url = new_tab_url) == NULL)
 		url = NEW_TAB_URL;
 
-	new_tab(url, NULL);
+	new_tab(url, NULL, NULL);
 }
 
 void

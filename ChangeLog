@@ -1,5 +1,7 @@
 2021-08-12  Omar Polo  <op@omarpolo.com>
 
+	* cmd.c (cmd_push_button_new_tab): open new tab right after the current one
+
 	* telescope.c (load_url): improved reload command: it doesn't push the current url to the history anymore.
 
 2021-08-03  Omar Polo  <op@omarpolo.com>
