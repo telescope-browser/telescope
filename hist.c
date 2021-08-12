@@ -34,8 +34,5 @@ void
 hist_push(struct histhead *head, struct hist *h)
 {
 	head->len++;
-	if (TAILQ_EMPTY(&head->head))
-		TAILQ_INSERT_HEAD(&head->head, h, entries);
-	else
-		TAILQ_INSERT_TAIL(&head->head, h, entries);
+	TAILQ_INSERT_TAIL(&head->head, h, entries);
 }

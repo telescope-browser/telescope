@@ -522,12 +522,9 @@ cmd_tab_move_to(struct buffer *buffer)
 	t = TAILQ_PREV(current_tab, tabshead, tabs);
 	TAILQ_REMOVE(&tabshead, current_tab, tabs);
 
-	if (t == NULL) {
-		if (TAILQ_EMPTY(&tabshead))
-			TAILQ_INSERT_HEAD(&tabshead, current_tab, tabs);
-		else
-			TAILQ_INSERT_TAIL(&tabshead, current_tab, tabs);
-	} else
+	if (t == NULL)
+		TAILQ_INSERT_TAIL(&tabshead, current_tab, tabs);
+	else
 		TAILQ_INSERT_BEFORE(t, current_tab, tabs);
 }
 

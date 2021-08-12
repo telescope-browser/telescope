@@ -46,10 +46,7 @@ emit_help_item(char *prfx, interactivefn *fn)
 	l->line = strdup(prfx);
 	l->alt = (char*)cmd->cmd;
 
-	if (TAILQ_EMPTY(&helpwin.page.head))
-		TAILQ_INSERT_HEAD(&helpwin.page.head, l, lines);
-	else
-		TAILQ_INSERT_TAIL(&helpwin.page.head, l, lines);
+	TAILQ_INSERT_TAIL(&helpwin.page.head, l, lines);
 }
 
 static void

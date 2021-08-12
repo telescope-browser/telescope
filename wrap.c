@@ -112,10 +112,7 @@ push_line(struct buffer *buffer, struct line *l, const char *buf, size_t len, in
 		memcpy(vl->line, buf, len);
 	vl->flags = flags;
 
-	if (TAILQ_EMPTY(&buffer->head))
-		TAILQ_INSERT_HEAD(&buffer->head, vl, vlines);
-	else
-		TAILQ_INSERT_TAIL(&buffer->head, vl, vlines);
+	TAILQ_INSERT_TAIL(&buffer->head, vl, vlines);
 	return 1;
 }
 

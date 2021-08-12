@@ -47,10 +47,7 @@ emit_line(struct parser *p, const char *line, size_t len)
 		memcpy(l->line, line, len);
 	}
 
-	if (TAILQ_EMPTY(&p->head))
-		TAILQ_INSERT_HEAD(&p->head, l, lines);
-	else
-		TAILQ_INSERT_TAIL(&p->head, l, lines);
+	TAILQ_INSERT_TAIL(&p->head, l, lines);
 
 	return 1;
 }

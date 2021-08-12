@@ -107,10 +107,7 @@ emit_line(struct parser *p, enum line_type type, char *line, char *alt)
 		break;
 	}
 
-	if (TAILQ_EMPTY(&p->head))
-		TAILQ_INSERT_HEAD(&p->head, l, lines);
-	else
-		TAILQ_INSERT_TAIL(&p->head, l, lines);
+	TAILQ_INSERT_TAIL(&p->head, l, lines);
 
 	return 1;
 }

@@ -183,10 +183,7 @@ again:
 	entry->key = k;
 	TAILQ_INIT(&entry->map.m);
 
-	if (TAILQ_EMPTY(&map->m))
-		TAILQ_INSERT_HEAD(&map->m, entry, keymaps);
-	else
-		TAILQ_INSERT_TAIL(&map->m, entry, keymaps);
+	TAILQ_INSERT_TAIL(&map->m, entry, keymaps);
 
         if (*key != '\0') {
 		map = &entry->map;

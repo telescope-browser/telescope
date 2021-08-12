@@ -119,10 +119,7 @@ minibuffer_hist_save_entry(void)
 
 	strlcpy(hist->h, ministate.buf, sizeof(hist->h));
 
-	if (TAILQ_EMPTY(&ministate.history->head))
-		TAILQ_INSERT_HEAD(&ministate.history->head, hist, entries);
-	else
-		TAILQ_INSERT_TAIL(&ministate.history->head, hist, entries);
+	TAILQ_INSERT_TAIL(&ministate.history->head, hist, entries);
 	ministate.history->len++;
 }
 
@@ -388,10 +385,7 @@ populate_compl_buffer(complfn *fn, void *data)
 		if ((l->line = strdup(s)) == NULL)
 			abort();
 
-		if (TAILQ_EMPTY(&p->head))
-			TAILQ_INSERT_HEAD(&p->head, l, lines);
-		else
-			TAILQ_INSERT_TAIL(&p->head, l, lines);
+		TAILQ_INSERT_TAIL(&p->head, l, lines);
 
 		linedata = NULL;
 		descr = NULL;

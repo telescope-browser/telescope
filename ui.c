@@ -1003,12 +1003,8 @@ new_tab(const char *url, const char *base, struct tab *after)
 
 	if (after != NULL)
 		TAILQ_INSERT_AFTER(&tabshead, after, tab, tabs);
-	else {
-		if (TAILQ_EMPTY(&tabshead))
-			TAILQ_INSERT_HEAD(&tabshead, tab, tabs);
-		else
-			TAILQ_INSERT_TAIL(&tabshead, tab, tabs);
-	}
+	else
+		TAILQ_INSERT_TAIL(&tabshead, tab, tabs);
 
 	load_url_in_tab(tab, url, base, 0);
 	return tab;
