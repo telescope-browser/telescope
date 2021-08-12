@@ -207,7 +207,7 @@ ir_select_gemini(void)
 	memcpy(&uri, &tab->uri, sizeof(tab->uri));
 	phos_uri_set_query(&uri, ministate.buf);
 	phos_serialize_uri(&uri, buf, sizeof(buf));
-	load_url_in_tab(tab, buf, NULL);
+	load_url_in_tab(tab, buf, NULL, 0);
 }
 
 void
@@ -224,7 +224,7 @@ lu_select(void)
 {
 	exit_minibuffer();
 	minibuffer_hist_save_entry();
-	load_url_in_tab(current_tab, ministate.buf, NULL);
+	load_url_in_tab(current_tab, ministate.buf, NULL, 0);
 }
 
 void
@@ -262,7 +262,7 @@ ls_select(void)
 	}
 
 	exit_minibuffer();
-	load_url_in_tab(current_tab, l->alt, NULL);
+	load_url_in_tab(current_tab, l->alt, NULL, 0);
 }
 
 static inline void

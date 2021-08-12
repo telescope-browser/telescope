@@ -806,7 +806,7 @@ do_load_url(struct tab *tab, const char *url, const char *base)
  * do load it!
  */
 void
-load_url(struct tab *tab, const char *url, const char *base)
+load_url(struct tab *tab, const char *url, const char *base, int nohist)
 {
 	int lazy;
 
@@ -817,7 +817,11 @@ load_url(struct tab *tab, const char *url, const char *base)
 		tab->flags &= ~TAB_LAZY;
 	}
 
-	if (!lazy || tab->hist_cur == NULL) {
+	/* can't have both nohist and lazy at the same time. */
+	if (nohist && lazy)
+		nohist = 0;
+
+	if (!nohist && (!lazy || tab->hist_cur == NULL)) {
 		if (tab->hist_cur != NULL)
 			hist_clear_forward(&tab->hist,
 			    TAILQ_NEXT(tab->hist_cur, entries));

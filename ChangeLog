@@ -1,3 +1,7 @@
+2021-08-12  Omar Polo  <op@omarpolo.com>
+
+	* telescope.c (load_url): improved reload command: it doesn't push the current url to the history anymore.
+
 2021-08-03  Omar Polo  <op@omarpolo.com>
 
 	* pages/about_new.gmi.in: add link to veronica-2.  reorder links
