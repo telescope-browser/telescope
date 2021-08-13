@@ -1,3 +1,7 @@
+2021-08-13  Omar Polo  <op@omarpolo.com>
+
+	* telescope.c (protos): added support for file:// URIs
+
 2021-08-12  Omar Polo  <op@omarpolo.com>
 
 	* cmd.c (cmd_push_button_new_tab): open new tab right after the current one
