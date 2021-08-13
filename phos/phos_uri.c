@@ -893,7 +893,13 @@ phos_serialize_uri(const struct phos_uri *uri, char *buf, size_t len)
 		CAT(":");
 	}
 
-	if (*uri->host != '\0') {
+	if (*uri->host != '\0' || strcmp(uri->scheme, "file") == 0) {
+		/*
+		 * The file URI scheme has a quirk that even if a
+		 * hostname is not present, we still have to append
+		 * the two slashes.  This is why we have
+		 * file:///etc/hosts and not file:/etc/hosts
+		 */
 		CAT("//");
 		CAT(uri->host);
 	}
