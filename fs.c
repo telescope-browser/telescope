@@ -23,7 +23,9 @@
 #include "compat.h"
 
 #include <sys/stat.h>
+#include <sys/types.h>
 
+#include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
@@ -172,8 +174,8 @@ send_hdr(uint32_t peerid, int code, const char *meta)
 	fs_send_ui(IMSG_GOT_META, peerid, -1, meta, strlen(meta)+1);
 }
 
-static void
-handle_get_file(struct imsg *imsg, size_t datalen)
+static inline const char *
+file_type(const char *path)
 {
 	struct mapping {
 		const char	*ext;
@@ -187,41 +189,83 @@ handle_get_file(struct imsg *imsg, size_t datalen)
 		{"patch",	"text/x-patch"},
 		{"txt",		"text/plain"},
 		{NULL, NULL},
-	},		*m;
+	}, *m;
+	char *dot;
+
+	if ((dot = strrchr(path, '.')) == NULL)
+		return NULL;
+
+	dot++;
+
+	for (m = ms; m->ext != NULL; ++m)
+		if (!strcmp(m->ext, dot))
+			return m->mime;
+
+	return NULL;
+}
+
+static inline void
+send_dir(uint32_t peerid, const char *path)
+{
+	struct dirent	**names;
+	struct evbuffer	 *ev;
+	int		  i, len;
+
+	if ((ev = evbuffer_new()) == NULL ||
+	    (len = scandir(path, &names, NULL, alphasort)) == -1) {
+		evbuffer_free(ev);
+		send_hdr(peerid, 40, "failure reading the directory");
+		return;
+	}
+
+	evbuffer_add_printf(ev, "# Index of %s\n\n", path);
+	for (i = 0; i < len; ++i) {
+		evbuffer_add_printf(ev, "=> %s", names[i]->d_name);
+		if (names[i]->d_type == DT_DIR)
+			evbuffer_add(ev, "/", 1);
+		evbuffer_add(ev, "\n", 1);
+	}
+
+	send_hdr(peerid, 20, "text/gemini");
+	fs_send_ui(IMSG_BUF, peerid, -1,
+	    EVBUFFER_DATA(ev), EVBUFFER_LENGTH(ev));
+	fs_send_ui(IMSG_EOF, peerid, -1, NULL, 0);
+
+	evbuffer_free(ev);
+	free(names);
+}
+
+static void
+handle_get_file(struct imsg *imsg, size_t datalen)
+{
+	struct stat	 sb;
 	FILE		*f;
-	char		*data, *dot;
+	char		*data;
 	const char	*meta = NULL;
-	int		 code;
 
 	data = imsg->data;
 	data[datalen-1] = '\0';
 
-	if ((dot = strrchr(data, '.')) == NULL) {
-		send_hdr(imsg->hdr.peerid, 51,
-		    "don't know how to visualize this file");
-		return;
-	}
-	dot++;
-
-	for (m = ms; m->ext != NULL; ++m) {
-		if (!strcmp(m->ext, dot)) {
-			meta = m->mime;
-			break;
-		}
-	}
-
-	if (meta == NULL) {
-		send_hdr(imsg->hdr.peerid, 51,
-		    "don't know how to visualize this file");
-		return;
-	}
-
 	if ((f = fopen(data, "r")) == NULL) {
-		/*
-		 * If errno is EDIR it would be nice to serve the
-		 * directory listing.  See how it's done in gmid.
-		 */
 		send_hdr(imsg->hdr.peerid, 51, "can't open the file");
+		return;
+	}
+
+	if (fstat(fileno(f), &sb) == -1) {
+		send_hdr(imsg->hdr.peerid, 40, "fstat failed");
+		return;
+	}
+
+	if (S_ISDIR(sb.st_mode)) {
+		fclose(f);
+		send_dir(imsg->hdr.peerid, data);
+		return;
+	}
+
+	if ((meta = file_type(data)) == NULL) {
+		fclose(f);
+		send_hdr(imsg->hdr.peerid, 51,
+		    "don't know how to visualize this file");
 		return;
 	}
 
