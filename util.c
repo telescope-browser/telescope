@@ -20,6 +20,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "telescope.h"
@@ -47,6 +48,20 @@ has_prefix(const char *str, const char *prfx)
 		if (str[i] != prfx[i])
 			return 0;
 	return prfx[i] == '\0';
+}
+
+int
+has_suffix(const char *str, const char *sufx)
+{
+	size_t l, s;
+
+	l = strlen(str);
+	s = strlen(sufx);
+
+	if (l < s)
+		return 0;
+
+	return !strcmp(str + (l - s), sufx);
 }
 
 int
