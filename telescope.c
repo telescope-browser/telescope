@@ -669,9 +669,9 @@ load_gopher_url(struct tab *tab, const char *url)
 		strlcat(req.req, "?", sizeof(req.req));
 		strlcat(req.req, tab->uri.query, sizeof(req.req));
 	}
-	strlcpy(req.req, "\r\n", sizeof(req.req));
+	strlcat(req.req, "\r\n", sizeof(req.req));
 
-	return make_request(tab, &req, PROTO_GOPHER, path);
+	return make_request(tab, &req, PROTO_GOPHER, NULL);
 }
 
 static int
