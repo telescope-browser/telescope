@@ -223,8 +223,17 @@ send_dir(uint32_t peerid, const char *path)
 {
 	struct dirent	**names;
 	struct evbuffer	 *ev;
+	char		 *s;
 	int		(*selector)(const struct dirent *) = select_non_dot;
 	int		  i, len;
+
+	if (!has_suffix(path, "/")) {
+		if (asprintf(&s, "%s/", path) == -1)
+			die();
+		send_hdr(peerid, 30, s);
+		free(s);
+		return;
+	}
 
 	if (!strcmp(path, "/"))
 		selector = select_non_dotdot;
