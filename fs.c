@@ -176,6 +176,18 @@ send_hdr(uint32_t peerid, int code, const char *meta)
 	fs_send_ui(IMSG_GOT_META, peerid, -1, meta, strlen(meta)+1);
 }
 
+static inline void
+send_errno(uint32_t peerid, int code, const char *str, int no)
+{
+	char *s;
+
+	if (asprintf(&s, "%s: %s", str, strerror(no)) == -1)
+		s = NULL;
+
+	send_hdr(peerid, code, s == NULL ? str : s);
+	free(s);
+}
+
 static inline const char *
 file_type(const char *path)
 {
@@ -225,7 +237,7 @@ send_dir(uint32_t peerid, const char *path)
 	struct evbuffer	 *ev;
 	char		 *s;
 	int		(*selector)(const struct dirent *) = select_non_dot;
-	int		  i, len;
+	int		  i, len, no;
 
 	if (!has_suffix(path, "/")) {
 		if (asprintf(&s, "%s/", path) == -1)
@@ -240,8 +252,9 @@ send_dir(uint32_t peerid, const char *path)
 
 	if ((ev = evbuffer_new()) == NULL ||
 	    (len = scandir(path, &names, selector, alphasort)) == -1) {
+		no = errno;
 		evbuffer_free(ev);
-		send_hdr(peerid, 40, "failure reading the directory");
+		send_errno(peerid, 40, "failure reading the directory", no);
 		return;
 	}
 
@@ -274,12 +287,12 @@ handle_get_file(struct imsg *imsg, size_t datalen)
 	data[datalen-1] = '\0';
 
 	if ((f = fopen(data, "r")) == NULL) {
-		send_hdr(imsg->hdr.peerid, 51, "can't open the file");
+		send_errno(imsg->hdr.peerid, 51, "can't open", errno);
 		return;
 	}
 
 	if (fstat(fileno(f), &sb) == -1) {
-		send_hdr(imsg->hdr.peerid, 40, "fstat failed");
+		send_errno(imsg->hdr.peerid, 40, "fstat", errno);
 		return;
 	}
 
