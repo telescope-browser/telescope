@@ -580,7 +580,7 @@ load_page_from_str(struct tab *tab, const char *page)
 static int
 load_about_url(struct tab *tab, const char *url)
 {
-	tab->trust = TS_VERIFIED;
+	tab->trust = TS_UNKNOWN;
 	parser_init(tab, gemtext_initparser);
 	return make_fs_request(tab, IMSG_GET, url);
 }
