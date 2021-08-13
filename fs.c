@@ -36,7 +36,9 @@
 #include "pages.h"
 
 static void		 die(void) __attribute__((__noreturn__));
+static void		 send_file(uint32_t, FILE *);
 static void		 handle_get(struct imsg*, size_t);
+static void		 handle_get_file(struct imsg*, size_t);
 static void		 handle_quit(struct imsg*, size_t);
 static void		 handle_bookmark_page(struct imsg*, size_t);
 static void		 handle_save_cert(struct imsg*, size_t);
@@ -62,6 +64,7 @@ char	session_file[PATH_MAX];
 
 static imsg_handlerfn *handlers[] = {
 	[IMSG_GET] = handle_get,
+	[IMSG_GET_FILE] = handle_get_file,
 	[IMSG_QUIT] = handle_quit,
 	[IMSG_BOOKMARK_PAGE] = handle_bookmark_page,
 	[IMSG_SAVE_CERT] = handle_save_cert,
@@ -80,13 +83,29 @@ die(void)
 }
 
 static void
+send_file(uint32_t peerid, FILE *f)
+{
+	ssize_t	 r;
+	char	 buf[BUFSIZ];
+
+	for (;;) {
+		r = fread(buf, 1, sizeof(buf), f);
+		if (r != 0)
+			fs_send_ui(IMSG_BUF, peerid, -1, buf, r);
+		if (r != sizeof(buf))
+			break;
+	}
+	fs_send_ui(IMSG_EOF, peerid, -1, NULL, 0);
+	fclose(f);
+}
+
+static void
 handle_get(struct imsg *imsg, size_t datalen)
 {
 	const char	*bpath = "bookmarks.gmi";
-	char		 path[PATH_MAX], buf[BUFSIZ];
+	char		 path[PATH_MAX];
 	FILE		*f;
 	const char	*data, *p;
-	ssize_t		 r;
 	size_t		 i;
 	struct page {
 		const char	*name;
@@ -137,20 +156,77 @@ handle_get(struct imsg *imsg, size_t datalen)
 		return;
 	}
 
-	for (;;) {
-		r = fread(buf, 1, sizeof(buf), f);
-		fs_send_ui(IMSG_BUF, imsg->hdr.peerid, -1, buf, r);
-		if (r != sizeof(buf))
-			break;
-	}
-	fs_send_ui(IMSG_EOF, imsg->hdr.peerid, -1, NULL, 0);
-	fclose(f);
+	send_file(imsg->hdr.peerid, f);
 	return;
 
 notfound:
 	p = "# not found!\n";
 	fs_send_ui(IMSG_BUF, imsg->hdr.peerid, -1, p, strlen(p));
 	fs_send_ui(IMSG_EOF, imsg->hdr.peerid, -1, NULL, 0);
+}
+
+static inline void
+send_hdr(uint32_t peerid, int code, const char *meta)
+{
+	fs_send_ui(IMSG_GOT_CODE, peerid, -1, &code, sizeof(code));
+	fs_send_ui(IMSG_GOT_META, peerid, -1, meta, strlen(meta)+1);
+}
+
+static void
+handle_get_file(struct imsg *imsg, size_t datalen)
+{
+	struct mapping {
+		const char	*ext;
+		const char	*mime;
+	} ms[] = {
+		{"diff",	"text/x-patch"},
+		{"gemini",	"text/gemini"},
+		{"gmi",		"text/gemini"},
+		{"markdown",	"text/plain"},
+		{"md",		"text/plain"},
+		{"patch",	"text/x-patch"},
+		{"txt",		"text/plain"},
+		{NULL, NULL},
+	},		*m;
+	FILE		*f;
+	char		*data, *dot;
+	const char	*meta = NULL;
+	int		 code;
+
+	data = imsg->data;
+	data[datalen-1] = '\0';
+
+	if ((dot = strrchr(data, '.')) == NULL) {
+		send_hdr(imsg->hdr.peerid, 51,
+		    "don't know how to visualize this file");
+		return;
+	}
+	dot++;
+
+	for (m = ms; m->ext != NULL; ++m) {
+		if (!strcmp(m->ext, dot)) {
+			meta = m->mime;
+			break;
+		}
+	}
+
+	if (meta == NULL) {
+		send_hdr(imsg->hdr.peerid, 51,
+		    "don't know how to visualize this file");
+		return;
+	}
+
+	if ((f = fopen(data, "r")) == NULL) {
+		/*
+		 * If errno is EDIR it would be nice to serve the
+		 * directory listing.  See how it's done in gmid.
+		 */
+		send_hdr(imsg->hdr.peerid, 51, "can't open the file");
+		return;
+	}
+
+	send_hdr(imsg->hdr.peerid, 20, meta);
+	send_file(imsg->hdr.peerid, f);
 }
 
 static void
