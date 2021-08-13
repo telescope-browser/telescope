@@ -1,5 +1,7 @@
 2021-08-13  Omar Polo  <op@omarpolo.com>
 
+	* fs.c (handle_get_file): generate directory listings
+
 	* telescope.c (protos): added support for file:// URIs
 
 2021-08-12  Omar Polo  <op@omarpolo.com>
