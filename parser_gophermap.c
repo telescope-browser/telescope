@@ -53,6 +53,9 @@ gm_parse_selector(char *line, struct gm_selector *s)
 {
 	s->type = *line++;
 	s->ds = line;
+	s->selector = "";
+	s->addr = "";
+	s->port = "";
 
 	if ((line = strchr(line, '\t')) == NULL)
 		return;
