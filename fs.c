@@ -40,6 +40,8 @@
 static void		 die(void) __attribute__((__noreturn__));
 static void		 send_file(uint32_t, FILE *);
 static void		 handle_get(struct imsg*, size_t);
+static int		 select_non_dot(const struct dirent *);
+static int		 select_non_dotdot(const struct dirent *);
 static void		 handle_get_file(struct imsg*, size_t);
 static void		 handle_quit(struct imsg*, size_t);
 static void		 handle_bookmark_page(struct imsg*, size_t);
@@ -204,15 +206,31 @@ file_type(const char *path)
 	return NULL;
 }
 
+static int
+select_non_dot(const struct dirent *d)
+{
+	return strcmp(d->d_name, ".");
+}
+
+static int
+select_non_dotdot(const struct dirent *d)
+{
+	return strcmp(d->d_name, ".") && strcmp(d->d_name, "..");
+}
+
 static inline void
 send_dir(uint32_t peerid, const char *path)
 {
 	struct dirent	**names;
 	struct evbuffer	 *ev;
+	int		(*selector)(const struct dirent *) = select_non_dot;
 	int		  i, len;
 
+	if (!strcmp(path, "/"))
+		selector = select_non_dotdot;
+
 	if ((ev = evbuffer_new()) == NULL ||
-	    (len = scandir(path, &names, NULL, alphasort)) == -1) {
+	    (len = scandir(path, &names, selector, alphasort)) == -1) {
 		evbuffer_free(ev);
 		send_hdr(peerid, 40, "failure reading the directory");
 		return;
