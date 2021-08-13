@@ -103,6 +103,7 @@ static void		 handle_imsg_update_cert_ok(struct imsg *, size_t);
 static void		 handle_dispatch_imsg(int, short, void*);
 static int		 load_page_from_str(struct tab*, const char*);
 static int		 load_about_url(struct tab*, const char*);
+static int		 load_file_url(struct tab *, const char *);
 static int		 load_finger_url(struct tab *, const char *);
 static int		 load_gemini_url(struct tab*, const char*);
 static int		 load_gopher_url(struct tab *, const char *);
@@ -124,6 +125,7 @@ static struct proto {
 	int		 (*loadfn)(struct tab*, const char*);
 } protos[] = {
 	{"about",	NULL,	load_about_url},
+	{"file",	NULL,	load_file_url},
 	{"finger",	"79",	load_finger_url},
 	{"gemini",	"1965",	load_gemini_url},
 	{"gopher",	"70",	load_gopher_url},
@@ -581,6 +583,13 @@ load_about_url(struct tab *tab, const char *url)
 	tab->trust = TS_VERIFIED;
 	parser_init(tab, gemtext_initparser);
 	return make_fs_request(tab, IMSG_GET, url);
+}
+
+static int
+load_file_url(struct tab *tab, const char *url)
+{
+	tab->trust = TS_UNKNOWN;
+	return make_fs_request(tab, IMSG_GET_FILE, tab->uri.path);
 }
 
 static int
