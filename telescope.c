@@ -110,6 +110,7 @@ static int		 load_via_proxy(struct tab *, const char *,
 			     struct proxy *);
 static int		 make_request(struct tab *, struct get_req *, int,
 			     const char *);
+static int		 make_fs_request(struct tab *, int, const char *);
 static int		 do_load_url(struct tab*, const char *, const char *);
 static void		 parse_session_line(char *, const char **, uint32_t *);
 static void		 load_last_session(void);
@@ -578,13 +579,8 @@ static int
 load_about_url(struct tab *tab, const char *url)
 {
 	tab->trust = TS_VERIFIED;
-
 	parser_init(tab, gemtext_initparser);
-
-	ui_send_fs(IMSG_GET, tab->id,
-	    tab->hist_cur->h, strlen(tab->hist_cur->h)+1);
-
-	return 1;
+	return make_fs_request(tab, IMSG_GET, url);
 }
 
 static int
@@ -704,6 +700,21 @@ make_request(struct tab *tab, struct get_req *req, int proto, const char *r)
 
 	/*
 	 * So the various load_*_url can `return make_request` and
+	 * do_load_url is happy.
+	 */
+	return 1;
+}
+
+static int
+make_fs_request(struct tab *tab, int type, const char *r)
+{
+	stop_tab(tab);
+	tab->id = tab_new_id();
+
+	ui_send_fs(type, tab->id, r, strlen(r)+1);
+
+	/*
+	 * So load_{about,file}_url can `return make_fs_request` and
 	 * do_load_url is happy.
 	 */
 	return 1;
