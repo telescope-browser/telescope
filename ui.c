@@ -163,7 +163,8 @@ restore_curs_x(struct buffer *buffer)
 		return;
 
 	if (vl->parent->data != NULL)
-		buffer->curs_x += utf8_swidth_between(vl->parent->line, vl->parent->data);
+		buffer->curs_x += utf8_swidth_between(vl->parent->line,
+		    vl->parent->data);
 	else {
 		prfx = line_prefixes[vl->parent->type].prfx1;
 		buffer->curs_x += utf8_swidth(prfx);
@@ -606,7 +607,8 @@ adjust_line(struct vline *vl, struct buffer *buffer)
 }
 
 static void
-redraw_window(WINDOW *win, int off, int height, int width, struct buffer *buffer)
+redraw_window(WINDOW *win, int off, int height, int width,
+    struct buffer *buffer)
 {
 	struct vline	*vl;
 	int		 l, onscreen;
