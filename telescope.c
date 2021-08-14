@@ -63,7 +63,7 @@ enum telescope_process {
 #define UNKNOWN_TYPE_OR_CSET	3
 #define UNKNOWN_PROTOCOL	4
 
-/* XXX: keep in sync with telescope.c:/^normalize_code/ */
+/* XXX: keep in sync with normalize_code */
 const char *err_pages[70] = {
 	[CANNOT_FETCH]		= "# Couldn't load the page\n",
 	[TOO_MUCH_REDIRECTS]	= "# Too much redirects\n",
