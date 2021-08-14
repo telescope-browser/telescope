@@ -663,6 +663,12 @@ to the value
 Valid options are:
 .Pp
 .Bl -tag -width twelveletters -compact
+.It autosave
+.Pq integer
+If greater than zero, save the session after the specified amount of
+seconds after some events happens
+.Pq new or closed tabs, visited a link ...
+Defaults to 20.
 .It dont-wrap-pre
 .Pq integer
 If nonzero, don't wrap preformatted blocks.
