@@ -12,8 +12,8 @@ Bug reports to: @PACKAGE_BUGREPORT@
 => gemini://geminispace.info			Gemini Search Engine (geminispace.info)
 => gopher://gopher.floodgap.com/7/v2/vs		Gopher Search Engine (Veronica-2)
 
-=> gemini://gemini.circumlunar.space/docs/	Gemini documentation
-=> gemini://gemini.circumlunar.space/software/	Gemini software
+=> gemini://gemini.circumlunar.space/		Gemini documentation
+=> gopher://gopher.floodgap.com/1/		Floodgap Systems Gopher Server
 
 => @PACKAGE_URL@				Telescope project page
 => about:help					Help
