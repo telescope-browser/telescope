@@ -14,12 +14,14 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "parser.h"
-#include "telescope.h"
-#include "ui.h"
+#include "compat.h"
 
 #include <stdlib.h>
 #include <string.h>
+
+#include "parser.h"
+#include "telescope.h"
+#include "ui.h"
 
 /*
  * Load a text/gemini page given the string page.  Always returns 0.
