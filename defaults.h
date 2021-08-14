@@ -18,14 +18,15 @@
 #define DEFAULTS_H
 
 extern char	*new_tab_url;
-extern int	 fill_column;
-extern int	 olivetti_mode;
-extern int	 enable_colors;
-extern int	 hide_pre_context;
-extern int	 hide_pre_blocks;
-extern int	 hide_pre_closing_line;
+
 extern int	 dont_wrap_pre;
 extern int	 emojify_link;
+extern int	 enable_colors;
+extern int	 fill_column;
+extern int	 hide_pre_blocks;
+extern int	 hide_pre_closing_line;
+extern int	 hide_pre_context;
+extern int	 olivetti_mode;
 extern int	 set_title;
 
 struct lineprefix {
