@@ -1,3 +1,9 @@
+2021-08-14  Omar Polo  <op@omarpolo.com>
+
+	* defaults.c: add `autosave' config option.
+
+	* telescope.c (autosave_timer): add an autosave timer to persist the session once in a while while telescope is running.
+
 2021-08-13  Omar Polo  <op@omarpolo.com>
 
 	* fs.c (handle_get_file): generate directory listings
