@@ -23,6 +23,7 @@
 #include "compl.h"
 #include "defaults.h"
 #include "minibuffer.h"
+#include "session.h"
 #include "telescope.h"
 #include "ui.h"
 #include "utf8.h"

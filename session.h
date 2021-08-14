@@ -14,34 +14,22 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef PARSER_H
-#define PARSER_H
+#ifndef SESSION_H
+#define SESSION_H
 
 #include "telescope.h"
 
-typedef void (*parserfn)(struct parser *);
+void		 switch_to_tab(struct tab *);
+unsigned int	 tab_new_id(void);
+struct tab	*new_tab(const char *, const char *base, struct tab *);
+void		 free_tab(struct tab *);
+void		 stop_tab(struct tab*);
 
-/* parser.c */
-int	 load_page_from_str(struct tab *, const char *);
+void		 save_session(void);
+void		 load_last_session(void);
 
-void	 parser_init(struct tab *, parserfn);
-int	 parser_parse(struct tab *, const char *, size_t);
-int	 parser_free(struct tab *);
-
-int	 parser_append(struct parser*, const char*, size_t);
-int	 parser_set_buf(struct parser*, const char*, size_t);
-int	 parser_foreach_line(struct parser*, const char*, size_t, parsechunkfn);
-
-/* parser_gemtext.c */
-void	 gemtext_initparser(struct parser*);
-
-/* parser_gophermap.c */
-void	 gophermap_initparser(struct parser *);
-
-/* parser_textpatch.c */
-void	 textpatch_initparser(struct parser *);
-
-/* parser_textplain.c */
-void	 textplain_initparser(struct parser*);
+void		 autosave_init(void);
+void		 autosave_timer(int, short, void *);
+void		 autosave_hook(void);
 
 #endif

@@ -320,19 +320,16 @@ void		 sandbox_ui_process(void);
 void		 sandbox_fs_process(void);
 
 /* telescope.c */
+extern int operating;
+
 void		 gopher_send_search_req(struct tab *, const char *);
 void		 load_url(struct tab *, const char *, const char *, int);
 void		 load_url_in_tab(struct tab *, const char *, const char *, int);
 int		 load_previous_page(struct tab*);
 int		 load_next_page(struct tab*);
-void		 switch_to_tab(struct tab *);
-unsigned int	 tab_new_id(void);
-struct tab	*new_tab(const char *, const char *base, struct tab *);
-void		 free_tab(struct tab *);
-void		 stop_tab(struct tab*);
 void		 add_to_bookmarks(const char*);
-void		 save_session(void);
-void		 autosave_hook(void);
+int		 ui_send_net(int, uint32_t, const void *, uint16_t);
+int		 ui_send_fs(int, uint32_t, const void *, uint16_t);
 
 /* tofu.c */
 void			 tofu_init(struct ohash*, unsigned int, ptrdiff_t);

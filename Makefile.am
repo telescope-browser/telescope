@@ -31,6 +31,8 @@ telescope_SOURCES =	cmd.c			\
 			parser_textpatch.c	\
 			parser_textplain.c	\
 			sandbox.c		\
+			session.c		\
+			session.h		\
 			telescope.c		\
 			telescope.h		\
 			tofu.c			\

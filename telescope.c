@@ -30,6 +30,7 @@
 #include "defaults.h"
 #include "minibuffer.h"
 #include "parser.h"
+#include "session.h"
 #include "telescope.h"
 #include "ui.h"
 
@@ -45,11 +46,9 @@ static const char *opts = "Cc:hnT:v";
 /*
  * Used to know when we're finished loading.
  */
-static int		 operating;
+int			 operating;
 
 static struct imsgev	*iev_fs, *iev_net;
-
-static struct event	 autosaveev;
 
 struct tabshead		 tabshead = TAILQ_HEAD_INITIALIZER(tabshead);
 struct proxylist	 proxies = TAILQ_HEAD_INITIALIZER(proxies);
@@ -108,7 +107,6 @@ static void		 handle_imsg_bookmark_ok(struct imsg*, size_t);
 static void		 handle_imsg_save_cert_ok(struct imsg*, size_t);
 static void		 handle_imsg_update_cert_ok(struct imsg *, size_t);
 static void		 handle_dispatch_imsg(int, short, void*);
-static int		 load_page_from_str(struct tab*, const char*);
 static int		 load_about_url(struct tab*, const char*);
 static int		 load_file_url(struct tab *, const char *);
 static int		 load_finger_url(struct tab *, const char *);
@@ -120,12 +118,7 @@ static int		 make_request(struct tab *, struct get_req *, int,
 			     const char *);
 static int		 make_fs_request(struct tab *, int, const char *);
 static int		 do_load_url(struct tab*, const char *, const char *);
-static void		 autosave_timer(int, short, void *);
-static void		 parse_session_line(char *, const char **, uint32_t *);
-static void		 load_last_session(void);
 static pid_t		 start_child(enum telescope_process, const char *, int);
-static int		 ui_send_net(int, uint32_t, const void *, uint16_t);
-static int		 ui_send_fs(int, uint32_t, const void *, uint16_t);
 
 static struct proto {
 	const char	*schema;
@@ -572,20 +565,6 @@ handle_dispatch_imsg(int fd, short ev, void *d)
 }
 
 static int
-load_page_from_str(struct tab *tab, const char *page)
-{
-	erase_buffer(&tab->buffer);
-	parser_init(tab, gemtext_initparser);
-	if (!tab->buffer.page.parse(&tab->buffer.page, page, strlen(page)))
-		die();
-	if (!tab->buffer.page.free(&tab->buffer.page))
-		die();
-	ui_on_tab_refresh(tab);
-	ui_on_tab_loaded(tab);
-	return 0;
-}
-
-static int
 load_about_url(struct tab *tab, const char *url)
 {
 	tab->trust = TS_UNKNOWN;
@@ -942,220 +921,10 @@ load_next_page(struct tab *tab)
 }
 
 void
-switch_to_tab(struct tab *tab)
-{
-	current_tab = tab;
-	tab->flags &= ~TAB_URGENT;
-
-	if (operating && tab->flags & TAB_LAZY)
-		load_url_in_tab(tab, tab->hist_cur->h, NULL, 0);
-}
-
-unsigned int
-tab_new_id(void)
-{
-	static uint32_t tab_counter;
-
-	return tab_counter++;
-}
-
-struct tab *
-new_tab(const char *url, const char *base, struct tab *after)
-{
-	struct tab	*tab;
-
-	autosave_hook();
-
-	if ((tab = calloc(1, sizeof(*tab))) == NULL) {
-		event_loopbreak();
-		return NULL;
-	}
-	tab->fd = -1;
-
-	TAILQ_INIT(&tab->hist.head);
-
-	TAILQ_INIT(&tab->buffer.head);
-	TAILQ_INIT(&tab->buffer.page.head);
-
-	tab->id = tab_new_id();
-	if (!operating)
-		tab->flags |= TAB_LAZY;
-	switch_to_tab(tab);
-
-	if (after != NULL)
-		TAILQ_INSERT_AFTER(&tabshead, after, tab, tabs);
-	else
-		TAILQ_INSERT_TAIL(&tabshead, tab, tabs);
-
-	load_url_in_tab(tab, url, base, 0);
-	return tab;
-}
-
-/*
- * Free every resource linked to the tab, including the tab itself.
- * Removes the tab from the tablist, but doesn't update the
- * current_tab though.
- */
-void
-free_tab(struct tab *tab)
-{
-	stop_tab(tab);
-
-	autosave_hook();
-
-	if (evtimer_pending(&tab->loadingev, NULL))
-		evtimer_del(&tab->loadingev);
-
-	TAILQ_REMOVE(&tabshead, tab, tabs);
-	free(tab);
-}
-
-void
-stop_tab(struct tab *tab)
-{
-	ui_send_net(IMSG_STOP, tab->id, NULL, 0);
-
-	if (tab->fd != -1) {
-		close(tab->fd);
-		tab->fd = -1;
-		free(tab->path);
-		tab->path = NULL;
-		load_page_from_str(tab, "Stopped.\n");
-	}
-}
-
-void
 add_to_bookmarks(const char *str)
 {
 	ui_send_fs(IMSG_BOOKMARK_PAGE, 0,
 	    str, strlen(str)+1);
-}
-
-void
-save_session(void)
-{
-	struct tab	*tab;
-	char		*t;
-	int		 flags;
-
-	ui_send_fs(IMSG_SESSION_START, 0, NULL, 0);
-
-	TAILQ_FOREACH(tab, &tabshead, tabs) {
-		flags = tab->flags;
-		if (tab == current_tab)
-			flags |= TAB_CURRENT;
-
-		t = tab->hist_cur->h;
-		ui_send_fs(IMSG_SESSION_TAB, flags, t, strlen(t)+1);
-
-		t = tab->buffer.page.title;
-		ui_send_fs(IMSG_SESSION_TAB_TITLE, 0, t, strlen(t)+1);
-	}
-
-	ui_send_fs(IMSG_SESSION_END, 0, NULL, 0);
-}
-
-static void
-autosave_timer(int fd, short event, void *data)
-{
-	save_session();
-}
-
-/*
- * Function to be called in "interesting" places where we may want to
- * schedule an autosave (like on new tab or before loading an url.)
- */
-void
-autosave_hook(void)
-{
-	struct timeval tv;
-
-	if (autosave <= 0)
-		return;
-
-	if (!evtimer_pending(&autosaveev, NULL)) {
-		tv.tv_sec = autosave;
-		tv.tv_usec = 0;
-
-		evtimer_add(&autosaveev, &tv);
-	}
-}
-
-/*
- * Parse a line of the session file.  The format is:
- *
- *	URL [flags,...] [title]\n
- */
-static void
-parse_session_line(char *line, const char **title, uint32_t *flags)
-{
-	char *s, *t, *ap;
-
-	*title = "";
-	*flags = 0;
-	if ((s = strchr(line, ' ')) == NULL)
-		return;
-
-	*s++ = '\0';
-
-        if ((t = strchr(s, ' ')) != NULL) {
-		*t++ = '\0';
-		*title = t;
-	}
-
-	while ((ap = strsep(&s, ",")) != NULL) {
-		if (*ap == '\0')
-			;
-		else if (!strcmp(ap, "current"))
-			*flags |= TAB_CURRENT;
-		else
-			message("unknown tab flag: %s", ap);
-	}
-}
-
-static void
-load_last_session(void)
-{
-	const char	*title;
-	char		*nl, *line = NULL;
-	uint32_t	 flags;
-	size_t		 linesize = 0;
-	ssize_t		 linelen;
-	FILE		*session;
-	struct tab	*tab, *curr = NULL;
-
-	if ((session = fopen(session_file, "r")) == NULL) {
-		/* first time? */
-		new_tab("about:new", NULL, NULL);
-		switch_to_tab(new_tab("about:help", NULL, NULL));
-		return;
-	}
-
-	while ((linelen = getline(&line, &linesize, session)) != -1) {
-                if ((nl = strchr(line, '\n')) != NULL)
-			*nl = '\0';
-		parse_session_line(line, &title, &flags);
-		if ((tab = new_tab(line, NULL, NULL)) == NULL)
-			err(1, "new_tab");
-                strlcpy(tab->buffer.page.title, title,
-		    sizeof(tab->buffer.page.title));
-		if (flags & TAB_CURRENT)
-			curr = tab;
-	}
-
-	if (ferror(session))
-		message("error reading %s: %s",
-		    session_file, strerror(errno));
-	fclose(session);
-	free(line);
-
-	if (curr != NULL)
-		switch_to_tab(curr);
-
-	if (last_time_crashed())
-		switch_to_tab(new_tab("about:crash", NULL, NULL));
-
-	return;
 }
 
 static pid_t
@@ -1195,7 +964,7 @@ start_child(enum telescope_process p, const char *argv0, int fd)
 	err(1, "execvp(%s)", argv0);
 }
 
-static int
+int
 ui_send_net(int type, uint32_t peerid, const void *data,
     uint16_t datalen)
 {
@@ -1203,7 +972,7 @@ ui_send_net(int type, uint32_t peerid, const void *data,
 	    datalen);
 }
 
-static int
+int
 ui_send_fs(int type, uint32_t peerid, const void *data, uint16_t datalen)
 {
 	return imsg_compose_event(iev_fs, type, peerid, 0, -1, data,
@@ -1338,7 +1107,7 @@ main(int argc, char * const *argv)
 	event_init();
 
 	/* Setup event handler for the autosave */
-	evtimer_set(&autosaveev, autosave_timer, NULL);
+	autosave_init();
 
 	/* Setup event handlers for pipes to fs/net */
 	iev_fs->events = EV_READ;
