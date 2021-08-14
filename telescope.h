@@ -328,6 +328,7 @@ void		 free_tab(struct tab *);
 void		 stop_tab(struct tab*);
 void		 add_to_bookmarks(const char*);
 void		 save_session(void);
+void		 autosave_hook(void);
 
 /* tofu.c */
 void			 tofu_init(struct ohash*, unsigned int, ptrdiff_t);

@@ -957,6 +957,8 @@ load_url_in_tab(struct tab *tab, const char *url, const char *base, int nohist)
 		return;
 	}
 
+	autosave_hook();
+
 	message("Loading %s...", url);
 	start_loading_anim(tab);
 	load_url(tab, url, base, nohist);
@@ -984,6 +986,8 @@ struct tab *
 new_tab(const char *url, const char *base, struct tab *after)
 {
 	struct tab	*tab;
+
+	autosave_hook();
 
 	if ((tab = calloc(1, sizeof(*tab))) == NULL) {
 		event_loopbreak();

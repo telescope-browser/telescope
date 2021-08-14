@@ -44,6 +44,8 @@ static const char *opts = "Cc:hnT:v";
 
 static struct imsgev	*iev_fs, *iev_net;
 
+static struct event	 autosaveev;
+
 struct tabshead		 tabshead = TAILQ_HEAD_INITIALIZER(tabshead);
 struct proxylist	 proxies = TAILQ_HEAD_INITIALIZER(proxies);
 
@@ -113,6 +115,7 @@ static int		 make_request(struct tab *, struct get_req *, int,
 			     const char *);
 static int		 make_fs_request(struct tab *, int, const char *);
 static int		 do_load_url(struct tab*, const char *, const char *);
+static void		 autosave_timer(int, short, void *);
 static void		 parse_session_line(char *, const char **, uint32_t *);
 static void		 load_last_session(void);
 static pid_t		 start_child(enum telescope_process, const char *, int);
@@ -928,6 +931,8 @@ free_tab(struct tab *tab)
 {
 	stop_tab(tab);
 
+	autosave_hook();
+
 	if (evtimer_pending(&tab->loadingev, NULL))
 		evtimer_del(&tab->loadingev);
 
@@ -978,6 +983,32 @@ save_session(void)
 	}
 
 	ui_send_fs(IMSG_SESSION_END, 0, NULL, 0);
+}
+
+static void
+autosave_timer(int fd, short event, void *data)
+{
+	save_session();
+}
+
+/*
+ * Function to be called in "interesting" places where we may want to
+ * schedule an autosave (like on new tab or before loading an url.)
+ */
+void
+autosave_hook(void)
+{
+	struct timeval tv;
+
+	if (autosave <= 0)
+		return;
+
+	if (!evtimer_pending(&autosaveev, NULL)) {
+		tv.tv_sec = autosave;
+		tv.tv_usec = 0;
+
+		evtimer_add(&autosaveev, &tv);
+	}
 }
 
 /*
@@ -1235,6 +1266,9 @@ main(int argc, char * const *argv)
 	load_certs(&certs);
 
 	event_init();
+
+	/* Setup event handler for the autosave */
+	evtimer_set(&autosaveev, autosave_timer, NULL);
 
 	/* Setup event handlers for pipes to fs/net */
 	iev_fs->events = EV_READ;

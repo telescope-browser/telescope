@@ -19,6 +19,7 @@
 
 extern char	*new_tab_url;
 
+extern int	 autosave;
 extern int	 dont_wrap_pre;
 extern int	 emojify_link;
 extern int	 enable_colors;

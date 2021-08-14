@@ -28,6 +28,7 @@
 
 char *new_tab_url = NULL;
 
+int autosave = 20;
 int dont_wrap_pre = 0;
 int emojify_link = 1;
 int enable_colors = 1;
@@ -490,6 +491,8 @@ config_setvari(const char *var, int val)
 		emojify_link = !!val;
 	} else if (!strcmp(var, "set-title")) {
 		set_title = !!val;
+	} else if (!strcmp(var, "autosave")) {
+		autosave = val;
 	} else {
 		return 0;
 	}
