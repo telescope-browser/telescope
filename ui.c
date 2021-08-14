@@ -894,7 +894,7 @@ redraw_tab(struct tab *tab)
 	doupdate();
 
 	if (set_title)
-		dprintf(1, "\033]0;%s - Telescope\a",
+		dprintf(1, "\033]2;%s - Telescope\a",
 		    current_tab->buffer.page.title);
 }
 
