@@ -120,9 +120,9 @@ extern int		 help_lines, help_cols;
 void		 save_excursion(struct excursion *, struct buffer *);
 void		 restore_excursion(struct excursion *, struct buffer *);
 void		 global_key_unbound(void);
+struct buffer	*current_buffer(void);
 struct vline	*adjust_line(struct vline *, struct buffer *);
 void		 start_loading_anim(struct tab *);
-struct buffer	*current_buffer(void);
 
 int		 ui_print_colors(void);
 int		 ui_init(void);
