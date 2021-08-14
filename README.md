@@ -1,13 +1,5 @@
 # Telescope
 
-```
- _______         __
-|_     _|.-----.|  |.-----.-----.----.-----.-----.-----.
-  |   |  |  -__||  ||  -__|__ --|  __|  _  |  _  |  -__|
-  |___|  |_____||__||_____|_____|____|_____|   __|_____|
-                                           |__|
-```
-
 Telescope is a Emacs/w3m-inspired browser for the "small internet"
 that supports Gemini, Gopher and Finger.
 
