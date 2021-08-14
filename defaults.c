@@ -27,14 +27,15 @@
 #include "ui.h"
 
 char *new_tab_url = NULL;
-int fill_column = 80;
-int olivetti_mode = 1;
-int enable_colors = 1;
-int hide_pre_context = 0;
-int hide_pre_blocks = 0;
-int hide_pre_closing_line = 0;
+
 int dont_wrap_pre = 0;
 int emojify_link = 1;
+int enable_colors = 1;
+int fill_column = 80;
+int hide_pre_blocks = 0;
+int hide_pre_closing_line = 0;
+int hide_pre_context = 0;
+int olivetti_mode = 1;
 int set_title = 1;
 
 struct lineprefix line_prefixes[] = {
