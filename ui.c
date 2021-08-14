@@ -204,14 +204,16 @@ readkey(void)
 	}
 
 	thiskey.cp = 0;
-	if ((unsigned int)thiskey.key < UINT8_MAX) {
-		while (1) {
-			if (!utf8_decode(&state, &thiskey.cp, (uint8_t)thiskey.key))
-				break;
-			if ((thiskey.key = wgetch(body)) == ERR) {
-				message("Error decoding user input");
-				return 0;
-			}
+
+	if ((unsigned int)thiskey.key >= UINT8_MAX)
+		return 1;
+
+	while (1) {
+		if (!utf8_decode(&state, &thiskey.cp, (uint8_t)thiskey.key))
+			break;
+		if ((thiskey.key = wgetch(body)) == ERR) {
+			message("Error decoding user input");
+			return 0;
 		}
 	}
 
