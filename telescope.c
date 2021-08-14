@@ -42,6 +42,11 @@ static struct option longopts[] = {
 
 static const char *opts = "Cc:hnT:v";
 
+/*
+ * Used to know when we're finished loading.
+ */
+static int		 operating;
+
 static struct imsgev	*iev_fs, *iev_net;
 
 static struct event	 autosaveev;
@@ -897,6 +902,21 @@ load_url(struct tab *tab, const char *url, const char *base, int nohist)
 		erase_buffer(&tab->buffer);
 }
 
+void
+load_url_in_tab(struct tab *tab, const char *url, const char *base, int nohist)
+{
+	if (!operating) {
+		load_url(tab, url, base, nohist);
+		return;
+	}
+
+	autosave_hook();
+
+	message("Loading %s...", url);
+	start_loading_anim(tab);
+	load_url(tab, url, base, nohist);
+}
+
 int
 load_previous_page(struct tab *tab)
 {
@@ -919,6 +939,56 @@ load_next_page(struct tab *tab)
 	tab->hist_cur = h;
 	do_load_url(tab, h->h, NULL);
 	return 1;
+}
+
+void
+switch_to_tab(struct tab *tab)
+{
+	current_tab = tab;
+	tab->flags &= ~TAB_URGENT;
+
+	if (operating && tab->flags & TAB_LAZY)
+		load_url_in_tab(tab, tab->hist_cur->h, NULL, 0);
+}
+
+unsigned int
+tab_new_id(void)
+{
+	static uint32_t tab_counter;
+
+	return tab_counter++;
+}
+
+struct tab *
+new_tab(const char *url, const char *base, struct tab *after)
+{
+	struct tab	*tab;
+
+	autosave_hook();
+
+	if ((tab = calloc(1, sizeof(*tab))) == NULL) {
+		event_loopbreak();
+		return NULL;
+	}
+	tab->fd = -1;
+
+	TAILQ_INIT(&tab->hist.head);
+
+	TAILQ_INIT(&tab->buffer.head);
+	TAILQ_INIT(&tab->buffer.page.head);
+
+	tab->id = tab_new_id();
+	if (!operating)
+		tab->flags |= TAB_LAZY;
+	switch_to_tab(tab);
+
+	if (after != NULL)
+		TAILQ_INSERT_AFTER(&tabshead, after, tab, tabs);
+	else
+		TAILQ_INSERT_TAIL(&tabshead, tab, tabs);
+
+	load_url_in_tab(tab, url, base, 0);
+	return tab;
 }
 
 /*
@@ -1287,6 +1357,7 @@ main(int argc, char * const *argv)
 			new_tab(url, NULL, NULL);
 
 		sandbox_ui_process();
+		operating = 1;
 		ui_main_loop();
 		ui_end();
 	}

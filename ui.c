@@ -72,11 +72,6 @@ static void		 redraw_tab(struct tab*);
 static void		 update_loading_anim(int, short, void*);
 static void		 stop_loading_anim(struct tab*);
 
-/*
- * Used to know when we're finished loading.
- */
-static int		 operating;
-
 static int		 should_rearrange_windows;
 static int		 too_small;
 static int		 x_offset;
@@ -100,8 +95,6 @@ static int		 side_window;
 static int		 in_side_window;
 
 static struct timeval	loadingev_timer = { 0, 250000 };
-
-static uint32_t		 tab_counter;
 
 static char	keybuf[64];
 
@@ -953,71 +946,6 @@ stop_loading_anim(struct tab *tab)
 		wrefresh(echoarea);
 }
 
-void
-load_url_in_tab(struct tab *tab, const char *url, const char *base, int nohist)
-{
-	if (!operating) {
-		load_url(tab, url, base, nohist);
-		return;
-	}
-
-	autosave_hook();
-
-	message("Loading %s...", url);
-	start_loading_anim(tab);
-	load_url(tab, url, base, nohist);
-
-	redraw_tab(tab);
-}
-
-void
-switch_to_tab(struct tab *tab)
-{
-	current_tab = tab;
-	tab->flags &= ~TAB_URGENT;
-
-	if (operating && tab->flags & TAB_LAZY)
-		load_url_in_tab(tab, tab->hist_cur->h, NULL, 0);
-}
-
-unsigned int
-tab_new_id(void)
-{
-	return tab_counter++;
-}
-
-struct tab *
-new_tab(const char *url, const char *base, struct tab *after)
-{
-	struct tab	*tab;
-
-	autosave_hook();
-
-	if ((tab = calloc(1, sizeof(*tab))) == NULL) {
-		event_loopbreak();
-		return NULL;
-	}
-	tab->fd = -1;
-
-	TAILQ_INIT(&tab->hist.head);
-
-	TAILQ_INIT(&tab->buffer.head);
-	TAILQ_INIT(&tab->buffer.page.head);
-
-	tab->id = tab_new_id();
-	if (!operating)
-		tab->flags |= TAB_LAZY;
-	switch_to_tab(tab);
-
-	if (after != NULL)
-		TAILQ_INSERT_AFTER(&tabshead, after, tab, tabs);
-	else
-		TAILQ_INSERT_TAIL(&tabshead, tab, tabs);
-
-	load_url_in_tab(tab, url, base, 0);
-	return tab;
-}
-
 int
 ui_print_colors(void)
 {
@@ -1140,7 +1068,6 @@ ui_init()
 void
 ui_main_loop(void)
 {
-	operating = 1;
 	switch_to_tab(current_tab);
 	redraw_tab(current_tab);
 

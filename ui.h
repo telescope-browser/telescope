@@ -122,11 +122,7 @@ void		 restore_excursion(struct excursion *, struct buffer *);
 void		 global_key_unbound(void);
 struct vline	*adjust_line(struct vline *, struct buffer *);
 void		 start_loading_anim(struct tab *);
-void		 load_url_in_tab(struct tab *, const char *, const char *, int);
-void		 switch_to_tab(struct tab *);
 struct buffer	*current_buffer(void);
-struct tab	*new_tab(const char *, const char *base, struct tab *);
-unsigned int	 tab_new_id(void);
 
 int		 ui_print_colors(void);
 int		 ui_init(void);

@@ -322,8 +322,12 @@ void		 sandbox_fs_process(void);
 /* telescope.c */
 void		 gopher_send_search_req(struct tab *, const char *);
 void		 load_url(struct tab *, const char *, const char *, int);
+void		 load_url_in_tab(struct tab *, const char *, const char *, int);
 int		 load_previous_page(struct tab*);
 int		 load_next_page(struct tab*);
+void		 switch_to_tab(struct tab *);
+unsigned int	 tab_new_id(void);
+struct tab	*new_tab(const char *, const char *base, struct tab *);
 void		 free_tab(struct tab *);
 void		 stop_tab(struct tab*);
 void		 add_to_bookmarks(const char*);
