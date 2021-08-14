@@ -640,33 +640,63 @@ load_gemini_url(struct tab *tab, const char *url)
 	return make_request(tab, &req, PROTO_GEMINI, tab->hist_cur->h);
 }
 
+static inline const char *
+gopher_skip_selector(const char *path, int *ret_type)
+{
+	*ret_type = 0;
+
+	if (!strcmp(path, "/") || *path == '\0') {
+		*ret_type = '1';
+		return path;
+	}
+
+	if (*path != '/')
+		return path;
+	path++;
+
+	switch (*ret_type = *path) {
+	case '0':
+	case '1':
+	case '7':
+		break;
+
+	default:
+		*ret_type = 0;
+		path -= 1;
+		return path;
+	}
+
+	path++;
+	if (*path == '/')
+		path++;
+
+	return path;
+}
+
 static int
 load_gopher_url(struct tab *tab, const char *url)
 {
 	struct get_req	 req;
+	int		 type;
 	const char	*path;
 
 	memset(&req, 0, sizeof(req));
 	strlcpy(req.host, tab->uri.host, sizeof(req.host));
 	strlcpy(req.port, tab->uri.port, sizeof(req.host));
 
-	path = tab->uri.path;
-	if (!strcmp(path, "/") || *path == '\0') {
-		/* expect the top directory to be a gophermap */
-		parser_init(tab, gophermap_initparser);
-	} else if (has_prefix(path, "/1/")) {
-		/* gophermap menu/submenu */
-		parser_init(tab, gophermap_initparser);
-		path += 2;
-	} else if (has_prefix(path, "/0/")) {
+	path = gopher_skip_selector(tab->uri.path, &type);
+	switch (type) {
+	case '0':
 		parser_init(tab, textplain_initparser);
-		path += 2;
-	} else if (has_prefix(path, "/7/")) {
-		/* show input request if there is no query */
+		break;
+	case '1':
+		parser_init(tab, gophermap_initparser);
+		break;
+	case '7':
 		ui_require_input(tab, 0, PROTO_GOPHER);
 		return load_page_from_str(tab, err_pages[10]);
-	} else {
-		return 0;
+	default:
+		return load_page_from_str(tab, "Unknown gopher selector");
 	}
 
 	strlcpy(req.req, path, sizeof(req.req));
