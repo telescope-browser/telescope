@@ -1,3 +1,7 @@
+2021-08-15  Omar Polo  <op@omarpolo.com>
+
+	* fs.c (last_time_crashed): improve crash detection
+
 2021-08-14  Omar Polo  <op@omarpolo.com>
 
 	* defaults.c: add `autosave' config option.
