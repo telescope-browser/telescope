@@ -17,7 +17,9 @@
 #include "compat.h"
 
 #include <sys/socket.h>
+#include <sys/wait.h>
 
+#include <errno.h>
 #include <getopt.h>
 #include <signal.h>
 #include <stdio.h>
@@ -990,11 +992,13 @@ int
 main(int argc, char * const *argv)
 {
 	struct imsgev	 net_ibuf, fs_ibuf;
+	pid_t		 pid;
 	int		 pipe2net[2], pipe2fs[2];
 	int		 ch, configtest = 0, fail = 0;
 	int		 has_url = 0;
 	int		 proc = -1;
 	int		 sessionfd;
+	int		 status;
 	char		 path[PATH_MAX];
 	const char	*url = NEW_TAB_URL;
 	const char	*argv0;
@@ -1133,6 +1137,16 @@ main(int argc, char * const *argv)
 	ui_send_net(IMSG_QUIT, 0, NULL, 0);
 	imsg_flush(&iev_fs->ibuf);
 	imsg_flush(&iev_net->ibuf);
+
+	/* wait for children to terminate */
+	do {
+		pid = wait(&status);
+		if (pid == -1) {
+			if (errno != EINTR && errno != ECHILD)
+				err(1, "wait");
+		} else if (WIFSIGNALED(status))
+			warnx("child terminated; signal %d", WTERMSIG(status));
+	} while (pid != -1 || (pid == -1 && errno == EINTR));
 
 	close(sessionfd);
 

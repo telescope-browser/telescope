@@ -316,6 +316,8 @@ handle_get_file(struct imsg *imsg, size_t datalen)
 static void
 handle_quit(struct imsg *imsg, size_t datalen)
 {
+	unlink(crashed_file);
+
 	event_loopbreak();
 }
 
@@ -592,17 +594,25 @@ fs_main(void)
 
 
 
+/*
+ * Check if the last time telescope crashed.  The check is done by
+ * looking at `crashed_file': if it exists then last time we crashed.
+ * Then, while here, touch the file too.  During IMSG_QUIT we'll
+ * remove it.
+ */
 int
 last_time_crashed(void)
 {
-	int fd;
+	int fd, crashed = 1;
 
-	if ((fd = open(crashed_file, O_RDONLY)) == -1)
-		return 0;
+	if (unlink(crashed_file) == -1 && errno == ENOENT)
+		crashed = 0;
 
+	if ((fd = open(crashed_file, O_CREAT|O_WRONLY, 0600)) == -1)
+		return crashed;
 	close(fd);
-	unlink(crashed_file);
-	return 1;
+
+	return crashed;
 }
 
 int
