@@ -259,9 +259,9 @@ handle_check_cert_user_choice(int accept, struct tab *tab)
 		 * trust the certificate for this session only.  If
 		 * the page results in a redirect while we're asking
 		 * the user to save, we'll end up with an invalid
-		 * tabid (one request == one tab id) and crash.  It
-		 * also makes sense to save it for the current session
-		 * if the user accepted it.
+		 * tabid (one request == one tab id).  It also makes
+		 * sense to save it for the current session if the
+		 * user accepted it.
 		 */
 		tofu_temp_trust(&certs, tab->uri.host, tab->uri.port, tab->cert);
 
