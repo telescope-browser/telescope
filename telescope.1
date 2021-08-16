@@ -149,6 +149,23 @@ Gemini is fully supported, with the exception of client-certificates.
 Gopher support is limited to items type 0, 1 and 7.
 All text is assumed to be encoded in UTF-8 (or ASCII).
 .El
+.Pp
+User-entered URLs, given as argument on the command line or entered
+with
+.Ic load-url ,
+are intepreted with a simple heuristic:
+.Bl -bullet -compact
+.It
+if it's a proper absolute URL then use it as-is,
+.It
+if it starts with
+.Dq ./
+or
+.Dq /
+assume it's a file:// URL,
+.It
+otherwise assume it's a Gemini URL.
+.El
 .Sh DEFAULT KEY BINDINGS
 The default key bindings are very similar to GNU Emacs, but care has
 been taken to include also bindings familiar for
