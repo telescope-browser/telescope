@@ -930,6 +930,46 @@ add_to_bookmarks(const char *str)
 	    str, strlen(str)+1);
 }
 
+/*
+ *  Given a user-entered URL, apply some heuristics to use it:
+ *
+ *  - if it's a proper url use it
+ *  - if it starts with a `./' or a `/' assume its a file:// url
+ *  - assume it's a gemini:// url
+ *
+ *  `ret' (of which len is the size) will be filled with the resulting
+ *  url.
+ */
+void
+humanify_url(const char *raw, char *ret, size_t len)
+{
+	struct phos_uri	uri;
+	char		buf[PATH_MAX];
+
+	if (phos_parse_absolute_uri(raw, &uri)) {
+		strlcpy(ret, raw, len);
+		return;
+	}
+
+	if (has_prefix(raw, "./")) {
+		strlcpy(ret, "file://", len);
+		getcwd(buf, sizeof(buf));
+		strlcat(ret, buf, len);
+		strlcat(ret, "/", len);
+		strlcat(ret, raw+2, len);
+		return;
+	}
+
+	if (*raw == '/') {
+		strlcpy(ret, "file://", len);
+		strlcat(ret, raw, len);
+		return;
+	}
+
+	strlcpy(ret, "gemini://", len);
+	strlcat(ret, raw, len);
+}
+
 static pid_t
 start_child(enum telescope_process p, const char *argv0, int fd)
 {
@@ -1002,8 +1042,7 @@ main(int argc, char * const *argv)
 	int		 proc = -1;
 	int		 sessionfd;
 	int		 status;
-	char		 path[PATH_MAX];
-	const char	*url = NEW_TAB_URL;
+	char		 path[PATH_MAX], url[GEMINI_URL_LEN+1];
 	const char	*argv0;
 
 	argv0 = argv[0];
@@ -1068,7 +1107,7 @@ main(int argc, char * const *argv)
 
 	if (argc != 0) {
 		has_url = 1;
-		url = argv[0];
+		humanify_url(argv[0], url, sizeof(url));
 	}
 
 	/* setup keys before reading the config */

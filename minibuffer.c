@@ -221,9 +221,13 @@ ir_select_gopher(void)
 void
 lu_select(void)
 {
+	char url[GEMINI_URL_LEN+1];
+
 	exit_minibuffer();
 	minibuffer_hist_save_entry();
-	load_url_in_tab(current_tab, ministate.buf, NULL, 0);
+
+	humanify_url(ministate.buf, url, sizeof(url));
+	load_url_in_tab(current_tab, url, NULL, 0);
 }
 
 void

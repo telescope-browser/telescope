@@ -547,8 +547,6 @@ cmd_load_url(struct buffer *buffer)
 	enter_minibuffer(sensible_self_insert, lu_select, exit_minibuffer,
 	    &lu_history, NULL, NULL);
 	strlcpy(ministate.prompt, "Load URL: ", sizeof(ministate.prompt));
-	strlcpy(ministate.buf, "gemini://", sizeof(ministate.buf));
-	cmd_move_end_of_line(&ministate.buffer);
 }
 
 void
