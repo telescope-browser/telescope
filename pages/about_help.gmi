@@ -26,7 +26,7 @@ Telescope is documented carefully, so please refer to the manual page to know mo
 
 ## Operate the Telescope
 
-By default Telescope includes various keys inspired from either Emacs or vi.  However, knowledge of these editors is not required.  Here’s a quick list of essential commands
+By default Telescope includes various keys inspired from either Emacs or vi.  However, knowledge of these editors is not required.  Here’s a list of essential commands
 
 * > to prompt for a URL;
 * < to edit the current URL;
@@ -80,8 +80,8 @@ Telescope supports custom protocol proxies (proxies that translate between proto
 
 Configuring telescope to use a proxy is easy, just drop something like the following to your configuration file:
 
-```Example of protocol proxy configuration for HTTP/S
-proxy "http"  via "gemini://127.0.0.1:1965"
+```Example of protocol proxy configuration for http and https
+proxy "http" via "gemini://127.0.0.1:1965"
 proxy "https" via "gemini://127.0.0.1:1965"
 ```
 
