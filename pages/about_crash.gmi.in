@@ -4,13 +4,13 @@ It seems that Telescope crashed last time!  Please consider reporting this bug s
 
 => mailto:@PACKAGE_BUGREPORT@	@PACKAGE_BUGREPORT@
 
-When reporting a bug, its useful to include the following information, otherwise it won’t be helpful:
+When reporting a bug, please include the following information, otherwise it won’t be helpful:
 
 * Operating system
 * Telescope version (i.e. @PACKAGE_STRING@)
 * how to reproduce the crash, if known
 
-In addition, the backtrace (i.e. the state of the program at the moment of the crash) contains invaluable data to unveil the source of the bug.  Obtaining a backtrace is usually simple, but unfortunately depends on your system.
+If possible, a backtrace (the state of the program when it crashed) contains invaluable data to unveil the source of the bug.  Obtaining a backtrace is usually simple, but unfortunately depends on your system.
 
 On most system, you should find a file named ‘telescope.core’ or ‘<number>.core’ or just ‘core’ in the directory where you launched telescope (probably your home).
 
@@ -37,7 +37,7 @@ in particular the “Examining a core dump” section.
 At this point you should be at the GDB prompt.  Just type ‘bt’, press enter and copy all the output in a mail to @PACKAGE_BUGREPORT@.
 
 > (gdb) bt
-> ...prints lots of useful information...
+> ...lots of useful information...
 > (gdb)
 
 To quit gdb, just type ‘q’ and enter.
