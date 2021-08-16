@@ -92,38 +92,38 @@ const char *err_pages[70] = {
 
 static void		 die(void) __attribute__((__noreturn__));
 static struct tab	*tab_by_id(uint32_t);
-static void		 handle_imsg_err(struct imsg*, size_t);
-static void		 handle_imsg_check_cert(struct imsg*, size_t);
+static void		 handle_imsg_err(struct imsg *, size_t);
+static void		 handle_imsg_check_cert(struct imsg *, size_t);
 static void		 handle_check_cert_user_choice(int, struct tab *);
 static void		 handle_maybe_save_new_cert(int, struct tab *);
-static void		 handle_imsg_got_code(struct imsg*, size_t);
-static void		 handle_imsg_got_meta(struct imsg*, size_t);
+static void		 handle_imsg_got_code(struct imsg *, size_t);
+static void		 handle_imsg_got_meta(struct imsg *, size_t);
 static void		 handle_maybe_save_page(int, struct tab *);
 static void		 handle_save_page_path(const char *, struct tab *);
-static void		 handle_imsg_file_opened(struct imsg*, size_t);
-static void		 handle_imsg_buf(struct imsg*, size_t);
-static void		 handle_imsg_eof(struct imsg*, size_t);
-static void		 handle_imsg_bookmark_ok(struct imsg*, size_t);
-static void		 handle_imsg_save_cert_ok(struct imsg*, size_t);
+static void		 handle_imsg_file_opened(struct imsg *, size_t);
+static void		 handle_imsg_buf(struct imsg *, size_t);
+static void		 handle_imsg_eof(struct imsg *, size_t);
+static void		 handle_imsg_bookmark_ok(struct imsg *, size_t);
+static void		 handle_imsg_save_cert_ok(struct imsg *, size_t);
 static void		 handle_imsg_update_cert_ok(struct imsg *, size_t);
-static void		 handle_dispatch_imsg(int, short, void*);
-static int		 load_about_url(struct tab*, const char*);
+static void		 handle_dispatch_imsg(int, short, void *);
+static int		 load_about_url(struct tab *, const char *);
 static int		 load_file_url(struct tab *, const char *);
 static int		 load_finger_url(struct tab *, const char *);
-static int		 load_gemini_url(struct tab*, const char*);
+static int		 load_gemini_url(struct tab *, const char *);
 static int		 load_gopher_url(struct tab *, const char *);
 static int		 load_via_proxy(struct tab *, const char *,
 			     struct proxy *);
 static int		 make_request(struct tab *, struct get_req *, int,
 			     const char *);
 static int		 make_fs_request(struct tab *, int, const char *);
-static int		 do_load_url(struct tab*, const char *, const char *);
+static int		 do_load_url(struct tab *, const char *, const char *);
 static pid_t		 start_child(enum telescope_process, const char *, int);
 
 static struct proto {
 	const char	*schema;
 	const char	*port;
-	int		 (*loadfn)(struct tab*, const char*);
+	int		 (*loadfn)(struct tab *, const char *);
 } protos[] = {
 	{"about",	NULL,	load_about_url},
 	{"file",	NULL,	load_file_url},
@@ -265,7 +265,8 @@ handle_check_cert_user_choice(int accept, struct tab *tab)
 		 * sense to save it for the current session if the
 		 * user accepted it.
 		 */
-		tofu_temp_trust(&certs, tab->uri.host, tab->uri.port, tab->cert);
+		tofu_temp_trust(&certs, tab->uri.host, tab->uri.port,
+		    tab->cert);
 
 		ui_yornp("Save the new certificate?",
 		    handle_maybe_save_new_cert, tab);
@@ -380,8 +381,9 @@ handle_imsg_got_meta(struct imsg *imsg, size_t datalen)
 		if (setup_parser_for(tab)) {
 			ui_send_net(IMSG_PROCEED, tab->id, NULL, 0);
 		} else {
-			load_page_from_str(tab, err_pages[UNKNOWN_TYPE_OR_CSET]);
-			ui_yornp("Can't display page, wanna save?",
+			load_page_from_str(tab,
+			    err_pages[UNKNOWN_TYPE_OR_CSET]);
+			ui_yornp("Can't display page, save it?",
 			    handle_maybe_save_page, tab);
 		}
 	} else if (tab->code < 40) { /* 3x */
@@ -863,7 +865,8 @@ load_url(struct tab *tab, const char *url, const char *base, int nohist)
 			hist_clear_forward(&tab->hist,
 			    TAILQ_NEXT(tab->hist_cur, entries));
 
-		if ((tab->hist_cur = calloc(1, sizeof(*tab->hist_cur))) == NULL) {
+		if ((tab->hist_cur = calloc(1, sizeof(*tab->hist_cur)))
+		    == NULL) {
 			event_loopbreak();
 			return;
 		}
@@ -1075,7 +1078,7 @@ main(int argc, char * const *argv)
 
 	config_init();
 	parseconfig(path, fail);
-	if (configtest){
+	if (configtest) {
 		puts("config OK");
 		exit(0);
 	}
