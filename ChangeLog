@@ -1,3 +1,9 @@
+2021-08-16  Omar Polo  <op@omarpolo.com>
+
+	* telescope.c (humanify_url): add heuristics for human-provided URLs
+
+	* cmd.c (cmd_load_url): don't add ``gemini://'' on load_url
+
 2021-08-15  Omar Polo  <op@omarpolo.com>
 
 	* fs.c (last_time_crashed): improve crash detection
