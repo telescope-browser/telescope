@@ -1,3 +1,7 @@
+2021-08-18  Omar Polo  <op@omarpolo.com>
+
+	* defaults.c (load_default_keys): bind M-[ and M-] to tab-move-to and tab-move
+
 2021-08-16  Omar Polo  <op@omarpolo.com>
 
 	* telescope.c (humanify_url): add heuristics for human-provided URLs
