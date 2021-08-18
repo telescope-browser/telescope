@@ -3,6 +3,13 @@
 Telescope is a Emacs/w3m-inspired browser for the "small internet"
 that supports Gemini, Gopher and Finger.
 
+Features:
+
+ - tabs
+ - bookmarks
+ - privsep
+ - minibuffer live narrowing
+
 There are still various things missing or, if you prefer, various
 things that you can help develop :)
 
