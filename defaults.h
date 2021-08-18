@@ -29,6 +29,7 @@ extern int	 hide_pre_closing_line;
 extern int	 hide_pre_context;
 extern int	 olivetti_mode;
 extern int	 set_title;
+extern int	 tab_bar_show;
 
 struct lineprefix {
 	const char	*prfx1;

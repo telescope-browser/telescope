@@ -38,6 +38,7 @@ int hide_pre_closing_line = 0;
 int hide_pre_context = 0;
 int olivetti_mode = 1;
 int set_title = 1;
+int tab_bar_show = 1;
 
 struct lineprefix line_prefixes[] = {
 	[LINE_TEXT] =		{ "",		"" },
@@ -495,6 +496,13 @@ config_setvari(const char *var, int val)
 		set_title = !!val;
 	} else if (!strcmp(var, "autosave")) {
 		autosave = val;
+	} else if (!strcmp(var, "tab-bar-show")) {
+		if (val < 0)
+			tab_bar_show = -1;
+		else if (val == 0)
+			tab_bar_show = 0;
+		else
+			tab_bar_show = 1;
 	} else {
 		return 0;
 	}

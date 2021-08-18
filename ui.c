@@ -74,6 +74,7 @@ static void		 update_loading_anim(int, short, void*);
 static void		 stop_loading_anim(struct tab*);
 
 static int		 should_rearrange_windows;
+static int		 show_tab_bar;
 static int		 too_small;
 static int		 x_offset;
 
@@ -294,12 +295,24 @@ handle_resize_nodelay(int s, short ev, void *d)
 	rearrange_windows();
 }
 
+static inline int
+should_show_tab_bar(void)
+{
+	if (tab_bar_show == -1)
+		return 0;
+	if (tab_bar_show == 0)
+		return 1;
+
+	return TAILQ_NEXT(TAILQ_FIRST(&tabshead), tabs) != NULL;
+}
+
 static void
 rearrange_windows(void)
 {
 	int		 lines;
 
 	should_rearrange_windows = 0;
+	show_tab_bar = should_show_tab_bar();
 
 	lines = LINES;
 
@@ -326,26 +339,31 @@ rearrange_windows(void)
 	mvwin(modeline, --lines, 0);
 	wresize(modeline, 1, COLS);
 
-	body_lines = --lines;
+	body_lines = show_tab_bar ? --lines : lines;
 	body_cols = COLS;
 
+	/*
+	 * Here we make the assumption that show_tab_bar is either 0
+	 * or 1, and reuse that as argument to mvwin.
+	 */
 	if (side_window) {
 		help_cols = 0.3 * COLS;
 		help_lines = lines;
-		mvwin(help, 1, 0);
+		mvwin(help, show_tab_bar, 0);
 		wresize(help, help_lines, help_cols);
 
 		wrap_page(&helpwin, help_cols);
 
 		body_cols = COLS - help_cols - 1;
-		mvwin(body, 1, help_cols);
+		mvwin(body, show_tab_bar, help_cols);
 	} else
-		mvwin(body, 1, 0);
+		mvwin(body, show_tab_bar, 0);
 
 	update_x_offset();
 	wresize(body, body_lines, body_cols);
 
-	wresize(tabline, 1, COLS);
+	if (show_tab_bar)
+		wresize(tabline, 1, COLS);
 
 	wrap_page(&current_tab->buffer, body_cols);
 	redraw_tab(current_tab);
@@ -879,7 +897,9 @@ redraw_tab(struct tab *tab)
 		wnoutrefresh(help);
 	}
 
-	redraw_tabline();
+	if (show_tab_bar)
+		redraw_tabline();
+
 	redraw_body(tab);
 	redraw_modeline(tab);
 	redraw_minibuffer();
@@ -1078,7 +1098,9 @@ ui_on_tab_loaded(struct tab *tab)
 	stop_loading_anim(tab);
 	message("Loaded %s", tab->hist_cur->h);
 
-	redraw_tabline();
+	if (show_tab_bar)
+		redraw_tabline();
+
 	wrefresh(tabline);
 	place_cursor(0);
 }
