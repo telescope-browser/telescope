@@ -53,6 +53,7 @@ new_tab(const char *url, const char *base, struct tab *after)
 {
 	struct tab	*tab;
 
+	ui_schedule_redraw();
 	autosave_hook();
 
 	if ((tab = calloc(1, sizeof(*tab))) == NULL) {
@@ -89,7 +90,7 @@ void
 free_tab(struct tab *tab)
 {
 	stop_tab(tab);
-
+	ui_schedule_redraw();
 	autosave_hook();
 
 	if (evtimer_pending(&tab->loadingev, NULL))
