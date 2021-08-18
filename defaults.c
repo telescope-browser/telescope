@@ -386,6 +386,8 @@ load_default_keys(void)
 	global_set_key("M-t",		cmd_tab_select);
 	global_set_key("[",		cmd_tab_previous);
 	global_set_key("]",		cmd_tab_next);
+	global_set_key("M-[",		cmd_tab_move_to);
+	global_set_key("M-]",		cmd_tab_move);
 	global_set_key("M-l",		cmd_link_select);
 	global_set_key("M-/",		cmd_swiper);
 	global_set_key("t",		cmd_toc);
