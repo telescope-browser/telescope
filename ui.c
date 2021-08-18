@@ -1025,21 +1025,18 @@ ui_init()
 	nonl();
 	intrflush(stdscr, FALSE);
 
-	if ((tabline = newwin(1, COLS, 0, 0)) == NULL)
+	if ((tabline = newwin(1, 1, 0, 0)) == NULL)
 		return 0;
-	if ((body = newwin(LINES - 3, COLS, 1, 0)) == NULL)
+	if ((body = newwin(1, 1, 0, 0)) == NULL)
 		return 0;
-	if ((modeline = newwin(1, COLS, LINES-2, 0)) == NULL)
+	if ((modeline = newwin(1, 1, 0, 0)) == NULL)
 		return 0;
-	if ((echoarea = newwin(1, COLS, LINES-1, 0)) == NULL)
+	if ((echoarea = newwin(1, 1, 0, 0)) == NULL)
 		return 0;
-	if ((minibuffer = newwin(1, COLS, LINES-1, 0)) == NULL)
+	if ((minibuffer = newwin(1, 1, 0, 0)) == NULL)
 		return 0;
-	if ((help = newwin(1, 1, 1, 0)) == NULL)
+	if ((help = newwin(1, 1, 0, 0)) == NULL)
 		return 0;
-
-	body_lines = LINES-3;
-	body_cols = COLS;
 
 	wbkgd(body, body_face.body);
 	wbkgd(echoarea, minibuffer_face.background);
@@ -1070,7 +1067,7 @@ void
 ui_main_loop(void)
 {
 	switch_to_tab(current_tab);
-	redraw_tab(current_tab);
+	rearrange_windows();
 
 	event_dispatch();
 }
