@@ -8,6 +8,10 @@ AC_PROG_YACC
 
 PKG_PROG_PKG_CONFIG
 
+AC_ARG_WITH([libimsg],
+	AS_HELP_STRING([--with-libimsg],
+		[Build with imsg-compat library (default: disabled)]))
+
 AC_REPLACE_FUNCS([
 	asprintf \
 	err \
@@ -74,9 +78,23 @@ case "$host_os" in
 		;;
 esac
 
-AC_CHECK_LIB(util, imsg_init, [], [
-	AC_LIBOBJ(imsg)
-	AC_LIBOBJ(imsg-buffer)
+AS_IF([test "x$with_libimsg" = "xyes"], [
+	PKG_CHECK_MODULES([libimsg], [libimsg], [
+		CFLAGS="$libimsg_CFLAGS $CFLAGS"
+		LIBS="$libimsg_LIBS $LIBS"
+	])
+])
+
+AC_SEARCH_LIBS([imsg_init], [util], [
+		AC_DEFINE([HAVE_IMSG], 1,
+			[Define to 1 if you have imsg functions (-lutil or -limsg).])
+	], [
+		AC_LIBOBJ(imsg)
+		AC_LIBOBJ(imsg-buffer)
+	]
+)
+
+AC_CHECK_LIB(util, ohash_init, [], [
 	AC_LIBOBJ(ohash)
 	AC_LIBOBJ(fmt_scaled)
 ])

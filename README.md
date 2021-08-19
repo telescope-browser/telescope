@@ -83,6 +83,12 @@ To build from a release tarball just execute:
 	make
 	sudo make install
 
+The configure script has optional support for building with libraries
+provided by your distribution instead of internal compatibility funcs:
+
+ - `--with-libimsg`: link with the
+   [imsg-compat](https://github.com/bsd-ac/imsg-compat) library
+
 If you want to build from the git checkout, something that's
 discouraged for users that don't intend to hack on telescope
 

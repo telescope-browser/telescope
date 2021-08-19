@@ -45,12 +45,16 @@
 # include "compat/queue.h"
 #endif
 
-#ifdef HAVE_LIBUTIL
+#ifdef HAVE_IMSG
 # include <imsg.h>
+#else
+# include "compat/imsg.h"
+#endif
+
+#ifdef HAVE_LIBUTIL
 # include <ohash.h>
 # include <util.h>
 #else
-# include "compat/imsg.h"
 # include "compat/ohash.h"
 # define FMT_SCALED_STRSIZE      7       /* minus sign, 4 digits, suffix, null byte */
 int		 fmt_scaled(long long, char *);
