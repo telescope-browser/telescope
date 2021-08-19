@@ -52,6 +52,10 @@ AC_SEARCH_LIBS([initscr], [ncursesw ncurses], [], [
 	AC_MSG_ERROR([requires either ncursesw or ncurses library])
 ])
 
+AC_SEARCH_LIBS([keyname], [ncursesw ncurses tinfow tinfo], [], [
+	AC_MSG_ERROR([requires either ncursesw or ncurses library with terminfo support])
+])
+
 AC_CHECK_LIB(tls, tls_init, [], [
 	AC_MSG_ERROR([requires libtls])
 ])
