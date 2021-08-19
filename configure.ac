@@ -12,6 +12,17 @@ AC_ARG_WITH([libimsg],
 	AS_HELP_STRING([--with-libimsg],
 		[Build with imsg-compat library (default: disabled)]))
 
+AC_ARG_WITH([libbsd],
+	AS_HELP_STRING([--with-libbsd],
+		[Build with libbsd library (default: disabled)]))
+
+AS_IF([test "x$with_libbsd" = "xyes"], [
+	PKG_CHECK_MODULES([libbsd], [libbsd-overlay libbsd-ctor], [
+		CFLAGS="$libbsd_CFLAGS $CFLAGS"
+		LIBS="$libbsd_LIBS $LIBS"
+	])
+])
+
 AC_REPLACE_FUNCS([
 	asprintf \
 	err \

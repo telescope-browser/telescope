@@ -86,6 +86,7 @@ To build from a release tarball just execute:
 The configure script has optional support for building with libraries
 provided by your distribution instead of internal compatibility funcs:
 
+ - `--with-libbsd`: link with [libbsd](https://libbsd.freedesktop.org)
  - `--with-libimsg`: link with the
    [imsg-compat](https://github.com/bsd-ac/imsg-compat) library
 
