@@ -217,7 +217,7 @@ hardwrap_text(struct buffer *buffer, struct line *l, size_t width)
 			continue;
 		w = utf8_chwidth(cp);
 		if (cur + w >= width) {
-			if (!push_line(buffer, l, start, lastchar - start, cont))
+			if (!push_line(buffer, l, start, lastchar-start, cont))
 				return 0;
 			cont = L_CONTINUATION;
 			if (dont_wrap_pre)
