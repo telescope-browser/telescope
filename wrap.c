@@ -239,7 +239,6 @@ wrap_page(struct buffer *buffer, int width)
 	struct line		*l;
 	const struct line	*top_orig, *orig;
 	struct vline		*vl;
-	int			 pre_width;
 	const char		*prfx;
 
 	top_orig = buffer->top_line == NULL ? NULL : buffer->top_line->parent;
@@ -274,11 +273,7 @@ wrap_page(struct buffer *buffer, int width)
 		case LINE_PATCH_HUNK_HDR:
 		case LINE_PATCH_ADD:
 		case LINE_PATCH_DEL:
-			if (olivetti_mode)
-				pre_width = MIN(fill_column, width);
-			else
-				pre_width = width;
-			hardwrap_text(buffer, l, pre_width);
+			hardwrap_text(buffer, l, MIN(fill_column, width));
 			break;
 		case LINE_COMPL:
 		case LINE_COMPL_CURRENT:
