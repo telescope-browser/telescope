@@ -114,7 +114,6 @@ stop_tab(struct tab *tab)
 	}
 }
 
-
 void
 save_session(void)
 {
