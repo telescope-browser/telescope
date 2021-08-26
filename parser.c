@@ -60,10 +60,13 @@ parser_free(struct tab *tab)
 
 	r = tab->buffer.page.free(&tab->buffer.page);
 
-	/* fallback to the host as title if nothing else */
 	if (*tab->buffer.page.title != '\0')
 		return r;
 
+	/*
+	 * heuristic: see if there is a "tilde user" and use that as
+	 * page title, using the full domain name as fallback.
+	 */
 	if ((tilde = strstr(tab->hist_cur->h, "/~")) != NULL) {
 		strlcpy(tab->buffer.page.title, tilde+1,
 		    sizeof(tab->buffer.page.title));
