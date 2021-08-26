@@ -78,6 +78,8 @@ about:bookmarks is the only page that doesn’t follow this pattern; it’s loca
 
 Telescope supports custom protocol proxies (proxies that translate between protocols).  Thanks to programs like the duckling-proxy, it’s possible to navigate the web using a Gemini browser.
 
+=> https://github.com/LukeEmmet/duckling-proxy The Duckling Proxy
+
 Configuring telescope to use a proxy is easy, just drop something like the following to your configuration file:
 
 ```Example of protocol proxy configuration for http and https
