@@ -59,7 +59,7 @@ static void setvari(char *, int);
 static void setvars(char *, char *);
 static int colorname(const char *);
 static void setcolor(const char *, const char *, const char *);
-static int attrname(char *);
+static int attrname(const char *);
 static void setattr(char *, char *, char *);
 static void add_proxy(char *, char *);
 static void bindkey(const char *, const char *, const char *);
@@ -400,7 +400,7 @@ setcolor(const char *prfx, const char *line, const char *trail)
 }
 
 static int
-attrname(char *n)
+attrname(const char *n)
 {
 	struct {
 		const char	*name;
@@ -416,10 +416,15 @@ attrname(char *n)
 		{ NULL, 0 },
 	};
 	int ret, found;
-	char *ap;
+	char *ap, *dup, *orig;
+
+	if ((dup = strdup(n)) == NULL)
+		err(1, "strdup");
+
+	orig = dup;
 
 	ret = 0;
-	while ((ap = strsep(&n, ",")) != NULL) {
+	while ((ap = strsep(&dup, ",")) != NULL) {
 		if (*ap == '\0')
 			continue;
 
@@ -437,6 +442,7 @@ attrname(char *n)
 			    ap, yylval.colno+1);
 	}
 
+	free(orig);
 	return ret;
 }
 
