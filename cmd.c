@@ -163,7 +163,7 @@ cmd_move_end_of_line(struct buffer *buffer)
 void
 cmd_redraw(struct buffer *buffer)
 {
-        ui_schedule_redraw();
+	ui_schedule_redraw();
 }
 
 void
@@ -416,7 +416,7 @@ cmd_next_page(struct buffer *buffer)
 void
 cmd_clear_minibuf(struct buffer *buffer)
 {
-        message(NULL);
+	message(NULL);
 }
 
 void

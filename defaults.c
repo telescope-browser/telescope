@@ -525,7 +525,7 @@ config_setvars(const char *var, char *val)
 int
 config_setcolor(int bg, const char *name, int prfx, int line, int trail)
 {
-        struct mapping *m;
+	struct mapping *m;
 	struct line_face *f;
 
 	if (!strcmp(name, "tabline")) {

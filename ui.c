@@ -402,7 +402,7 @@ line_prefix_and_text(struct vline *vl, char *buf, size_t len,
 		strlcat(buf, " ", len);
 
 		/* skip the emoji */
-                *text_ret += (space - vl->parent->line) + 1;
+		*text_ret += (space - vl->parent->line) + 1;
 	}
 
 	*prfx_ret = buf;
@@ -523,7 +523,7 @@ redraw_tabline(void)
 	else {
 		ots = toskip;
 		toskip--;
-                while (toskip != 0 &&
+		while (toskip != 0 &&
 		    (ots - toskip+1) * tabwidth < space)
 			toskip--;
 	}
@@ -556,7 +556,7 @@ redraw_tabline(void)
 		else
 			strlcpy(buf, " ", sizeof(buf));
 
-                if (strlcat(buf, title, sizeof(buf)) >= sizeof(buf)) {
+		if (strlcat(buf, title, sizeof(buf)) >= sizeof(buf)) {
 			/* truncation happens */
 			strlcpy(&buf[sizeof(buf)-4], "...", 4);
 		} else {
@@ -747,9 +747,9 @@ redraw_modeline(struct tab *tab)
 		/ buffer->line_max;
 
 	if (buffer->line_max <= (size_t)body_lines)
-                wprintw(modeline, "All ");
+		wprintw(modeline, "All ");
 	else if (buffer->line_off == 0)
-                wprintw(modeline, "Top ");
+		wprintw(modeline, "Top ");
 	else if (buffer->line_off + body_lines >= buffer->line_max)
 		wprintw(modeline, "Bottom ");
 	else
@@ -795,7 +795,7 @@ do_redraw_echoarea(void)
 	struct vline *vl;
 
 	if (ministate.curmesg != NULL)
-                wprintw(echoarea, "%s", ministate.curmesg);
+		wprintw(echoarea, "%s", ministate.curmesg);
 	else if (*keybuf != '\0')
 		waddstr(echoarea, keybuf);
 	else {

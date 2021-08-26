@@ -65,11 +65,11 @@ main(int argc, char **argv)
 		return 1;
 	}
 
-        printf("const uint8_t %s[] = {\n", varname);
+	printf("const uint8_t %s[] = {\n", varname);
 
 	did = 0;
 	len = 0;
-        for (;;) {
+	for (;;) {
 		r = fread(buf, 1, sizeof(buf), f);
 		len += r;
 

@@ -221,7 +221,7 @@ hardwrap_text(struct buffer *buffer, struct line *l, size_t width)
 				return 0;
 			cont = L_CONTINUATION;
 			if (dont_wrap_pre)
-                                return 1;
+				return 1;
 			cur = 0;
 			start = lastchar;
 		}

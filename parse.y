@@ -331,7 +331,7 @@ setvari(char *var, int val)
 static void
 setvars(char *var, char *val)
 {
-        if (!config_setvars(var, val))
+	if (!config_setvars(var, val))
 		yyerror("invalid variable or value: %s = \"%s\"",
 		    var, val);
 
@@ -502,7 +502,7 @@ cmdname(const char *name)
 {
 	struct cmd *cmd;
 
-        for (cmd = cmds; cmd->cmd != NULL; ++cmd) {
+	for (cmd = cmds; cmd->cmd != NULL; ++cmd) {
 		if (!strcmp(cmd->cmd, name))
 			return cmd->fn;
 	}

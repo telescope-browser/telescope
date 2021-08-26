@@ -59,7 +59,7 @@ gm_parse_selector(char *line, struct gm_selector *s)
 
 	if ((line = strchr(line, '\t')) == NULL)
 		return;
-        *line++ = '\0';
+	*line++ = '\0';
 	s->selector = line;
 
 	if ((line = strchr(line, '\t')) == NULL)
@@ -86,7 +86,7 @@ emit_line(struct parser *p, enum line_type type, struct gm_selector *s)
 	char buf[LINE_MAX], b[2] = {0};
 
 	if ((l = calloc(1, sizeof(*l))) == NULL)
-                goto err;
+		goto err;
 
 	if ((l->line = strdup(s->ds)) == NULL)
 		goto err;

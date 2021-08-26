@@ -161,8 +161,8 @@ again:
 		    &len) == -1)
 			goto err;
 		if (error != 0) {
-                        errno = error;
-                        goto err;
+			errno = error;
+			goto err;
 		}
 		goto done;
 	}
@@ -597,7 +597,7 @@ net_error(struct bufferevent *bev, short error, void *d)
 	}
 
 	if (error & EVBUFFER_EOF) {
-                src = EVBUFFER_INPUT(req->bev);
+		src = EVBUFFER_INPUT(req->bev);
 		if (EVBUFFER_LENGTH(src) != 0)
 			net_send_ui(IMSG_BUF, req->id, EVBUFFER_DATA(src),
 			    EVBUFFER_LENGTH(src));
@@ -646,7 +646,7 @@ handle_get_raw(struct imsg *imsg, size_t datalen)
 	req->proto = r->proto;
 
 #if HAVE_ASR_RUN
-        async_conn_towards(req);
+	async_conn_towards(req);
 #else
 	blocking_conn_towards(req);
 #endif

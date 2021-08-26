@@ -137,7 +137,7 @@ parser_foreach_line(struct parser *p, const char *buf, size_t size,
 		return 1;
 
 	if (!(p->flags & PARSER_IN_BODY)) {
-                p->flags |= PARSER_IN_BODY;
+		p->flags |= PARSER_IN_BODY;
 
 		/*
 		 * drop the BOM: only UTF-8 is supported, and there

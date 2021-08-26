@@ -104,9 +104,9 @@ tofu_temp_trust(struct ohash *h, const char *host, const char *port,
 	struct tofu_entry *e;
 
 	if ((e = calloc(1, sizeof(*e))) == NULL)
-                abort();
+		abort();
 
-        strlcpy(e->domain, host, sizeof(e->domain));
+	strlcpy(e->domain, host, sizeof(e->domain));
 	if (*port != '\0' && strcmp(port, "1965")) {
 		strlcat(e->domain, ":", sizeof(e->domain));
 		strlcat(e->domain, port, sizeof(e->domain));

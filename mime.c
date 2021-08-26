@@ -70,7 +70,7 @@ setup_parser_for(struct tab *tab)
 	char			*b, buf[GEMINI_URL_LEN] = {0};
 	struct parser_table	*t;
 
-        memcpy(buf, tab->meta, sizeof(tab->meta));
+	memcpy(buf, tab->meta, sizeof(tab->meta));
 
 	for (b = buf; *b != ';' && *b != '\0'; ++b)
 		;

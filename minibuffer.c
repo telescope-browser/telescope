@@ -358,7 +358,7 @@ read_abort(void)
 static void
 read_select(void)
 {
-        exit_minibuffer();
+	exit_minibuffer();
 	minibuffer_hist_save_entry();
 	read_cb(ministate.buf, read_data);
 }

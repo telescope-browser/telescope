@@ -156,7 +156,7 @@ parse_session_line(char *line, const char **title, uint32_t *flags)
 
 	*s++ = '\0';
 
-        if ((t = strchr(s, ' ')) != NULL) {
+	if ((t = strchr(s, ' ')) != NULL) {
 		*t++ = '\0';
 		*title = t;
 	}
@@ -190,12 +190,12 @@ load_last_session(void)
 	}
 
 	while ((linelen = getline(&line, &linesize, session)) != -1) {
-                if ((nl = strchr(line, '\n')) != NULL)
+		if ((nl = strchr(line, '\n')) != NULL)
 			*nl = '\0';
 		parse_session_line(line, &title, &flags);
 		if ((tab = new_tab(line, NULL, NULL)) == NULL)
 			err(1, "new_tab");
-                strlcpy(tab->buffer.page.title, title,
+		strlcpy(tab->buffer.page.title, title,
 		    sizeof(tab->buffer.page.title));
 		if (flags & TAB_CURRENT)
 			curr = tab;

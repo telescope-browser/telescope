@@ -81,19 +81,19 @@ size_t
 utf8_encode(uint32_t cp, char *s)
 {
 	if (cp <= 0x7F) {
-                *s = (uint8_t)cp;
+		*s = (uint8_t)cp;
 		return 1;
 	} else if (cp <= 0x7FF) {
-                s[1] = (uint8_t)(( cp        & 0x3F ) + 0x80);
+		s[1] = (uint8_t)(( cp        & 0x3F ) + 0x80);
 		s[0] = (uint8_t)(((cp >>  6) & 0x1F) + 0xC0);
 		return 2;
 	} else if (cp <= 0xFFFF) {
-                s[2] = (uint8_t)(( cp        & 0x3F) + 0x80);
+		s[2] = (uint8_t)(( cp        & 0x3F) + 0x80);
 		s[1] = (uint8_t)(((cp >>  6) & 0x3F) + 0x80);
 		s[0] = (uint8_t)(((cp >> 12) & 0x0F) + 0xE0);
 		return 3;
 	} else if (cp <= 0x10FFFF) {
-                s[3] = (uint8_t)(( cp        & 0x3F) + 0x80);
+		s[3] = (uint8_t)(( cp        & 0x3F) + 0x80);
 		s[2] = (uint8_t)(((cp >>  6) & 0x3F) + 0x80);
 		s[1] = (uint8_t)(((cp >> 12) & 0x3F) + 0x80);
 		s[0] = (uint8_t)(((cp >> 18) & 0x07) + 0xF0);
@@ -218,7 +218,7 @@ utf8_prev_cp(const char *start, const char *base)
 
 	for (; start > base; start--) {
 		c = *start;
-                if ((c & 0xC0) != 0x80)
+		if ((c & 0xC0) != 0x80)
 			return (char*)start;
 	}
 
