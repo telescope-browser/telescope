@@ -1,3 +1,7 @@
+2021-08-28  Omar Polo  <op@omarpolo.com>
+
+	* telescope.c (gopher_skip_selector): don't trim the initial `/' during gohper requests
+
 2021-08-26  Omar Polo  <op@omarpolo.com>
 
 	* parse.y (attrname): correctly parse multiple attributes
