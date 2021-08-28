@@ -9,6 +9,8 @@ Features:
  - bookmarks
  - privsep
  - minibuffer live narrowing
+ - multiple protocols support
+ - fully customizable
 
 There are still various things missing or, if you prefer, various
 things that you can help develop :)
