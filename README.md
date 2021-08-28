@@ -108,11 +108,14 @@ comprehensive testing on various platforms is done to ensure everything
 is working as intended.
 
 
-## Contrib
+## Contributing
 
 Any form of contribution is appreciated, not only patches or bug
-reports.  The contrib directory is for external things such as sample
-configuration files, themes, scripts and things like that.
+reports: feel free to open an issue or send an email to
+`telescope@omarpolo.com`.
+
+If you have a sample configuration, custom theme, a script or anything
+that could be helpful to others, consider adding it to the `contrib` directory.
 
 
 ## User files
