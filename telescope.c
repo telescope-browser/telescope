@@ -655,11 +655,7 @@ gopher_skip_selector(const char *path, int *ret_type)
 		return path;
 	}
 
-	path++;
-	if (*path == '/')
-		path++;
-
-	return path;
+	return ++path;
 }
 
 static int
