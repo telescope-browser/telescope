@@ -1,3 +1,7 @@
+2021-08-29  Omar Polo  <op@omarpolo.com>
+
+	* telescope.c (handle_maybe_save_page): prefill the save prompt with the filename to ease saving files
+
 2021-08-28  Omar Polo  <op@omarpolo.com>
 
 	* configure.ac: tag 0.5.1
