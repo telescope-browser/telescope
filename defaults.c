@@ -26,7 +26,8 @@
 #include "telescope.h"
 #include "ui.h"
 
-char *new_tab_url = NULL;
+char	*download_path = NULL;
+char	*new_tab_url = NULL;
 
 int autosave = 20;
 int dont_wrap_pre = 0;
@@ -513,7 +514,10 @@ config_setvari(const char *var, int val)
 int
 config_setvars(const char *var, char *val)
 {
-	if (!strcmp(var, "new-tab-url")) {
+	if (!strcmp(var, "download-path")) {
+		free(download_path);
+		download_path = val;
+	} else if (!strcmp(var, "new-tab-url")) {
 		if (new_tab_url != NULL)
 			free(new_tab_url);
 		new_tab_url = val;

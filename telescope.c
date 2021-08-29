@@ -416,8 +416,7 @@ handle_maybe_save_page(int dosave, struct tab *tab)
 	else
 		f++;
 
-	/* TODO: make base path customizable */
-	strlcpy(input, "/tmp/", sizeof(input));
+	strlcpy(input, download_path, sizeof(input));
 	strlcat(input, f, sizeof(input));
 
 	ui_read("Save to path", handle_save_page_path, tab, input);
@@ -1131,6 +1130,10 @@ main(int argc, char * const *argv)
 		puts("config OK");
 		exit(0);
 	}
+
+	if (download_path == NULL &&
+	    (download_path = strdup("/tmp/")) == NULL)
+		errx(1, "strdup");
 
 	fs_init();
 	if ((sessionfd = lock_session()) == -1)
