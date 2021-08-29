@@ -1185,9 +1185,15 @@ ui_yornp(const char *prompt, void (*fn)(int, struct tab *),
 
 void
 ui_read(const char *prompt, void (*fn)(const char*, struct tab *),
-    struct tab *data)
+    struct tab *data, const char *input)
 {
 	minibuffer_read(prompt, fn, data);
+
+	if (input != NULL) {
+		strlcpy(ministate.buf, input, sizeof(ministate.buf));
+		cmd_move_end_of_line(&ministate.buffer);
+	}
+
 	redraw_tab(current_tab);
 }
 

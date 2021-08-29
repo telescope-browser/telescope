@@ -403,10 +403,24 @@ handle_imsg_got_meta(struct imsg *imsg, size_t datalen)
 static void
 handle_maybe_save_page(int dosave, struct tab *tab)
 {
-	if (dosave)
-		ui_read("Save to path", handle_save_page_path, tab);
-	else
+	const char	*f;
+	char		 input[PATH_MAX];
+
+	if (!dosave) {
 		stop_tab(tab);
+		return;
+	}
+
+	if ((f = strrchr(tab->uri.path, '/')) == NULL)
+		f = "";
+	else
+		f++;
+
+	/* TODO: make base path customizable */
+	strlcpy(input, "/tmp/", sizeof(input));
+	strlcat(input, f, sizeof(input));
+
+	ui_read("Save to path", handle_save_page_path, tab, input);
 }
 
 static void
