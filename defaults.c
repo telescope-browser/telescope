@@ -515,8 +515,24 @@ int
 config_setvars(const char *var, char *val)
 {
 	if (!strcmp(var, "download-path")) {
+		const char *prfx = "", *v = val, *sufx = "";
+
+		if (has_prefix(val, "~/") &&
+		    v++ &&
+		    (prfx = getenv("HOME")) == NULL)
+			return 0;
+
+		if (!has_suffix(val, "/"))
+			sufx = "/";
+
 		free(download_path);
-		download_path = val;
+		if (asprintf(&download_path, "%s%s%s", prfx, v, sufx) == -1) {
+			download_path = NULL;
+			return 0;
+		}
+
+		free(val);
+		return 1;
 	} else if (!strcmp(var, "new-tab-url")) {
 		free(new_tab_url);
 		new_tab_url = val;
