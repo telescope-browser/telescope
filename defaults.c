@@ -518,8 +518,7 @@ config_setvars(const char *var, char *val)
 		free(download_path);
 		download_path = val;
 	} else if (!strcmp(var, "new-tab-url")) {
-		if (new_tab_url != NULL)
-			free(new_tab_url);
+		free(new_tab_url);
 		new_tab_url = val;
 	} else
 		return 0;
