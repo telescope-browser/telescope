@@ -101,7 +101,6 @@ style		: TSTYLE TSTRING { current_style = $2; } stylespec ;
 stylespec	: styleopt | '{' styleopts '}' ;
 
 styleopts	: /* empty */
-		| styleopts optnl
 		| styleopts styleopt optnl
 		;
 
