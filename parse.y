@@ -98,7 +98,7 @@ set		: TSET TSTRING '=' TSTRING	{ setvars($2, $4); }
 		;
 
 style		: TSTYLE TSTRING { current_style = $2; } stylespec ;
-stylespec	: styleopt | '{' styleopts '}' ;
+stylespec	: styleopt | '{' optnl styleopts '}' ;
 
 styleopts	: /* empty */
 		| styleopts styleopt optnl
