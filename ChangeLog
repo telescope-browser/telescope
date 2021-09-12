@@ -1,3 +1,7 @@
+2021-09-12  Omar Polo  <op@omarpolo.com>
+
+	* net.c (net_read): bugfix: telescope would render a blank page for (some rare) cases where it reads a very long replies from the server.
+
 2021-08-29  Omar Polo  <op@omarpolo.com>
 
 	* defaults.c (config_setvars): make download-path customizable
