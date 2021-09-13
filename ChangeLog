@@ -1,5 +1,7 @@
 2021-09-13  Omar Polo  <op@omarpolo.com>
 
+	* telescope.c (handle_imsg_eof): reset download byte counter
+
 	* sandbox.c (sandbox_fs_process): [openbsd] allow creating files in ~/Downloads
 
 2021-09-12  Omar Polo  <op@omarpolo.com>
