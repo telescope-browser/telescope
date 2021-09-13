@@ -47,7 +47,7 @@ sandbox_fs_process(void)
 
 	strlcpy(path, getenv("HOME"), sizeof(path));
 	strlcat(path, "/Downloads", sizeof(path));
-	if (unveil(path, "r") == -1)
+	if (unveil(path, "rwc") == -1)
 		err(1, "unveil");
 
 	strlcpy(path, getenv("HOME"), sizeof(path));
