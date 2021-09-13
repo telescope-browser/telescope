@@ -508,6 +508,7 @@ handle_imsg_eof(struct imsg *imsg, size_t datalen)
 
 		close(tab->fd);
 		tab->fd = -1;
+		tab->bytes = 0;
 		free(tab->path);
 		tab->path = NULL;
 	}
