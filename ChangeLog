@@ -1,3 +1,13 @@
+2021-09-13  Omar Polo  <op@omarpolo.com>
+
+	* telescope.c (handle_imsg_eof): reset download byte counter
+
+	* sandbox.c (sandbox_fs_process): [openbsd] allow creating files in ~/Downloads
+
+2021-09-12  Omar Polo  <op@omarpolo.com>
+
+	* net.c (net_read): bugfix: telescope would render a blank page for (some rare) cases where it reads a very long replies from the server.
+
 2021-08-28  Omar Polo  <op@omarpolo.com>
 
 	* configure.ac: tag 0.5.1
