@@ -1061,7 +1061,7 @@ main(int argc, char * const *argv)
 	int		 ch, configtest = 0, fail = 0;
 	int		 has_url = 0;
 	int		 proc = -1;
-	int		 sessionfd;
+	int		 sessionfd = -1;
 	int		 status;
 	char		 path[PATH_MAX], url[GEMINI_URL_LEN+1];
 	const char	*argv0;
@@ -1151,7 +1151,7 @@ main(int argc, char * const *argv)
 		errx(1, "strdup");
 
 	fs_init();
-	if ((sessionfd = lock_session()) == -1)
+	if (!safe_mode && (sessionfd = lock_session()) == -1)
 		errx(1, "can't lock session, is another instance of "
 		    "telescope already running?");
 
@@ -1218,7 +1218,8 @@ main(int argc, char * const *argv)
 			warnx("child terminated; signal %d", WTERMSIG(status));
 	} while (pid != -1 || (pid == -1 && errno == EINTR));
 
-	close(sessionfd);
+	if (!safe_mode && close(sessionfd) == -1)
+		err(1, "close(sessionfd = %d)", sessionfd);
 
 	return 0;
 }
