@@ -52,7 +52,10 @@ Only check the configuration file for validity.
 mode.
 Prevent
 .Nm
-from writing files to the disk.
+from writing files to the disk and to acquire the lock, allowing to
+run multiple instances at the same time.
+.Nm
+still loads the session file and the custom about pages.
 .It Fl v , Fl -version
 Display version.
 .El
