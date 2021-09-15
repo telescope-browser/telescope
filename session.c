@@ -121,6 +121,9 @@ save_session(void)
 	char		*t;
 	int		 flags;
 
+	if (safe_mode)
+		return;
+
 	ui_send_fs(IMSG_SESSION_START, 0, NULL, 0);
 
 	TAILQ_FOREACH(tab, &tabshead, tabs) {

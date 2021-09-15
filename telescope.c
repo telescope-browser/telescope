@@ -37,16 +37,23 @@
 static struct option longopts[] = {
 	{"colors",	no_argument,	NULL,	'c'},
 	{"help",	no_argument,	NULL,	'h'},
+	{"safe",	no_argument,	NULL,	'S'},
 	{"version",	no_argument,	NULL,	'v'},
 	{NULL,		0,		NULL,	0},
 };
 
-static const char *opts = "Cc:hnT:v";
+static const char *opts = "Cc:hnST:v";
 
 /*
  * Used to know when we're finished loading.
  */
 int			 operating;
+
+/*
+ * "Safe" (or "sandobox") mode.  If enabled, Telescope shouldn't write
+ * anything to the filesystem or execute external programs.
+ */
+int			safe_mode;
 
 static struct imsgev	*iev_fs, *iev_net;
 
@@ -268,8 +275,11 @@ handle_check_cert_user_choice(int accept, struct tab *tab)
 		tofu_temp_trust(&certs, tab->uri.host, tab->uri.port,
 		    tab->cert);
 
-		ui_yornp("Save the new certificate?",
-		    handle_maybe_save_new_cert, tab);
+		if (!safe_mode)
+			ui_yornp("Save the new certificate?",
+			    handle_maybe_save_new_cert, tab);
+		else
+			message("Certificate temporarly trusted");
 	} else {
 		free(tab->cert);
 		tab->cert = NULL;
@@ -383,8 +393,9 @@ handle_imsg_got_meta(struct imsg *imsg, size_t datalen)
 		} else {
 			load_page_from_str(tab,
 			    err_pages[UNKNOWN_TYPE_OR_CSET]);
-			ui_yornp("Can't display page, save it?",
-			    handle_maybe_save_page, tab);
+			if (!safe_mode)
+				ui_yornp("Can't display page, save it?",
+				    handle_maybe_save_page, tab);
 		}
 	} else if (tab->code < 40) { /* 3x */
 		tab->redirect_count++;
@@ -1035,7 +1046,7 @@ ui_send_fs(int type, uint32_t peerid, const void *data, uint16_t datalen)
 static void __attribute__((noreturn))
 usage(int r)
 {
-	fprintf(stderr, "USAGE: %s [-hnv] [-c config] [url]\n",
+	fprintf(stderr, "USAGE: %s [-hnSv] [-c config] [url]\n",
 	    getprogname());
 	fprintf(stderr, "version: " PACKAGE " " VERSION "\n");
 	exit(r);
@@ -1079,6 +1090,9 @@ main(int argc, char * const *argv)
 			break;
 		case 'h':
 			usage(0);
+		case 'S':
+			safe_mode = 1;
+			break;
 		case 'T':
 			switch (*optarg) {
 			case 'f':

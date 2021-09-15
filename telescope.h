@@ -321,6 +321,7 @@ void		 sandbox_fs_process(void);
 
 /* telescope.c */
 extern int operating;
+extern int safe_mode;
 
 void		 gopher_send_search_req(struct tab *, const char *);
 void		 load_url(struct tab *, const char *, const char *, int);
