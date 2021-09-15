@@ -1046,7 +1046,7 @@ ui_send_fs(int type, uint32_t peerid, const void *data, uint16_t datalen)
 static void __attribute__((noreturn))
 usage(int r)
 {
-	fprintf(stderr, "USAGE: %s [-hnSv] [-c config] [url]\n",
+	fprintf(stderr, "USAGE: %s [-ChnSv] [-c config] [url]\n",
 	    getprogname());
 	fprintf(stderr, "version: " PACKAGE " " VERSION "\n");
 	exit(r);
