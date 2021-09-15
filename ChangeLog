@@ -1,3 +1,7 @@
+2021-09-15  Omar Polo  <op@omarpolo.com>
+
+	* telescope.c: add a ``safe mode''.
+
 2021-09-13  Omar Polo  <op@omarpolo.com>
 
 	* telescope.c (handle_imsg_eof): reset download byte counter
