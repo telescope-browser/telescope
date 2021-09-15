@@ -316,7 +316,8 @@ handle_get_file(struct imsg *imsg, size_t datalen)
 static void
 handle_quit(struct imsg *imsg, size_t datalen)
 {
-	unlink(crashed_file);
+	if (!safe_mode)
+		unlink(crashed_file);
 
 	event_loopbreak();
 }
@@ -604,6 +605,9 @@ int
 last_time_crashed(void)
 {
 	int fd, crashed = 1;
+
+	if (safe_mode)
+		return 0;
 
 	if (unlink(crashed_file) == -1 && errno == ENOENT)
 		crashed = 0;
