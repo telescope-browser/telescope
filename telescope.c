@@ -994,7 +994,7 @@ humanify_url(const char *raw, char *ret, size_t len)
 static pid_t
 start_child(enum telescope_process p, const char *argv0, int fd)
 {
-	const char	*argv[4];
+	const char	*argv[5];
 	int		 argc = 0;
 	pid_t		 pid;
 
@@ -1022,6 +1022,9 @@ start_child(enum telescope_process p, const char *argv0, int fd)
 		argv[argc++] = "-Tn";
 		break;
 	}
+
+	if (safe_mode)
+		argv[argc++] = "-S";
 
 	argv[argc++] = NULL;
 	execvp(argv0, (char *const *)argv);
