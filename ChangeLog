@@ -1,3 +1,7 @@
+2021-09-20  Omar Polo  <op@omarpolo.com>
+
+	* parser_textpatch.c (tpatch_emit_line): fix patch/diff syntax highlighting when more than one file are involved
+
 2021-09-15  Omar Polo  <op@omarpolo.com>
 
 	* telescope.c: add a ``safe mode''.
