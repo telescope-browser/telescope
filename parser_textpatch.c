@@ -81,6 +81,18 @@ tpatch_emit_line(struct parser *p, const char *line, size_t linelen)
 			case '@':
 				l->type = LINE_PATCH_HUNK_HDR;
 				break;
+			case ' ':
+				/* context lines */
+				break;
+			default:
+				/*
+				 * A single patch file can have more
+				 * than one "header" if touches more
+				 * than one file.
+				 */
+				l->type = LINE_PATCH_HDR;
+				p->flags |= PARSER_IN_PATCH_HDR;
+				break;
 			}
 
 		if (has_prefix(l->line, "+++"))
