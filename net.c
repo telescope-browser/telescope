@@ -36,6 +36,9 @@
 # include <asr.h>
 #endif
 
+#define DNS_RDATACLASS_IN	1
+#define DNS_RDATATYPE_TXT	16
+
 #include "telescope.h"
 
 static struct imsgev		*iev_ui;
@@ -68,9 +71,13 @@ static void	 die(void) __attribute__((__noreturn__));
 
 static void	 try_to_connect(int, short, void*);
 
+static void	 offline_dns_done(struct rrsetinfo *, struct req *);
+static void	 offline_dns_query(struct req *);
+
 #if HAVE_ASR_RUN
 static void	 query_done(struct asr_result*, void*);
 static void	 async_conn_towards(struct req*);
+static void	 offline_query_done(struct asr_result *, void *);
 #else
 static void	 blocking_conn_towards(struct req*);
 #endif
@@ -182,8 +189,7 @@ again:
 
 err:
 	freeaddrinfo(req->servinfo);
-	close_with_errf(req, "failed to connect to %s",
-	    req->url.host);
+	offline_dns_query(req);
 	return;
 
 done:
@@ -223,6 +229,61 @@ done:
 	}
 }
 
+static void
+offline_dns_done(struct rrsetinfo *res, struct req *req)
+{
+	size_t		 i, len;
+	const char	*reason = NULL;
+
+	for (i = 0; i < res->rri_nrdatas; ++i) {
+		if (res->rri_rdatas[i].rdi_length <= 1)
+			continue;
+
+		len = *(uint8_t*)res->rri_rdatas[i].rdi_data;
+		reason = res->rri_rdatas[i].rdi_data+1;
+		break;
+	}
+
+	if (reason == NULL)
+		close_with_errf(req, "failed to connect to %s", req->url.host);
+	else
+		close_with_errf(req,
+		    "failed to connect to %s\n\nThe site says: %*s\n",
+		    req->url.host, (int)len, reason);
+
+	freerrset(res);
+}
+
+static void
+offline_dns_query(struct req *req)
+{
+	char		hostname[254];
+
+	strlcpy(hostname, "_offline.", sizeof(hostname));
+	strlcat(hostname, req->url.host, sizeof(hostname));
+
+#if HAVE_ASR_RUN
+	{
+		struct asr_query *q;
+
+		q = getrrsetbyname_async(hostname, DNS_RDATACLASS_IN,
+		    DNS_RDATATYPE_TXT, 0, NULL);
+		req->asrev = event_asr_run(q, offline_query_done, req);
+	}
+#else
+	{
+		struct rrsetinfo *res;
+
+		if (getrrsetbyname(hostname, DNS_RDATACLASS_IN,
+		    DNS_RDATATYPE_TXT, 0, &res))
+			close_with_errf(req, "failed to connect to %s",
+			    req->url.host);
+		else
+			offline_dns_done(res, req);
+	}
+#endif
+}
+
 #if HAVE_ASR_RUN
 static void
 query_done(struct asr_result *res, void *d)
@@ -256,6 +317,21 @@ async_conn_towards(struct req *req)
 	q = getaddrinfo_async(req->url.host, proto, &req->hints, NULL);
 	req->asrev = event_asr_run(q, query_done, req);
 }
+
+static void
+offline_query_done(struct asr_result *res, void *d)
+{
+	struct req		*req = d;
+
+	req->asrev = NULL;
+	if (res->ar_rrset_errno != 0) {
+		close_with_errf(req, "failed to resolve %s", req->url.host);
+		return;
+	}
+
+	offline_dns_done(res->ar_rrsetinfo, req);
+}
+
 #else
 static void
 blocking_conn_towards(struct req *req)
