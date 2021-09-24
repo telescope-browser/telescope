@@ -440,10 +440,13 @@ print_vline_descr(int width, WINDOW *window, struct vline *vl)
 static inline void
 print_line_break(int width, WINDOW *window)
 {
-	int x, y;
+	int		 x, y, len;
+	const char	*sep = "-*-*-";
+
+	len = utf8_swidth(sep);
 
 	getyx(window, y, x);
-	mvwprintw(window, y, width/2 - 4, "-*-*-");
+	mvwprintw(window, y, width/2 - len, sep);
 }
 
 /*
