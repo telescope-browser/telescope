@@ -156,7 +156,7 @@ parser_foreach_line(struct parser *p, const char *buf, size_t size,
 	/* drop every "funny" ASCII character */
 	for (i = 0; i < len; ) {
 		ch = b[i];
-		if ((ch >= ' ' || ch == '\n' || ch == '\t' || ch == '\f')
+		if ((ch >= ' ' || ch == '\n' || ch == '\t')
 		    && ch != 127) { /* del */
 			++i;
 			continue;
