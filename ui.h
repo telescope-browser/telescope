@@ -71,6 +71,9 @@ enum pairs {
 	PPEND,
 	PPEND_PRFX,
 	PPEND_TRAIL,
+	PB,
+	PB_PRFX,
+	PB_TRAIL,
 
 	PPATCH,
 	PPATCH_PRFX,

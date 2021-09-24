@@ -437,6 +437,15 @@ print_vline_descr(int width, WINDOW *window, struct vline *vl)
 	wprintw(window, "%s", vl->parent->alt);
 }
 
+static inline void
+print_line_break(int width, WINDOW *window)
+{
+	int x, y;
+
+	getyx(window, y, x);
+	mvwprintw(window, y, width/2 - 4, "-*-*-");
+}
+
 /*
  * Core part of the rendering.  It prints a vline starting from the
  * current cursor position.  Printing a vline consists of skipping
@@ -469,9 +478,13 @@ print_vline(int off, int width, WINDOW *window, struct vline *vl)
 		waddch(window, ' ');
 	wattr_off(window, body_face.left, NULL);
 
-	wattr_on(window, f->prefix, NULL);
-	wprintw(window, "%s", prfx);
-	wattr_off(window, f->prefix, NULL);
+	if (vl->parent->type == LINE_BREAK) {
+		print_line_break(width, window);
+	} else {
+		wattr_on(window, f->prefix, NULL);
+		wprintw(window, "%s", prfx);
+		wattr_off(window, f->prefix, NULL);
+	}
 
 	wattr_on(window, f->text, NULL);
 	wprintw(window, "%s", text);

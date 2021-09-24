@@ -44,6 +44,7 @@ static int	parse_quote(struct parser*, enum line_type, const char*, size_t);
 static int	parse_pre_start(struct parser*, enum line_type, const char*, size_t);
 static int	parse_pre_cnt(struct parser*, enum line_type, const char*, size_t);
 static int	parse_pre_end(struct parser*, enum line_type, const char*, size_t);
+static int	parse_linebreak(struct parser *, enum line_type, const char *, size_t);
 static void	search_title(struct parser*, enum line_type);
 
 typedef int (parselinefn)(struct parser*, enum line_type, const char*, size_t);
@@ -59,6 +60,7 @@ static parselinefn *parsers[] = {
 	[LINE_PRE_START]	= parse_pre_start,
 	[LINE_PRE_CONTENT]	= parse_pre_cnt,
 	[LINE_PRE_END]		= parse_pre_end,
+	[LINE_BREAK]		= parse_linebreak,
 };
 
 void
@@ -356,6 +358,8 @@ detect_line_type(const char *buf, size_t len, int in_pre)
 		if (buf[0] == '`' && buf[1] == '`' && buf[2] == '`')
 			return LINE_PRE_START;
 		break;
+	case 0xC:		/* form feed */
+		return LINE_BREAK;
 	}
 
 	return LINE_TEXT;
@@ -407,6 +411,12 @@ gemtext_free(struct parser *p)
 		search_title(p, LINE_TITLE_3);
 
 	return 1;
+}
+
+static int
+parse_linebreak(struct parser *p, enum line_type t, const char *buf, size_t len)
+{
+	return emit_line(p, t, NULL, NULL);
 }
 
 static void

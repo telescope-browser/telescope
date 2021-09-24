@@ -52,6 +52,7 @@ struct lineprefix line_prefixes[] = {
 	[LINE_PRE_START] =	{ "─── ",	"    " },
 	[LINE_PRE_CONTENT] =	{ "",		"" },
 	[LINE_PRE_END] =	{ "─── ",	"" },
+	[LINE_BREAK] =		{ "",		"" },
 
 	[LINE_PATCH] =		{"", ""},
 	[LINE_PATCH_HDR] =	{"", ""},
@@ -120,6 +121,11 @@ struct line_face line_faces[] = {
 		.prfx_pair = PPEND_PRFX,
 		.pair = PPEND,
 		.trail_pair = PPEND_TRAIL,
+	},
+	[LINE_BREAK] =		{
+		.prfx_pair = PB_PRFX,
+		.pair = PB,
+		.trail_pair = PB_TRAIL,
 	},
 
 	/* text/x-patch */
@@ -217,6 +223,7 @@ struct mapping {
 	{"pre.start",	LINE_PRE_START},
 	{"pre",		LINE_PRE_CONTENT},
 	{"pre.end",	LINE_PRE_END},
+	{"break",	LINE_BREAK},
 
 	/* text/x-patch */
 	{"patch",	LINE_PATCH},

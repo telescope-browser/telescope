@@ -80,6 +80,7 @@ enum line_type {
 	LINE_PRE_START,
 	LINE_PRE_CONTENT,
 	LINE_PRE_END,
+	LINE_BREAK,
 
 	/* text/x-patch */
 	LINE_PATCH,
