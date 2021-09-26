@@ -16,8 +16,6 @@
 
 /*
  * Handles the data in ~/.telescope
- *
- * TODO: add some form of locking on the files
  */
 
 #include "compat.h"
