@@ -15,7 +15,7 @@
  */
 
 /*
- * Handles the data in ~/.telescope
+ * Handles config and runtime files
  */
 
 #include "compat.h"
@@ -27,11 +27,13 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <libgen.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
+#include "fs.h"
 #include "pages.h"
 #include "telescope.h"
 
@@ -52,11 +54,25 @@ static void		 handle_session_tab_title(struct imsg*, size_t);
 static void		 handle_session_end(struct imsg*, size_t);
 static void		 handle_dispatch_imsg(int, short, void*);
 static int		 fs_send_ui(int, uint32_t, int, const void *, uint16_t);
+static size_t		 join_path(char*, const char*, const char*, size_t);
+static void		 getenv_default(char*, const char*, const char*, size_t);
+static void		 mkdirs(const char*, mode_t);
+static void		 xdg_init(void);
 
 static struct imsgev		*iev_ui;
 static FILE			*session;
 
-static char	base_path[PATH_MAX];
+/* WARNING: xdg_*_base variables are not initialized if ~/.telescope exists */
+static char	xdg_config_base[PATH_MAX];
+static char	xdg_data_base[PATH_MAX];
+static char	xdg_cache_base[PATH_MAX];
+
+/* *_path_base variables are all equal to $HOME/.telescope if it exists */
+static char	config_path_base[PATH_MAX];
+static char	data_path_base[PATH_MAX];
+static char	cache_path_base[PATH_MAX];
+
+char		config_path[PATH_MAX];
 static char	lockfile_path[PATH_MAX];
 static char	bookmark_file[PATH_MAX];
 static char	known_hosts_file[PATH_MAX], known_hosts_tmp[PATH_MAX];
@@ -140,7 +156,7 @@ handle_get(struct imsg *imsg, size_t datalen)
 	if (page == NULL)
 		goto notfound;
 
-	strlcpy(path, base_path, sizeof(path));
+	strlcpy(path, config_path_base, sizeof(path));
 	strlcat(path, "/", sizeof(path));
 	if (page->path != NULL)
 		strlcat(path, page->path, sizeof(path));
@@ -514,7 +530,7 @@ handle_dispatch_imsg(int fd, short ev, void *d)
 
 	if (dispatch_imsg(iev, ev, handlers, sizeof(handlers)) == -1) {
 		/*
-		 * This should leave a ~/.telescope/crashed file to
+		 * This should leave a ~/.cache/telescope/crashed file to
 		 * trigger about:crash on next run.  Unfortunately, if
 		 * the main process dies the fs sticks around and
 		 * doesn't notice that the fd was closed.  Why EV_READ
@@ -537,31 +553,114 @@ fs_send_ui(int type, uint32_t peerid, int fd, const void *data,
 	    data, datalen);
 }
 
+static size_t
+join_path(char *buf, const char *lhs, const char *rhs, size_t buflen)
+{
+	strlcpy(buf, lhs, buflen);
+	return strlcat(buf, rhs, buflen);
+}
+
+static void
+getenv_default(char *buf, const char *name, const char *def, size_t buflen)
+{
+	size_t ret;
+	char *home, *env;
+
+	if ((home = getenv("HOME")) == NULL)
+		errx(1, "HOME is not defined");
+
+	if ((env = getenv(name)) != NULL)
+		ret = strlcpy(buf, env, buflen);
+	else
+		ret = join_path(buf, home, def, buflen);
+
+	if (ret >= buflen)
+		errx(1, "buffer too small for %s", name);
+}
+
+static void
+mkdirs(const char *path, mode_t mode)
+{
+	char copy[PATH_MAX+1], *parent;
+
+	strlcpy(copy, path, sizeof(copy));
+	parent = dirname(copy);
+	if (!strcmp(parent, "/"))
+		return;
+	mkdirs(parent, mode);
+
+	if (mkdir(path, mode) != 0) {
+		if (errno == EEXIST)
+			return;
+		err(1, "can't mkdir %s", path);
+	}
+}
+
+static void
+xdg_init(void)
+{
+	char *home, old_path[PATH_MAX];
+	struct stat info;
+
+	/* old path */
+	if ((home = getenv("HOME")) == NULL)
+		errx(1, "HOME is not defined");
+	join_path(old_path, home, "/.telescope", sizeof(old_path));
+
+	/* if ~/.telescope exists, use that instead of xdg dirs */
+	if (stat(old_path, &info) == 0 && S_ISDIR(info.st_mode)) {
+		join_path(config_path_base, home, "/.telescope",
+		    sizeof(config_path_base));
+		join_path(data_path_base, home, "/.telescope",
+		    sizeof(data_path_base));
+		join_path(cache_path_base, home, "/.telescope",
+		    sizeof(cache_path_base));
+		return;
+	}
+
+	/* xdg paths */
+	getenv_default(xdg_config_base, "XDG_CONFIG_HOME", "/.config",
+	    sizeof(xdg_config_base));
+	getenv_default(xdg_data_base, "XDG_DATA_HOME", "/.local/share",
+	    sizeof(xdg_data_base));
+	getenv_default(xdg_cache_base, "XDG_CACHE_HOME", "/.cache",
+	    sizeof(xdg_cache_base));
+
+	join_path(config_path_base, xdg_config_base, "/telescope",
+	    sizeof(config_path_base));
+	join_path(data_path_base, xdg_data_base, "/telescope",
+	    sizeof(data_path_base));
+	join_path(cache_path_base, xdg_cache_base, "/telescope",
+	    sizeof(cache_path_base));
+
+	mkdirs(xdg_config_base, S_IRWXU);
+	mkdirs(xdg_data_base, S_IRWXU);
+	mkdirs(xdg_cache_base, S_IRWXU);
+
+	mkdirs(config_path_base, S_IRWXU);
+	mkdirs(data_path_base, S_IRWXU);
+	mkdirs(cache_path_base, S_IRWXU);
+}
+
 int
 fs_init(void)
 {
-	strlcpy(base_path, getenv("HOME"), sizeof(base_path));
-	strlcat(base_path, "/.telescope", sizeof(base_path));
-	mkdir(base_path, 0700);
+	xdg_init();
 
-	strlcpy(lockfile_path, base_path, sizeof(lockfile_path));
-	strlcat(lockfile_path, "/lock", sizeof(lockfile_path));
-
-	strlcpy(bookmark_file, base_path, sizeof(bookmark_file));
-	strlcat(bookmark_file, "/bookmarks.gmi", sizeof(bookmark_file));
-
-	strlcpy(known_hosts_file, base_path, sizeof(known_hosts_file));
-	strlcat(known_hosts_file, "/known_hosts", sizeof(known_hosts_file));
-
-	strlcpy(known_hosts_tmp, base_path, sizeof(known_hosts_tmp));
-	strlcat(known_hosts_tmp, "/known_hosts.tmp.XXXXXXXXXX",
+	join_path(config_path, config_path_base, "/config",
+	    sizeof(config_path));
+	join_path(lockfile_path, cache_path_base, "/lock",
+	    sizeof(lockfile_path));
+	join_path(bookmark_file, data_path_base, "/bookmarks.gmi",
+	    sizeof(bookmark_file));
+	join_path(known_hosts_file, data_path_base, "/known_hosts",
 	    sizeof(known_hosts_file));
-
-	strlcpy(session_file, base_path, sizeof(session_file));
-	strlcat(session_file, "/session", sizeof(session_file));
-
-	strlcpy(crashed_file, base_path, sizeof(crashed_file));
-	strlcat(crashed_file, "/crashed", sizeof(crashed_file));
+	join_path(known_hosts_tmp, cache_path_base,
+	    "/known_hosts.tmp.XXXXXXXXXX", sizeof(known_hosts_tmp));
+	join_path(session_file, cache_path_base, "/session",
+	    sizeof(session_file));
+	join_path(crashed_file, cache_path_base, "/crashed",
+	    sizeof(crashed_file));
 
 	return 1;
 }

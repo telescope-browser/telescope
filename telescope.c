@@ -28,6 +28,7 @@
 #include <unistd.h>
 
 #include "defaults.h"
+#include "fs.h"
 #include "minibuffer.h"
 #include "parser.h"
 #include "session.h"
@@ -1066,7 +1067,7 @@ main(int argc, char * const *argv)
 	int		 proc = -1;
 	int		 sessionfd = -1;
 	int		 status;
-	char		 path[PATH_MAX], url[GEMINI_URL_LEN+1];
+	char		 url[GEMINI_URL_LEN+1];
 	const char	*argv0;
 
 	argv0 = argv[0];
@@ -1077,8 +1078,7 @@ main(int argc, char * const *argv)
 	if (getenv("NO_COLOR") != NULL)
 		enable_colors = 0;
 
-	strlcpy(path, getenv("HOME"), sizeof(path));
-	strlcat(path, "/.telescope/config", sizeof(path));
+	fs_init();
 
 	while ((ch = getopt_long(argc, argv, opts, longopts, NULL)) != -1) {
 		switch (ch) {
@@ -1086,7 +1086,7 @@ main(int argc, char * const *argv)
 			exit(ui_print_colors());
 		case 'c':
 			fail = 1;
-			strlcpy(path, optarg, sizeof(path));
+			strlcpy(config_path, optarg, sizeof(config_path));
 			break;
 		case 'n':
 			configtest = 1;
@@ -1143,7 +1143,7 @@ main(int argc, char * const *argv)
 	TAILQ_INIT(&minibuffer_map.m);
 
 	config_init();
-	parseconfig(path, fail);
+	parseconfig(config_path, fail);
 	if (configtest) {
 		puts("config OK");
 		exit(0);
@@ -1153,7 +1153,6 @@ main(int argc, char * const *argv)
 	    (download_path = strdup("/tmp/")) == NULL)
 		errx(1, "strdup");
 
-	fs_init();
 	if (!safe_mode && (sessionfd = lock_session()) == -1)
 		errx(1, "can't lock session, is another instance of "
 		    "telescope already running?");

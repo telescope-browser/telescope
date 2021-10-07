@@ -56,7 +56,7 @@ Telescope strives to be familiar for vi/vim users too!  hjkl is available by def
 
 Telescope is fully customizable.  The configuration file is
 
-> ~/.telescope/config
+> ~/.config/telescope/config
 
 By default Telescope doesn’t use colours too much in order to adapt to both light and dark-themed terminals.  This doesn’t mean that Telescope cannot use colours though!  See for example contrib/light.config and contrib/dark.config.
 
@@ -67,11 +67,11 @@ By default Telescope doesn’t use colours too much in order to adapt to both li
 
 All the ‘about:*’ pages can be locally overridden.  For example, to customise about:new create:
 
-> ~/.telescope/pages/about_new.gmi
+> ~/.config/telescope/pages/about_new.gmi
 
 about:bookmarks is the only page that doesn’t follow this pattern; it’s located at
 
-> ~/.telescope/bookmarks.gmi
+> ~/.local/share/telescope/bookmarks.gmi
 
 
 ## Protocol Proxies

@@ -120,9 +120,9 @@ that could be helpful to others, consider adding it to the `contrib` directory.
 
 ## User files
 
-Telescope stores user files in `~/.telescope`.  The usage and contents
-of these files are described in [the man page](telescope.1), under
-"FILES".  There's no support yet for XDG-style directories.
+Telescope stores user files according to the
+[XDG Base Directory Specification][xdg]. The usage and contents of these files
+are described in [the man page](telescope.1), under "FILES".
 
 Only one instance of Telescope can be running at time per user.
 
@@ -137,3 +137,4 @@ distributed under the [UNICODE, Inc license agreement][unicode-license].
 
 
 [unicode-license]: https://www.unicode.org/license.html
+[xdg]: https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html

@@ -39,7 +39,7 @@ Show all available colors and exit.
 .It Fl c Pa config
 Specify an alternative configuration file.
 By default
-.Pa $HOME/.telescope/config
+.Pa $HOME/.config/telescope/config
 is loaded.
 .It Fl h , Fl -help
 Display version and usage.
@@ -635,7 +635,7 @@ The following aliases are available during
 During the startup,
 .Nm
 reads the configuration file at
-.Pa ~/.telescope/config
+.Pa ~/.config/telescope/config
 or the one given with the
 .Fl c
 flag.
@@ -880,21 +880,21 @@ The user's terminal name.
 .El
 .Sh FILES
 .Bl -tag -width Ds -compact
-.It Pa ~/.telescope/bookmarks.gmi
-Bookmarks file.
-.It Pa ~/.telescope/config
+.It Pa ~/.config/telescope/config
 Default configuration file.
-.It Pa ~/.telescope/known_hosts
+.It Pa ~/.config/telescope/pages/about_*.gmi
+Overrides for built-in about: pages.
+.It Pa ~/.local/share/telescope/bookmarks.gmi
+Bookmarks file.
+.It Pa ~/.local/share/telescope/known_hosts
 Hash of the certificates for all the known hosts.
 Each line contains three fields: hostname with optional port number,
 hash of the certificate and a numeric flag.
-.It Pa ~/.telescope/lock
+.It Pa ~/.cache/telescope/lock
 Lock file used to prevent multiple instance of
 .Nm
 from running at the same time.
-.It Pa ~/.telescope/pages/about_*.gmi
-Overrides for built-in about: pages.
-.It Pa ~/.telescope/session
+.It Pa ~/.cache/telescope/session
 The list of tabs from the last session.
 Every line identifies a tab and contains three space-separated fields:
 the full URL, a comma-separated list of attributes and the cached
@@ -908,7 +908,7 @@ It's possible to browse
 .Dq the small web
 .Pq i.e. simple websites
 by using programs like the duckling-proxy by defining a proxy in
-.Pa ~/.telescope/config :
+.Pa ~/.config/telescope/config :
 .Bd -literal -offset indent
 proxy http via "gemini://127.0.0.1:1965"
 proxy https via "gemini://127.0.0.1:1965"

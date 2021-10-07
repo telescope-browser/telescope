@@ -2,4 +2,4 @@
 
 No bookmarks yet!
 
-Create ~/.telescope/bookmarks.gmi or use ‘bookmark-page’.
+Create ~/.local/share/telescope/bookmarks.gmi or use ‘bookmark-page’.
