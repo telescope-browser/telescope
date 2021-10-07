@@ -49,16 +49,16 @@ sandbox_fs_process(void)
 	strlcpy(path, getenv("HOME"), sizeof(path));
 	strlcat(path, "/Downloads", sizeof(path));
 	if (unveil(path, "rwc") == -1)
-		err(1, "unveil");
+		err(1, "unveil(%s)", path);
 
 	if (unveil(config_path_base, "rwc") == -1)
-		err(1, "unveil");
+		err(1, "unveil(%s)", config_path_base);
 
 	if (unveil(data_path_base, "rwc") == -1)
-		err(1, "unveil");
+		err(1, "unveil(%s)", data_path_base);
 
 	if (unveil(cache_path_base, "rwc") == -1)
-		err(1, "unveil");
+		err(1, "unveil(%s)", cache_path_base);
 
 	if (pledge("stdio rpath wpath cpath sendfd", NULL) == -1)
 		err(1, "pledge");
