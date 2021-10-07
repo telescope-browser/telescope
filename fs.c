@@ -68,17 +68,16 @@ static char	xdg_data_base[PATH_MAX];
 static char	xdg_cache_base[PATH_MAX];
 
 /* *_path_base variables are all equal to $HOME/.telescope if it exists */
-static char	config_path_base[PATH_MAX];
-static char	data_path_base[PATH_MAX];
-static char	cache_path_base[PATH_MAX];
+char		config_path_base[PATH_MAX];
+char		data_path_base[PATH_MAX];
+char		cache_path_base[PATH_MAX];
 
 char		config_path[PATH_MAX];
-static char	lockfile_path[PATH_MAX];
-static char	bookmark_file[PATH_MAX];
-static char	known_hosts_file[PATH_MAX], known_hosts_tmp[PATH_MAX];
-static char	crashed_file[PATH_MAX];
-
-char	session_file[PATH_MAX];
+char		lockfile_path[PATH_MAX];
+char		bookmark_file[PATH_MAX];
+char		known_hosts_file[PATH_MAX], known_hosts_tmp[PATH_MAX];
+char		crashed_file[PATH_MAX];
+char		session_file[PATH_MAX];
 
 static imsg_handlerfn *handlers[] = {
 	[IMSG_GET] = handle_get,

@@ -17,8 +17,25 @@
 #ifndef FS_H
 #define FS_H
 
+#include "compat.h"
+
 #include <limits.h>
 
+extern char	config_path_base[PATH_MAX];
+extern char	data_path_base[PATH_MAX];
+extern char	cache_path_base[PATH_MAX];
+
 extern char	config_path[PATH_MAX];
+extern char	lockfile_path[PATH_MAX];
+extern char	bookmark_file[PATH_MAX];
+extern char	known_hosts_file[PATH_MAX], known_host_tmp[PATH_MAX];
+extern char	crashed_file[PATH_MAX];
+extern char	session_file[PATH_MAX];
+
+int		 fs_init(void);
+int		 fs_main(void);
+int		 last_time_crashed(void);
+int		 lock_session(void);
+int		 load_certs(struct ohash *);
 
 #endif

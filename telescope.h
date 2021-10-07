@@ -284,15 +284,6 @@ int		 config_setcolor(int, const char *, int, int, int);
 int		 config_setattr(const char *, int, int, int);
 void		 config_apply_style(void);
 
-/* fs.c */
-extern char	session_file[PATH_MAX];
-
-int		 fs_init(void);
-int		 fs_main(void);
-int		 last_time_crashed(void);
-int		 lock_session(void);
-int		 load_certs(struct ohash*);
-
 /* help.c */
 void		 recompute_help(void);
 
