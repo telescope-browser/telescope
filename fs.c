@@ -581,18 +581,19 @@ getenv_default(char *buf, const char *name, const char *def, size_t buflen)
 static void
 mkdirs(const char *path, mode_t mode)
 {
-	char copy[PATH_MAX+1], *parent;
+	char copy[PATH_MAX+1], orig[PATH_MAX+1], *parent;
 
 	strlcpy(copy, path, sizeof(copy));
+	strlcpy(orig, path, sizeof(orig));
 	parent = dirname(copy);
 	if (!strcmp(parent, "/"))
 		return;
 	mkdirs(parent, mode);
 
-	if (mkdir(path, mode) != 0) {
+	if (mkdir(orig, mode) != 0) {
 		if (errno == EEXIST)
 			return;
-		err(1, "can't mkdir %s", path);
+		err(1, "can't mkdir %s", orig);
 	}
 }
 
