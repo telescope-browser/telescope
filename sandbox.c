@@ -14,6 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "fs.h"
 #include "telescope.h"
 
 #ifdef __OpenBSD__
@@ -50,9 +51,13 @@ sandbox_fs_process(void)
 	if (unveil(path, "rwc") == -1)
 		err(1, "unveil");
 
-	strlcpy(path, getenv("HOME"), sizeof(path));
-	strlcat(path, "/.telescope/", sizeof(path));
-	if (unveil(path, "rwc") == -1)
+	if (unveil(config_path_base, "rwc") == -1)
+		err(1, "unveil");
+
+	if (unveil(data_path_base, "rwc") == -1)
+		err(1, "unveil");
+
+	if (unveil(cache_path_base, "rwc") == -1)
 		err(1, "unveil");
 
 	if (pledge("stdio rpath wpath cpath sendfd", NULL) == -1)
