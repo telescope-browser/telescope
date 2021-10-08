@@ -176,6 +176,243 @@ assume it's a file:// URL,
 .It
 otherwise assume it's a Gemini URL.
 .El
+.Sh CONFIGURATION FILE
+During the startup,
+.Nm
+reads the configuration file at
+.Pa ~/.config/telescope/config
+or
+.Pa ~/.telescope/config .
+.Pp
+It's possible to load a custom configuration file using the
+.Fl c
+flag.
+.Pp
+.Nm
+will also load a file called
+.Pa config-TERM ,
+where
+.Dq TERM
+is the name of the terminal type
+.Pq i.e. the TERM environment variable ,
+if it exists.
+.Pp
+The format of the configuration file is fairly flexible.
+The current line can be extended over multiple ones using a
+backslash
+.Pq Sq \e .
+Comments can be put anywhere in the file using a hash mark
+.Pq Sq # ,
+and extend to the end of the current line, but backslashes can't be
+used to extend comments over multiple lines.
+.Pp
+The following constructs are available:
+.Bl -tag -width Ds
+.It Ic bind Ar map Ar key Ar cmd
+Bind
+.Ar key
+to the function
+.Ar cmd
+in the keymap
+.Ar map .
+Valid values for map are
+.Dq global-map
+.Pq i.e. when the user is viewing a page
+and
+.Dq minibuffer-map
+.Pq i.e. when the minibuffer has the focus.
+.Ar key
+follows the same syntax described in
+.Sx DEFAULT KEY BINDINGS
+and all the possible functions are listed in
+.Sx INTERACTIVE COMMANDS .
+.It Ic proxy Ar proto Ic via Ar url
+Use
+.Ar url
+as proxy for all URLs with
+protocol
+.Ar proto .
+.Ar url
+must be a Gemini URI without path, query and fragment component.
+.It Ic set Ar opt No = Ar val
+Set the option
+.Ar opt
+to the value
+.Ar val .
+Valid options are:
+.Pp
+.Bl -tag -width twelveletters -compact
+.It autosave
+.Pq integer
+If greater than zero, save the session after the specified amount of
+seconds after some events happens
+.Pq new or closed tabs, visited a link ...
+Defaults to 20.
+.It dont-wrap-pre
+.Pq integer
+If nonzero, don't wrap preformatted blocks.
+Defaults to 0.
+.It download-path
+.Pq string
+The default download path.
+Defaults to
+.Pa /tmp .
+.It emojify-link
+.Pq integer
+If nonzero, when the text of a link starts with an emoji followed by a
+space, use that emoji as line prefix.
+Defaults to 1.
+.It enable-colors
+.Pq integer
+If nonzero, enable colours.
+Defaults to 0 if
+.Ev NO_COLORS
+is set, 1 otherwise.
+.It fill-column
+.Pq integer
+If greater than zero, lines of text will be formatted in a way that
+don't exceed the given number of columns.
+Defaults to 80.
+.It hide-pre-blocks
+.Pq integer
+If nonzero, hide by default the body of the preformatted blocks.
+Defaults to zero.
+.Ic push-button
+can be used to toggle the visibility per-block.
+.It hide-pre-closing-line
+.Pq integer
+If nonzero, hide the closing line of preformatted blocks.
+Defaults to 0.
+.It hide-pre-context
+.Pq integer
+If nonzero, hide the start and end line of the preformatted blocks.
+If both hide-pre-context and hide-pre-blocks are nonzero, preformatted
+blocks are irremediably hidden.
+Defaults to zero.
+.It new-tab-url
+.Pq string
+URL for the new tab page.
+Defaults to
+.Dq about:new .
+.It olivetti-mode
+.Pq integer
+If nonzero, enable
+.Ic olivetti-mode
+Defaults to 1.
+.It set-title
+.Pq integer
+If nonzero, set the terminal title to the page title.
+Defaults to 1.
+.It tab-bar-show
+.Pq integer
+If tab-bar-show is -1 hide the tab bar permanently, if 0 show it
+unconditionally.
+If it's 1, show the bar only when there is more than one tab.
+Defaults to 1.
+.El
+.It Ic style Ar name Ar option
+Change the styling of the element identified by
+.Ar name .
+Multiple options may be specified within curly braces.
+Valid style identifiers are:
+.Bl -tag -width line.compl.current -compact -offset Ds
+.It line
+the area outside the lines in the body of the page.
+.It line.compl
+the completions.
+.It line.compl.current
+the current completion.
+.It line.help
+text in the *Help* buffer.
+.It line.text
+text lines.
+.It line.link
+link lines.
+.It line.title1..3
+headings
+.It line.item
+item lines.
+.It line.quote
+quotes.
+.It line.pre.start
+the heading of a preformatted block.
+.It line.pre
+the content of a preformatted block.
+.It line.pre.end
+the closing line of a preformatted block.
+.It minibuffer
+the minibuffer.
+.It modeline
+the modeline.
+.It tabline
+the tabline.
+.It tabline.tab
+the non-focused tabs.
+.It tabline.current
+the focused tab.
+.El
+.Pp
+Valid options are:
+.Bl -tag -width Ds
+.It Ic attr Ar prefix Oo Ar line Oo Ar trail Oc Oc
+Sets the text attributes.
+If only one value is given,
+.Ar line
+and
+.Ar trail
+default to that; if two values are given then
+.Ar trail
+defaults to
+.Ar prefix .
+Each attribute is a comma-separated list of keywords:
+.Bl -tag -width underline -compact -offset Ds
+.It Ic normal
+no attributes.
+.It Ic standout
+best highlighting mode for the terminal.
+.It Ic underline
+underlines the text.
+.It Ic reverse
+reverses background/foreground colors.
+.It Ic blink
+makes the text blinking.
+.It Ic dim
+half bright.
+.It Ic bold
+extra bright or bold.
+.El
+.Pp
+Only the style identifiers with the
+.Dq line.
+prefix accept up to three attributes.
+The other will only use the first one given.
+.It Ic bg Ar prefix Oo Ar line Oo Ar trail Oc Oc
+Sets the background color.
+Follows the same behaviour as
+.Ic attr
+regarding the optional parameters.
+The colour is one of black, red, green, yellow, blue,
+magenta, cyan and white; colour0 to colour255
+.Pq or color0 to color255
+from the 256-colour set;
+default for the default colour.
+.It Ic fg Ar prefix Oo Ar line Oo Ar trail Oc Oc
+Sets the foreground color.
+It behaves just like
+.Ic bg .
+.It Ic prefix Ar prfx Op Ar cont
+Sets the prefix for the current line type to
+.Ar prfx
+and
+.Ar cont
+as the prefix for the continuation lines
+.Pq i.e. when a long line gets wrapped.
+If
+.Ar cont
+is not given its value will be the same of
+.Ar prfx .
+.El
+.El
 .Sh DEFAULT KEY BINDINGS
 The default key bindings are very similar to GNU Emacs, but care has
 been taken to include also bindings familiar for
@@ -630,243 +867,6 @@ The following aliases are available during
 .Ic tab-previous
 .It Ic q No and Ic wq
 .Ic kill-telescope
-.El
-.Sh CONFIGURATION FILE
-During the startup,
-.Nm
-reads the configuration file at
-.Pa ~/.config/telescope/config
-or
-.Pa ~/.telescope/config .
-.Pp
-It's possible to load a custom configuration file using the
-.Fl c
-flag.
-.Pp
-.Nm
-will also load a file called
-.Pa config-TERM ,
-where
-.Dq TERM
-is the name of the terminal type
-.Pq i.e. the TERM environment variable ,
-if it exists.
-.Pp
-The format of the configuration file is fairly flexible.
-The current line can be extended over multiple ones using a
-backslash
-.Pq Sq \e .
-Comments can be put anywhere in the file using a hash mark
-.Pq Sq # ,
-and extend to the end of the current line, but backslashes can't be
-used to extend comments over multiple lines.
-.Pp
-The following constructs are available:
-.Bl -tag -width Ds
-.It Ic bind Ar map Ar key Ar cmd
-Bind
-.Ar key
-to the function
-.Ar cmd
-in the keymap
-.Ar map .
-Valid values for map are
-.Dq global-map
-.Pq i.e. when the user is viewing a page
-and
-.Dq minibuffer-map
-.Pq i.e. when the minibuffer has the focus.
-.Ar key
-follows the same syntax described in
-.Sx DEFAULT KEY BINDINGS
-and all the possible functions are listed in
-.Sx INTERACTIVE COMMANDS .
-.It Ic proxy Ar proto Ic via Ar url
-Use
-.Ar url
-as proxy for all URLs with
-protocol
-.Ar proto .
-.Ar url
-must be a Gemini URI without path, query and fragment component.
-.It Ic set Ar opt No = Ar val
-Set the option
-.Ar opt
-to the value
-.Ar val .
-Valid options are:
-.Pp
-.Bl -tag -width twelveletters -compact
-.It autosave
-.Pq integer
-If greater than zero, save the session after the specified amount of
-seconds after some events happens
-.Pq new or closed tabs, visited a link ...
-Defaults to 20.
-.It dont-wrap-pre
-.Pq integer
-If nonzero, don't wrap preformatted blocks.
-Defaults to 0.
-.It download-path
-.Pq string
-The default download path.
-Defaults to
-.Pa /tmp .
-.It emojify-link
-.Pq integer
-If nonzero, when the text of a link starts with an emoji followed by a
-space, use that emoji as line prefix.
-Defaults to 1.
-.It enable-colors
-.Pq integer
-If nonzero, enable colours.
-Defaults to 0 if
-.Ev NO_COLORS
-is set, 1 otherwise.
-.It fill-column
-.Pq integer
-If greater than zero, lines of text will be formatted in a way that
-don't exceed the given number of columns.
-Defaults to 80.
-.It hide-pre-blocks
-.Pq integer
-If nonzero, hide by default the body of the preformatted blocks.
-Defaults to zero.
-.Ic push-button
-can be used to toggle the visibility per-block.
-.It hide-pre-closing-line
-.Pq integer
-If nonzero, hide the closing line of preformatted blocks.
-Defaults to 0.
-.It hide-pre-context
-.Pq integer
-If nonzero, hide the start and end line of the preformatted blocks.
-If both hide-pre-context and hide-pre-blocks are nonzero, preformatted
-blocks are irremediably hidden.
-Defaults to zero.
-.It new-tab-url
-.Pq string
-URL for the new tab page.
-Defaults to
-.Dq about:new .
-.It olivetti-mode
-.Pq integer
-If nonzero, enable
-.Ic olivetti-mode
-Defaults to 1.
-.It set-title
-.Pq integer
-If nonzero, set the terminal title to the page title.
-Defaults to 1.
-.It tab-bar-show
-.Pq integer
-If tab-bar-show is -1 hide the tab bar permanently, if 0 show it
-unconditionally.
-If it's 1, show the bar only when there is more than one tab.
-Defaults to 1.
-.El
-.It Ic style Ar name Ar option
-Change the styling of the element identified by
-.Ar name .
-Multiple options may be specified within curly braces.
-Valid style identifiers are:
-.Bl -tag -width line.compl.current -compact -offset Ds
-.It line
-the area outside the lines in the body of the page.
-.It line.compl
-the completions.
-.It line.compl.current
-the current completion.
-.It line.help
-text in the *Help* buffer.
-.It line.text
-text lines.
-.It line.link
-link lines.
-.It line.title1..3
-headings
-.It line.item
-item lines.
-.It line.quote
-quotes.
-.It line.pre.start
-the heading of a preformatted block.
-.It line.pre
-the content of a preformatted block.
-.It line.pre.end
-the closing line of a preformatted block.
-.It minibuffer
-the minibuffer.
-.It modeline
-the modeline.
-.It tabline
-the tabline.
-.It tabline.tab
-the non-focused tabs.
-.It tabline.current
-the focused tab.
-.El
-.Pp
-Valid options are:
-.Bl -tag -width Ds
-.It Ic attr Ar prefix Oo Ar line Oo Ar trail Oc Oc
-Sets the text attributes.
-If only one value is given,
-.Ar line
-and
-.Ar trail
-default to that; if two values are given then
-.Ar trail
-defaults to
-.Ar prefix .
-Each attribute is a comma-separated list of keywords:
-.Bl -tag -width underline -compact -offset Ds
-.It Ic normal
-no attributes.
-.It Ic standout
-best highlighting mode for the terminal.
-.It Ic underline
-underlines the text.
-.It Ic reverse
-reverses background/foreground colors.
-.It Ic blink
-makes the text blinking.
-.It Ic dim
-half bright.
-.It Ic bold
-extra bright or bold.
-.El
-.Pp
-Only the style identifiers with the
-.Dq line.
-prefix accept up to three attributes.
-The other will only use the first one given.
-.It Ic bg Ar prefix Oo Ar line Oo Ar trail Oc Oc
-Sets the background color.
-Follows the same behaviour as
-.Ic attr
-regarding the optional parameters.
-The colour is one of black, red, green, yellow, blue,
-magenta, cyan and white; colour0 to colour255
-.Pq or color0 to color255
-from the 256-colour set;
-default for the default colour.
-.It Ic fg Ar prefix Oo Ar line Oo Ar trail Oc Oc
-Sets the foreground color.
-It behaves just like
-.Ic bg .
-.It Ic prefix Ar prfx Op Ar cont
-Sets the prefix for the current line type to
-.Ar prfx
-and
-.Ar cont
-as the prefix for the continuation lines
-.Pq i.e. when a long line gets wrapped.
-If
-.Ar cont
-is not given its value will be the same of
-.Ar prfx .
-.El
 .El
 .Sh ENVIRONMENT
 When
