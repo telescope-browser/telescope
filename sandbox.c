@@ -46,7 +46,7 @@ sandbox_fs_process(void)
 	char path[PATH_MAX];
 
 	if (unveil("/tmp", "rwc") == -1)
-		err(1, "unveil");
+		err(1, "unveil(/tmp)");
 
 	strlcpy(path, getenv("HOME"), sizeof(path));
 	strlcat(path, "/Downloads", sizeof(path));
