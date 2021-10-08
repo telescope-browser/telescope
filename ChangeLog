@@ -1,3 +1,7 @@
+2021-10-08  Omar Polo  <op@omarpolo.com>
+
+	* sandbox.c (landlock_unveil): use landlock on linux if available to restrict what parts of the filesystem telescope can see
+
 2021-10-07  Andrea Feletto  <andrea@andreafeletto.com>
 
 	* contrib/xdg-migrate.sh: add a script to aid the migration of ~/.telescope to XDG
