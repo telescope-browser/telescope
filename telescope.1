@@ -11,7 +11,7 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: September 15 2021$
+.Dd $Mdocdate: October 8 2021$
 .Dt TELESCOPE 1
 .Os
 .Sh NAME
@@ -636,7 +636,10 @@ During the startup,
 .Nm
 reads the configuration file at
 .Pa ~/.config/telescope/config
-or the one given with the
+or
+.Pa ~/.telescope/config .
+.Pp
+It's possible to load a custom configuration file using the
 .Fl c
 flag.
 .Pp
@@ -877,8 +880,23 @@ To decide whether to use colors or not.
 The content of the variable doesn't matter.
 .It Ev TERM
 The user's terminal name.
+.It Ev XDG_CACHE_HOME , Ev XDG_CONFIG_HOME , Ev XDG_DATA_HOME
+If defined can alter the default location of the files used.
 .El
 .Sh FILES
+By default
+.Nm
+follows the XDG Base Directory Specification.
+However, if
+.Pa ~/.telescope
+exists, XDG is ignored and all the files are stored inside it.
+The usage of
+.Ev XDG_CACHE_HOME ,
+.Ev XDG_CONFIG_HOME
+and
+.Ev XDG_DATA_HOME
+can further alter the location of these files.
+.Pp
 .Bl -tag -width Ds -compact
 .It Pa ~/.config/telescope/config
 Default configuration file.
@@ -920,6 +938,11 @@ without any configuration
 .Bd -literal -offset indent
 telescope -c /dev/null
 .Ed
+.Sh STANDARDS
+.Rs
+.%B XDG Base Directory Specification
+.%U https://specifications.freedesktop.org/basedir-spec/latest/
+.Re
 .Sh AUTHORS
 .An -nosplit
 The
