@@ -50,7 +50,7 @@ sandbox_fs_process(void)
 
 	strlcpy(path, getenv("HOME"), sizeof(path));
 	strlcat(path, "/Downloads", sizeof(path));
-	if (unveil(path, "rwc") == -1)
+	if (unveil(path, "rwc") == -1 && errno != ENOENT)
 		err(1, "unveil(%s)", path);
 
 	if (unveil(config_path_base, "rwc") == -1)
@@ -207,7 +207,7 @@ sandbox_fs_process(void)
 
 	strlcpy(path, getenv("HOME"), sizeof(path));
 	strlcat(path, "/Downloads", sizeof(path));
-	if (landlock_unveil(fd, path, rwc) == -1)
+	if (landlock_unveil(fd, path, rwc) == -1 && errno != ENOENT)
 		err(1, "landlock_unveil(%s)", path);
 
 	if (landlock_unveil(fd, config_path_base, rwc) == -1)
