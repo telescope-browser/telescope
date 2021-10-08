@@ -7,3 +7,5 @@
  - `dark.config`: an opinionated theme for dark terminals.  Load it
    with `telescope -c contrib/dark.config` or copy it to
    `~/.config/telescope/config`
+ - `xdg-migrate.sh` aids the migration from a monolithic
+   `~/.telescope` directory to a XDG.
