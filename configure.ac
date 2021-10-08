@@ -112,6 +112,8 @@ AC_CHECK_LIB(util, ohash_init, [], [
 
 AC_CHECK_FUNCS([asr_run])
 
+AC_CHECK_HEADERS([linux/landlock.h])
+
 # check compiler flags
 AC_DEFUN([CC_ADD_CHECK_FLAGS], [
 	AC_MSG_CHECKING([if $CC supports $1 flag])

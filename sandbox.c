@@ -14,6 +14,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "compat.h"
+
 #include "fs.h"
 #include "telescope.h"
 
@@ -62,6 +64,160 @@ sandbox_fs_process(void)
 
 	if (pledge("stdio rpath wpath cpath sendfd", NULL) == -1)
 		err(1, "pledge");
+}
+
+#elif HAVE_LINUX_LANDLOCK_H
+
+#include <linux/landlock.h>
+#include <linux/prctl.h>
+
+#include <sys/prctl.h>
+#include <sys/stat.h>
+#include <sys/syscall.h>
+
+#include <fcntl.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+/*
+ * What's the deal with landlock?  While distro with linux >= 5.13
+ * have the struct declarations, libc wrappers are missing.  The
+ * sample landlock code provided by the authors includes these "shims"
+ * in their example for the landlock API until libc provides them.
+ *
+ * Linux is such a mess sometimes.  /rant
+ */
+
+#ifndef landlock_create_ruleset
+static inline int
+landlock_create_ruleset(const struct landlock_ruleset_attr *attr, size_t size,
+    __u32 flags)
+{
+	return syscall(__NR_landlock_create_ruleset, attr, size, flags);
+}
+#endif
+
+#ifndef landlock_add_rule
+static inline int
+landlock_add_rule(int ruleset_fd, enum landlock_rule_type type,
+    const void *attr, __u32 flags)
+{
+	return syscall(__NR_landlock_add_rule, ruleset_fd, type, attr, flags);
+}
+#endif
+
+#ifndef landlock_restrict_self
+static inline int
+landlock_restrict_self(int ruleset_fd, __u32 flags)
+{
+	return syscall(__NR_landlock_restrict_self, ruleset_fd, flags);
+}
+#endif
+
+static int
+open_landlock(void)
+{
+	struct landlock_ruleset_attr attr = {
+		.handled_access_fs =	LANDLOCK_ACCESS_FS_READ_FILE	|
+					LANDLOCK_ACCESS_FS_READ_DIR	|
+					LANDLOCK_ACCESS_FS_WRITE_FILE	|
+					LANDLOCK_ACCESS_FS_MAKE_DIR	|
+					LANDLOCK_ACCESS_FS_MAKE_REG,
+	};
+
+	return landlock_create_ruleset(&attr, sizeof(attr), 0);
+}
+
+static int
+landlock_unveil(int landlock_fd, const char *path, int perms)
+{
+	struct landlock_path_beneath_attr pb;
+	int err, saved_errno;
+
+	pb.allowed_access = perms;
+
+	if ((pb.parent_fd = open(path, O_PATH)) == -1)
+		return -1;
+
+	err = landlock_add_rule(landlock_fd, LANDLOCK_RULE_PATH_BENEATH,
+	    &pb, 0);
+	saved_errno = errno;
+	close(pb.parent_fd);
+	errno = saved_errno;
+	return err ? -1 : 0;
+}
+
+static int
+landlock_apply(int fd)
+{
+	int r, saved_errno;
+
+	if (prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) == -1)
+		err(1, "%s: prctl(PR_SET_NO_NEW_PRIVS)", __func__);
+
+	r = landlock_restrict_self(fd, 0);
+	saved_errno = errno;
+	close(fd);
+	errno = saved_errno;
+	return r ? -1 : 0;
+}
+
+static int
+landlock_no_fs(void)
+{
+	int fd;
+
+	if ((fd = open_landlock()) == -1)
+		return -1;
+
+	return landlock_apply(fd);
+}
+
+void
+sandbox_net_process(void)
+{
+	return;
+}
+
+void
+sandbox_ui_process(void)
+{
+	if (landlock_no_fs() == -1)
+		err(1, "landlock");
+}
+
+void
+sandbox_fs_process(void)
+{
+	int fd, rwc;
+        char path[PATH_MAX];
+
+	if ((fd = open_landlock()) == -1)
+		err(1, "can't create landlock ruleset");
+
+	rwc =	LANDLOCK_ACCESS_FS_READ_FILE	|
+		LANDLOCK_ACCESS_FS_READ_DIR	|
+		LANDLOCK_ACCESS_FS_WRITE_FILE	|
+		LANDLOCK_ACCESS_FS_MAKE_DIR	|
+		LANDLOCK_ACCESS_FS_MAKE_REG;
+
+	if (landlock_unveil(fd, "/tmp", rwc) == -1)
+		err(1, "landlock_unveil(/tmp)");
+
+	strlcpy(path, getenv("HOME"), sizeof(path));
+	strlcat(path, "/Downloads", sizeof(path));
+	if (landlock_unveil(fd, path, rwc) == -1)
+		err(1, "landlock_unveil(%s)", path);
+
+	if (landlock_unveil(fd, config_path_base, rwc) == -1)
+		err(1, "landlock_unveil(%s)", config_path_base);
+
+	if (landlock_unveil(fd, data_path_base, rwc) == -1)
+		err(1, "landlock_unveil(%s)", data_path_base);
+
+	if (landlock_unveil(fd, cache_path_base, rwc) == -1)
+		err(1, "landlock_unveil(%s)", cache_path_base);
 }
 
 #else
