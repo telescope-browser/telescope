@@ -21,6 +21,7 @@
 
 #ifdef __OpenBSD__
 
+# include <errno.h>
 # include <limits.h>
 # include <stdlib.h>
 # include <string.h>
@@ -75,6 +76,7 @@ sandbox_fs_process(void)
 #include <sys/stat.h>
 #include <sys/syscall.h>
 
+#include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
