@@ -1,3 +1,9 @@
+2021-10-07  Andrea Feletto  <andrea@andreafeletto.com>
+
+	* contrib/xdg-migrate.sh: add a script to aid the migration of ~/.telescope to XDG
+
+	* fs.c (xdg_init): use XDG-style directories if ~/.telescope does not exists
+
 2021-09-20  Omar Polo  <op@omarpolo.com>
 
 	* parser_textpatch.c (tpatch_emit_line): fix patch/diff syntax highlighting when more than one file are involved
