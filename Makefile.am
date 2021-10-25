@@ -1,6 +1,6 @@
 bin_PROGRAMS =		telescope
 
-EXTRA_telescope_SOURCES = compat/ohash.h compat/queue.h compat/imsg.h
+EXTRA_telescope_SOURCES = compat/ohash.h compat/queue.h compat/imsg.h contrib
 
 telescope_SOURCES =	cmd.c			\
 			cmd.gen.c		\
