@@ -1,3 +1,7 @@
+2021-10-26  Omar Polo  <op@omarpolo.com>
+
+	* parser_gemtext.c (detect_line_type): correct item line detection: a space is required after the `*' character.
+
 2021-10-08  Omar Polo  <op@omarpolo.com>
 
 	* sandbox.c (landlock_unveil): use landlock on linux if available to restrict what parts of the filesystem telescope can see

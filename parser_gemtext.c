@@ -332,7 +332,10 @@ detect_line_type(const char *buf, size_t len, int in_pre)
 		return LINE_TEXT;
 
 	switch (*buf) {
-	case '*': return LINE_ITEM;
+	case '*':
+		if (len > 1 && buf[1] == ' ')
+			return LINE_ITEM;
+		break;
 	case '>': return LINE_QUOTE;
 	case '=':
 		if (len >= 1 && buf[1] == '>')
