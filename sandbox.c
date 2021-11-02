@@ -193,7 +193,7 @@ void
 sandbox_fs_process(void)
 {
 	int fd, rwc;
-        char path[PATH_MAX];
+	char path[PATH_MAX];
 
 	if ((fd = open_landlock()) == -1)
 		err(1, "can't create landlock ruleset");
