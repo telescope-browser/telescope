@@ -802,8 +802,7 @@ gopher_send_search_req(struct tab *tab, const char *text)
  * Effectively load the given url in the given tab.  Return 1 when
  * loading the page asynchronously, and thus when an erase_buffer can
  * be done right after this function return, or 0 when loading the
- * page synchronously.  In this last case, erase_buffer *MUST* be
- * called by the handling function (such as load_page_from_str).
+ * page synchronously.
  */
 static int
 do_load_url(struct tab *tab, const char *url, const char *base)
@@ -902,8 +901,8 @@ load_url(struct tab *tab, const char *url, const char *base, int nohist)
 			    sizeof(tab->hist_cur->h));
 	}
 
-	if (!lazy && do_load_url(tab, url, base))
-		erase_buffer(&tab->buffer);
+	if (!lazy)
+		do_load_url(tab, url, base);
 }
 
 void
