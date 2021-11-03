@@ -67,10 +67,14 @@ static void do_parseconfig(const char *, int);
 
 %}
 
-%token SET
-%token STYLE PRFX CONT BG FG ATTR
-%token BIND UNBIND
-%token PROXY VIA
+%token	ATTR
+%token	BIND BG
+%token	CONT
+%token	FG
+%token	PRFX PROXY
+%token	SET STYLE
+%token	UNBIND
+%token	VIA
 
 %token <str> STRING
 %token <num> NUMBER
