@@ -67,13 +67,13 @@ static void do_parseconfig(const char *, int);
 
 %}
 
-%token TSET
-%token TSTYLE TPRFX TCONT TBG TFG TATTR
-%token TBIND TUNBIND
-%token TPROXY TVIA
+%token SET
+%token STYLE PRFX CONT BG FG ATTR
+%token BIND UNBIND
+%token PROXY VIA
 
-%token <str> TSTRING
-%token <num> TNUMBER
+%token <str> STRING
+%token <num> NUMBER
 
 %%
 
@@ -93,41 +93,41 @@ rule		: set
 		| proxy
 		;
 
-set		: TSET TSTRING '=' TSTRING	{ setvars($2, $4); }
-		| TSET TSTRING '=' TNUMBER	{ setvari($2, $4); }
+set		: SET STRING '=' STRING	{ setvars($2, $4); }
+		| SET STRING '=' NUMBER	{ setvari($2, $4); }
 		;
 
-style		: TSTYLE TSTRING { current_style = $2; } stylespec ;
+style		: STYLE STRING { current_style = $2; } stylespec ;
 stylespec	: styleopt | '{' optnl styleopts '}' ;
 
 styleopts	: /* empty */
 		| styleopts styleopt optnl
 		;
 
-styleopt	: TPRFX TSTRING		{ setprfx($2, $2); }
-		| TPRFX TSTRING TSTRING	{ setprfx($2, $3); }
-		| TBG { color_type = TBG; } colorspec
-		| TFG { color_type = TFG; } colorspec
-		| TATTR attr
+styleopt	: PRFX STRING		{ setprfx($2, $2); }
+		| PRFX STRING STRING	{ setprfx($2, $3); }
+		| BG { color_type = BG; } colorspec
+		| FG { color_type = FG; } colorspec
+		| ATTR attr
 		;
 
-colorspec	: TSTRING			{ setcolor($1, $1, $1); free($1); }
-		| TSTRING TSTRING		{ setcolor($1, $2, $1); free($1); free($2); }
-		| TSTRING TSTRING TSTRING	{ setcolor($1, $2, $3); free($1); free($2); free($3); }
+colorspec	: STRING			{ setcolor($1, $1, $1); free($1); }
+		| STRING STRING		{ setcolor($1, $2, $1); free($1); free($2); }
+		| STRING STRING STRING	{ setcolor($1, $2, $3); free($1); free($2); free($3); }
 		;
 
-attr		: TSTRING			{ setattr($1, $1, $1); free($1); }
-		| TSTRING TSTRING		{ setattr($1, $2, $1); free($1); free($2); }
-		| TSTRING TSTRING TSTRING	{ setattr($1, $2, $3); free($1); free($2); free($3); }
+attr		: STRING			{ setattr($1, $1, $1); free($1); }
+		| STRING STRING		{ setattr($1, $2, $1); free($1); free($2); }
+		| STRING STRING STRING	{ setattr($1, $2, $3); free($1); free($2); free($3); }
 		;
 
-bind		: TBIND TSTRING TSTRING TSTRING	{ bindkey($2, $3, $4); free($2); free($3); free($4); }
+bind		: BIND STRING STRING STRING	{ bindkey($2, $3, $4); free($2); free($3); free($4); }
 		;
 
-unbind		: TUNBIND TSTRING TSTRING	{ yyerror("TODO: unbind %s %s", $2, $3); }
+unbind		: UNBIND STRING STRING	{ yyerror("TODO: unbind %s %s", $2, $3); }
 		;
 
-proxy		: TPROXY TSTRING TVIA TSTRING { add_proxy($2, $4); free($4); }
+proxy		: PROXY STRING VIA STRING { add_proxy($2, $4); free($4); }
 		;
 
 optnl		: '\n' optnl	/* zero or more newlines */
@@ -153,17 +153,17 @@ static struct keyword {
 	const char *word;
 	int token;
 } keywords[] = {
-	{ "attr", TATTR },
-	{ "bg", TBG },
-	{ "bind", TBIND },
-	{ "cont", TCONT },
-	{ "fg", TFG },
-	{ "prefix", TPRFX },
-	{ "proxy", TPROXY },
-	{ "set", TSET },
-	{ "style", TSTYLE },
-	{ "unbind", TUNBIND },
-	{ "via", TVIA },
+	{ "attr", ATTR },
+	{ "bg", BG },
+	{ "bind", BIND },
+	{ "cont", CONT },
+	{ "fg", FG },
+	{ "prefix", PRFX },
+	{ "proxy", PROXY },
+	{ "set", SET },
+	{ "style", STYLE },
+	{ "unbind", UNBIND },
+	{ "via", VIA },
 };
 
 int
@@ -295,12 +295,12 @@ eow:
 		yylval.num = strtonum(buf, INT_MIN, INT_MAX, &errstr);
 		if (errstr != NULL)
 			yyerror("number is %s: %s", errstr, buf);
-		return TNUMBER;
+		return NUMBER;
 	}
 	if ((str = strdup(buf)) == NULL)
 		err(1, "%s", __func__);
 	yylval.str = str;
-	return TSTRING;
+	return STRING;
 
 eof:
 	if (ferror(yyfp))
@@ -394,7 +394,7 @@ setcolor(const char *prfx, const char *line, const char *trail)
 	l = colorname(line);
 	t = colorname(trail);
 
-	if (!config_setcolor(color_type == TBG, current_style, p, l, t))
+	if (!config_setcolor(color_type == BG, current_style, p, l, t))
 		yyerror("invalid style %s", current_style);
 }
 
