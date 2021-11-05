@@ -228,10 +228,6 @@ struct tab {
 	short			 loading_anim;
 	short			 loading_anim_step;
 	struct event		 loadingev;
-
-	int			 fd;
-	size_t			 bytes;
-	char			*path;
 };
 
 extern TAILQ_HEAD(proxylist, proxy) proxies;
@@ -295,6 +291,7 @@ void		 config_apply_style(void);
 /* downloads.c */
 extern STAILQ_HEAD(downloads, download) downloads;
 struct download {
+	uint32_t		 id;
 	int			 fd;
 	size_t			 bytes;
 	char			*path;
@@ -302,6 +299,8 @@ struct download {
 };
 
 void		 recompute_downloads(void);
+void		 enqueue_download(uint32_t, const char *);
+struct download	*download_by_id(uint32_t);
 
 /* help.c */
 void		 recompute_help(void);
@@ -309,6 +308,7 @@ void		 recompute_help(void);
 /* hist.c */
 void		 hist_clear_forward(struct histhead*, struct hist*);
 void		 hist_push(struct histhead*, struct hist*);
+struct hist	*hist_pop(struct histhead *);
 
 /* keymap.c */
 int		 kbd(const char*);

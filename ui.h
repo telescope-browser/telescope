@@ -132,6 +132,7 @@ extern struct buffer	 helpwin;
 extern int		 help_lines, help_cols;
 
 extern struct buffer	 downloadwin;
+extern int		 download_lines;
 
 void		 save_excursion(struct excursion *, struct buffer *);
 void		 restore_excursion(struct excursion *, struct buffer *);
@@ -145,8 +146,10 @@ int		 ui_init(void);
 void		 ui_main_loop(void);
 void		 ui_on_tab_loaded(struct tab *);
 void		 ui_on_tab_refresh(struct tab *);
+void		 ui_on_download_refresh(void);
 const char	*ui_keyname(int);
 void		 ui_toggle_side_window(int);
+void		 ui_show_downloads_pane(void);
 void		 ui_schedule_redraw(void);
 void		 ui_after_message_hook(void);
 void		 ui_require_input(struct tab *, int, int);

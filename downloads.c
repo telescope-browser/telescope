@@ -72,3 +72,31 @@ recompute_downloads(void)
 end:
 	wrap_page(&downloadwin.page, download_lines);
 }
+
+void
+enqueue_download(uint32_t id, const char *path)
+{
+	struct download *d;
+
+	if ((d = calloc(1, sizeof(*d))) == NULL)
+		abort();
+
+	d->id = id;
+	d->fd = -1;
+	d->path = strdup(path);
+
+	STAILQ_INSERT_TAIL(&downloads, d, entries);
+}
+
+struct download *
+download_by_id(uint32_t id)
+{
+	struct download *d;
+
+	STAILQ_FOREACH(d, &downloads, entries) {
+		if (d->id == id)
+			return d;
+	}
+
+	return NULL;
+}

@@ -61,7 +61,6 @@ new_tab(const char *url, const char *base, struct tab *after)
 		event_loopbreak();
 		return NULL;
 	}
-	tab->fd = -1;
 
 	TAILQ_INIT(&tab->hist.head);
 
@@ -105,14 +104,6 @@ void
 stop_tab(struct tab *tab)
 {
 	ui_send_net(IMSG_STOP, tab->id, NULL, 0);
-
-	if (tab->fd != -1) {
-		close(tab->fd);
-		tab->fd = -1;
-		free(tab->path);
-		tab->path = NULL;
-		load_page_from_str(tab, "Stopped.\n");
-	}
 }
 
 void

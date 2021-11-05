@@ -374,6 +374,7 @@ static void
 handle_imsg_got_meta(struct imsg *imsg, size_t datalen)
 {
 	struct tab	*tab;
+	char		 buf[128];
 
 	if ((tab = tab_by_id(imsg->hdr.peerid)) == NULL)
 		return;
@@ -391,12 +392,17 @@ handle_imsg_got_meta(struct imsg *imsg, size_t datalen)
 	} else if (tab->code == 20) {
 		if (setup_parser_for(tab)) {
 			ui_send_net(IMSG_PROCEED, tab->id, NULL, 0);
-		} else {
+		} else if (safe_mode) {
 			load_page_from_str(tab,
 			    err_pages[UNKNOWN_TYPE_OR_CSET]);
-			if (!safe_mode)
-				ui_yornp("Can't display page, save it?",
-				    handle_maybe_save_page, tab);
+		} else {
+			struct hist *h;
+
+			if ((h = hist_pop(&tab->hist)) != NULL)
+				tab->hist_cur = h;
+			snprintf(buf, sizeof(buf),
+			    "Can't display \"%s\", save it?", tab->meta);
+			ui_yornp(buf, handle_maybe_save_page, tab);
 		}
 	} else if (tab->code < 40) { /* 3x */
 		tab->redirect_count++;
@@ -417,6 +423,9 @@ handle_maybe_save_page(int dosave, struct tab *tab)
 {
 	const char	*f;
 	char		 input[PATH_MAX];
+
+	/* XXX: this print a message that is confusing  */
+	ui_on_tab_loaded(tab);
 
 	if (!dosave) {
 		stop_tab(tab);
@@ -442,104 +451,83 @@ handle_save_page_path(const char *path, struct tab *tab)
 		return;
 	}
 
-	tab->path = strdup(path);
+	ui_show_downloads_pane();
 
+	enqueue_download(tab->id, path);
 	ui_send_fs(IMSG_FILE_OPEN, tab->id, path, strlen(path)+1);
+
+	/*
+	 * Change this tab id, the old one is associated with the
+	 * download now.
+	 */
+	tab->id = tab_new_id();
 }
 
 static void
 handle_imsg_file_opened(struct imsg *imsg, size_t datalen)
 {
-	struct tab	*tab;
-	char		*page;
+	struct download	*d;
 	const char	*e;
-	int		 l;
 
-	if ((tab = tab_by_id(imsg->hdr.peerid)) == NULL) {
-		if (imsg->fd != -1)
-			close(imsg->fd);
-		return;
-	}
+	/*
+	 * There are no reason we shouldn't be able to find the
+	 * required download.
+	 */
+	if ((d = download_by_id(imsg->hdr.peerid)) == NULL)
+		die();
 
 	if (imsg->fd == -1) {
-		stop_tab(tab);
-
 		e = imsg->data;
 		if (e[datalen-1] != '\0')
 			die();
-		l = asprintf(&page, "# Can't open file\n\n> %s: %s\n",
-		    tab->path, e);
-		if (l == -1)
-			die();
-		load_page_from_str(tab, page);
-		free(page);
+		message("Can't open file %s: %s", d->path, e);
 	} else {
-		tab->fd = imsg->fd;
-		ui_send_net(IMSG_PROCEED, tab->id, NULL, 0);
+		d->fd = imsg->fd;
+		ui_send_net(IMSG_PROCEED, d->id, NULL, 0);
 	}
 }
 
 static void
 handle_imsg_buf(struct imsg *imsg, size_t datalen)
 {
-	struct tab	*tab;
-	int		 l;
-	char		*page, buf[FMT_SCALED_STRSIZE] = {0};
+	struct tab	*tab = NULL;
+	struct download	*d = NULL;
 
-	if ((tab = tab_by_id(imsg->hdr.peerid)) == NULL)
+	if ((tab = tab_by_id(imsg->hdr.peerid)) == NULL &&
+	    (d = download_by_id(imsg->hdr.peerid)) == NULL)
 		return;
 
-	tab->bytes += datalen;
-	if (tab->fd == -1) {
+	if (tab != NULL) {
 		if (!parser_parse(tab, imsg->data, datalen))
 			die();
+		ui_on_tab_refresh(tab);
 	} else {
-		write(tab->fd, imsg->data, datalen);
-		fmt_scaled(tab->bytes, buf);
-		l = asprintf(&page, "Saving to \"%s\"... (%s)\n",
-		    tab->path,
-		    buf);
-		if (l == -1)
-			die();
-		load_page_from_str(tab, page);
-		free(page);
+		d->bytes += datalen;
+		write(d->fd, imsg->data, datalen);
+		ui_on_download_refresh();
 	}
-
-	ui_on_tab_refresh(tab);
 }
 
 static void
 handle_imsg_eof(struct imsg *imsg, size_t datalen)
 {
-	struct tab	*tab;
-	int		 l;
-	char		*page, buf[FMT_SCALED_STRSIZE] = {0};
+	struct tab	*tab = NULL;
+	struct download	*d = NULL;
 
-	if ((tab = tab_by_id(imsg->hdr.peerid)) == NULL)
+	if ((tab = tab_by_id(imsg->hdr.peerid)) == NULL &&
+	    (d = download_by_id(imsg->hdr.peerid)) == NULL)
 		return;
 
-	if (tab->fd == -1) {
+	if (tab != NULL) {
 		if (!parser_free(tab))
 			die();
+		ui_on_tab_refresh(tab);
+		ui_on_tab_loaded(tab);
 	} else {
-		fmt_scaled(tab->bytes, buf);
-		l = asprintf(&page, "Saved to \"%s\" (%s)\n",
-		    tab->path,
-		    buf);
-		if (l == -1)
-			die();
-		load_page_from_str(tab, page);
-		free(page);
-
-		close(tab->fd);
-		tab->fd = -1;
-		tab->bytes = 0;
-		free(tab->path);
-		tab->path = NULL;
+		close(d->fd);
+		d->fd = -1;
+		ui_on_download_refresh();
 	}
-
-	ui_on_tab_refresh(tab);
-	ui_on_tab_loaded(tab);
 }
 
 static void
@@ -813,13 +801,6 @@ do_load_url(struct tab *tab, const char *url, const char *base)
 	char		*t;
 
 	tab->proxy = NULL;
-
-	if (tab->fd != -1) {
-		close(tab->fd);
-		tab->fd = -1;
-		free(tab->path);
-		tab->path = NULL;
-	}
 
 	tab->trust = TS_UNKNOWN;
 

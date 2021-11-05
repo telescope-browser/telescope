@@ -36,3 +36,17 @@ hist_push(struct histhead *head, struct hist *h)
 	head->len++;
 	TAILQ_INSERT_TAIL(&head->head, h, entries);
 }
+
+struct hist *
+hist_pop(struct histhead *head)
+{
+	struct hist	*h, *p;
+
+	if ((h = TAILQ_LAST(&head->head, mhisthead)) == NULL)
+		return NULL;
+	if ((p = TAILQ_PREV(h, mhisthead, entries)) == NULL)
+		return NULL;
+
+	hist_clear_forward(head, h);
+	return p;
+}

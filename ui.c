@@ -1172,6 +1172,15 @@ ui_on_tab_refresh(struct tab *tab)
 		tab->flags |= TAB_URGENT;
 }
 
+void
+ui_on_download_refresh(void)
+{
+	if (side_window & SIDE_WINDOW_BOTTOM) {
+                recompute_downloads();
+		redraw_tab(current_tab);
+	}
+}
+
 const char *
 ui_keyname(int k)
 {
@@ -1198,6 +1207,13 @@ ui_toggle_side_window(int kind)
 	 */
 	rearrange_windows();
 	rearrange_windows();
+}
+
+void
+ui_show_downloads_pane(void)
+{
+	if (!(side_window & SIDE_WINDOW_BOTTOM))
+		ui_toggle_side_window(SIDE_WINDOW_BOTTOM);
 }
 
 void
