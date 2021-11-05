@@ -50,7 +50,7 @@ recompute_downloads(void)
 
 	if (STAILQ_EMPTY(&downloads)) {
 		no_downloads();
-		return;
+		goto end;
 	}
 
 	STAILQ_FOREACH(d, &downloads, entries) {
@@ -68,4 +68,7 @@ recompute_downloads(void)
 
 		TAILQ_INSERT_TAIL(&downloadwin.page.head, l, lines);
 	}
+
+end:
+	wrap_page(&downloadwin.page, download_lines);
 }
