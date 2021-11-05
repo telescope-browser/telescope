@@ -64,6 +64,7 @@ CMD(cmd_tab_next,		"Focus next tab.");
 CMD(cmd_tab_previous,		"Focus previous tab.");
 CMD(cmd_tab_select,		"Switch to a tab using the minibuffer.");
 CMD(cmd_toc,			"Jump to a heading using the minibuffer.");
+CMD(cmd_toggle_downloads,	"Toggle the downloads side window.");
 CMD(cmd_toggle_help,		"Toggle side window with help.");
 CMD(cmd_toggle_pre_wrap,	"Toggle the wrapping of preformatted blocks.");
 

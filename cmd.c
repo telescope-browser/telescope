@@ -588,7 +588,7 @@ cmd_list_bookmarks(struct buffer *buffer)
 void
 cmd_toggle_help(struct buffer *buffer)
 {
-	ui_toggle_side_window();
+	ui_toggle_side_window(SIDE_WINDOW_LEFT);
 }
 
 void
@@ -954,4 +954,10 @@ cmd_mini_scroll_down(struct buffer *buffer)
 	buffer->current_line->parent->type = LINE_COMPL;
 	cmd_scroll_down(buffer);
 	buffer->current_line->parent->type = LINE_COMPL_CURRENT;
+}
+
+void
+cmd_toggle_downloads(struct buffer *buffer)
+{
+	ui_toggle_side_window(SIDE_WINDOW_BOTTOM);
 }

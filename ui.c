@@ -61,6 +61,7 @@ static void		 line_prefix_and_text(struct vline *, char *, size_t, const char **
 static void		 print_vline(int, int, WINDOW*, struct vline*);
 static void		 redraw_tabline(void);
 static void		 redraw_window(WINDOW*, int, int, int, struct buffer*);
+static void		 redraw_download(void);
 static void		 redraw_help(void);
 static void		 redraw_body(struct tab*);
 static void		 redraw_modeline(struct tab*);
@@ -92,6 +93,11 @@ static WINDOW		*help;
 /* not static so we can see them from help.c */
 struct buffer		 helpwin;
 int			 help_lines, help_cols;
+
+static WINDOW		*download;
+/* not static so we can see them from download.c */
+struct buffer		 downloadwin;
+int			 download_lines;
 
 static int		 side_window;
 static int		 in_side_window;
@@ -152,7 +158,9 @@ restore_curs_x(struct buffer *buffer)
 	} else
 		buffer->curs_x = utf8_snwidth(vl->line, buffer->cpoff);
 
-	buffer->curs_x += x_offset;
+	/* small hack: don't olivetti-mode the download pane */
+	if (buffer != &downloadwin)
+		buffer->curs_x += x_offset;
 
 	if (vl == NULL)
 		return;
@@ -177,8 +185,10 @@ current_buffer(void)
 {
 	if (in_minibuffer)
 		return &ministate.buffer;
-	if (in_side_window)
+	if (in_side_window & SIDE_WINDOW_LEFT)
 		return &helpwin;
+	if (in_side_window & SIDE_WINDOW_BOTTOM)
+		return &downloadwin;
 	return &current_tab->buffer;
 }
 
@@ -267,7 +277,7 @@ dispatch_stdio(int fd, short ev, void *d)
 	current_map = base_map;
 
 done:
-	if (side_window)
+	if (side_window & SIDE_WINDOW_LEFT)
 		recompute_help();
 
 	if (should_rearrange_windows)
@@ -310,6 +320,7 @@ static void
 rearrange_windows(void)
 {
 	int		 lines;
+	int		 minibuffer_lines;
 
 	should_rearrange_windows = 0;
 	show_tab_bar = should_show_tab_bar();
@@ -327,9 +338,10 @@ rearrange_windows(void)
 	/* move and resize the windows, in reverse order! */
 
 	if (in_minibuffer == MB_COMPREAD) {
-		mvwin(minibuffer, lines-10, 0);
-		wresize(minibuffer, 10, COLS);
-		lines -= 10;
+		minibuffer_lines = MIN(10, lines/2);
+		mvwin(minibuffer, lines - minibuffer_lines, 0);
+		wresize(minibuffer, minibuffer_lines, COLS);
+		lines -= minibuffer_lines;
 
 		wrap_page(&ministate.compl.buffer, COLS);
 	}
@@ -340,6 +352,15 @@ rearrange_windows(void)
 	mvwin(modeline, --lines, 0);
 	wresize(modeline, 1, COLS);
 
+	if (side_window & SIDE_WINDOW_BOTTOM) {
+		download_lines = MIN(5, lines/2);
+		mvwin(download, lines - download_lines, 0);
+		wresize(download, download_lines, COLS);
+		lines -= download_lines;
+
+		wrap_page(&downloadwin, COLS);
+	}
+
 	body_lines = show_tab_bar ? --lines : lines;
 	body_cols = COLS;
 
@@ -347,7 +368,7 @@ rearrange_windows(void)
 	 * Here we make the assumption that show_tab_bar is either 0
 	 * or 1, and reuse that as argument to mvwin.
 	 */
-	if (side_window) {
+	if (side_window & SIDE_WINDOW_LEFT) {
 		help_cols = 0.3 * COLS;
 		help_lines = lines;
 		mvwin(help, show_tab_bar, 0);
@@ -693,6 +714,12 @@ end:
 }
 
 static void
+redraw_download(void)
+{
+	redraw_window(download, 0, download_lines, COLS, &downloadwin);
+}
+
+static void
 redraw_help(void)
 {
 	redraw_window(help, 0, help_lines, help_cols, &helpwin);
@@ -871,17 +898,29 @@ place_cursor(int soft)
 		touch = wrefresh;
 
 	if (in_minibuffer) {
-		if (side_window)
+		if (side_window & SIDE_WINDOW_LEFT)
 			touch(help);
+		if (side_window & SIDE_WINDOW_BOTTOM)
+			touch(download);
 		touch(body);
 		touch(echoarea);
-	} else if (in_side_window) {
+	} else if (in_side_window & SIDE_WINDOW_LEFT) {
 		touch(body);
 		touch(echoarea);
+                if (in_side_window & SIDE_WINDOW_BOTTOM)
+			touch(download);
 		touch(help);
-	} else {
-		if (side_window)
+	} else if (in_side_window & SIDE_WINDOW_BOTTOM) {
+		touch(body);
+		touch(echoarea);
+		if (in_side_window & SIDE_WINDOW_LEFT)
 			touch(help);
+		touch(download);
+	} else {
+		if (side_window & SIDE_WINDOW_LEFT)
+			touch(help);
+		if (side_window & SIDE_WINDOW_BOTTOM)
+			touch(download);
 		touch(echoarea);
 		touch(body);
 	}
@@ -893,9 +932,14 @@ redraw_tab(struct tab *tab)
 	if (too_small)
 		return;
 
-	if (side_window) {
+	if (side_window & SIDE_WINDOW_LEFT) {
 		redraw_help();
 		wnoutrefresh(help);
+	}
+
+	if (side_window & SIDE_WINDOW_BOTTOM) {
+		redraw_download();
+		wnoutrefresh(download);
 	}
 
 	if (show_tab_bar)
@@ -1022,6 +1066,10 @@ ui_init()
 
 	minibuffer_init();
 
+	/* initialize download window */
+	TAILQ_INIT(&downloadwin.head);
+	TAILQ_INIT(&downloadwin.page.head);
+
 	/* initialize help window */
 	TAILQ_INIT(&helpwin.head);
 	TAILQ_INIT(&helpwin.page.head);
@@ -1055,6 +1103,8 @@ ui_init()
 	if ((echoarea = newwin(1, 1, 0, 0)) == NULL)
 		return 0;
 	if ((minibuffer = newwin(1, 1, 0, 0)) == NULL)
+		return 0;
+	if ((download = newwin(1, 1, 0, 0)) == NULL)
 		return 0;
 	if ((help = newwin(1, 1, 0, 0)) == NULL)
 		return 0;
@@ -1123,13 +1173,16 @@ ui_keyname(int k)
 }
 
 void
-ui_toggle_side_window(void)
+ui_toggle_side_window(int kind)
 {
-	side_window = !side_window;
-	if (side_window)
+	if (in_side_window & kind)
+		ui_other_window();
+
+	side_window ^= kind;
+	if (side_window & SIDE_WINDOW_LEFT)
 		recompute_help();
-	else
-		in_side_window = 0;
+	if (side_window & SIDE_WINDOW_BOTTOM)
+		recompute_downloads();
 
 	/*
 	 * ugly hack, but otherwise the window doesn't get updated
@@ -1201,8 +1254,15 @@ ui_read(const char *prompt, void (*fn)(const char*, struct tab *),
 void
 ui_other_window(void)
 {
-	if (side_window)
-		in_side_window = !in_side_window;
+	if (in_side_window & SIDE_WINDOW_LEFT &&
+	    side_window & SIDE_WINDOW_BOTTOM)
+		in_side_window = SIDE_WINDOW_BOTTOM;
+	else if (in_side_window)
+		in_side_window = 0;
+	else if (!in_side_window && side_window & SIDE_WINDOW_LEFT)
+		in_side_window = SIDE_WINDOW_LEFT;
+	else if (!in_side_window && side_window)
+		in_side_window = SIDE_WINDOW_BOTTOM;
 	else
 		message("No other window to select");
 }

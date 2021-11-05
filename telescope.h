@@ -28,6 +28,9 @@
 
 #define GEMINI_URL_LEN 1024
 
+#define SIDE_WINDOW_LEFT	0x1
+#define SIDE_WINDOW_BOTTOM	0x2
+
 struct imsgev {
 	struct imsgbuf	 ibuf;
 	void		(*handler)(int, short, void *);
@@ -283,6 +286,17 @@ int		 config_setvars(const char *, char *);
 int		 config_setcolor(int, const char *, int, int, int);
 int		 config_setattr(const char *, int, int, int);
 void		 config_apply_style(void);
+
+/* downloads.c */
+extern STAILQ_HEAD(downloads, download) downloads;
+struct download {
+	int			 fd;
+	size_t			 bytes;
+	char			*path;
+	STAILQ_ENTRY(download)	 entries;
+};
+
+void		 recompute_downloads(void);
 
 /* help.c */
 void		 recompute_help(void);

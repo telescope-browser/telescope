@@ -10,6 +10,7 @@ telescope_SOURCES =	cmd.c			\
 			compl.h			\
 			defaults.c		\
 			defaults.h		\
+			downloads.c		\
 			emoji-matcher.c		\
 			fs.c			\
 			gen-emoji-matcher.sh	\

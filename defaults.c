@@ -380,6 +380,7 @@ load_default_keys(void)
 
 	/* global */
 	global_set_key("<f1>",		cmd_toggle_help);
+	global_set_key("<f2>",		cmd_toggle_downloads);
 	global_set_key("C-m",		cmd_push_button);
 	global_set_key("M-enter",	cmd_push_button_new_tab);
 	global_set_key("M-tab",		cmd_previous_button);
