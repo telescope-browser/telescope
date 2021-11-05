@@ -435,21 +435,11 @@ print_vline_descr(int width, WINDOW *window, struct vline *vl)
 {
 	int x, y, goal;
 
-	if (vl->parent->type != LINE_COMPL &&
-	    vl->parent->type != LINE_COMPL_CURRENT &&
-	    vl->parent->type != LINE_HELP &&
-	    vl->parent->type != LINE_DOWNLOAD &&
-	    vl->parent->type != LINE_DOWNLOAD_DONE &&
-	    vl->parent->type != LINE_DOWNLOAD_INFO)
-		return;
-
-	if (vl->parent->alt == NULL)
-		return;
-
-	(void)y;
-	getyx(window, y, x);
-
 	switch (vl->parent->type) {
+	case LINE_COMPL:
+	case LINE_COMPL_CURRENT:
+		goal = width/2;
+		break;
 	case LINE_HELP:
 	case LINE_DOWNLOAD:
 	case LINE_DOWNLOAD_DONE:
@@ -457,8 +447,14 @@ print_vline_descr(int width, WINDOW *window, struct vline *vl)
 		goal = 8;
 		break;
 	default:
-		goal = width/2;
+		return;
 	}
+
+	if (vl->parent->alt == NULL)
+		return;
+
+	(void)y;
+	getyx(window, y, x);
 
 	if (goal <= x)
 		wprintw(window, " ");
