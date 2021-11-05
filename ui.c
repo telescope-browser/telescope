@@ -442,7 +442,6 @@ print_vline_descr(int width, WINDOW *window, struct vline *vl)
 		break;
 	case LINE_DOWNLOAD:
 	case LINE_DOWNLOAD_DONE:
-	case LINE_DOWNLOAD_INFO:
 		goal = width/4;
 		break;
 	case LINE_HELP:
