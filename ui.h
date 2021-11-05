@@ -119,11 +119,6 @@ enum pairs {
 	PMINIBUF,
 };
 
-struct thiskey {
-	short meta;
-	int key;
-	uint32_t cp;
-};
 extern struct thiskey thiskey;
 
 extern struct tab	*current_tab;

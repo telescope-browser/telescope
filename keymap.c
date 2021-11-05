@@ -195,3 +195,23 @@ again:
 	return 1;
 }
 
+int
+lookup_key(struct kmap **map, struct thiskey *key, struct buffer *buf)
+{
+	struct keymap *k;
+
+	TAILQ_FOREACH(k, &(*map)->m, keymaps) {
+		if (k->meta == key->meta &&
+		    k->key == key->key) {
+			if (k->fn == NULL) {
+				*map = &k->map;
+				return LK_ADVANCED_MAP;
+			} else {
+				k->fn(buf);
+				return LK_MATCHED;
+			}
+		}
+	}
+
+	return LK_UNBOUND;
+}

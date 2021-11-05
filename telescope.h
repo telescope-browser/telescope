@@ -272,6 +272,12 @@ struct keymap {
 	TAILQ_ENTRY(keymap)	 keymaps;
 };
 
+struct thiskey {
+	short meta;
+	int key;
+	uint32_t cp;
+};
+
 struct cmd {
 	const char	*cmd;
 	void		(*fn)(struct buffer *);
@@ -311,6 +317,12 @@ void		 hist_push(struct histhead*, struct hist*);
 struct hist	*hist_pop(struct histhead *);
 
 /* keymap.c */
+enum {
+	LK_ADVANCED_MAP,
+	LK_MATCHED,
+	LK_UNBOUND,
+};
+
 int		 kbd(const char*);
 const char	*unkbd(int);
 int		 kmap_define_key(struct kmap*, const char*, void(*)(struct buffer*));

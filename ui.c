@@ -229,7 +229,7 @@ readkey(void)
 static void
 dispatch_stdio(int fd, short ev, void *d)
 {
-	struct keymap	*k;
+	int		 lk;
 	const char	*keyname;
 	char		 tmp[5] = {0};
 
@@ -254,29 +254,18 @@ dispatch_stdio(int fd, short ev, void *d)
 		strlcat(keybuf, tmp, sizeof(keybuf));
 	}
 
-	TAILQ_FOREACH(k, &current_map->m, keymaps) {
-		if (k->meta == thiskey.meta &&
-		    k->key == thiskey.key) {
-			if (k->fn == NULL)
-				current_map = &k->map;
-			else {
-				current_map = base_map;
-				strlcpy(keybuf, "", sizeof(keybuf));
-				k->fn(current_buffer());
-			}
-			goto done;
-		}
+	lk = lookup_key(&current_map, &thiskey, current_buffer());
+	if (lk == LK_UNBOUND) {
+		if (current_map->unhandled_input != NULL)
+			current_map->unhandled_input();
+		else
+			global_key_unbound();
+	}
+	if (lk != LK_ADVANCED_MAP) {
+		current_map = base_map;
+		strlcpy(keybuf, "", sizeof(keybuf));
 	}
 
-	if (current_map->unhandled_input != NULL)
-		current_map->unhandled_input();
-	else
-		global_key_unbound();
-
-	strlcpy(keybuf, "", sizeof(keybuf));
-	current_map = base_map;
-
-done:
 	if (side_window & SIDE_WINDOW_LEFT)
 		recompute_help();
 
