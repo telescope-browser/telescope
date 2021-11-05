@@ -66,6 +66,12 @@ struct body_face {
 };
 extern struct body_face body_face;
 
+struct download_face {
+	int bg, fg, attr;
+	int background;
+};
+extern struct download_face download_face;
+
 struct modeline_face {
 	int bg, fg, attr;
 	int background;

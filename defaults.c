@@ -63,6 +63,10 @@ struct lineprefix line_prefixes[] = {
 	[LINE_COMPL_CURRENT] =	{"", ""},
 
 	[LINE_HELP] =		{"", ""},
+
+	[LINE_DOWNLOAD] =	{" Fetching ", "          "},
+	[LINE_DOWNLOAD_DONE] =	{" Done     ", "          "},
+	[LINE_DOWNLOAD_INFO] =	{" ", " "},
 };
 
 struct line_face line_faces[] = {
@@ -169,6 +173,23 @@ struct line_face line_faces[] = {
 		.pair = PHELP,
 		.trail_pair = PHELP_TRAIL,
 	},
+
+	/* download */
+	[LINE_DOWNLOAD] = {
+		.prfx_pair = PDOWNLOAD_PRFX,
+		.pair = PDOWNLOAD,
+		.trail_pair = PDOWNLOAD_TRAIL
+	},
+	[LINE_DOWNLOAD_DONE] = {
+		.prfx_pair = PDOWNLOAD_DONE_PRFX,
+		.pair = PDOWNLOAD_DONE,
+		.trail_pair = PDOWNLOAD_DONE_TRAIL
+	},
+	[LINE_DOWNLOAD_INFO] = {
+		.prfx_pair = PDOWNLOAD_INFO_PRFX,
+		.pair = PDOWNLOAD_INFO,
+		.trail_pair = PDOWNLOAD_INFO_TRAIL
+	},
 };
 
 struct tab_face tab_face = {
@@ -189,6 +210,12 @@ struct body_face body_face = {
 	.lbg = -1, .lfg = -1,
 	.bg  = -1, .fg  = -1,
 	.rbg = -1, .rfg = -1,
+};
+
+struct download_face download_face = {
+	.bg = -1,
+	.fg = -1,
+	.attr = A_NORMAL,
 };
 
 struct modeline_face modeline_face = {
@@ -231,6 +258,11 @@ struct mapping {
 
 	/* help */
 	{"help",	LINE_HELP},
+
+	/* download */
+	{"download.ongoing",	LINE_DOWNLOAD},
+	{"download.done",	LINE_DOWNLOAD_DONE},
+	{"download.info",	LINE_DOWNLOAD_INFO},
 };
 
 static struct mapping *
@@ -245,7 +277,6 @@ mapping_by_name(const char *name)
 
 	return NULL;
 }
-
 
 static inline void
 global_set_key(const char *key, void (*fn)(struct buffer*))
@@ -595,6 +626,11 @@ config_setcolor(int bg, const char *name, int prfx, int line, int trail)
 			body_face.fg = line;
 			body_face.rfg = trail;
 		}
+	} else if (!strcmp(name, "download")) {
+		if (bg)
+			download_face.bg = prfx;
+		else
+			download_face.fg = prfx;
 	} else if (!strcmp(name, "minibuffer")) {
 		if (bg)
 			minibuffer_face.bg = prfx;
@@ -640,6 +676,8 @@ config_setattr(const char *name, int prfx, int line, int trail)
 		f->prfx_attr = prfx;
 		f->attr = line;
 		f->trail_attr = trail;
+	} else if (!strcmp(name, "download")) {
+		download_face.attr = prfx;
 	} else if (!strcmp(name, "minibuffer")) {
 		minibuffer_face.attr = prfx;
 	} else if (!strcmp(name, "modeline")) {
@@ -702,6 +740,10 @@ config_apply_style(void)
 
 	tl_init_pair(colors, PBRIGHT, body_face.rfg, body_face.rbg);
 	body_face.right = COLOR_PAIR(PBRIGHT);
+
+	/* download */
+	tl_init_pair(colors, PDOWNLOAD_WIN, download_face.fg, download_face.bg);
+	download_face.background = COLOR_PAIR(PDOWNLOAD_WIN) | download_face.attr;
 
 	/* modeline */
 	tl_init_pair(colors, PMODELINE, modeline_face.fg, modeline_face.bg);

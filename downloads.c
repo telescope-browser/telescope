@@ -32,7 +32,7 @@ no_downloads()
 	if ((l = calloc(1, sizeof(*l))) == NULL)
 		abort();
 
-	l->type = LINE_HELP;
+	l->type = LINE_DOWNLOAD_INFO;
 	l->line = strdup("No downloads");
 
 	TAILQ_INSERT_TAIL(&downloadwin.page.head, l, lines);
@@ -59,7 +59,10 @@ recompute_downloads(void)
 
 		fmt_scaled(d->bytes, buf);
 
-		l->type = LINE_HELP;
+		l->type = LINE_DOWNLOAD;
+		if (d->fd == -1)
+			l->type = LINE_DOWNLOAD_DONE;
+
 		l->line = strdup(d->path);
 		l->alt = strdup(buf);
 

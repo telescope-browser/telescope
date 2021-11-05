@@ -278,6 +278,9 @@ wrap_page(struct buffer *buffer, int width)
 		case LINE_COMPL:
 		case LINE_COMPL_CURRENT:
 		case LINE_HELP:
+		case LINE_DOWNLOAD:
+		case LINE_DOWNLOAD_DONE:
+		case LINE_DOWNLOAD_INFO:
 			wrap_one(buffer, prfx, l, width);
 			break;
 		}

@@ -97,6 +97,11 @@ enum line_type {
 
 	/* help */
 	LINE_HELP,
+
+	/* download */
+	LINE_DOWNLOAD,
+	LINE_DOWNLOAD_DONE,
+	LINE_DOWNLOAD_INFO,
 };
 
 /* for lines: mark as hidden */

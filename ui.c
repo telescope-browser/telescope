@@ -437,7 +437,10 @@ print_vline_descr(int width, WINDOW *window, struct vline *vl)
 
 	if (vl->parent->type != LINE_COMPL &&
 	    vl->parent->type != LINE_COMPL_CURRENT &&
-	    vl->parent->type != LINE_HELP)
+	    vl->parent->type != LINE_HELP &&
+	    vl->parent->type != LINE_DOWNLOAD &&
+	    vl->parent->type != LINE_DOWNLOAD_DONE &&
+	    vl->parent->type != LINE_DOWNLOAD_INFO)
 		return;
 
 	if (vl->parent->alt == NULL)
@@ -446,10 +449,16 @@ print_vline_descr(int width, WINDOW *window, struct vline *vl)
 	(void)y;
 	getyx(window, y, x);
 
-	if (vl->parent->type == LINE_HELP)
+	switch (vl->parent->type) {
+	case LINE_HELP:
+	case LINE_DOWNLOAD:
+	case LINE_DOWNLOAD_DONE:
+	case LINE_DOWNLOAD_INFO:
 		goal = 8;
-	else
+		break;
+	default:
 		goal = width/2;
+	}
 
 	if (goal <= x)
 		wprintw(window, " ");
@@ -1110,6 +1119,7 @@ ui_init()
 		return 0;
 
 	wbkgd(body, body_face.body);
+	wbkgd(download, download_face.background);
 	wbkgd(echoarea, minibuffer_face.background);
 
 	update_x_offset();
