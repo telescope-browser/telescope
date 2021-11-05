@@ -70,7 +70,7 @@ recompute_downloads(void)
 	}
 
 end:
-	wrap_page(&downloadwin.page, download_lines);
+	wrap_page(&downloadwin, download_lines);
 }
 
 void
