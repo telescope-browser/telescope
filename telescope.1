@@ -315,7 +315,7 @@ Change the styling of the element identified by
 .Ar name .
 Multiple options may be specified within curly braces.
 Valid style identifiers are:
-.Bl -tag -width line.compl.current -compact -offset Ds
+.Bl -tag -width line.download.ongoing -compact -offset Ds
 .It line
 the area outside the lines in the body of the page.
 .It line.compl
@@ -324,6 +324,12 @@ the completions.
 the current completion.
 .It line.help
 text in the *Help* buffer.
+.It line.download.ongoing
+an ongoing download
+.It line.download.done
+a completed download
+.It line.download.info
+informational text in the *Downloads* buffer.
 .It line.text
 text lines.
 .It line.link
@@ -340,6 +346,8 @@ the heading of a preformatted block.
 the content of a preformatted block.
 .It line.pre.end
 the closing line of a preformatted block.
+.It download
+the download pane
 .It minibuffer
 the minibuffer.
 .It modeline
