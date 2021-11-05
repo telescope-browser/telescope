@@ -1,0 +1,117 @@
+=> /gallery/		Gallery
+=> /telescope.1.txt	Docs
+
+# Telescope
+
+> Telescope is a w3m-like browser for Gemini.
+
+``` Ascii art of the word “Telescope” and “v0.5.2”
+ _______         __
+|_     _|.-----.|  |.-----.-----.----.-----.-----.-----.
+  |   |  |  -__||  ||  -__|__ --|  __|  _  |  _  |  -__|
+  |___|  |_____||__||_____|_____|____|_____|   __|_____|
+                                           |__| v0.5.2
+```
+
+Telescope is written entirely for fun, as a hobbystic project in my free time.  As such, it lacks a ton of features you’ll find in more mature Gemini browsers, but it also has some unique ones.
+
+The UI is strongly inspired from Emacs and W3M, so you’ll find some familiar concepts, such as the minibuffer or the tabline, and the default keybindigs also reflect this, but care has been taken to add keys familiar for vi and CUA users too.
+
+=> https://asciinema.org/a/426862	Asciinema record
+
+## Install
+
+=> https://repology.org/project/telescope/versions Some distros provide a package — thanks to the maintainers!
+
+Source code and precompiled binaries for linux are available:
+=> https://github.com/omar-polo/telescope/releases/download/0.5.2/telescope-0.5.2.tar.gz	telescope-0.5.2.tar.gz
+=> https://github.com/omar-polo/telescope/releases/download/0.5.2/telescope.linux.aarch64	telescope.linux.aarch64
+=> https://github.com/omar-polo/telescope/releases/download/0.5.2/telescope.linux.amd64	telescope.linux.amd64
+
+=> https://github.com/omar-polo/telescope/releases/download/0.5.2/telescope-0.5.2-binaries.tar.gz telescope-0.5.2-binaries.tar.gz
+
+When in doubt, compile from source.  It’s easy and takes less than a minute on a raspberry pi 3.  The dependencies are:
+* libncurses
+* libevent
+* libtls (from either LibreSSL or libretls)
+* yacc (or GNU bison)
+
+Once all the dependencies are installed, building is as easy as:
+
+```Example of how to compile from source
+$ curl -LO https://github.com/omar-polo/telescope/releases/download/0.5.2/telescope-0.5.2.tar.gz
+$ tar xzvf telescope-0.5.2.tar.gz
+$ cd telescope-0.5.2
+$ ./configure
+$ make
+$ sudo make install # eventually
+```
+
+A SHA256 file containing the checksums is available.  However, that only checks for accidental corruption: you can use signify (SHA256.sig and the public key telescope-0.5.pub) or GPG.  The hash of the signify public key is also included in the SHA256 file and signed with my GPG too.  The signify public key for the next release ‘telescope-0.6.pub’ is also included.
+
+=> https://github.com/omar-polo/telescope/releases/download/0.5.2/SHA256			SHA256
+=> https://github.com/omar-polo/telescope/releases/download/0.5.2/SHA256.gpg		SHA256.gpg
+=> https://github.com/omar-polo/telescope/releases/download/0.5.2/SHA256.sig		SHA256.sig
+=> https://github.com/omar-polo/telescope/releases/download/0.5.2/telescope-0.5.pub	telescope-0.5.pub
+=> https://github.com/omar-polo/telescope/releases/download/0.5.2/telescope-0.6.pub	telescope-0.6.pub
+
+```Example of how to verify the signature with signify
+$ signify -C -p telescope-0.5.2.pub -x SHA256.sig
+Signature Verified
+telescope-0.5.2-binaries.tar.gz: OK
+telescope-0.5.pub: OK
+telescope-0.5.2.tar.gz: OK
+telescope-0.6.pub: OK
+telescope.linux.aarch64: OK
+telescope.linux.amd64: OK
+```
+
+Finally, it’s possible to fetch the sources using git:
+
+=> //git.omarpolo.com/telescope/		git repository
+=> https://github.com/omar-polo/telescope	GitHub mirror
+
+
+## Changelog for the last versions
+
+0.5.2 “Le nuvole” bugfix release — Released September 13, 2021
+
+Bugfixes:
+* some very long pages can cause (rarely) telescope to render a blank page
+* allow creating files in ~/Downloads on OpenBSD
+* reset download byte counter
+
+----
+
+0.5.1 “Le nuvole” bugfix release — Released August 28, 2021
+
+Telescope used to trim the initial “/” in gopher requests: this is not correct and while some servers are forgiving, other (rightfully) aren't.
+
+----
+
+0.5 “Le nuvole” — Released August 27, 2021
+
+## New features
+
+* support for the finger protocol
+* support for the gopher protocol (only item types 0, 1 and 7 for the moment)
+* highlight diff/patches
+* typing the protocol of a URI is not needed anymore: added some heuristics to assume file:// URLs and fall back to gemini:// as default
+* open local files and directories
+* add an autosave timer to persist the session once in a while
+* scroll completions with M-v/C-v (mini-scroll-up/mini-scroll-down)
+* variable `tab-bar-show' controls the visibility of the tab bar
+
+## Improvements
+
+* new heuristics to extract a title for pages without headings: use the domain name or the "tilde username"
+* about:new updated with some gopher links too
+* reload doesn't push the current url to the history anymore
+* push-button-new-tab opens a new tab *right after* the current one, not as the last
+* improved the crash detection
+* M-[ and M-] are bind to tab-move-to/tab-move
+
+## Bug fixes
+
+* fixed some crashes caused by cursor movements on empty pages
+* correctly parse multiple attributes

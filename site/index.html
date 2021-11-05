@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>Telescope</title>
+    <meta charset="utf8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+    body {
+      font-family: monospace;
+      font-size: 14px;
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 20px;
+      padding-bottom: 80px;
+    }
+
+    h1::before {
+      content: "# ";
+    }
+
+    h2 {
+      margin-top: 40px;
+    }
+
+    h2::before {
+      content: "## ";
+    }
+
+    h3::before {
+      content: "### ";
+    }
+
+    blockquote {
+      margin: 0;
+      padding: 0;
+    }
+
+    blockquote::before {
+      content: "> ";
+    }
+
+    blockquote p {
+      font-style: italic;
+      display: inline;
+    }
+
+    p.link::before {
+      content: "→ ";
+    }
+
+    hr {
+      border: 0;
+      height: 1px;
+      background-color: #222;
+      width: 100%;
+      display: block;
+      margin: 2em auto;
+    }
+
+    pre {
+      overflow: auto;
+    }
+
+    pre.banner {
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+    }
+
+    code, kbd {
+      color: #9d109d;
+    }
+
+    img {
+      display: block;
+      margin: 0 auto;
+      max-width: 100%;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body {
+        background-color: #222;
+        color: white;
+      }
+
+      img {
+        filter: brightness(0.65);
+        transition: filter 0.2s ease-in-out;
+      }
+
+      img:hover {
+        filter: brightness(1.0);
+      }
+
+      a {
+        color: aqua;
+      }
+
+      hr {
+        background-color: #ddd;
+      }
+
+      code, kbd {
+        color: #ff4cff;
+      }
+    }
+
+    @media (max-width: 400px) {
+      pre.banner { font-size: 9px; }
+    }
+
+    @media (max-width: 500px) {
+      pre.banner { font-size: 10px; }
+    }
+    </style>
+  </head>
+  <body>
+    <header>
+      <nav>
+        Home | <a href="/gallery/">Gallery</a> | <a href="telescope.1.html">Docs</a>
+      </nav>
+    </header>
+    <pre class="banner"> _______         __
+|_     _|.-----.|  |.-----.-----.----.-----.-----.-----.
+  |   |  |  -__||  ||  -__|__ --|  __|  _  |  _  |  -__|
+  |___|  |_____||__||_____|_____|____|_____|   __|_____|
+                                           |__| v0.5.2</pre>
+    <blockquote>
+      <p>Telescope is a w3m-like browser for Gemini</p>
+    </blockquote>
+    <p>
+      Telescope is written entirely for fun, as a hobbystic project in
+      my free time.  As such, it lacks a ton of features you’ll find
+      in more mature Gemini browsers, but it also has some unique
+      ones.
+    </p>
+    <p>
+      The UI is strongly inspired from Emacs and W3M, so you’ll find
+      some familiar concepts, such as the minibuffer or the tabline,
+      and the default keybindigs also reflect this, but keys familiar
+      for vi and CUA users are also present by default.
+    </p>
+    <p>
+      <a href="https://asciinema.org/a/426862" target="_blank">
+        <img src="https://asciinema.org/a/426862.svg" />
+      </a>
+    </p>
+    <h2>Install</h2>
+    <p>Some distros provide a package — thanks to the maintainers!</p>
+    <a href="https://repology.org/project/telescope/versions">
+      <img src="https://repology.org/badge/vertical-allrepos/telescope.svg" alt="Packaging status">
+    </a>
+    <p>Source code and precompiled binaries for linux are available:</p>
+    <ul>
+      <li>
+        <a href="https://github.com/omar-polo/telescope/releases/download/0.5.2/telescope-0.5.2.tar.gz">
+          telescope-0.5.2.tar.gz
+        </a>
+      </li>
+      <li>
+        <a href="https://github.com/omar-polo/telescope/releases/download/0.5.2/telescope.linux.aarch64">
+          telescope.linux.aarch64
+        </a>
+      </li>
+      <li>
+        <a href="https://github.com/omar-polo/telescope/releases/download/0.5.2/telescope.linux.amd64">
+          telescope.linux.amd64
+        </a>
+      </li>
+      <li>
+        <a href="https://github.com/omar-polo/telescope/releases/download/0.5.2/telescope-0.5.2-binaries.tar.gz">
+          telescope-0.5.2-binaries.tar.gz
+        </a>
+      </li>
+    </ul>
+    <p>
+      When in doubt, compile from source.  It’s easy and takes less
+      than a minute on a raspberry pi 3.  The dependencies are:
+    </p>
+    <ul>
+      <li>libncurses</li>
+      <li>libevent</li>
+      <li>libtls (from either LibreSSL or libretls)</li>
+      <li>yacc (or GNU bison)</li>
+    </ul>
+    <p>Once all the dependencies are installed, building is as easy as:</p>
+    <pre>$ curl -LO https://github.com/omar-polo/telescope/releases/download/0.5.2/telescope-0.5.2.tar.gz
+$ tar xzvf telescope-0.5.2.tar.gz
+$ cd telescope-0.5.2
+$ ./configure
+$ make
+$ sudo make install # eventually
+    </pre>
+    <p>
+      A SHA256 file containing the checksums is available.  However,
+      that only checks for accidental corruption: you can use signify
+      (<code>SHA256.sig</code> and the public key
+      <code>telescope-0.5.pub</code>) or GPG.  The hash of the signify
+      public key is also included in the SHA256 file and signed with
+      my GPG too. The signify public key for the next release
+      <code>telescope-0.6.pub</code> is also included.
+    </p>
+    <ul>
+      <li>
+        <a href="https://github.com/omar-polo/telescope/releases/download/0.5.2/SHA256">
+          SHA256
+        </a>
+      </li>
+      <li>
+        <a href="https://github.com/omar-polo/telescope/releases/download/0.5.2/SHA256.gpg">
+          SHA256.gpg
+        </a>
+      </li>
+      <li>
+        <a href="https://github.com/omar-polo/telescope/releases/download/0.5.2/SHA256.sig">
+          SHA256.sig
+        </a>
+      </li>
+      <li>
+        <a href="https://github.com/omar-polo/telescope/releases/download/0.5.2/telescope-0.5.pub">
+          telescope-0.5.pub
+        </a>
+      </li>
+      <li>
+        <a href="https://github.com/omar-polo/telescope/releases/download/0.5.2/telescope-0.6.pub">
+          telescope-0.6.pub
+        </a>
+      </li>
+    </ul>
+    <p>How to verify the signature with signify:</p>
+    <pre>$ signify -C -p telescope-0.5.pub -x SHA256.sig
+Signature Verified
+telescope-0.5.2-binaries.tar.gz: OK
+telescope-0.5.pub: OK
+telescope-0.5.2.tar.gz: OK
+telescope-0.6.pub: OK
+telescope.linux.aarch64: OK
+telescope.linux.amd64: OK
+    </pre>
+    <p>Finally, it’s possible to fetch the sources using git:</p>
+    <ul>
+      <li>
+        <a href="https://git.omarpolo.com/telescope/">git repository</a>
+      </li>
+      <li>
+        <a href="https://github.com/omar-polo/telescope">GitHub mirror</a>
+      </li>
+    </ul>
+    <h2>Changelog for the last versions</h2>
+    <p>0.5.2 “Le Nuvole” bugfix release — Released September 13, 2021</p>
+    <p>Bugfixes:</p>
+    <ul>
+      <li>
+        some very long pages can cause (rarely) telescope to render a
+        blank page
+      </li>
+      <li>allow creating files in <code>~/Downloads</code> on OpenBSD</li>
+      <li>reset download byte counter</li>
+    </ul>
+    <hr />
+    <p>0.5.1 “Le Nuvole” bugfix release — Released August 28, 2021</p>
+    <p>
+      Telescope used to trim the initial “/” in gopher requests: this
+      is not correct and while some servers are forgiving, other
+      (rightfully) aren't.
+    </p>
+    <hr />
+    <p>0.5 “Le Nuvole” — Released August 27, 2021</p>
+    <h3>New features</h3>
+    <ul>
+      <li>Support for the finger protocol</li>
+      <li>
+        Support for the gopher protocol (only item types 0, 1, and 7
+        for the moment)
+      </li>
+      <li>Highlight diff/patches</li>
+      <li>
+        Typing the protocol of a URI is not needed anymore: added some
+        heuristics to assume file:// URLs and fall back to gemini://
+        as default
+      </li>
+      <li>Open local files and directories</li>
+      <li>Add an autosave timer to persist the session once in a while</li>
+      <li>Scroll completions with M-v/C-v (mini-scroll-up/mini-scroll-down)</li>
+      <li>Variable `tab-bar-show' contrlos the visibility of the tab bar</li>
+    </ul>
+    <h3>Improvements</h3>
+    <ul>
+      <li>
+        New heuristics to extract a title for page without headings:
+        use the domain name or the "tilde username"
+      </li>
+      <li>About:new updated with some gopher links too</li>
+      <li>Reload doesn't push the current url to the history anymore</li>
+      <li>
+        Push-button-new-tab opens a new tab *right after* the current
+        one, not as the last
+      </li>
+      <li>Improved the crash detection</li>
+      <li>M-[ and M-] are bind to tab-move-to/tab-move</li>
+    </ul>
+    <h3>Bug fixes</h3>
+    <ul>
+      <li>Fixed some crashes caused by cursor movements on empty pages</li>
+      <li>Correctly parse multiple attributes</li>
+    </ul>
+  </body>
+</html>

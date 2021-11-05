@@ -1,0 +1,18 @@
+=> /			Home
+=> /telescope.1.txt	Docs
+
+# Gallery
+
+=> xterm-default-look.png		default look on bright terminal
+=> kitty-default-look.png		default look on dark terminal
+
+=> xterm-contrib-light.png		the contrib/light theme
+=> kitty-contrib-dark.png		the contrib/dark theme
+
+=> xterm-contrib-light-swiper.png	swiper with the contrib/light theme
+=> kitty-contrib-dark-swiper.png	swiper with the contrib/dark theme
+
+=> xterm-contrib-light-about-help.png	about:help with the contrib/light theme
+=> kitty-contrib-dark-about-help.png	about:help with the contrib/dark theme
+
+=> contrib-brutalist.png		Brutalist theme
