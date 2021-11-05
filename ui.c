@@ -316,6 +316,7 @@ rearrange_windows(void)
 
 	lines = LINES;
 
+	/* 3 lines for the ui and 12 for the  */
 	if ((too_small = lines < 15)) {
 		erase();
 		printw("Window too small.");
