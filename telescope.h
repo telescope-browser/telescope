@@ -17,11 +17,12 @@
 #ifndef TELESCOPE_H
 #define TELESCOPE_H
 
-#include "cmd.h"
 #include "compat.h"
-#include "phos/phos.h"
 
 #include <limits.h>
+
+#include "cmd.h"
+#include "phos/phos.h"
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
