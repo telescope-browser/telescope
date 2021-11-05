@@ -17,6 +17,7 @@
 #ifndef UI_H
 #define UI_H
 
+#include "keymap.h"
 #include "telescope.h"
 
 extern int	 body_lines;

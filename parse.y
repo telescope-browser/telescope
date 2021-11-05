@@ -20,6 +20,7 @@
 
 %{
 
+#include "keymap.h"
 #include "telescope.h"
 
 #include <phos/phos.h>

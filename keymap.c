@@ -20,6 +20,7 @@
 #include <curses.h>
 #include <stdlib.h>
 
+#include "keymap.h"
 #include "telescope.h"
 
 #define CTRL(n)	((n)&0x1F)

@@ -255,29 +255,6 @@ struct get_req {
 	char		req[1027];
 };
 
-struct kmap {
-	TAILQ_HEAD(map, keymap)	m;
-	void			(*unhandled_input)(void);
-};
-extern struct kmap global_map, minibuffer_map;
-
-typedef void(interactivefn)(struct buffer *);
-
-struct keymap {
-	int			 meta;
-	int			 key;
-	struct kmap		 map;
-	interactivefn		 *fn;
-
-	TAILQ_ENTRY(keymap)	 keymaps;
-};
-
-struct thiskey {
-	short meta;
-	int key;
-	uint32_t cp;
-};
-
 struct cmd {
 	const char	*cmd;
 	void		(*fn)(struct buffer *);
@@ -315,17 +292,6 @@ void		 recompute_help(void);
 void		 hist_clear_forward(struct histhead*, struct hist*);
 void		 hist_push(struct histhead*, struct hist*);
 struct hist	*hist_pop(struct histhead *);
-
-/* keymap.c */
-enum {
-	LK_ADVANCED_MAP,
-	LK_MATCHED,
-	LK_UNBOUND,
-};
-
-int		 kbd(const char*);
-const char	*unkbd(int);
-int		 kmap_define_key(struct kmap*, const char*, void(*)(struct buffer*));
 
 /* mime.c */
 int		 setup_parser_for(struct tab*);
