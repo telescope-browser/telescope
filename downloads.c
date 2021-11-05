@@ -63,8 +63,8 @@ recompute_downloads(void)
 		if (d->fd == -1)
 			l->type = LINE_DOWNLOAD_DONE;
 
-		l->line = strdup(d->path);
-		l->alt = strdup(buf);
+		l->line = strdup(buf);
+		l->alt = strdup(d->path);
 
 		TAILQ_INSERT_TAIL(&downloadwin.page.head, l, lines);
 	}
