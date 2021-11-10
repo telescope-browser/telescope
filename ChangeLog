@@ -1,3 +1,7 @@
+2021-11-10  Omar Polo  <op@omarpolo.com>
+
+	* net.c (net_error): handle empty replies (i.e. no header)
+
 2021-11-05  Omar Polo  <op@omarpolo.com>
 
 	* defaults.c (load_default_keys): bind toggle-downloads to <f2>
