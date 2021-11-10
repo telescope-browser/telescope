@@ -608,6 +608,12 @@ net_error(struct bufferevent *bev, short error, void *d)
 	}
 
 	if (error & EVBUFFER_EOF) {
+		/* EOF and no header */
+		if (!req->done_header) {
+			close_with_err(req, "protocol error");
+			return;
+		}
+
 		src = EVBUFFER_INPUT(req->bev);
 		if (EVBUFFER_LENGTH(src) != 0)
 			net_send_ui(IMSG_BUF, req->id, EVBUFFER_DATA(src),
