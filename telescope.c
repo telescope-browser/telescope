@@ -638,7 +638,7 @@ load_gemini_url(struct tab *tab, const char *url)
 
 	memset(&req, 0, sizeof(req));
 	strlcpy(req.host, tab->uri.host, sizeof(req.host));
-	strlcpy(req.port, tab->uri.port, sizeof(req.host));
+	strlcpy(req.port, tab->uri.port, sizeof(req.port));
 
 	return make_request(tab, &req, PROTO_GEMINI, tab->hist_cur->h);
 }
@@ -681,7 +681,7 @@ load_gopher_url(struct tab *tab, const char *url)
 
 	memset(&req, 0, sizeof(req));
 	strlcpy(req.host, tab->uri.host, sizeof(req.host));
-	strlcpy(req.port, tab->uri.port, sizeof(req.host));
+	strlcpy(req.port, tab->uri.port, sizeof(req.port));
 
 	path = gopher_skip_selector(tab->uri.path, &type);
 	switch (type) {
@@ -715,7 +715,7 @@ load_via_proxy(struct tab *tab, const char *url, struct proxy *p)
 
 	memset(&req, 0, sizeof(req));
 	strlcpy(req.host, p->host, sizeof(req.host));
-	strlcpy(req.port, p->port, sizeof(req.host));
+	strlcpy(req.port, p->port, sizeof(req.port));
 
 	tab->proxy = p;
 
@@ -767,7 +767,7 @@ gopher_send_search_req(struct tab *tab, const char *text)
 
 	memset(&req, 0, sizeof(req));
 	strlcpy(req.host, tab->uri.host, sizeof(req.host));
-	strlcpy(req.port, tab->uri.port, sizeof(req.host));
+	strlcpy(req.port, tab->uri.port, sizeof(req.port));
 
 	/* +2 to skip /7 */
 	strlcpy(req.req, tab->uri.path+2, sizeof(req.req));
