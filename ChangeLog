@@ -1,3 +1,7 @@
+2021-11-24  Nikolay Korotkiy <sikmir@gmail.com>
+
+	* telescope.c (load_gemini_url): fix macOs crash on `__strlcpy_chk' due to wrong lengths
+
 2021-11-10  Omar Polo  <op@omarpolo.com>
 
 	* net.c (net_error): handle empty replies (i.e. no header)
