@@ -155,7 +155,7 @@ handle_get(struct imsg *imsg, size_t datalen)
 	if (page == NULL)
 		goto notfound;
 
-	strlcpy(path, config_path_base, sizeof(path));
+	strlcpy(path, data_path_base, sizeof(path));
 	strlcat(path, "/", sizeof(path));
 	if (page->path != NULL)
 		strlcat(path, page->path, sizeof(path));

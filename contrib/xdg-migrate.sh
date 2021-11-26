@@ -18,7 +18,7 @@ mkdir -p "$xdg_config" "$xdg_data" "$xdg_cache"
 
 for filepath in \
 	"$xdg_config/config" \
-	"$xdg_config/pages" \
+	"$xdg_data/pages" \
 	"$xdg_data/bookmarks.gmi" \
 	"$xdg_data/known_hosts"
 do
