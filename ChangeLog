@@ -1,3 +1,7 @@
+2021-11-26  Omar Polo  <op@omarpolo.com>
+
+	* configure.ac: add HOSTCC and HOSTFLAGS to aid cross-compiling since pagebundler needs to be built with the host compiler.  Reported and tested by Nikolay Korotkiy, thanks!
+
 2021-11-24  Nikolay Korotkiy <sikmir@gmail.com>
 
 	* telescope.c (load_gemini_url): fix macOs crash on `__strlcpy_chk' due to wrong lengths
