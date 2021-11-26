@@ -8,6 +8,12 @@ AC_PROG_YACC
 
 PKG_PROG_PKG_CONFIG
 
+AC_ARG_VAR(HOSTCC, [The C compiler on the host.])
+AC_ARG_VAR(HOSTCFLAGS, [CFLAGS for the host compiler])
+
+test -z "${HOSTCC}"     && HOSTCC='$(CC)'
+test -z "${HOSTCFLAGS}" && HOSTCFLAGS='$(CFLAGS)'
+
 AC_ARG_WITH([libimsg],
 	AS_HELP_STRING([--with-libimsg],
 		[Build with imsg-compat library (default: disabled)]))
