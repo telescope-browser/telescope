@@ -957,5 +957,11 @@ The
 .Nm
 program was written by
 .An Omar Polo Aq Mt op@omarpolo.com .
+.Sh CAVEATS
+.Nm
+assumes a UTF-8 environment and doesn't do anything to cope with other
+encodings.
+This can cause weird rendering issues if you're lucky, or possibly
+worst things depending on your locale and terminal emulator.
 .Sh BUGS
 There's no UI for out-of-band certificates validation.

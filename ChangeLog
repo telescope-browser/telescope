@@ -1,3 +1,7 @@
+2021-11-27  Omar Polo  <op@openbsd.org>
+
+	* telescope.1: mention that we're expecting an UTF-8 environment.
+
 2021-11-26  Omar Polo  <op@omarpolo.com>
 
 	* configure.ac: add HOSTCC and HOSTFLAGS to aid cross-compiling since pagebundler needs to be built with the host compiler.  Reported and tested by Nikolay Korotkiy, thanks!
