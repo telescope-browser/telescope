@@ -179,6 +179,10 @@ landlock_no_fs(void)
 void
 sandbox_net_process(void)
 {
+	/*
+	 * We don't know what paths are required for the TLS stack.
+	 * Yes, it sucks.
+	 */
 	return;
 }
 
