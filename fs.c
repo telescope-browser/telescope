@@ -62,12 +62,18 @@ static void		 xdg_init(void);
 static struct imsgev		*iev_ui;
 static FILE			*session;
 
-/* WARNING: xdg_*_base variables are not initialized if ~/.telescope exists */
+/*
+ * Note: these are empty if ~/.telescope exists, use *_path_base
+ * below.
+ */
 static char	xdg_config_base[PATH_MAX];
 static char	xdg_data_base[PATH_MAX];
 static char	xdg_cache_base[PATH_MAX];
 
-/* *_path_base variables are all equal to $HOME/.telescope if it exists */
+/*
+ * Where to store user data.  These are all equal to ~/.telescope if
+ * it exists.
+ */
 char		config_path_base[PATH_MAX];
 char		data_path_base[PATH_MAX];
 char		cache_path_base[PATH_MAX];
