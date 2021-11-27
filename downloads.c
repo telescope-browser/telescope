@@ -70,7 +70,13 @@ recompute_downloads(void)
 	}
 
 end:
-	wrap_page(&downloadwin, download_lines);
+	/*
+	 * The exact value doesn't matter, as wrap_page only considers
+	 * l->line, which is the human representation of the byte
+	 * counter, and we know for sure is < FMT_SCALED_STRSIZE so it
+	 * fits.
+	 */
+	wrap_page(&downloadwin, download_cols);
 }
 
 void

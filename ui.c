@@ -98,6 +98,7 @@ static WINDOW		*download;
 /* not static so we can see them from download.c */
 struct buffer		 downloadwin;
 int			 download_lines;
+int			 download_cols;
 
 static int		 side_window;
 static int		 in_side_window;
@@ -343,11 +344,12 @@ rearrange_windows(void)
 
 	if (side_window & SIDE_WINDOW_BOTTOM) {
 		download_lines = MIN(5, lines/2);
+		download_cols = COLS;
 		mvwin(download, lines - download_lines, 0);
-		wresize(download, download_lines, COLS);
+		wresize(download, download_lines, download_cols);
 		lines -= download_lines;
 
-		wrap_page(&downloadwin, COLS);
+		wrap_page(&downloadwin, download_cols);
 	}
 
 	body_lines = show_tab_bar ? --lines : lines;

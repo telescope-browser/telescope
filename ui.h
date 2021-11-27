@@ -129,6 +129,7 @@ extern int		 help_lines, help_cols;
 
 extern struct buffer	 downloadwin;
 extern int		 download_lines;
+extern int		 download_cols;
 
 void		 save_excursion(struct excursion *, struct buffer *);
 void		 restore_excursion(struct excursion *, struct buffer *);
