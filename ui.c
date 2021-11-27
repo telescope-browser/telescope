@@ -1166,7 +1166,7 @@ void
 ui_on_download_refresh(void)
 {
 	if (side_window & SIDE_WINDOW_BOTTOM) {
-                recompute_downloads();
+		recompute_downloads();
 		redraw_tab(current_tab);
 	}
 }
