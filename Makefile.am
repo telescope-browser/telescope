@@ -13,6 +13,7 @@ telescope_SOURCES =	cmd.c			\
 			downloads.c		\
 			emoji-matcher.c		\
 			fs.c			\
+			fs.h			\
 			gen-emoji-matcher.sh	\
 			gencmd.awk		\
 			help.c			\
