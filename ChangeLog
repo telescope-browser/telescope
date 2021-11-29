@@ -1,3 +1,11 @@
+2021-11-29  Omar Polo  <op@omarpolo.com>
+
+	* configure.ac: tagged 0.6.1 bugfix release
+
+	* sandbox.c (open_landlock): handle gracefully when landlock is disabled at runtime.  Reported and tested by Nikolay Korotkiy, thanks!
+
+	* configure.ac: tag 0.6 "Piccola storia ignobile"
+
 2021-11-27  Omar Polo  <op@openbsd.org>
 
 	* telescope.1: mention that we're expecting an UTF-8 environment.
