@@ -26,7 +26,7 @@ The UI is strongly inspired from Emacs and W3M, so you’ll find some familiar c
 Source code is available:
 => https://github.com/omar-polo/telescope/releases/download/0.6.1/telescope-0.6.1.tar.gz	telescope-0.6.1.tar.gz
 
-When in doubt, compile from source.  It’s easy and takes less than a minute on a raspberry pi 3.  The dependencies are:
+The dependencies are:
 * libncurses
 * libevent
 * libtls (from either LibreSSL or libretls)
