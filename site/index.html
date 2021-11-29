@@ -124,7 +124,7 @@
 |_     _|.-----.|  |.-----.-----.----.-----.-----.-----.
   |   |  |  -__||  ||  -__|__ --|  __|  _  |  _  |  -__|
   |___|  |_____||__||_____|_____|____|_____|   __|_____|
-                                           |__| v0.6</pre>
+                                           |__| v0.6.1</pre>
     <blockquote>
       <p>Telescope is a w3m-like browser for Gemini</p>
     </blockquote>
@@ -153,23 +153,23 @@
     <p>Source code and precompiled binaries for linux are available:</p>
     <ul>
       <li>
-        <a href="https://github.com/omar-polo/telescope/releases/download/0.6/telescope-0.6.tar.gz">
-          telescope-0.6.tar.gz
+        <a href="https://github.com/omar-polo/telescope/releases/download/0.6.1/telescope-0.6.1.tar.gz">
+          telescope-0.6.1.tar.gz
         </a>
       </li>
       <li>
-        <a href="https://github.com/omar-polo/telescope/releases/download/0.6/telescope.linux.aarch64">
+        <a href="https://github.com/omar-polo/telescope/releases/download/0.6.1/telescope.linux.aarch64">
           telescope.linux.aarch64
         </a>
       </li>
       <li>
-        <a href="https://github.com/omar-polo/telescope/releases/download/0.6/telescope.linux.amd64">
+        <a href="https://github.com/omar-polo/telescope/releases/download/0.6.1/telescope.linux.amd64">
           telescope.linux.amd64
         </a>
       </li>
       <li>
-        <a href="https://github.com/omar-polo/telescope/releases/download/0.6/telescope-0.6-binaries.tar.gz">
-          telescope-0.6-binaries.tar.gz
+        <a href="https://github.com/omar-polo/telescope/releases/download/0.6.1/telescope-0.6.1-binaries.tar.gz">
+          telescope-0.6.1-binaries.tar.gz
         </a>
       </li>
     </ul>
@@ -184,9 +184,9 @@
       <li>yacc (or GNU bison)</li>
     </ul>
     <p>Once all the dependencies are installed, building is as easy as:</p>
-    <pre>$ curl -LO https://github.com/omar-polo/telescope/releases/download/0.6/telescope-0.6.tar.gz
-$ tar xzvf telescope-0.6.tar.gz
-$ cd telescope-0.6
+    <pre>$ curl -LO https://github.com/omar-polo/telescope/releases/download/0.6.1/telescope-0.6.1.tar.gz
+$ tar xzvf telescope-0.6.1.tar.gz
+$ cd telescope-0.6.1
 $ ./configure
 $ make
 $ sudo make install # eventually
@@ -202,27 +202,27 @@ $ sudo make install # eventually
     </p>
     <ul>
       <li>
-        <a href="https://github.com/omar-polo/telescope/releases/download/0.6/SHA256">
+        <a href="https://github.com/omar-polo/telescope/releases/download/0.6.1/SHA256">
           SHA256
         </a>
       </li>
       <li>
-        <a href="https://github.com/omar-polo/telescope/releases/download/0.6/SHA256.gpg">
+        <a href="https://github.com/omar-polo/telescope/releases/download/0.6.1/SHA256.gpg">
           SHA256.gpg
         </a>
       </li>
       <li>
-        <a href="https://github.com/omar-polo/telescope/releases/download/0.6/SHA256.sig">
+        <a href="https://github.com/omar-polo/telescope/releases/download/0.6.1/SHA256.sig">
           SHA256.sig
         </a>
       </li>
       <li>
-        <a href="https://github.com/omar-polo/telescope/releases/download/0.6/telescope-0.6.pub">
+        <a href="https://github.com/omar-polo/telescope/releases/download/0.6.1/telescope-0.6.pub">
           telescope-0.6.pub
         </a>
       </li>
       <li>
-        <a href="https://github.com/omar-polo/telescope/releases/download/0.6/telescope-0.7.pub">
+        <a href="https://github.com/omar-polo/telescope/releases/download/0.6.1/telescope-0.7.pub">
           telescope-0.7.pub
         </a>
       </li>
@@ -230,9 +230,9 @@ $ sudo make install # eventually
     <p>How to verify the signature with signify:</p>
     <pre>$ signify -C -p telescope-0.5.pub -x SHA256.sig
 Signature Verified
-telescope-0.6-binaries.tar.gz: OK
+telescope-0.6.1-binaries.tar.gz: OK
 telescope-0.6.pub: OK
-telescope-0.6.tar.gz: OK
+telescope-0.6.1.tar.gz: OK
 telescope-0.7.pub: OK
 telescope.linux.aarch64: OK
 telescope.linux.amd64: OK
@@ -246,7 +246,15 @@ telescope.linux.amd64: OK
         <a href="https://github.com/omar-polo/telescope">GitHub mirror</a>
       </li>
     </ul>
-    <h2>Changelog for the lastest version</h2>
+    <h2>Changelog</h2>
+    <p>0.6.1 “Piccola storia ignobile” bugfix release — Released November 29, 2021</p>
+    <ul>
+      <li>
+        Handle gracefully when landlock is disabled at runtime.
+        Reported and tested by Nikolay Korotkiy, thanks!
+      </li>
+    </ul>
+    <hr />
     <p>0.6 “Piccola storia ignobile” — Released November 29, 2021</p>
     <h3>New features</h3>
     <ul>
