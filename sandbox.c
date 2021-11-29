@@ -120,6 +120,7 @@ landlock_restrict_self(int ruleset_fd, __u32 flags)
 static int
 open_landlock(void)
 {
+	int fd;
 	struct landlock_ruleset_attr attr = {
 		.handled_access_fs =	LANDLOCK_ACCESS_FS_READ_FILE	|
 					LANDLOCK_ACCESS_FS_READ_DIR	|
@@ -128,7 +129,17 @@ open_landlock(void)
 					LANDLOCK_ACCESS_FS_MAKE_REG,
 	};
 
-	return landlock_create_ruleset(&attr, sizeof(attr), 0);
+	fd = landlock_create_ruleset(&attr, sizeof(attr), 0);
+	if (fd == -1) {
+		switch (errno) {
+		case ENOSYS:
+		case EOPNOTSUPP:
+			return -1;
+		default:
+			err(1, "can't create landlock ruleset");
+		}
+	}
+	return fd;
 }
 
 static int
@@ -170,8 +181,12 @@ landlock_no_fs(void)
 {
 	int fd;
 
+	/*
+	 * XXX: landlock disabled at runtime, pretend everything's
+	 * good.
+	 */
 	if ((fd = open_landlock()) == -1)
-		return -1;
+		return 0;
 
 	return landlock_apply(fd);
 }
@@ -199,8 +214,12 @@ sandbox_fs_process(void)
 	int fd, rwc;
 	char path[PATH_MAX];
 
+	/*
+	 * XXX: at build-time we found landlock.h but we've just
+	 * realized it's not available on this kernel, so do nothing.
+	 */
 	if ((fd = open_landlock()) == -1)
-		err(1, "can't create landlock ruleset");
+		return;
 
 	rwc =	LANDLOCK_ACCESS_FS_READ_FILE	|
 		LANDLOCK_ACCESS_FS_READ_DIR	|
