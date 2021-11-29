@@ -6,7 +6,7 @@
 
 	* configure.ac: tag 0.6 "Piccola storia ignobile"
 
-2021-11-27  Omar Polo  <op@openbsd.org>
+2021-11-27  Omar Polo  <op@omarpolo.com>
 
 	* telescope.1: mention that we're expecting an UTF-8 environment.
 
