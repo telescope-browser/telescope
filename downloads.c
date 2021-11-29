@@ -25,7 +25,7 @@
 struct downloads downloads = STAILQ_HEAD_INITIALIZER(downloads);
 
 static void
-no_downloads()
+no_downloads(void)
 {
 	struct line	*l;
 
