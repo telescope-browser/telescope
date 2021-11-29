@@ -124,7 +124,7 @@
 |_     _|.-----.|  |.-----.-----.----.-----.-----.-----.
   |   |  |  -__||  ||  -__|__ --|  __|  _  |  _  |  -__|
   |___|  |_____||__||_____|_____|____|_____|   __|_____|
-                                           |__| v0.5.2</pre>
+                                           |__| v0.6</pre>
     <blockquote>
       <p>Telescope is a w3m-like browser for Gemini</p>
     </blockquote>
@@ -153,23 +153,23 @@
     <p>Source code and precompiled binaries for linux are available:</p>
     <ul>
       <li>
-        <a href="https://github.com/omar-polo/telescope/releases/download/0.5.2/telescope-0.5.2.tar.gz">
-          telescope-0.5.2.tar.gz
+        <a href="https://github.com/omar-polo/telescope/releases/download/0.6/telescope-0.6.tar.gz">
+          telescope-0.6.tar.gz
         </a>
       </li>
       <li>
-        <a href="https://github.com/omar-polo/telescope/releases/download/0.5.2/telescope.linux.aarch64">
+        <a href="https://github.com/omar-polo/telescope/releases/download/0.6/telescope.linux.aarch64">
           telescope.linux.aarch64
         </a>
       </li>
       <li>
-        <a href="https://github.com/omar-polo/telescope/releases/download/0.5.2/telescope.linux.amd64">
+        <a href="https://github.com/omar-polo/telescope/releases/download/0.6/telescope.linux.amd64">
           telescope.linux.amd64
         </a>
       </li>
       <li>
-        <a href="https://github.com/omar-polo/telescope/releases/download/0.5.2/telescope-0.5.2-binaries.tar.gz">
-          telescope-0.5.2-binaries.tar.gz
+        <a href="https://github.com/omar-polo/telescope/releases/download/0.6/telescope-0.6-binaries.tar.gz">
+          telescope-0.6-binaries.tar.gz
         </a>
       </li>
     </ul>
@@ -184,9 +184,9 @@
       <li>yacc (or GNU bison)</li>
     </ul>
     <p>Once all the dependencies are installed, building is as easy as:</p>
-    <pre>$ curl -LO https://github.com/omar-polo/telescope/releases/download/0.5.2/telescope-0.5.2.tar.gz
-$ tar xzvf telescope-0.5.2.tar.gz
-$ cd telescope-0.5.2
+    <pre>$ curl -LO https://github.com/omar-polo/telescope/releases/download/0.6/telescope-0.6.tar.gz
+$ tar xzvf telescope-0.6.tar.gz
+$ cd telescope-0.6
 $ ./configure
 $ make
 $ sudo make install # eventually
@@ -195,45 +195,45 @@ $ sudo make install # eventually
       A SHA256 file containing the checksums is available.  However,
       that only checks for accidental corruption: you can use signify
       (<code>SHA256.sig</code> and the public key
-      <code>telescope-0.5.pub</code>) or GPG.  The hash of the signify
+      <code>telescope-0.6.pub</code>) or GPG.  The hash of the signify
       public key is also included in the SHA256 file and signed with
       my GPG too. The signify public key for the next release
-      <code>telescope-0.6.pub</code> is also included.
+      <code>telescope-0.7.pub</code> is also included.
     </p>
     <ul>
       <li>
-        <a href="https://github.com/omar-polo/telescope/releases/download/0.5.2/SHA256">
+        <a href="https://github.com/omar-polo/telescope/releases/download/0.6/SHA256">
           SHA256
         </a>
       </li>
       <li>
-        <a href="https://github.com/omar-polo/telescope/releases/download/0.5.2/SHA256.gpg">
+        <a href="https://github.com/omar-polo/telescope/releases/download/0.6/SHA256.gpg">
           SHA256.gpg
         </a>
       </li>
       <li>
-        <a href="https://github.com/omar-polo/telescope/releases/download/0.5.2/SHA256.sig">
+        <a href="https://github.com/omar-polo/telescope/releases/download/0.6/SHA256.sig">
           SHA256.sig
         </a>
       </li>
       <li>
-        <a href="https://github.com/omar-polo/telescope/releases/download/0.5.2/telescope-0.5.pub">
-          telescope-0.5.pub
+        <a href="https://github.com/omar-polo/telescope/releases/download/0.6/telescope-0.6.pub">
+          telescope-0.6.pub
         </a>
       </li>
       <li>
-        <a href="https://github.com/omar-polo/telescope/releases/download/0.5.2/telescope-0.6.pub">
-          telescope-0.6.pub
+        <a href="https://github.com/omar-polo/telescope/releases/download/0.6/telescope-0.7.pub">
+          telescope-0.7.pub
         </a>
       </li>
     </ul>
     <p>How to verify the signature with signify:</p>
     <pre>$ signify -C -p telescope-0.5.pub -x SHA256.sig
 Signature Verified
-telescope-0.5.2-binaries.tar.gz: OK
-telescope-0.5.pub: OK
-telescope-0.5.2.tar.gz: OK
+telescope-0.6-binaries.tar.gz: OK
 telescope-0.6.pub: OK
+telescope-0.6.tar.gz: OK
+telescope-0.7.pub: OK
 telescope.linux.aarch64: OK
 telescope.linux.amd64: OK
     </pre>
@@ -246,63 +246,52 @@ telescope.linux.amd64: OK
         <a href="https://github.com/omar-polo/telescope">GitHub mirror</a>
       </li>
     </ul>
-    <h2>Changelog for the last versions</h2>
-    <p>0.5.2 “Le Nuvole” bugfix release — Released September 13, 2021</p>
-    <p>Bugfixes:</p>
-    <ul>
-      <li>
-        some very long pages can cause (rarely) telescope to render a
-        blank page
-      </li>
-      <li>allow creating files in <code>~/Downloads</code> on OpenBSD</li>
-      <li>reset download byte counter</li>
-    </ul>
-    <hr />
-    <p>0.5.1 “Le Nuvole” bugfix release — Released August 28, 2021</p>
-    <p>
-      Telescope used to trim the initial “/” in gopher requests: this
-      is not correct and while some servers are forgiving, other
-      (rightfully) aren't.
-    </p>
-    <hr />
-    <p>0.5 “Le Nuvole” — Released August 27, 2021</p>
+    <h2>Changelog for the lastest version</h2>
+    <p>0.6 “Piccola storia ignobile” — Released November 29, 2021</p>
     <h3>New features</h3>
     <ul>
-      <li>Support for the finger protocol</li>
+      <li>added a pane that lists all the downloads (current or not)</li>
+      <li>download-path is customizable</li>
       <li>
-        Support for the gopher protocol (only item types 0, 1, and 7
-        for the moment)
+        sandbox/safe mode: telescope won't write anything to the file
+        system.
       </li>
-      <li>Highlight diff/patches</li>
       <li>
-        Typing the protocol of a URI is not needed anymore: added some
-        heuristics to assume file:// URLs and fall back to gemini://
-        as default
+        XDG-style directories if ~/.telescope does not exists; idea
+        and implementation by Andrea Feletto, thanks!  (there's a
+        script also by him in contrib to migrate the setup)
       </li>
-      <li>Open local files and directories</li>
-      <li>Add an autosave timer to persist the session once in a while</li>
-      <li>Scroll completions with M-v/C-v (mini-scroll-up/mini-scroll-down)</li>
-      <li>Variable `tab-bar-show' contrlos the visibility of the tab bar</li>
     </ul>
     <h3>Improvements</h3>
     <ul>
+      <li>prefill the save prompt with the file name</li>
+      <li>use landlock on linux if available</li>
       <li>
-        New heuristics to extract a title for page without headings:
-        use the domain name or the "tilde username"
+        add <code>HOSTCC</code> and <code>HOSTCFLAGS</code> variables
+        for the configure script to allow cross-compiling (<code>pagebundler</code>
+        needs to be built with the host compiler no matter what.)
+        Prompted and tested by Nikolay Korotkiy, thanks!
       </li>
-      <li>About:new updated with some gopher links too</li>
-      <li>Reload doesn't push the current url to the history anymore</li>
-      <li>
-        Push-button-new-tab opens a new tab *right after* the current
-        one, not as the last
-      </li>
-      <li>Improved the crash detection</li>
-      <li>M-[ and M-] are bind to tab-move-to/tab-move</li>
     </ul>
     <h3>Bug fixes</h3>
     <ul>
-      <li>Fixed some crashes caused by cursor movements on empty pages</li>
-      <li>Correctly parse multiple attributes</li>
+      <li>fix diff syntax highlighting with more than one header involved</li>
+      <li>
+        [gemini] fix item line detection: a space is required after
+        the <code>*</code> character
+      </li>
+      <li>
+        handle empty replies (i.e. no header.)  Found thanks to
+        ondollo' capsule :)
+      </li>
+      <li>
+        fixed a crash on macOs, by Nikolay Korotkiy (sikmir on
+        github). Thanks!
+      </li>
+      <li>
+        mention that telescope expects an UTF-8 environment in the
+        CAVEATS section of the manpage
+      </li>
     </ul>
   </body>
 </html>
