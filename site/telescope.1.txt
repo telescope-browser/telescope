@@ -4,7 +4,7 @@ NAME
      telescope	multi-protocol browser
 
 SYNOPSIS
-     telescope [-Chnv] [-c config] [URL]
+     telescope [-ChnSv] [-c config] [URL]
 
 DESCRIPTION
      telescope is an interactive browser that supports the Finger, Gemini and
@@ -16,12 +16,18 @@ DESCRIPTION
      -C, --colors   Show all available colors and exit.
 
      -c config	    Specify an alternative configuration file.	By default
-		    $HOME/.telescope/config is loaded.
+		    $HOME/.config/telescope/config is loaded.
 
      -h, --help	    Display version and usage.
 
      -n		    Configtest mode.  Only check the configuration file for
 		    validity.
+
+     -S, --safe	    Safe (or sandbox) mode.  Prevent telescope from
+		    writing files to the disk and to acquire the lock,
+		    allowing to run multiple instances at the same time.
+		    telescope still loads the session file and the custom
+		    about pages.
 
      -v, --version  Display version.
 
@@ -101,6 +107,143 @@ SUPPORTED PROTOCOLS
        if it's a proper absolute URL then use it as-is,
        if it starts with ./ or / assume it's a file:// URL,
        otherwise assume it's a Gemini URL.
+
+CONFIGURATION FILE
+     During the startup, telescope reads the configuration file at
+     ~/.config/telescope/config or ~/.telescope/config.
+
+     It's possible to load a custom configuration file using the -c flag.
+
+     telescope will also load a file called config-TERM, where TERM is the
+     name of the terminal type (i.e. the TERM environment variable), if it
+     exists.
+
+     The format of the configuration file is fairly flexible.  The current
+     line can be extended over multiple ones using a backslash (\).
+     Comments can be put anywhere in the file using a hash mark (#), and
+     extend to the end of the current line, but backslashes can't be used to
+     extend comments over multiple lines.
+
+     The following constructs are available:
+
+     bind map key cmd
+	     Bind key to the function cmd in the keymap map.  Valid values for
+	     map are global-map (i.e. when the user is viewing a page) and
+	     minibuffer-map (i.e. when the minibuffer has the focus.) key
+	     follows the same syntax described in DEFAULT KEY BINDINGS and all
+	     the possible functions are listed in INTERACTIVE COMMANDS.
+
+     proxy proto via url
+	     Use url as proxy for all URLs with protocol proto.	 url must be a
+	     Gemini URI without path, query and fragment component.
+
+     set opt = val
+	     Set the option opt to the value val.  Valid options are:
+
+	     autosave	    (integer) If greater than zero, save the session
+			    after the specified amount of seconds after some
+			    events happens (new or closed tabs, visited a link
+			    ...) Defaults to 20.
+	     dont-wrap-pre  (integer) If nonzero, don't wrap preformatted
+			    blocks.  Defaults to 0.
+	     download-path  (string) The default download path.	 Defaults to
+			    /tmp.
+	     emojify-link   (integer) If nonzero, when the text of a link
+			    starts with an emoji followed by a space, use that
+			    emoji as line prefix.  Defaults to 1.
+	     enable-colors  (integer) If nonzero, enable colours.  Defaults to
+			    0 if NO_COLORS is set, 1 otherwise.
+	     fill-column    (integer) If greater than zero, lines of text will
+			    be formatted in a way that don't exceed the given
+			    number of columns.	Defaults to 80.
+	     hide-pre-blocks
+			    (integer) If nonzero, hide by default the body of
+			    the preformatted blocks.  Defaults to zero.
+			    push-button can be used to toggle the visibility
+			    per-block.
+	     hide-pre-closing-line
+			    (integer) If nonzero, hide the closing line of
+			    preformatted blocks.  Defaults to 0.
+	     hide-pre-context
+			    (integer) If nonzero, hide the start and end line
+			    of the preformatted blocks.	 If both hide-pre-
+			    context and hide-pre-blocks are nonzero,
+			    preformatted blocks are irremediably hidden.
+			    Defaults to zero.
+	     new-tab-url    (string) URL for the new tab page.	Defaults to
+			    about:new.
+	     olivetti-mode  (integer) If nonzero, enable olivetti-mode
+			    Defaults to 1.
+	     set-title	    (integer) If nonzero, set the terminal title to
+			    the page title.  Defaults to 1.
+	     tab-bar-show   (integer) If tab-bar-show is -1 hide the tab bar
+			    permanently, if 0 show it unconditionally.	If
+			    it's 1, show the bar only when there is more than
+			    one tab.  Defaults to 1.
+
+     style name option
+	     Change the styling of the element identified by name.  Multiple
+	     options may be specified within curly braces.  Valid style
+	     identifiers are:
+		   line			  the area outside the lines in the
+					  body of the page.
+		   line.compl		  the completions.
+		   line.compl.current	  the current completion.
+		   line.help		  text in the *Help* buffer.
+		   line.download.ongoing  an ongoing download
+		   line.download.done	  a completed download
+		   line.download.info	  informational text in the
+					  *Downloads* buffer.
+		   line.text		  text lines.
+		   line.link		  link lines.
+		   line.title1..3	  headings
+		   line.item		  item lines.
+		   line.quote		  quotes.
+		   line.pre.start	  the heading of a preformatted block.
+		   line.pre		  the content of a preformatted block.
+		   line.pre.end		  the closing line of a preformatted
+					  block.
+		   download		  the download pane
+		   minibuffer		  the minibuffer.
+		   modeline		  the modeline.
+		   tabline		  the tabline.
+		   tabline.tab		  the non-focused tabs.
+		   tabline.current	  the focused tab.
+
+	     Valid options are:
+
+	     attr prefix [line [trail]]
+		     Sets the text attributes.	If only one value is given,
+		     line and trail default to that; if two values are given
+		     then trail defaults to prefix.  Each attribute is a
+		     comma-separated list of keywords:
+			   normal     no attributes.
+			   standout   best highlighting mode for the terminal.
+			   underline  underlines the text.
+			   reverse    reverses background/foreground colors.
+			   blink      makes the text blinking.
+			   dim	      half bright.
+			   bold	      extra bright or bold.
+
+		     Only the style identifiers with the line. prefix accept
+		     up to three attributes.  The other will only use the
+		     first one given.
+
+	     bg prefix [line [trail]]
+		     Sets the background color.	 Follows the same behaviour as
+		     attr regarding the optional parameters.  The colour is
+		     one of black, red, green, yellow, blue, magenta, cyan and
+		     white; colour0 to colour255 (or color0 to color255) from
+		     the 256-colour set; default for the default colour.
+
+	     fg prefix [line [trail]]
+		     Sets the foreground color.	 It behaves just like bg.
+
+	     prefix prfx [cont]
+		     Sets the prefix for the current line type to prfx and
+		     cont as the prefix for the continuation lines (i.e. when
+		     a long line gets wrapped.) If cont is not given its value
+		     will be the same of prfx.
 
 DEFAULT KEY BINDINGS
      The default key bindings are very similar to GNU Emacs, but care has been
@@ -351,134 +494,6 @@ INTERACTIVE COMMANDS
      tabp	       tab-previous
      q and wq	       kill-telescope
 
-CONFIGURATION FILE
-     During the startup, telescope reads the configuration file at
-     ~/.telescope/config or the one given with the -c flag.
-
-     telescope will also load a file called config-TERM, where TERM is the
-     name of the terminal type (i.e. the TERM environment variable), if it
-     exists.
-
-     The format of the configuration file is fairly flexible.  The current
-     line can be extended over multiple ones using a backslash (\).
-     Comments can be put anywhere in the file using a hash mark (#), and
-     extend to the end of the current line, but backslashes can't be used to
-     extend comments over multiple lines.
-
-     The following constructs are available:
-
-     bind map key cmd
-	     Bind key to the function cmd in the keymap map.  Valid values for
-	     map are global-map (i.e. when the user is viewing a page) and
-	     minibuffer-map (i.e. when the minibuffer has the focus.) key
-	     follows the same syntax described in DEFAULT KEY BINDINGS and all
-	     the possible functions are listed in INTERACTIVE COMMANDS.
-
-     proxy proto via url
-	     Use url as proxy for all URLs with protocol proto.	 url must be a
-	     Gemini URI without path, query and fragment component.
-
-     set opt = val
-	     Set the option opt to the value val.  Valid options are:
-
-	     autosave	    (integer) If greater than zero, save the session
-			    after the specified amount of seconds after some
-			    events happens (new or closed tabs, visited a link
-			    ...) Defaults to 20.
-	     dont-wrap-pre  (integer) If nonzero, don't wrap preformatted
-			    blocks.  Defaults to 0.
-	     emojify-link   (integer) If nonzero, when the text of a link
-			    starts with an emoji followed by a space, use that
-			    emoji as line prefix.  Defaults to 1.
-	     enable-colors  (integer) If nonzero, enable colours.  Defaults to
-			    0 if NO_COLORS is set, 1 otherwise.
-	     fill-column    (integer) If greater than zero, lines of text will
-			    be formatted in a way that don't exceed the given
-			    number of columns.	Defaults to 80.
-	     hide-pre-blocks
-			    (integer) If nonzero, hide by default the body of
-			    the preformatted blocks.  Defaults to zero.
-			    push-button can be used to toggle the visibility
-			    per-block.
-	     hide-pre-closing-line
-			    (integer) If nonzero, hide the closing line of
-			    preformatted blocks.  Defaults to 0.
-	     hide-pre-context
-			    (integer) If nonzero, hide the start and end line
-			    of the preformatted blocks.	 If both hide-pre-
-			    context and hide-pre-blocks are nonzero,
-			    preformatted blocks are irremediably hidden.
-			    Defaults to zero.
-	     new-tab-url    (string) URL for the new tab page.	Defaults to
-			    about:new.
-	     olivetti-mode  (integer) If nonzero, enable olivetti-mode
-			    Defaults to 1.
-	     set-title	    (integer) If nonzero, set the terminal title to
-			    the page title.  Defaults to 1.
-	     tab-bar-show   (integer) If tab-bar-show is -1 hide the tab bar
-			    permanently, if 0 show it unconditionally.	If
-			    it's 1, show the bar only when there is more than
-			    one tab.  Defaults to 1.
-
-     style name option
-	     Change the styling of the element identified by name.  Multiple
-	     options may be specified within curly braces.  Valid style
-	     identifiers are:
-		   line		       the area outside the lines in the body
-				       of the page.
-		   line.compl	       the completions.
-		   line.compl.current  the current completion.
-		   line.help	       text in the *Help* buffer.
-		   line.text	       text lines.
-		   line.link	       link lines.
-		   line.title1..3      headings
-		   line.item	       item lines.
-		   line.quote	       quotes.
-		   line.pre.start      the heading of a preformatted block.
-		   line.pre	       the content of a preformatted block.
-		   line.pre.end	       the closing line of a preformatted
-				       block.
-		   minibuffer	       the minibuffer.
-		   modeline	       the modeline.
-		   tabline	       the tabline.
-		   tabline.tab	       the non-focused tabs.
-		   tabline.current     the focused tab.
-
-	     Valid options are:
-
-	     attr prefix [line [trail]]
-		     Sets the text attributes.	If only one value is given,
-		     line and trail default to that; if two values are given
-		     then trail defaults to prefix.  Each attribute is a
-		     comma-separated list of keywords:
-			   normal     no attributes.
-			   standout   best highlighting mode for the terminal.
-			   underline  underlines the text.
-			   reverse    reverses background/foreground colors.
-			   blink      makes the text blinking.
-			   dim	      half bright.
-			   bold	      extra bright or bold.
-
-		     Only the style identifiers with the line. prefix accept
-		     up to three attributes.  The other will only use the
-		     first one given.
-
-	     bg prefix [line [trail]]
-		     Sets the background color.	 Follows the same behaviour as
-		     attr regarding the optional parameters.  The colour is
-		     one of black, red, green, yellow, blue, magenta, cyan and
-		     white; colour0 to colour255 (or color0 to color255) from
-		     the 256-colour set; default for the default colour.
-
-	     fg prefix [line [trail]]
-		     Sets the foreground color.	 It behaves just like bg.
-
-	     prefix prfx [cont]
-		     Sets the prefix for the current line type to prfx and
-		     cont as the prefix for the continuation lines (i.e. when
-		     a long line gets wrapped.) If cont is not given its value
-		     will be the same of prfx.
-
 ENVIRONMENT
      When telescope is started, it inspects the following environment
      variables:
@@ -490,21 +505,29 @@ ENVIRONMENT
 
      TERM	The user's terminal name.
 
+     XDG_CACHE_HOME, XDG_CONFIG_HOME, XDG_DATA_HOME
+		If defined can alter the default location of the files used.
+
 FILES
-     ~/.telescope/bookmarks.gmi
-	     Bookmarks file.
-     ~/.telescope/config
+     By default telescope follows the XDG Base Directory Specification.
+     However, if ~/.telescope exists, XDG is ignored and all the files are
+     stored inside it.	The usage of XDG_CACHE_HOME, XDG_CONFIG_HOME and
+     XDG_DATA_HOME can further alter the location of these files.
+
+     ~/.config/telescope/config
 	     Default configuration file.
-     ~/.telescope/known_hosts
+     ~/.local/share/telescope/pages/about_*.gmi
+	     Overrides for built-in about: pages.
+     ~/.local/share/telescope/bookmarks.gmi
+	     Bookmarks file.
+     ~/.local/share/telescope/known_hosts
 	     Hash of the certificates for all the known hosts.	Each line
 	     contains three fields: hostname with optional port number, hash
 	     of the certificate and a numeric flag.
-     ~/.telescope/lock
+     ~/.cache/telescope/lock
 	     Lock file used to prevent multiple instance of telescope from
 	     running at the same time.
-     ~/.telescope/pages/about_*.gmi
-	     Overrides for built-in about: pages.
-     ~/.telescope/session
+     ~/.cache/telescope/session
 	     The list of tabs from the last session.  Every line identifies a
 	     tab and contains three space-separated fields: the full URL, a
 	     comma-separated list of attributes and the cached title.  Is
@@ -513,7 +536,7 @@ FILES
 EXAMPLES
      It's possible to browse the small web (i.e. simple websites) by using
      programs like the duckling-proxy by defining a proxy in
-     ~/.telescope/config:
+     ~/.config/telescope/config:
 
 	   proxy http via "gemini://127.0.0.1:1965"
 	   proxy https via "gemini://127.0.0.1:1965"
@@ -522,10 +545,20 @@ EXAMPLES
 
 	   telescope -c /dev/null
 
+STANDARDS
+     XDG Base Directory Specification,
+     https://specifications.freedesktop.org/basedir-spec/latest/.
+
 AUTHORS
      The telescope program was written by Omar Polo <op@omarpolo.com>.
+
+CAVEATS
+     telescope assumes a UTF-8 environment and doesn't do anything to cope
+     with other encodings.  This can cause weird rendering issues if you're
+     lucky, or possibly worst things depending on your locale and terminal
+     emulator.
 
 BUGS
      There's no UI for out-of-band certificates validation.
 
-OpenBSD 7.0			August 27, 2021			   OpenBSD 7.0
+OpenBSD 7.0			October 8, 2021			   OpenBSD 7.0

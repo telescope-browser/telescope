@@ -19,22 +19,25 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <style>
-  body {
-    max-width: 960px;
-    margin: 0 auto;
-    padding: 0 1rem;
-    font-family: monospace;
-    font-size: 1rem;
-  }
-  table.head, table.foot { width: 100%; }
-  td.head-rtitle, td.foot-os { text-align: right; }
-  td.head-vol { text-align: center; }
-  .Nd, .Bf, .Op { display: inline; }
-  .Pa, .Ad { font-style: italic; }
-  .Ms { font-weight: bold; }
-  .Bl-diag > dt { font-weight: bold; }
-  code.Nm, .Fl, .Cm, .Ic, code.In, .Fd, .Fn, .Cd { font-weight: bold;
-    font-family: inherit; }
+    body {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 0 10px;
+        font-size: 1rem;
+    }
+
+    pre {
+        overflow: auto;
+    }
+    table.head, table.foot { width: 100%; }
+    td.head-rtitle, td.foot-os { text-align: right; }
+    td.head-vol { text-align: center; }
+    .Nd, .Bf, .Op { display: inline; }
+    .Pa, .Ad { font-style: italic; }
+    .Ms { font-weight: bold; }
+    .Bl-diag > dt { font-weight: bold; }
+    code.Nm, .Fl, .Cm, .Ic, code.In, .Fd, .Fn, .Cd { font-weight: bold;
+      font-family: inherit; }
   </style>
   <title>TELESCOPE(1)</title>
 </head>
@@ -57,7 +60,7 @@
 <table class="Nm">
   <tr>
     <td><code class="Nm">telescope</code></td>
-    <td>[<code class="Fl">-Chnv</code>]
+    <td>[<code class="Fl">-ChnSv</code>]
       [<code class="Fl">-c</code>&#x00A0;<span class="Pa">config</span>]
       [<var class="Ar">URL</var>]</td>
   </tr>
@@ -77,12 +80,19 @@
   <dt id="c"><a class="permalink" href="#c"><code class="Fl">-c</code></a>
     <span class="Pa">config</span></dt>
   <dd>Specify an alternative configuration file. By default
-      <span class="Pa">$HOME/.telescope/config</span> is loaded.</dd>
+      <span class="Pa">$HOME/.config/telescope/config</span> is loaded.</dd>
   <dt id="h"><a class="permalink" href="#h"><code class="Fl">-h</code></a>,
     <code class="Fl">--help</code></dt>
   <dd>Display version and usage.</dd>
   <dt id="n"><a class="permalink" href="#n"><code class="Fl">-n</code></a></dt>
   <dd>Configtest mode. Only check the configuration file for validity.</dd>
+  <dt id="S"><a class="permalink" href="#S"><code class="Fl">-S</code></a>,
+    <code class="Fl">--safe</code></dt>
+  <dd>&#x201C;Safe&#x201D; (or &#x201C;sandbox&#x201D;) mode. Prevent
+      <code class="Nm">telescope</code> from writing files to the disk and to
+      acquire the lock, allowing to run multiple instances at the same time.
+      <code class="Nm">telescope</code> still loads the session file and the
+      custom about pages.</dd>
   <dt id="v"><a class="permalink" href="#v"><code class="Fl">-v</code></a>,
     <code class="Fl">--version</code></dt>
   <dd>Display version.</dd>
@@ -174,6 +184,202 @@
       file:// URL,</li>
   <li>otherwise assume it's a Gemini URL.</li>
 </ul>
+</section>
+<section class="Sh">
+<h1 class="Sh" id="CONFIGURATION_FILE"><a class="permalink" href="#CONFIGURATION_FILE">CONFIGURATION
+  FILE</a></h1>
+<p class="Pp">During the startup, <code class="Nm">telescope</code> reads the
+    configuration file at <span class="Pa">~/.config/telescope/config</span> or
+    <span class="Pa">~/.telescope/config</span>.</p>
+<p class="Pp">It's possible to load a custom configuration file using the
+    <code class="Fl">-c</code> flag.</p>
+<p class="Pp"><code class="Nm">telescope</code> will also load a file called
+    <span class="Pa">config-TERM</span>, where &#x201C;TERM&#x201D; is the name
+    of the terminal type (i.e. the TERM environment variable), if it exists.</p>
+<p class="Pp">The format of the configuration file is fairly flexible. The
+    current line can be extended over multiple ones using a backslash
+    (&#x2018;\&#x2019;). Comments can be put anywhere in the file using a hash
+    mark (&#x2018;#&#x2019;), and extend to the end of the current line, but
+    backslashes can't be used to extend comments over multiple lines.</p>
+<p class="Pp">The following constructs are available:</p>
+<dl class="Bl-tag">
+  <dt id="bind"><a class="permalink" href="#bind"><code class="Ic">bind</code></a>
+    <var class="Ar">map</var> <var class="Ar">key</var>
+    <var class="Ar">cmd</var></dt>
+  <dd>Bind <var class="Ar">key</var> to the function <var class="Ar">cmd</var>
+      in the keymap <var class="Ar">map</var>. Valid values for map are
+      &#x201C;global-map&#x201D; (i.e. when the user is viewing a page) and
+      &#x201C;minibuffer-map&#x201D; (i.e. when the minibuffer has the focus.)
+      <var class="Ar">key</var> follows the same syntax described in
+      <a class="Sx" href="#DEFAULT_KEY_BINDINGS">DEFAULT KEY BINDINGS</a> and
+      all the possible functions are listed in
+      <a class="Sx" href="#INTERACTIVE_COMMANDS">INTERACTIVE COMMANDS</a>.</dd>
+  <dt id="proxy"><a class="permalink" href="#proxy"><code class="Ic">proxy</code></a>
+    <var class="Ar">proto</var> <code class="Ic">via</code>
+    <var class="Ar">url</var></dt>
+  <dd>Use <var class="Ar">url</var> as proxy for all URLs with protocol
+      <var class="Ar">proto</var>. <var class="Ar">url</var> must be a Gemini
+      URI without path, query and fragment component.</dd>
+  <dt id="set"><a class="permalink" href="#set"><code class="Ic">set</code></a>
+    <var class="Ar">opt</var> <span class="No">=</span>
+    <var class="Ar">val</var></dt>
+  <dd>Set the option <var class="Ar">opt</var> to the value
+      <var class="Ar">val</var>. Valid options are:
+    <p class="Pp"></p>
+    <dl class="Bl-tag Bl-compact">
+      <dt>autosave</dt>
+      <dd>(integer) If greater than zero, save the session after the specified
+          amount of seconds after some events happens (new or closed tabs,
+          visited a link ...) Defaults to 20.</dd>
+      <dt>dont-wrap-pre</dt>
+      <dd>(integer) If nonzero, don't wrap preformatted blocks. Defaults to
+        0.</dd>
+      <dt>download-path</dt>
+      <dd>(string) The default download path. Defaults to
+          <span class="Pa">/tmp</span>.</dd>
+      <dt>emojify-link</dt>
+      <dd>(integer) If nonzero, when the text of a link starts with an emoji
+          followed by a space, use that emoji as line prefix. Defaults to
+        1.</dd>
+      <dt>enable-colors</dt>
+      <dd>(integer) If nonzero, enable colours. Defaults to 0 if
+          <code class="Ev">NO_COLORS</code> is set, 1 otherwise.</dd>
+      <dt>fill-column</dt>
+      <dd>(integer) If greater than zero, lines of text will be formatted in a
+          way that don't exceed the given number of columns. Defaults to
+        80.</dd>
+      <dt>hide-pre-blocks</dt>
+      <dd>(integer) If nonzero, hide by default the body of the preformatted
+          blocks. Defaults to zero. <code class="Ic">push-button</code> can be
+          used to toggle the visibility per-block.</dd>
+      <dt>hide-pre-closing-line</dt>
+      <dd>(integer) If nonzero, hide the closing line of preformatted blocks.
+          Defaults to 0.</dd>
+      <dt>hide-pre-context</dt>
+      <dd>(integer) If nonzero, hide the start and end line of the preformatted
+          blocks. If both hide-pre-context and hide-pre-blocks are nonzero,
+          preformatted blocks are irremediably hidden. Defaults to zero.</dd>
+      <dt>new-tab-url</dt>
+      <dd>(string) URL for the new tab page. Defaults to
+          &#x201C;about:new&#x201D;.</dd>
+      <dt>olivetti-mode</dt>
+      <dd>(integer) If nonzero, enable <code class="Ic">olivetti-mode</code>
+          Defaults to 1.</dd>
+      <dt>set-title</dt>
+      <dd>(integer) If nonzero, set the terminal title to the page title.
+          Defaults to 1.</dd>
+      <dt>tab-bar-show</dt>
+      <dd>(integer) If tab-bar-show is -1 hide the tab bar permanently, if 0
+          show it unconditionally. If it's 1, show the bar only when there is
+          more than one tab. Defaults to 1.</dd>
+    </dl>
+  </dd>
+  <dt id="style"><a class="permalink" href="#style"><code class="Ic">style</code></a>
+    <var class="Ar">name</var> <var class="Ar">option</var></dt>
+  <dd>Change the styling of the element identified by
+      <var class="Ar">name</var>. Multiple options may be specified within curly
+      braces. Valid style identifiers are:
+    <div class="Bd-indent">
+    <dl class="Bl-tag Bl-compact">
+      <dt>line</dt>
+      <dd>the area outside the lines in the body of the page.</dd>
+      <dt>line.compl</dt>
+      <dd>the completions.</dd>
+      <dt>line.compl.current</dt>
+      <dd>the current completion.</dd>
+      <dt>line.help</dt>
+      <dd>text in the *Help* buffer.</dd>
+      <dt>line.download.ongoing</dt>
+      <dd>an ongoing download</dd>
+      <dt>line.download.done</dt>
+      <dd>a completed download</dd>
+      <dt>line.download.info</dt>
+      <dd>informational text in the *Downloads* buffer.</dd>
+      <dt>line.text</dt>
+      <dd>text lines.</dd>
+      <dt>line.link</dt>
+      <dd>link lines.</dd>
+      <dt>line.title1..3</dt>
+      <dd>headings</dd>
+      <dt>line.item</dt>
+      <dd>item lines.</dd>
+      <dt>line.quote</dt>
+      <dd>quotes.</dd>
+      <dt>line.pre.start</dt>
+      <dd>the heading of a preformatted block.</dd>
+      <dt>line.pre</dt>
+      <dd>the content of a preformatted block.</dd>
+      <dt>line.pre.end</dt>
+      <dd>the closing line of a preformatted block.</dd>
+      <dt>download</dt>
+      <dd>the download pane</dd>
+      <dt>minibuffer</dt>
+      <dd>the minibuffer.</dd>
+      <dt>modeline</dt>
+      <dd>the modeline.</dd>
+      <dt>tabline</dt>
+      <dd>the tabline.</dd>
+      <dt>tabline.tab</dt>
+      <dd>the non-focused tabs.</dd>
+      <dt>tabline.current</dt>
+      <dd>the focused tab.</dd>
+    </dl>
+    </div>
+    <p class="Pp">Valid options are:</p>
+    <dl class="Bl-tag">
+      <dt id="attr"><a class="permalink" href="#attr"><code class="Ic">attr</code></a>
+        <var class="Ar">prefix</var> [<var class="Ar">line</var>
+        [<var class="Ar">trail</var>]]</dt>
+      <dd>Sets the text attributes. If only one value is given,
+          <var class="Ar">line</var> and <var class="Ar">trail</var> default to
+          that; if two values are given then <var class="Ar">trail</var>
+          defaults to <var class="Ar">prefix</var>. Each attribute is a
+          comma-separated list of keywords:
+        <div class="Bd-indent">
+        <dl class="Bl-tag Bl-compact">
+          <dt id="normal"><a class="permalink" href="#normal"><code class="Ic">normal</code></a></dt>
+          <dd>no attributes.</dd>
+          <dt id="standout"><a class="permalink" href="#standout"><code class="Ic">standout</code></a></dt>
+          <dd>best highlighting mode for the terminal.</dd>
+          <dt id="underline"><a class="permalink" href="#underline"><code class="Ic">underline</code></a></dt>
+          <dd>underlines the text.</dd>
+          <dt id="reverse"><a class="permalink" href="#reverse"><code class="Ic">reverse</code></a></dt>
+          <dd>reverses background/foreground colors.</dd>
+          <dt id="blink"><a class="permalink" href="#blink"><code class="Ic">blink</code></a></dt>
+          <dd>makes the text blinking.</dd>
+          <dt id="dim"><a class="permalink" href="#dim"><code class="Ic">dim</code></a></dt>
+          <dd>half bright.</dd>
+          <dt id="bold"><a class="permalink" href="#bold"><code class="Ic">bold</code></a></dt>
+          <dd>extra bright or bold.</dd>
+        </dl>
+        </div>
+        <p class="Pp">Only the style identifiers with the &#x201C;line.&#x201D;
+            prefix accept up to three attributes. The other will only use the
+            first one given.</p>
+      </dd>
+      <dt id="bg"><a class="permalink" href="#bg"><code class="Ic">bg</code></a>
+        <var class="Ar">prefix</var> [<var class="Ar">line</var>
+        [<var class="Ar">trail</var>]]</dt>
+      <dd>Sets the background color. Follows the same behaviour as
+          <code class="Ic">attr</code> regarding the optional parameters. The
+          colour is one of black, red, green, yellow, blue, magenta, cyan and
+          white; colour0 to colour255 (or color0 to color255) from the
+          256-colour set; default for the default colour.</dd>
+      <dt id="fg"><a class="permalink" href="#fg"><code class="Ic">fg</code></a>
+        <var class="Ar">prefix</var> [<var class="Ar">line</var>
+        [<var class="Ar">trail</var>]]</dt>
+      <dd>Sets the foreground color. It behaves just like
+          <code class="Ic">bg</code>.</dd>
+      <dt id="prefix"><a class="permalink" href="#prefix"><code class="Ic">prefix</code></a>
+        <var class="Ar">prfx</var> [<var class="Ar">cont</var>]</dt>
+      <dd>Sets the prefix for the current line type to
+          <var class="Ar">prfx</var> and <var class="Ar">cont</var> as the
+          prefix for the continuation lines (i.e. when a long line gets
+          wrapped.) If <var class="Ar">cont</var> is not given its value will be
+          the same of <var class="Ar">prfx</var>.</dd>
+    </dl>
+  </dd>
+</dl>
 </section>
 <section class="Sh">
 <h1 class="Sh" id="DEFAULT_KEY_BINDINGS"><a class="permalink" href="#DEFAULT_KEY_BINDINGS">DEFAULT
@@ -673,189 +879,6 @@
 </section>
 </section>
 <section class="Sh">
-<h1 class="Sh" id="CONFIGURATION_FILE"><a class="permalink" href="#CONFIGURATION_FILE">CONFIGURATION
-  FILE</a></h1>
-<p class="Pp">During the startup, <code class="Nm">telescope</code> reads the
-    configuration file at <span class="Pa">~/.telescope/config</span> or the one
-    given with the <code class="Fl">-c</code> flag.</p>
-<p class="Pp"><code class="Nm">telescope</code> will also load a file called
-    <span class="Pa">config-TERM</span>, where &#x201C;TERM&#x201D; is the name
-    of the terminal type (i.e. the TERM environment variable), if it exists.</p>
-<p class="Pp">The format of the configuration file is fairly flexible. The
-    current line can be extended over multiple ones using a backslash
-    (&#x2018;\&#x2019;). Comments can be put anywhere in the file using a hash
-    mark (&#x2018;#&#x2019;), and extend to the end of the current line, but
-    backslashes can't be used to extend comments over multiple lines.</p>
-<p class="Pp">The following constructs are available:</p>
-<dl class="Bl-tag">
-  <dt id="bind"><a class="permalink" href="#bind"><code class="Ic">bind</code></a>
-    <var class="Ar">map</var> <var class="Ar">key</var>
-    <var class="Ar">cmd</var></dt>
-  <dd>Bind <var class="Ar">key</var> to the function <var class="Ar">cmd</var>
-      in the keymap <var class="Ar">map</var>. Valid values for map are
-      &#x201C;global-map&#x201D; (i.e. when the user is viewing a page) and
-      &#x201C;minibuffer-map&#x201D; (i.e. when the minibuffer has the focus.)
-      <var class="Ar">key</var> follows the same syntax described in
-      <a class="Sx" href="#DEFAULT_KEY_BINDINGS">DEFAULT KEY BINDINGS</a> and
-      all the possible functions are listed in
-      <a class="Sx" href="#INTERACTIVE_COMMANDS">INTERACTIVE COMMANDS</a>.</dd>
-  <dt id="proxy"><a class="permalink" href="#proxy"><code class="Ic">proxy</code></a>
-    <var class="Ar">proto</var> <code class="Ic">via</code>
-    <var class="Ar">url</var></dt>
-  <dd>Use <var class="Ar">url</var> as proxy for all URLs with protocol
-      <var class="Ar">proto</var>. <var class="Ar">url</var> must be a Gemini
-      URI without path, query and fragment component.</dd>
-  <dt id="set"><a class="permalink" href="#set"><code class="Ic">set</code></a>
-    <var class="Ar">opt</var> <span class="No">=</span>
-    <var class="Ar">val</var></dt>
-  <dd>Set the option <var class="Ar">opt</var> to the value
-      <var class="Ar">val</var>. Valid options are:
-    <p class="Pp"></p>
-    <dl class="Bl-tag Bl-compact">
-      <dt>autosave</dt>
-      <dd>(integer) If greater than zero, save the session after the specified
-          amount of seconds after some events happens (new or closed tabs,
-          visited a link ...) Defaults to 20.</dd>
-      <dt>dont-wrap-pre</dt>
-      <dd>(integer) If nonzero, don't wrap preformatted blocks. Defaults to
-        0.</dd>
-      <dt>emojify-link</dt>
-      <dd>(integer) If nonzero, when the text of a link starts with an emoji
-          followed by a space, use that emoji as line prefix. Defaults to
-        1.</dd>
-      <dt>enable-colors</dt>
-      <dd>(integer) If nonzero, enable colours. Defaults to 0 if
-          <code class="Ev">NO_COLORS</code> is set, 1 otherwise.</dd>
-      <dt>fill-column</dt>
-      <dd>(integer) If greater than zero, lines of text will be formatted in a
-          way that don't exceed the given number of columns. Defaults to
-        80.</dd>
-      <dt>hide-pre-blocks</dt>
-      <dd>(integer) If nonzero, hide by default the body of the preformatted
-          blocks. Defaults to zero. <code class="Ic">push-button</code> can be
-          used to toggle the visibility per-block.</dd>
-      <dt>hide-pre-closing-line</dt>
-      <dd>(integer) If nonzero, hide the closing line of preformatted blocks.
-          Defaults to 0.</dd>
-      <dt>hide-pre-context</dt>
-      <dd>(integer) If nonzero, hide the start and end line of the preformatted
-          blocks. If both hide-pre-context and hide-pre-blocks are nonzero,
-          preformatted blocks are irremediably hidden. Defaults to zero.</dd>
-      <dt>new-tab-url</dt>
-      <dd>(string) URL for the new tab page. Defaults to
-          &#x201C;about:new&#x201D;.</dd>
-      <dt>olivetti-mode</dt>
-      <dd>(integer) If nonzero, enable <code class="Ic">olivetti-mode</code>
-          Defaults to 1.</dd>
-      <dt>set-title</dt>
-      <dd>(integer) If nonzero, set the terminal title to the page title.
-          Defaults to 1.</dd>
-      <dt>tab-bar-show</dt>
-      <dd>(integer) If tab-bar-show is -1 hide the tab bar permanently, if 0
-          show it unconditionally. If it's 1, show the bar only when there is
-          more than one tab. Defaults to 1.</dd>
-    </dl>
-  </dd>
-  <dt id="style"><a class="permalink" href="#style"><code class="Ic">style</code></a>
-    <var class="Ar">name</var> <var class="Ar">option</var></dt>
-  <dd>Change the styling of the element identified by
-      <var class="Ar">name</var>. Multiple options may be specified within curly
-      braces. Valid style identifiers are:
-    <div class="Bd-indent">
-    <dl class="Bl-tag Bl-compact">
-      <dt>line</dt>
-      <dd>the area outside the lines in the body of the page.</dd>
-      <dt>line.compl</dt>
-      <dd>the completions.</dd>
-      <dt>line.compl.current</dt>
-      <dd>the current completion.</dd>
-      <dt>line.help</dt>
-      <dd>text in the *Help* buffer.</dd>
-      <dt>line.text</dt>
-      <dd>text lines.</dd>
-      <dt>line.link</dt>
-      <dd>link lines.</dd>
-      <dt>line.title1..3</dt>
-      <dd>headings</dd>
-      <dt>line.item</dt>
-      <dd>item lines.</dd>
-      <dt>line.quote</dt>
-      <dd>quotes.</dd>
-      <dt>line.pre.start</dt>
-      <dd>the heading of a preformatted block.</dd>
-      <dt>line.pre</dt>
-      <dd>the content of a preformatted block.</dd>
-      <dt>line.pre.end</dt>
-      <dd>the closing line of a preformatted block.</dd>
-      <dt>minibuffer</dt>
-      <dd>the minibuffer.</dd>
-      <dt>modeline</dt>
-      <dd>the modeline.</dd>
-      <dt>tabline</dt>
-      <dd>the tabline.</dd>
-      <dt>tabline.tab</dt>
-      <dd>the non-focused tabs.</dd>
-      <dt>tabline.current</dt>
-      <dd>the focused tab.</dd>
-    </dl>
-    </div>
-    <p class="Pp">Valid options are:</p>
-    <dl class="Bl-tag">
-      <dt id="attr"><a class="permalink" href="#attr"><code class="Ic">attr</code></a>
-        <var class="Ar">prefix</var> [<var class="Ar">line</var>
-        [<var class="Ar">trail</var>]]</dt>
-      <dd>Sets the text attributes. If only one value is given,
-          <var class="Ar">line</var> and <var class="Ar">trail</var> default to
-          that; if two values are given then <var class="Ar">trail</var>
-          defaults to <var class="Ar">prefix</var>. Each attribute is a
-          comma-separated list of keywords:
-        <div class="Bd-indent">
-        <dl class="Bl-tag Bl-compact">
-          <dt id="normal"><a class="permalink" href="#normal"><code class="Ic">normal</code></a></dt>
-          <dd>no attributes.</dd>
-          <dt id="standout"><a class="permalink" href="#standout"><code class="Ic">standout</code></a></dt>
-          <dd>best highlighting mode for the terminal.</dd>
-          <dt id="underline"><a class="permalink" href="#underline"><code class="Ic">underline</code></a></dt>
-          <dd>underlines the text.</dd>
-          <dt id="reverse"><a class="permalink" href="#reverse"><code class="Ic">reverse</code></a></dt>
-          <dd>reverses background/foreground colors.</dd>
-          <dt id="blink"><a class="permalink" href="#blink"><code class="Ic">blink</code></a></dt>
-          <dd>makes the text blinking.</dd>
-          <dt id="dim"><a class="permalink" href="#dim"><code class="Ic">dim</code></a></dt>
-          <dd>half bright.</dd>
-          <dt id="bold"><a class="permalink" href="#bold"><code class="Ic">bold</code></a></dt>
-          <dd>extra bright or bold.</dd>
-        </dl>
-        </div>
-        <p class="Pp">Only the style identifiers with the &#x201C;line.&#x201D;
-            prefix accept up to three attributes. The other will only use the
-            first one given.</p>
-      </dd>
-      <dt id="bg"><a class="permalink" href="#bg"><code class="Ic">bg</code></a>
-        <var class="Ar">prefix</var> [<var class="Ar">line</var>
-        [<var class="Ar">trail</var>]]</dt>
-      <dd>Sets the background color. Follows the same behaviour as
-          <code class="Ic">attr</code> regarding the optional parameters. The
-          colour is one of black, red, green, yellow, blue, magenta, cyan and
-          white; colour0 to colour255 (or color0 to color255) from the
-          256-colour set; default for the default colour.</dd>
-      <dt id="fg"><a class="permalink" href="#fg"><code class="Ic">fg</code></a>
-        <var class="Ar">prefix</var> [<var class="Ar">line</var>
-        [<var class="Ar">trail</var>]]</dt>
-      <dd>Sets the foreground color. It behaves just like
-          <code class="Ic">bg</code>.</dd>
-      <dt id="prefix"><a class="permalink" href="#prefix"><code class="Ic">prefix</code></a>
-        <var class="Ar">prfx</var> [<var class="Ar">cont</var>]</dt>
-      <dd>Sets the prefix for the current line type to
-          <var class="Ar">prfx</var> and <var class="Ar">cont</var> as the
-          prefix for the continuation lines (i.e. when a long line gets
-          wrapped.) If <var class="Ar">cont</var> is not given its value will be
-          the same of <var class="Ar">prfx</var>.</dd>
-    </dl>
-  </dd>
-</dl>
-</section>
-<section class="Sh">
 <h1 class="Sh" id="ENVIRONMENT"><a class="permalink" href="#ENVIRONMENT">ENVIRONMENT</a></h1>
 <p class="Pp">When <code class="Nm">telescope</code> is started, it inspects the
     following environment variables:</p>
@@ -867,25 +890,37 @@
       doesn't matter.</dd>
   <dt id="TERM"><a class="permalink" href="#TERM"><code class="Ev">TERM</code></a></dt>
   <dd>The user's terminal name.</dd>
+  <dt id="XDG_CACHE_HOME"><a class="permalink" href="#XDG_CACHE_HOME"><code class="Ev">XDG_CACHE_HOME</code></a>,
+    <code class="Ev">XDG_CONFIG_HOME</code>,
+    <code class="Ev">XDG_DATA_HOME</code></dt>
+  <dd>If defined can alter the default location of the files used.</dd>
 </dl>
 </section>
 <section class="Sh">
 <h1 class="Sh" id="FILES"><a class="permalink" href="#FILES">FILES</a></h1>
+<p class="Pp">By default <code class="Nm">telescope</code> follows the XDG Base
+    Directory Specification. However, if <span class="Pa">~/.telescope</span>
+    exists, XDG is ignored and all the files are stored inside it. The usage of
+    <code class="Ev">XDG_CACHE_HOME</code>,
+    <code class="Ev">XDG_CONFIG_HOME</code> and
+    <code class="Ev">XDG_DATA_HOME</code> can further alter the location of
+    these files.</p>
+<p class="Pp"></p>
 <dl class="Bl-tag Bl-compact">
-  <dt><span class="Pa">~/.telescope/bookmarks.gmi</span></dt>
-  <dd>Bookmarks file.</dd>
-  <dt><span class="Pa">~/.telescope/config</span></dt>
+  <dt><span class="Pa">~/.config/telescope/config</span></dt>
   <dd>Default configuration file.</dd>
-  <dt><span class="Pa">~/.telescope/known_hosts</span></dt>
+  <dt><span class="Pa">~/.local/share/telescope/pages/about_*.gmi</span></dt>
+  <dd>Overrides for built-in about: pages.</dd>
+  <dt><span class="Pa">~/.local/share/telescope/bookmarks.gmi</span></dt>
+  <dd>Bookmarks file.</dd>
+  <dt><span class="Pa">~/.local/share/telescope/known_hosts</span></dt>
   <dd>Hash of the certificates for all the known hosts. Each line contains three
       fields: hostname with optional port number, hash of the certificate and a
       numeric flag.</dd>
-  <dt><span class="Pa">~/.telescope/lock</span></dt>
+  <dt><span class="Pa">~/.cache/telescope/lock</span></dt>
   <dd>Lock file used to prevent multiple instance of
       <code class="Nm">telescope</code> from running at the same time.</dd>
-  <dt><span class="Pa">~/.telescope/pages/about_*.gmi</span></dt>
-  <dd>Overrides for built-in about: pages.</dd>
-  <dt><span class="Pa">~/.telescope/session</span></dt>
+  <dt><span class="Pa">~/.cache/telescope/session</span></dt>
   <dd>The list of tabs from the last session. Every line identifies a tab and
       contains three space-separated fields: the full URL, a comma-separated
       list of attributes and the cached title. Is written by
@@ -896,7 +931,7 @@
 <h1 class="Sh" id="EXAMPLES"><a class="permalink" href="#EXAMPLES">EXAMPLES</a></h1>
 <p class="Pp">It's possible to browse &#x201C;the small web&#x201D; (i.e. simple
     websites) by using programs like the duckling-proxy by defining a proxy in
-    <span class="Pa">~/.telescope/config</span>:</p>
+    <span class="Pa">~/.config/telescope/config</span>:</p>
 <div class="Bd Pp Bd-indent Li">
 <pre>proxy http via &quot;gemini://127.0.0.1:1965&quot;
 proxy https via &quot;gemini://127.0.0.1:1965&quot;</pre>
@@ -908,10 +943,23 @@ proxy https via &quot;gemini://127.0.0.1:1965&quot;</pre>
 </div>
 </section>
 <section class="Sh">
+<h1 class="Sh" id="STANDARDS"><a class="permalink" href="#STANDARDS">STANDARDS</a></h1>
+<p class="Pp"><cite class="Rs"><i class="RsB">XDG Base Directory
+    Specification</i>,
+    <a class="RsU" href="https://specifications.freedesktop.org/basedir-spec/latest/">https://specifications.freedesktop.org/basedir-spec/latest/</a>.</cite></p>
+</section>
+<section class="Sh">
 <h1 class="Sh" id="AUTHORS"><a class="permalink" href="#AUTHORS">AUTHORS</a></h1>
 <p class="Pp">The <code class="Nm">telescope</code> program was written by
     <span class="An">Omar Polo</span>
     &lt;<a class="Mt" href="mailto:op@omarpolo.com">op@omarpolo.com</a>&gt;.</p>
+</section>
+<section class="Sh">
+<h1 class="Sh" id="CAVEATS"><a class="permalink" href="#CAVEATS">CAVEATS</a></h1>
+<p class="Pp"><code class="Nm">telescope</code> assumes a UTF-8 environment and
+    doesn't do anything to cope with other encodings. This can cause weird
+    rendering issues if you're lucky, or possibly worst things depending on your
+    locale and terminal emulator.</p>
 </section>
 <section class="Sh">
 <h1 class="Sh" id="BUGS"><a class="permalink" href="#BUGS">BUGS</a></h1>
@@ -920,7 +968,7 @@ proxy https via &quot;gemini://127.0.0.1:1965&quot;</pre>
 </div>
 <table class="foot">
   <tr>
-    <td class="foot-date">August 27, 2021</td>
+    <td class="foot-date">October 8, 2021</td>
     <td class="foot-os">OpenBSD 7.0</td>
   </tr>
 </table>
