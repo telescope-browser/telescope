@@ -201,12 +201,12 @@ readkey(void)
 	if ((thiskey.key = wgetch(body)) == ERR)
 		return 0;
 
-	thiskey.meta = thiskey.key == 27;
+	thiskey.meta = thiskey.key == '\e';
 	if (thiskey.meta) {
 		thiskey.key = wgetch(body);
-		if (thiskey.key == ERR || thiskey.key == 27) {
+		if (thiskey.key == ERR || thiskey.key == '\e') {
 			thiskey.meta = 0;
-			thiskey.key = 27;
+			thiskey.key = '\e';
 		}
 	}
 

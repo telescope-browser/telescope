@@ -105,7 +105,7 @@ static struct keytable {
 	/* ... */
 	{ "del",	KEY_BACKSPACE },
 	{ "backspace",	127 },
-	{ "esc",	27 },
+	{ "esc",	'\e' },
 	{ "space",	' ' },
 	{ "spc",	' ' },
 	{ "enter",	CTRL('m') },
