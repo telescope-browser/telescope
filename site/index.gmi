@@ -23,7 +23,7 @@ The UI is strongly inspired from Emacs and W3M, so you’ll find some familiar c
 
 => https://repology.org/project/telescope/versions Some distros provide a package — thanks to the maintainers!
 
-Source code is available:
+otherwise build from sources:
 => https://github.com/omar-polo/telescope/releases/download/0.6.1/telescope-0.6.1.tar.gz	telescope-0.6.1.tar.gz
 
 The dependencies are:
