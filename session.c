@@ -109,9 +109,8 @@ stop_tab(struct tab *tab)
 void
 save_session(void)
 {
-	struct tab	*tab;
-	char		*t;
-	int		 flags;
+	struct session_tab	 st;
+	struct tab		*tab;
 
 	if (safe_mode)
 		return;
@@ -119,15 +118,14 @@ save_session(void)
 	ui_send_fs(IMSG_SESSION_START, 0, NULL, 0);
 
 	TAILQ_FOREACH(tab, &tabshead, tabs) {
-		flags = tab->flags;
+		memset(&st, 0, sizeof(st));
+
 		if (tab == current_tab)
-			flags |= TAB_CURRENT;
+			st.flags = TAB_CURRENT;
 
-		t = tab->hist_cur->h;
-		ui_send_fs(IMSG_SESSION_TAB, flags, t, strlen(t)+1);
-
-		t = tab->buffer.page.title;
-		ui_send_fs(IMSG_SESSION_TAB_TITLE, 0, t, strlen(t)+1);
+		strlcpy(st.uri, tab->hist_cur->h, sizeof(st.uri));
+		strlcpy(st.title, tab->buffer.page.title, sizeof(st.title));
+		ui_send_fs(IMSG_SESSION_TAB, 0, &st, sizeof(st));
 	}
 
 	ui_send_fs(IMSG_SESSION_END, 0, NULL, 0);
