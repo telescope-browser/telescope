@@ -28,6 +28,7 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 
 #define GEMINI_URL_LEN 1024
+#define TITLE_MAX 128+1		/* account for NUL too */
 
 #define SIDE_WINDOW_LEFT	0x1
 #define SIDE_WINDOW_BOTTOM	0x2

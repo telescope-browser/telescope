@@ -671,9 +671,92 @@ fs_init(void)
 	return 1;
 }
 
+/*
+ * Parse a line of the session file.  The format is:
+ *
+ *	URL [flags,...] [title]\n
+ */
+static void
+parse_session_line(char *line, const char **title, uint32_t *flags)
+{
+	char *s, *t, *ap;
+
+	*title = "";
+	*flags = 0;
+	if ((s = strchr(line, ' ')) == NULL)
+		return;
+
+	*s++ = '\0';
+
+	if ((t = strchr(s, ' ')) != NULL) {
+		*t++ = '\0';
+		*title = t;
+	}
+
+	while ((ap = strsep(&s, ",")) != NULL) {
+		if (!strcmp(ap, "current"))
+			*flags |= TAB_CURRENT;
+	}
+}
+
+static inline void
+sendtab(uint32_t flags, const char *uri, const char *title)
+{
+	struct session_tab tab;
+
+	memset(&tab, 0, sizeof(tab));
+	tab.flags = flags;
+
+	if (strlcpy(tab.uri, uri, sizeof(tab.uri)) >= sizeof(tab.uri))
+		return;
+
+	/* don't worry about cached title truncation */
+	if (title != NULL)
+		strlcpy(tab.title, title, sizeof(tab.title));
+
+	fs_send_ui(IMSG_SESSION_TAB, 0, -1, &tab, sizeof(tab));
+}
+
+static void
+load_last_session(int fd, short event, void *d)
+{
+	FILE		*session;
+	uint32_t	 flags;
+	size_t		 linesize = 0;
+	ssize_t		 linelen;
+	int		 first_time = 0;
+	const char	*title;
+	char		*nl, *line = NULL;
+
+	if ((session = fopen(session_file, "r")) == NULL) {
+		/* first time? */
+		first_time = 1;
+		goto end;
+	}
+
+	while ((linelen = getline(&line, &linesize, session)) != -1) {
+		if ((nl = strchr(line, '\n')) != NULL)
+			*nl = '\0';
+		parse_session_line(line, &title, &flags);
+		sendtab(flags, line, title);
+	}
+
+	fclose(session);
+	free(line);
+
+	if (last_time_crashed())
+		sendtab(TAB_CURRENT, "about:crash", NULL);
+
+end:
+	fs_send_ui(IMSG_SESSION_END, 0, -1, &first_time, sizeof(first_time));
+}
+
 int
 fs_main(void)
 {
+	struct event ev;
+	struct timeval t = {0, 0};
+
 	setproctitle("fs");
 
 	fs_init();
@@ -691,6 +774,14 @@ fs_main(void)
 	event_add(&iev_ui->ev, NULL);
 
 	sandbox_fs_process();
+
+	/*
+	 * Run load_last_session during the event loop, as soon as
+	 * possible; it uses fs_send_ui so it can't be ran outside
+	 * of event_dispatch.
+	 */
+	evtimer_set(&ev, load_last_session, NULL);
+	evtimer_add(&ev, &t);
 
 	event_dispatch();
 	return 0;

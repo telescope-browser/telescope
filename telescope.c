@@ -45,6 +45,9 @@ static struct option longopts[] = {
 
 static const char *opts = "Cc:hnST:v";
 
+static int	has_url;
+static char	url[GEMINI_URL_LEN];
+
 /*
  * Used to know when we're finished loading.
  */
@@ -114,6 +117,7 @@ static void		 handle_imsg_eof(struct imsg *, size_t);
 static void		 handle_imsg_bookmark_ok(struct imsg *, size_t);
 static void		 handle_imsg_save_cert_ok(struct imsg *, size_t);
 static void		 handle_imsg_update_cert_ok(struct imsg *, size_t);
+static void		 handle_imsg_session(struct imsg *, size_t);
 static void		 handle_dispatch_imsg(int, short, void *);
 static int		 load_about_url(struct tab *, const char *);
 static int		 load_file_url(struct tab *, const char *);
@@ -152,6 +156,8 @@ static imsg_handlerfn *handlers[] = {
 	[IMSG_SAVE_CERT_OK] = handle_imsg_save_cert_ok,
 	[IMSG_UPDATE_CERT_OK] = handle_imsg_update_cert_ok,
 	[IMSG_FILE_OPENED] = handle_imsg_file_opened,
+	[IMSG_SESSION_TAB] = handle_imsg_session,
+	[IMSG_SESSION_END] = handle_imsg_session,
 };
 
 static struct ohash	certs;
@@ -485,6 +491,51 @@ handle_imsg_file_opened(struct imsg *imsg, size_t datalen)
 		d->fd = imsg->fd;
 		ui_send_net(IMSG_PROCEED, d->id, NULL, 0);
 	}
+}
+
+static void
+handle_imsg_session(struct imsg *imsg, size_t datalen)
+{
+	static struct tab	*curr;
+	struct session_tab	 st;
+	struct tab		*tab;
+	int			 first_time;
+
+	/*
+	 * The fs process tried to send tabs after it has announced
+	 * that he's done.  Something fishy is going on, better die.
+	 */
+	if (operating)
+		die();
+
+	if (imsg->hdr.type == IMSG_SESSION_END) {
+		if (datalen != sizeof(first_time))
+			die();
+		memcpy(&first_time, imsg->data, sizeof(first_time));
+		if (first_time) {
+			new_tab("about:new", NULL, NULL);
+			curr = new_tab("about:help", NULL, NULL);
+		}
+
+		operating = 1;
+		if (curr != NULL)
+			switch_to_tab(curr);
+		if (has_url || TAILQ_EMPTY(&tabshead))
+			new_tab(url, NULL, NULL);
+		ui_main_loop();
+		return;
+	}
+
+	if (datalen != sizeof(st))
+		die();
+
+	memcpy(&st, imsg->data, sizeof(st));
+	if ((tab = new_tab(st.uri, NULL, NULL)) == NULL)
+		die();
+	strlcpy(tab->buffer.page.title, st.title,
+	    sizeof(tab->buffer.page.title));
+	if (st.flags & TAB_CURRENT)
+		curr = tab;
 }
 
 static void
@@ -1043,11 +1094,9 @@ main(int argc, char * const *argv)
 	pid_t		 pid;
 	int		 pipe2net[2], pipe2fs[2];
 	int		 ch, configtest = 0, fail = 0;
-	int		 has_url = 0;
 	int		 proc = -1;
 	int		 sessionfd = -1;
 	int		 status;
-	char		 url[GEMINI_URL_LEN+1];
 	const char	*argv0;
 
 	argv0 = argv[0];
@@ -1175,13 +1224,8 @@ main(int argc, char * const *argv)
 	event_add(&iev_net->ev, NULL);
 
 	if (ui_init()) {
-		load_last_session();
-		if (has_url || TAILQ_EMPTY(&tabshead))
-			new_tab(url, NULL, NULL);
-
 		sandbox_ui_process();
-		operating = 1;
-		ui_main_loop();
+		event_dispatch();
 		ui_end();
 	}
 

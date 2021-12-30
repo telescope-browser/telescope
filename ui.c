@@ -1121,6 +1121,12 @@ ui_init()
 
 	mvwprintw(body, 0, 0, "");
 
+	return 1;
+}
+
+void
+ui_main_loop(void)
+{
 	evtimer_set(&resizeev, handle_resize, NULL);
 
 	event_set(&stdioev, 0, EV_READ | EV_PERSIST, dispatch_stdio, NULL);
@@ -1129,16 +1135,8 @@ ui_init()
 	signal_set(&winchev, SIGWINCH, handle_resize, NULL);
 	signal_add(&winchev, NULL);
 
-	return 1;
-}
-
-void
-ui_main_loop(void)
-{
 	switch_to_tab(current_tab);
 	rearrange_windows();
-
-	event_dispatch();
 }
 
 void
