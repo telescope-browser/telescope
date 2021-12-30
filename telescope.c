@@ -933,14 +933,14 @@ add_to_bookmarks(const char *str)
 }
 
 /*
- *  Given a user-entered URL, apply some heuristics to use it:
+ * Given a user-entered URL, apply some heuristics to use it:
  *
- *  - if it's a proper url use it
- *  - if it starts with a `./' or a `/' assume its a file:// url
- *  - assume it's a gemini:// url
+ * - if it's a proper url use it
+ * - if it starts with a `./' or a `/' assume its a file:// url
+ * - assume it's a gemini:// url
  *
- *  `ret' (of which len is the size) will be filled with the resulting
- *  url.
+ * `ret' (of which len is the size) will be filled with the resulting
+ * url.
  */
 void
 humanify_url(const char *raw, char *ret, size_t len)
