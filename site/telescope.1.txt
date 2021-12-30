@@ -16,7 +16,7 @@ DESCRIPTION
      -C, --colors   Show all available colors and exit.
 
      -c config	    Specify an alternative configuration file.	By default
-		    $HOME/.config/telescope/config is loaded.
+		    ~/.config/telescope/config is loaded.
 
      -h, --help	    Display version and usage.
 
@@ -561,4 +561,4 @@ CAVEATS
 BUGS
      There's no UI for out-of-band certificates validation.
 
-OpenBSD 7.0			October 8, 2021			   OpenBSD 7.0
+OpenBSD 7.0		       November 29, 2021		   OpenBSD 7.0
