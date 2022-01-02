@@ -69,6 +69,7 @@ enum imsg_type {
 
 	IMSG_SESSION_START,
 	IMSG_SESSION_TAB,
+	IMSG_SESSION_TAB_HIST,
 	IMSG_SESSION_END,
 };
 
@@ -292,6 +293,7 @@ void		 recompute_help(void);
 /* hist.c */
 void		 hist_clear_forward(struct histhead*, struct hist*);
 void		 hist_push(struct histhead*, struct hist*);
+void		 hist_add_before(struct histhead *, struct hist *, struct hist *);
 struct hist	*hist_pop(struct histhead *);
 
 /* mime.c */

@@ -37,6 +37,13 @@ hist_push(struct histhead *head, struct hist *h)
 	TAILQ_INSERT_TAIL(&head->head, h, entries);
 }
 
+void
+hist_add_before(struct histhead *head, struct hist *curr, struct hist *h)
+{
+	head->len++;
+	TAILQ_INSERT_BEFORE(curr, h, entries);
+}
+
 struct hist *
 hist_pop(struct histhead *head)
 {

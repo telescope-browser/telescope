@@ -50,6 +50,7 @@ static void		 handle_update_cert(struct imsg*, size_t);
 static void		 handle_file_open(struct imsg*, size_t);
 static void		 handle_session_start(struct imsg*, size_t);
 static void		 handle_session_tab(struct imsg*, size_t);
+static void		 handle_session_tab_hist(struct imsg*, size_t);
 static void		 handle_session_end(struct imsg*, size_t);
 static void		 handle_dispatch_imsg(int, short, void*);
 static int		 fs_send_ui(int, uint32_t, int, const void *, uint16_t);
@@ -94,6 +95,7 @@ static imsg_handlerfn *handlers[] = {
 	[IMSG_FILE_OPEN] = handle_file_open,
 	[IMSG_SESSION_START] = handle_session_start,
 	[IMSG_SESSION_TAB] = handle_session_tab,
+	[IMSG_SESSION_TAB_HIST] = handle_session_tab_hist,
 	[IMSG_SESSION_END] = handle_session_end,
 };
 
@@ -505,6 +507,24 @@ handle_session_tab(struct imsg *imsg, size_t datalen)
 }
 
 static void
+handle_session_tab_hist(struct imsg *imsg, size_t datalen)
+{
+	struct session_tab_hist th;
+
+	if (session == NULL)
+		die();
+
+	if (datalen != sizeof(th))
+		die();
+
+	memcpy(&th, imsg->data, sizeof(th));
+	if (th.uri[sizeof(th.uri)-1] != '\0')
+		die();
+
+	fprintf(session, "%s %s\n", th.future ? ">" : "<", th.uri);
+}
+
+static void
 handle_session_end(struct imsg *imsg, size_t datalen)
 {
 	if (session == NULL)
@@ -703,6 +723,20 @@ sendtab(uint32_t flags, const char *uri, const char *title)
 	fs_send_ui(IMSG_SESSION_TAB, 0, -1, &tab, sizeof(tab));
 }
 
+static inline void
+sendhist(const char *uri, int future)
+{
+	struct session_tab_hist sth;
+
+	memset(&sth, 0, sizeof(sth));
+	sth.future = future;
+
+	if (strlcpy(sth.uri, uri, sizeof(sth.uri)) >= sizeof(sth.uri))
+		return;
+
+	fs_send_ui(IMSG_SESSION_TAB_HIST, 0, -1, &sth, sizeof(sth));
+}
+
 static void
 load_last_session(int fd, short event, void *d)
 {
@@ -711,8 +745,9 @@ load_last_session(int fd, short event, void *d)
 	size_t		 linesize = 0;
 	ssize_t		 linelen;
 	int		 first_time = 0;
+	int		 future;
 	const char	*title;
-	char		*nl, *line = NULL;
+	char		*nl, *s, *line = NULL;
 
 	if ((session = fopen(session_file, "r")) == NULL) {
 		/* first time? */
@@ -723,8 +758,17 @@ load_last_session(int fd, short event, void *d)
 	while ((linelen = getline(&line, &linesize, session)) != -1) {
 		if ((nl = strchr(line, '\n')) != NULL)
 			*nl = '\0';
-		parse_session_line(line, &title, &flags);
-		sendtab(flags, line, title);
+
+		if (*line == '<' || *line == '>') {
+			future = *line == '>';
+			s = line+1;
+			if (*s != ' ')
+				continue;
+			sendhist(++s, future);
+		} else {
+			parse_session_line(line, &title, &flags);
+			sendtab(flags, line, title);
+		}
 	}
 
 	fclose(session);

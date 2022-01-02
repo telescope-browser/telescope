@@ -158,6 +158,7 @@ static imsg_handlerfn *handlers[] = {
 	[IMSG_UPDATE_CERT_OK] = handle_imsg_update_cert_ok,
 	[IMSG_FILE_OPENED] = handle_imsg_file_opened,
 	[IMSG_SESSION_TAB] = handle_imsg_session,
+	[IMSG_SESSION_TAB_HIST] = handle_imsg_session,
 	[IMSG_SESSION_END] = handle_imsg_session,
 };
 
@@ -498,8 +499,10 @@ static void
 handle_imsg_session(struct imsg *imsg, size_t datalen)
 {
 	static struct tab	*curr;
+	static struct tab	*tab;
 	struct session_tab	 st;
-	struct tab		*tab;
+	struct session_tab_hist	 sth;
+	struct hist		*h;
 	int			 first_time;
 
 	/*
@@ -521,6 +524,24 @@ handle_imsg_session(struct imsg *imsg, size_t datalen)
 		    sizeof(tab->buffer.page.title));
 		if (st.flags & TAB_CURRENT)
 			curr = tab;
+		break;
+
+	case IMSG_SESSION_TAB_HIST:
+		if (tab == NULL || datalen != sizeof(sth))
+			die();
+
+		memcpy(&sth, imsg->data, sizeof(sth));
+		if (sth.uri[sizeof(sth.uri)-1] != '\0')
+			die();
+
+		if ((h = calloc(1, sizeof(*h))) == NULL)
+			die();
+		strlcpy(h->h, sth.uri, sizeof(h->h));
+
+		if (sth.future)
+			hist_push(&tab->hist, h);
+		else
+			hist_add_before(&tab->hist, tab->hist_cur, h);
 		break;
 
 	case IMSG_SESSION_END:

@@ -112,7 +112,10 @@ void
 save_session(void)
 {
 	struct session_tab	 st;
+	struct session_tab_hist	 sth;
 	struct tab		*tab;
+	struct hist		*h;
+	int			 future;
 
 	if (safe_mode)
 		return;
@@ -128,6 +131,19 @@ save_session(void)
 		strlcpy(st.uri, tab->hist_cur->h, sizeof(st.uri));
 		strlcpy(st.title, tab->buffer.page.title, sizeof(st.title));
 		ui_send_fs(IMSG_SESSION_TAB, 0, &st, sizeof(st));
+
+		future = 0;
+		TAILQ_FOREACH(h, &tab->hist.head, entries) {
+			if (h == tab->hist_cur) {
+				future = 1;
+				continue;
+			}
+
+			memset(&sth, 0, sizeof(sth));
+			strlcpy(sth.uri, h->h, sizeof(sth.uri));
+			sth.future = future;
+			ui_send_fs(IMSG_SESSION_TAB_HIST, 0, &sth, sizeof(sth));
+		}
 	}
 
 	ui_send_fs(IMSG_SESSION_END, 0, NULL, 0);
