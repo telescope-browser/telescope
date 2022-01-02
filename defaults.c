@@ -526,7 +526,7 @@ config_setvari(const char *var, int val)
 		dont_wrap_pre = !!val;
 	} else if (!strcmp(var, "emojify-link")) {
 		emojify_link = !!val;
-	} else if (!strcmp(var, "set-title")) {
+	} else if (!strcmp(var, "change-title") || !strcmp(var, "set-title")) {
 		set_title = !!val;
 	} else if (!strcmp(var, "autosave")) {
 		autosave = val;
