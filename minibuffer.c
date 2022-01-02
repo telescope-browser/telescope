@@ -94,6 +94,22 @@ recompute_completions(int add)
 		vl->parent->type = LINE_COMPL_CURRENT;
 }
 
+int
+minibuffer_insert_current_candidate(void)
+{
+	struct vline *vl;
+
+	vl = ministate.compl.buffer.current_line;
+	if (vl == NULL || vl->parent->flags & L_HIDDEN)
+		return -1;
+
+	minibuffer_taint_hist();
+	strlcpy(ministate.buf, vl->parent->line, sizeof(ministate.buf));
+	ministate.buffer.cpoff = utf8_cplen(ministate.buf);
+
+	return 0;
+}
+
 static void *
 minibuffer_metadata(void)
 {
@@ -178,10 +194,18 @@ sensible_self_insert(void)
 void
 eecmd_select(void)
 {
-	struct cmd *cmd;
+	struct cmd	*cmd;
+	struct vline	*vl;
+	const char	*t;
 
+	vl = ministate.compl.buffer.current_line;
+	if (vl == NULL || vl->parent->flags & L_HIDDEN)
+		goto end;
+
+	t = vl->parent->line;
 	for (cmd = cmds; cmd->cmd != NULL; ++cmd) {
-		if (!strcmp(cmd->cmd, ministate.buf)) {
+		if (!strcmp(cmd->cmd, t)) {
+			minibuffer_insert_current_candidate();
 			exit_minibuffer();
 			minibuffer_hist_save_entry();
 			cmd->fn(current_buffer());
@@ -189,6 +213,7 @@ eecmd_select(void)
 		}
 	}
 
+end:
 	message("No match");
 }
 

@@ -1,5 +1,7 @@
 2022-01-02  Omar Polo  <op@omarpolo.com>
 
+	* minibuffer.c (eecmd_select): execute the selected command, not what it's being typed into the minibuffer.
+
 	* defaults.c (load_default_keys): bind `del' to previous-page.  Suggested by Florian.
 
 	* telescope.c (longopts): add --colours as an alias for --color.  Suggested by Florian, thanks!

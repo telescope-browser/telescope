@@ -837,18 +837,10 @@ cmd_next_completion(struct buffer *buffer)
 void
 cmd_insert_current_candidate(struct buffer *buffer)
 {
-	struct vline *vl;
-
 	if (in_minibuffer != MB_COMPREAD)
 		return;
 
-	buffer = &ministate.compl.buffer;
-	if ((vl = buffer->current_line) == NULL)
-		return;
-
-	minibuffer_taint_hist();
-	strlcpy(ministate.buf, vl->parent->line, sizeof(ministate.buf));
-	ministate.buffer.cpoff = utf8_cplen(ministate.buf);
+	minibuffer_insert_current_candidate();
 }
 
 void

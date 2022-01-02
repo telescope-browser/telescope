@@ -69,7 +69,7 @@ extern struct buffer	 minibufferwin;
 extern int		 in_minibuffer;
 
 void	 recompute_completions(int);
-
+int	 minibuffer_insert_current_candidate(void);
 void	 minibuffer_taint_hist(void);
 void	 minibuffer_self_insert(void);
 void	 sensible_self_insert(void);
