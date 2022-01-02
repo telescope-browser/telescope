@@ -272,11 +272,19 @@ cmd_end_of_buffer(struct buffer *buffer)
 	cmd_move_end_of_line(buffer);
 }
 
+static void
+kill_telescope_cb(int r, struct tab *tab)
+{
+	if (r) {
+		save_session();
+		event_loopbreak();
+	}
+}
+
 void
 cmd_kill_telescope(struct buffer *buffer)
 {
-	save_session();
-	event_loopbreak();
+	yornp("really quit?", kill_telescope_cb, NULL);
 }
 
 void

@@ -1,5 +1,7 @@
 2022-01-02  Omar Polo  <op@omarpolo.com>
 
+	* cmd.c (cmd_kill_telescope): ask yorn (yes or no) before quitting telescope.
+
 	* minibuffer.c (eecmd_select): execute the selected command, not what it's being typed into the minibuffer.
 
 	* defaults.c (load_default_keys): bind `del' to previous-page.  Suggested by Florian.
