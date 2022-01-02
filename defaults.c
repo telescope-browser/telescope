@@ -400,6 +400,7 @@ load_default_keys(void)
 	global_set_key("M-<prior>",	cmd_tab_previous);
 	global_set_key("M-<next>",	cmd_tab_next);
 
+	global_set_key("del",		cmd_previous_page);
 	global_set_key("M-<left>",	cmd_previous_page);
 	global_set_key("M-<right>",	cmd_next_page);
 
