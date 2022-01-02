@@ -1,5 +1,7 @@
 2022-01-02  Omar Polo  <op@omarpolo.com>
 
+	* telescope.c (longopts): add --colours as an alias for --color.  Suggested by Florian, thanks!
+
 	* telescope.c (longopts): fixed crash on --colors.  Reported by Florian, thanks!
 
 2021-11-29  Omar Polo  <op@omarpolo.com>
