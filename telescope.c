@@ -36,7 +36,7 @@
 #include "ui.h"
 
 static struct option longopts[] = {
-	{"colors",	no_argument,	NULL,	'c'},
+	{"colors",	no_argument,	NULL,	'C'},
 	{"help",	no_argument,	NULL,	'h'},
 	{"safe",	no_argument,	NULL,	'S'},
 	{"version",	no_argument,	NULL,	'v'},
