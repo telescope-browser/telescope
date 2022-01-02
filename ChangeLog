@@ -1,3 +1,7 @@
+2022-01-02  Omar Polo  <op@omarpolo.com>
+
+	* telescope.c (longopts): fixed crash on --colors.  Reported by Florian, thanks!
+
 2021-11-29  Omar Polo  <op@omarpolo.com>
 
 	* configure.ac: tagged 0.6.1 bugfix release
