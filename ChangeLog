@@ -1,5 +1,7 @@
 2022-01-02  Omar Polo  <op@omarpolo.com>
 
+	* defaults.c (fill_column): bump default fill-column to 120.
+
 	* defaults.c (config_setvari): rename `set-title' to `change-title'.  The old name will still be supported for a while to ease backwards compatibility.
 
 	* cmd.c (cmd_kill_telescope): ask yorn (yes or no) before quitting telescope.
