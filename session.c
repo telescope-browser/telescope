@@ -37,8 +37,10 @@ switch_to_tab(struct tab *tab)
 	current_tab = tab;
 	tab->flags &= ~TAB_URGENT;
 
-	if (operating && tab->flags & TAB_LAZY)
-		load_url_in_tab(tab, tab->hist_cur->h, NULL, 0);
+	if (operating && tab->flags & TAB_LAZY) {
+		tab->flags ^= TAB_LAZY;
+		load_url_in_tab(tab, tab->hist_cur->h, NULL, 1);
+	}
 }
 
 unsigned int
@@ -68,16 +70,16 @@ new_tab(const char *url, const char *base, struct tab *after)
 	TAILQ_INIT(&tab->buffer.page.head);
 
 	tab->id = tab_new_id();
-	if (!operating)
-		tab->flags |= TAB_LAZY;
-	switch_to_tab(tab);
 
 	if (after != NULL)
 		TAILQ_INSERT_AFTER(&tabshead, after, tab, tabs);
 	else
 		TAILQ_INSERT_TAIL(&tabshead, tab, tabs);
 
+	if (!operating)
+		tab->flags |= TAB_LAZY;
 	load_url_in_tab(tab, url, base, 0);
+	switch_to_tab(tab);
 	return tab;
 }
 

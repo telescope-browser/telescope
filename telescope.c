@@ -894,25 +894,13 @@ do_load_url(struct tab *tab, const char *url, const char *base)
 }
 
 /*
- * Load url in tab.  If tab is marked as lazy, only prepare the url
- * but don't load it.  If tab is lazy and a url was already prepared,
- * do load it!
+ * Load url in tab and handle history.  If a tab is marked as lazy, only
+ * prepare the url but don't load it.
  */
 void
 load_url(struct tab *tab, const char *url, const char *base, int nohist)
 {
-	int lazy;
-
-	lazy = tab->flags & TAB_LAZY;
-
-	if (lazy && tab->hist_cur != NULL) {
-		lazy = 0;
-		tab->flags &= ~TAB_LAZY;
-	}
-
-	/* can't have both nohist and lazy at the same time. */
-	if (nohist && lazy)
-		nohist = 0;
+	int lazy = tab->flags & TAB_LAZY;
 
 	if (!nohist && (!lazy || tab->hist_cur == NULL)) {
 		if (tab->hist_cur != NULL)
