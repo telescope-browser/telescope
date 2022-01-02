@@ -509,7 +509,21 @@ handle_imsg_session(struct imsg *imsg, size_t datalen)
 	if (operating)
 		die();
 
-	if (imsg->hdr.type == IMSG_SESSION_END) {
+	switch (imsg->hdr.type) {
+	case IMSG_SESSION_TAB:
+		if (datalen != sizeof(st))
+			die();
+
+		memcpy(&st, imsg->data, sizeof(st));
+		if ((tab = new_tab(st.uri, NULL, NULL)) == NULL)
+			die();
+		strlcpy(tab->buffer.page.title, st.title,
+		    sizeof(tab->buffer.page.title));
+		if (st.flags & TAB_CURRENT)
+			curr = tab;
+		break;
+
+	case IMSG_SESSION_END:
 		if (datalen != sizeof(first_time))
 			die();
 		memcpy(&first_time, imsg->data, sizeof(first_time));
@@ -524,19 +538,11 @@ handle_imsg_session(struct imsg *imsg, size_t datalen)
 		if (has_url || TAILQ_EMPTY(&tabshead))
 			new_tab(url, NULL, NULL);
 		ui_main_loop();
-		return;
+		break;
+
+	default:
+		die();
 	}
-
-	if (datalen != sizeof(st))
-		die();
-
-	memcpy(&st, imsg->data, sizeof(st));
-	if ((tab = new_tab(st.uri, NULL, NULL)) == NULL)
-		die();
-	strlcpy(tab->buffer.page.title, st.title,
-	    sizeof(tab->buffer.page.title));
-	if (st.flags & TAB_CURRENT)
-		curr = tab;
 }
 
 static void
