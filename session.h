@@ -19,6 +19,17 @@
 
 #include "telescope.h"
 
+struct session_tab {
+	uint32_t	flags;
+	char		uri[GEMINI_URL_LEN];
+	char		title[TITLE_MAX];
+};
+
+struct session_tab_hist {
+	char		uri[GEMINI_URL_LEN];
+	int		future;
+};
+
 void		 switch_to_tab(struct tab *);
 unsigned int	 tab_new_id(void);
 struct tab	*new_tab(const char *, const char *base, struct tab *);

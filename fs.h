@@ -21,19 +21,6 @@
 
 #include <limits.h>
 
-#include "telescope.h"
-
-struct session_tab {
-	uint32_t	flags;
-	char		uri[GEMINI_URL_LEN];
-	char		title[TITLE_MAX];
-};
-
-struct session_tab_hist {
-	char		uri[GEMINI_URL_LEN];
-	int		future;
-};
-
 extern char	config_path_base[PATH_MAX];
 extern char	data_path_base[PATH_MAX];
 extern char	cache_path_base[PATH_MAX];
