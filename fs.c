@@ -58,7 +58,7 @@ static int		 fs_send_ui(int, uint32_t, int, const void *, uint16_t);
 static size_t		 join_path(char*, const char*, const char*, size_t);
 static void		 getenv_default(char*, const char*, const char*, size_t);
 static void		 mkdirs(const char*, mode_t);
-static void		 xdg_init(void);
+static void		 init_paths(void);
 static void		 load_last_session(void);
 static void		 load_certs(void);
 
@@ -616,7 +616,7 @@ mkdirs(const char *path, mode_t mode)
 }
 
 static void
-xdg_init(void)
+init_paths(void)
 {
 	char		 xdg_config_base[PATH_MAX];
 	char		 xdg_data_base[PATH_MAX];
@@ -668,7 +668,7 @@ xdg_init(void)
 int
 fs_init(void)
 {
-	xdg_init();
+	init_paths();
 
 	join_path(config_path, config_path_base, "/config",
 	    sizeof(config_path));
