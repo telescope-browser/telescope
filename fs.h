@@ -34,7 +34,6 @@ extern char	session_file[PATH_MAX];
 
 int		 fs_init(void);
 int		 fs_main(void);
-int		 last_time_crashed(void);
 int		 lock_session(void);
 
 #endif

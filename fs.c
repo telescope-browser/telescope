@@ -60,6 +60,7 @@ static void		 getenv_default(char*, const char*, const char*, size_t);
 static void		 mkdirs(const char*, mode_t);
 static void		 init_paths(void);
 static void		 load_last_session(void);
+static int		 last_time_crashed(void);
 static void		 load_certs(void);
 
 static struct imsgev		*iev_ui;
@@ -817,15 +818,13 @@ fs_main(void)
 	return 0;
 }
 
-
-
 /*
  * Check if the last time telescope crashed.  The check is done by
  * looking at `crashed_file': if it exists then last time we crashed.
  * Then, while here, touch the file too.  During IMSG_QUIT we'll
  * remove it.
  */
-int
+static int
 last_time_crashed(void)
 {
 	int fd, crashed = 1;
