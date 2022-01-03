@@ -58,6 +58,7 @@ enum imsg_type {
 
 	/* ui <-> fs */
 	IMSG_INIT,
+	IMSG_TOFU,
 	IMSG_BOOKMARK_PAGE,
 	IMSG_BOOKMARK_OK,
 	IMSG_SAVE_CERT,

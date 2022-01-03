@@ -59,6 +59,7 @@ static void		 getenv_default(char*, const char*, const char*, size_t);
 static void		 mkdirs(const char*, mode_t);
 static void		 xdg_init(void);
 static void		 load_last_session(void);
+static void		 load_certs(void);
 
 static struct imsgev		*iev_ui;
 static FILE			*session;
@@ -339,6 +340,7 @@ handle_misc(struct imsg *imsg, size_t datalen)
 {
 	switch (imsg->hdr.type) {
 	case IMSG_INIT:
+		load_certs();
 		load_last_session();
 		break;
 
@@ -880,43 +882,42 @@ parse_khost_line(char *line, char *tmp[3])
 	return ap == &tmp[3] && *line == '\0';
 }
 
-int
-load_certs(struct ohash *h)
+static void
+load_certs(void)
 {
 	char		*tmp[3], *line = NULL;
 	const char	*errstr;
 	size_t		 lineno = 0, linesize = 0;
 	ssize_t		 linelen;
 	FILE		*f;
-	struct tofu_entry *e;
+	struct tofu_entry e;
 
 	if ((f = fopen(known_hosts_file, "r")) == NULL)
-		return 0;
+		return;
 
 	while ((linelen = getline(&line, &linesize, f)) != -1) {
-		if ((e = calloc(1, sizeof(*e))) == NULL)
-			abort();
-
 		lineno++;
 
+		memset(&e, 0, sizeof(e));
 		if (parse_khost_line(line, tmp)) {
-			strlcpy(e->domain, tmp[0], sizeof(e->domain));
-			strlcpy(e->hash, tmp[1], sizeof(e->hash));
+			strlcpy(e.domain, tmp[0], sizeof(e.domain));
+			strlcpy(e.hash, tmp[1], sizeof(e.hash));
 
-			e->verified = strtonum(tmp[2], 0, 1, &errstr);
+			e.verified = strtonum(tmp[2], 0, 1, &errstr);
 			if (errstr != NULL)
 				errx(1, "%s:%zu verification for %s is %s: %s",
 				    known_hosts_file, lineno,
-				    e->domain, errstr, tmp[2]);
-			tofu_add(h, e);
+				    e.domain, errstr, tmp[2]);
+
+			fs_send_ui(IMSG_TOFU, 0, -1, &e, sizeof(e));
 		} else {
 			warnx("%s:%zu invalid entry",
 			    known_hosts_file, lineno);
-			free(e);
 		}
 	}
 
 	free(line);
-	return ferror(f);
+	fclose(f);
+	return;
 }
 

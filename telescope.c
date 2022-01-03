@@ -115,6 +115,7 @@ static void		 handle_save_page_path(const char *, struct tab *);
 static void		 handle_imsg_file_opened(struct imsg *, size_t);
 static void		 handle_imsg_buf(struct imsg *, size_t);
 static void		 handle_imsg_eof(struct imsg *, size_t);
+static void		 handle_imsg_tofu(struct imsg *, size_t);
 static void		 handle_imsg_bookmark_ok(struct imsg *, size_t);
 static void		 handle_imsg_save_cert_ok(struct imsg *, size_t);
 static void		 handle_imsg_update_cert_ok(struct imsg *, size_t);
@@ -153,6 +154,7 @@ static imsg_handlerfn *handlers[] = {
 	[IMSG_GOT_META] = handle_imsg_got_meta,
 	[IMSG_BUF] = handle_imsg_buf,
 	[IMSG_EOF] = handle_imsg_eof,
+	[IMSG_TOFU] = handle_imsg_tofu,
 	[IMSG_BOOKMARK_OK] = handle_imsg_bookmark_ok,
 	[IMSG_SAVE_CERT_OK] = handle_imsg_save_cert_ok,
 	[IMSG_UPDATE_CERT_OK] = handle_imsg_update_cert_ok,
@@ -607,6 +609,26 @@ handle_imsg_eof(struct imsg *imsg, size_t datalen)
 		d->fd = -1;
 		ui_on_download_refresh();
 	}
+}
+
+static void
+handle_imsg_tofu(struct imsg *imsg, size_t datalen)
+{
+	struct tofu_entry *e;
+
+	if (operating)
+		die();
+
+	if ((e = calloc(1, sizeof(*e))) == NULL)
+		die();
+
+	if (datalen != sizeof(*e))
+		die();
+	memcpy(e, imsg->data, sizeof(*e));
+	if (e->domain[sizeof(e->domain)-1] != '\0' ||
+	    e->hash[sizeof(e->hash)-1] != '\0')
+		die();
+	tofu_add(&certs, e);
 }
 
 static void
@@ -1219,9 +1241,8 @@ main(int argc, char * const *argv)
 
 	setproctitle("ui");
 
-	/* initialize tofu & load certificates */
+	/* initialize tofu store */
 	tofu_init(&certs, 5, offsetof(struct tofu_entry, domain));
-	load_certs(&certs);
 
 	event_init();
 
