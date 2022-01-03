@@ -868,7 +868,7 @@ lock_session(void)
 	return fd;
 }
 
-static int
+static inline int
 parse_khost_line(char *line, char *tmp[3])
 {
 	char **ap;
