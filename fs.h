@@ -28,7 +28,7 @@ extern char	cache_path_base[PATH_MAX];
 extern char	config_path[PATH_MAX];
 extern char	lockfile_path[PATH_MAX];
 extern char	bookmark_file[PATH_MAX];
-extern char	known_hosts_file[PATH_MAX], known_host_tmp[PATH_MAX];
+extern char	known_hosts_file[PATH_MAX], known_hosts_tmp[PATH_MAX];
 extern char	crashed_file[PATH_MAX];
 extern char	session_file[PATH_MAX];
 
