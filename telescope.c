@@ -1241,6 +1241,7 @@ main(int argc, char * const *argv)
 
 	if (ui_init()) {
 		sandbox_ui_process();
+		ui_send_fs(IMSG_INIT, 0, NULL, 0);
 		event_dispatch();
 		ui_end();
 	}

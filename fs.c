@@ -43,7 +43,7 @@ static void		 handle_get(struct imsg*, size_t);
 static int		 select_non_dot(const struct dirent *);
 static int		 select_non_dotdot(const struct dirent *);
 static void		 handle_get_file(struct imsg*, size_t);
-static void		 handle_quit(struct imsg*, size_t);
+static void		 handle_misc(struct imsg *, size_t);
 static void		 handle_bookmark_page(struct imsg*, size_t);
 static void		 handle_save_cert(struct imsg*, size_t);
 static void		 handle_update_cert(struct imsg*, size_t);
@@ -58,6 +58,7 @@ static size_t		 join_path(char*, const char*, const char*, size_t);
 static void		 getenv_default(char*, const char*, const char*, size_t);
 static void		 mkdirs(const char*, mode_t);
 static void		 xdg_init(void);
+static void		 load_last_session(void);
 
 static struct imsgev		*iev_ui;
 static FILE			*session;
@@ -88,7 +89,8 @@ char		session_file[PATH_MAX];
 static imsg_handlerfn *handlers[] = {
 	[IMSG_GET] = handle_get,
 	[IMSG_GET_FILE] = handle_get_file,
-	[IMSG_QUIT] = handle_quit,
+	[IMSG_QUIT] = handle_misc,
+	[IMSG_INIT] = handle_misc,
 	[IMSG_BOOKMARK_PAGE] = handle_bookmark_page,
 	[IMSG_SAVE_CERT] = handle_save_cert,
 	[IMSG_UPDATE_CERT] = handle_update_cert,
@@ -333,12 +335,22 @@ handle_get_file(struct imsg *imsg, size_t datalen)
 }
 
 static void
-handle_quit(struct imsg *imsg, size_t datalen)
+handle_misc(struct imsg *imsg, size_t datalen)
 {
-	if (!safe_mode)
-		unlink(crashed_file);
+	switch (imsg->hdr.type) {
+	case IMSG_INIT:
+		load_last_session();
+		break;
 
-	event_loopbreak();
+	case IMSG_QUIT:
+		if (!safe_mode)
+			unlink(crashed_file);
+		event_loopbreak();
+		break;
+
+	default:
+		die();
+	}
 }
 
 static void
@@ -738,7 +750,7 @@ sendhist(const char *uri, int future)
 }
 
 static void
-load_last_session(int fd, short event, void *d)
+load_last_session(void)
 {
 	FILE		*session;
 	uint32_t	 flags;
@@ -784,9 +796,6 @@ end:
 int
 fs_main(void)
 {
-	struct event ev;
-	struct timeval t = {0, 0};
-
 	setproctitle("fs");
 
 	fs_init();
@@ -804,14 +813,6 @@ fs_main(void)
 	event_add(&iev_ui->ev, NULL);
 
 	sandbox_fs_process();
-
-	/*
-	 * Run load_last_session during the event loop, as soon as
-	 * possible; it uses fs_send_ui so it can't be ran outside
-	 * of event_dispatch.
-	 */
-	evtimer_set(&ev, load_last_session, NULL);
-	evtimer_add(&ev, &t);
 
 	event_dispatch();
 	return 0;

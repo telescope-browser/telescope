@@ -57,6 +57,7 @@ enum imsg_type {
 	IMSG_QUIT,
 
 	/* ui <-> fs */
+	IMSG_INIT,
 	IMSG_BOOKMARK_PAGE,
 	IMSG_BOOKMARK_OK,
 	IMSG_SAVE_CERT,
