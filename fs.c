@@ -66,14 +66,6 @@ static struct imsgev		*iev_ui;
 static FILE			*session;
 
 /*
- * Note: these are empty if ~/.telescope exists, use *_path_base
- * below.
- */
-static char	xdg_config_base[PATH_MAX];
-static char	xdg_data_base[PATH_MAX];
-static char	xdg_cache_base[PATH_MAX];
-
-/*
  * Where to store user data.  These are all equal to ~/.telescope if
  * it exists.
  */
@@ -626,8 +618,12 @@ mkdirs(const char *path, mode_t mode)
 static void
 xdg_init(void)
 {
-	char *home, old_path[PATH_MAX];
-	struct stat info;
+	char		 xdg_config_base[PATH_MAX];
+	char		 xdg_data_base[PATH_MAX];
+	char		 xdg_cache_base[PATH_MAX];
+	char		 old_path[PATH_MAX];
+	char		*home;
+	struct stat	 info;
 
 	/* old path */
 	if ((home = getenv("HOME")) == NULL)
