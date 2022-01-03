@@ -26,7 +26,6 @@ void		 free_tab(struct tab *);
 void		 stop_tab(struct tab*);
 
 void		 save_session(void);
-void		 load_last_session(void);
 
 void		 autosave_init(void);
 void		 autosave_timer(int, short, void *);
