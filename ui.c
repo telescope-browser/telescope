@@ -537,7 +537,7 @@ redraw_tabline(void)
 			break;
 	}
 
-	if (toskip * tabwidth < space)
+	if (toskip * tabwidth <= space)
 		toskip = 0;
 	else {
 		ots = toskip;
