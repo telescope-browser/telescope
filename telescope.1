@@ -250,10 +250,6 @@ If greater than zero, save the session after the specified amount of
 seconds after some events happens
 .Pq new or closed tabs, visited a link ...
 Defaults to 20.
-.It change-title
-.Pq integer
-If nonzero, set the terminal title to the page title.
-Defaults to 1.
 .It dont-wrap-pre
 .Pq integer
 If nonzero, don't wrap preformatted blocks.
@@ -310,6 +306,10 @@ Defaults to 1.
 If tab-bar-show is -1 hide the tab bar permanently, if 0 show it
 unconditionally.
 If it's 1, show the bar only when there is more than one tab.
+Defaults to 1.
+.It update-title
+.Pq integer
+If nonzero, set the terminal title to the page title.
 Defaults to 1.
 .El
 .It Ic style Ar name Ar option
