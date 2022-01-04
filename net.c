@@ -39,7 +39,6 @@
 #include "telescope.h"
 
 static struct imsgev		*iev_ui;
-static struct tls_config	*tlsconf;
 
 /* a pending request */
 struct req {
@@ -197,18 +196,29 @@ done:
 		net_ready(req);
 		break;
 
-	case PROTO_GEMINI:
+	case PROTO_GEMINI: {
+		struct tls_config *conf;
+
+		if ((conf = tls_config_new()) == NULL)
+			die();
+
+		tls_config_insecure_noverifycert(conf);
+		tls_config_insecure_noverifyname(conf);
+
 		/* prepare tls */
 		if ((req->ctx = tls_client()) == NULL) {
 			close_with_errf(req, "tls_client: %s",
 			    strerror(errno));
 			return;
 		}
-		if (tls_configure(req->ctx, tlsconf) == -1) {
+
+		if (tls_configure(req->ctx, conf) == -1) {
 			close_with_errf(req, "tls_configure: %s",
 			    tls_error(req->ctx));
 			return;
 		}
+		tls_config_free(conf);
+
 		if (tls_connect_socket(req->ctx, req->fd, req->url.host)
 		    == -1) {
 			close_with_errf(req, "tls_connect_socket: %s",
@@ -217,6 +227,7 @@ done:
 		}
 		yield_w(req, net_tls_handshake, &timeout_for_handshake);
 		break;
+	}
 
 	default:
 		die();
@@ -738,11 +749,6 @@ net_main(void)
 
 	TAILQ_INIT(&reqhead);
 
-	if ((tlsconf = tls_config_new()) == NULL)
-		die();
-	tls_config_insecure_noverifycert(tlsconf);
-	tls_config_insecure_noverifyname(tlsconf);
-
 	event_init();
 
 	/* Setup pipe and event handler to the main process */
@@ -759,7 +765,6 @@ net_main(void)
 
 	event_dispatch();
 
-	tls_config_free(tlsconf);
 	msgbuf_clear(&iev_ui->ibuf.w);
 	close(iev_ui->ibuf.fd);
 	free(iev_ui);
