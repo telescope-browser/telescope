@@ -114,7 +114,7 @@ kill_tab(struct tab *tab)
 }
 
 /*
- * Resurrects the lastest killed tab and returns it. The tab is already
+ * Resurrects the lastest killed tab and returns it.  The tab is already
  * added to the tab list with the TAB_LAZY flag set.  NB: this doesn't
  * update current_tab.
  */
