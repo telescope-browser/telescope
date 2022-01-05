@@ -57,6 +57,7 @@ CMD(cmd_suspend_telescope,	"Suspend the current Telescope session.");
 CMD(cmd_swiper,			"Jump to a line using the minibuffer.");
 CMD(cmd_tab_close,		"Close the current tab.");
 CMD(cmd_tab_close_other,	"Close all tabs but the current one.");
+CMD(cmd_tab_undo_close,		"Reopen last closed tab.");
 CMD(cmd_tab_move,		"Move the current tab to the right.");
 CMD(cmd_tab_move_to,		"Move the current tab to the left.");
 CMD(cmd_tab_new,		"Open a new tab.");

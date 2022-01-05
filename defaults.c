@@ -37,6 +37,7 @@ int fill_column = 120;
 int hide_pre_blocks = 0;
 int hide_pre_closing_line = 0;
 int hide_pre_context = 0;
+int max_killed_tabs = 10;
 int olivetti_mode = 1;
 int set_title = 1;
 int tab_bar_show = 1;
@@ -378,6 +379,8 @@ load_default_keys(void)
 	global_set_key("H",		cmd_previous_page);
 	global_set_key("L",		cmd_next_page);
 
+	global_set_key("u",		cmd_tab_undo_close);
+
 	/* tmp */
 	global_set_key("q",		cmd_kill_telescope);
 
@@ -537,6 +540,9 @@ config_setvari(const char *var, int val)
 			tab_bar_show = 0;
 		else
 			tab_bar_show = 1;
+	} else if (!strcmp(var, "max-killed-tabs")) {
+		if (val >= 0)
+			max_killed_tabs = val;
 	} else {
 		return 0;
 	}

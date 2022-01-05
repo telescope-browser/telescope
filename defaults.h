@@ -28,6 +28,7 @@ extern int	 fill_column;
 extern int	 hide_pre_blocks;
 extern int	 hide_pre_closing_line;
 extern int	 hide_pre_context;
+extern int	 max_killed_tabs;
 extern int	 olivetti_mode;
 extern int	 set_title;
 extern int	 tab_bar_show;

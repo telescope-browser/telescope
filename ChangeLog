@@ -1,3 +1,12 @@
+2022-01-05  Omar Polo  <op@omarpolo.com>
+
+	* defaults.c (load_default_keys): bind `u' to tab-undo-close.
+	(config_setvari): add "max-killed-tabs" to control the maximum number of killed tabs to keep.
+
+	* cmd.c (cmd_tab_undo_close): allow to re-open closed tabs.
+
+	* session.c (kill_tab): save killed tabs into a queue.
+
 2022-01-02  Omar Polo  <op@omarpolo.com>
 
 	* telescope.c (handle_imsg_session): implement persistent tab history

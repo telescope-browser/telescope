@@ -459,7 +459,7 @@ cmd_tab_close(struct buffer *buffer)
 	if ((t = TAILQ_NEXT(tab, tabs)) != NULL ||
 	    (t = TAILQ_PREV(tab, tabshead, tabs)) != NULL) {
 		switch_to_tab(t);
-		free_tab(tab);
+		kill_tab(tab);
 	} else
 		message("Can't close the only tab.");
 
@@ -474,8 +474,21 @@ cmd_tab_close_other(struct buffer *buffer)
 		if (t == current_tab)
 			continue;
 
-		free_tab(t);
+		kill_tab(t);
 	}
+}
+
+void
+cmd_tab_undo_close(struct buffer *buffer)
+{
+	struct tab *t;
+
+	if ((t = unkill_tab()) == NULL) {
+		message("No recently-closed tabs");
+		return;
+	}
+
+	switch_to_tab(t);
 }
 
 void

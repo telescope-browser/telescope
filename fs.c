@@ -506,10 +506,16 @@ handle_session_tab(struct imsg *imsg, size_t datalen)
 
 	fprintf(session, "%s", tab.uri);
 
-	if (tab.flags & TAB_CURRENT)
-		fprintf(session, " current ");
-	else
+	if (tab.flags == 0)
 		fprintf(session, " - ");
+	else {
+		fprintf(session, " ");
+		if (tab.flags & TAB_CURRENT)
+			fprintf(session, "current,");
+		if (tab.flags & TAB_KILLED)
+			fprintf(session, "killed,");
+		fprintf(session, " ");
+	}
 
 	fprintf(session, "%s\n", tab.title);
 }
@@ -714,6 +720,8 @@ parse_session_line(char *line, const char **title, uint32_t *flags)
 	while ((ap = strsep(&s, ",")) != NULL) {
 		if (!strcmp(ap, "current"))
 			*flags |= TAB_CURRENT;
+		else if (!strcmp(ap, "killed"))
+			*flags |= TAB_KILLED;
 	}
 }
 

@@ -63,6 +63,7 @@ int			safe_mode;
 static struct imsgev	*iev_fs, *iev_net;
 
 struct tabshead		 tabshead = TAILQ_HEAD_INITIALIZER(tabshead);
+struct tabshead		 ktabshead = TAILQ_HEAD_INITIALIZER(ktabshead);
 struct proxylist	 proxies = TAILQ_HEAD_INITIALIZER(proxies);
 
 enum telescope_process {
@@ -526,6 +527,8 @@ handle_imsg_session(struct imsg *imsg, size_t datalen)
 		    sizeof(tab->buffer.page.title));
 		if (st.flags & TAB_CURRENT)
 			curr = tab;
+		if (st.flags & TAB_KILLED)
+			kill_tab(tab);
 		break;
 
 	case IMSG_SESSION_TAB_HIST:

@@ -204,12 +204,15 @@ struct buffer {
 };
 
 #define TAB_CURRENT	0x1	/* only for save_session */
-#define TAB_URGENT	0x2
-#define TAB_LAZY	0x4	/* to lazy load tabs */
+#define TAB_KILLED	0x2	/* only for save_session */
+#define TAB_URGENT	0x4
+#define TAB_LAZY	0x8	/* to lazy load tabs */
 
 #define NEW_TAB_URL	"about:new"
 
-extern TAILQ_HEAD(tabshead, tab) tabshead;
+TAILQ_HEAD(tabshead, tab);
+extern struct tabshead tabshead;
+extern struct tabshead ktabshead;
 struct tab {
 	TAILQ_ENTRY(tab)	 tabs;
 	uint32_t		 id;

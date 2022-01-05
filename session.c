@@ -84,21 +84,67 @@ new_tab(const char *url, const char *base, struct tab *after)
 }
 
 /*
- * Free every resource linked to the tab, including the tab itself.
- * Removes the tab from the tablist, but doesn't update the
- * current_tab though.
+ * Move a tab from the tablist to the killed tab list and erase its
+ * contents.  NB: doesn't update the current_tab.
  */
 void
-free_tab(struct tab *tab)
+kill_tab(struct tab *tab)
 {
+	int count;
+
 	stop_tab(tab);
+	erase_buffer(&tab->buffer);
+	TAILQ_REMOVE(&tabshead, tab, tabs);
 	ui_schedule_redraw();
 	autosave_hook();
 
 	if (evtimer_pending(&tab->loadingev, NULL))
 		evtimer_del(&tab->loadingev);
 
-	TAILQ_REMOVE(&tabshead, tab, tabs);
+	TAILQ_INSERT_HEAD(&ktabshead, tab, tabs);
+
+	/* gc closed tabs */
+	count = 0;
+	TAILQ_FOREACH(tab, &ktabshead, tabs)
+		count++;
+	while (count > max_killed_tabs) {
+		count--;
+		free_tab(TAILQ_LAST(&ktabshead, tabshead));
+	}
+}
+
+/*
+ * Resurrects the lastest killed tab and returns it. The tab is already
+ * added to the tab list with the TAB_LAZY flag set.  NB: this doesn't
+ * update current_tab.
+ */
+struct tab *
+unkill_tab(void)
+{
+	struct tab *t;
+
+	if (TAILQ_EMPTY(&ktabshead))
+		return NULL;
+
+	autosave_hook();
+
+	t = TAILQ_FIRST(&ktabshead);
+	TAILQ_REMOVE(&ktabshead, t, tabs);
+	TAILQ_INSERT_TAIL(&tabshead, t, tabs);
+	t->flags |= TAB_LAZY;
+	return t;
+}
+
+/*
+ * Free every resource linked to the tab, including the tab itself.
+ * Removes the tab from the *killed* tablist, but doesn't update the
+ * current_tab though.
+ */
+void
+free_tab(struct tab *tab)
+{
+	/* TODO: free the history */
+	TAILQ_REMOVE(&ktabshead, tab, tabs);
 	free(tab);
 }
 
@@ -108,43 +154,54 @@ stop_tab(struct tab *tab)
 	ui_send_net(IMSG_STOP, tab->id, NULL, 0);
 }
 
-void
-save_session(void)
+static inline void
+sendtab(struct tab *tab, int killed)
 {
 	struct session_tab	 st;
 	struct session_tab_hist	 sth;
-	struct tab		*tab;
 	struct hist		*h;
 	int			 future;
+
+	memset(&st, 0, sizeof(st));
+
+	if (tab == current_tab)
+		st.flags |= TAB_CURRENT;
+	if (killed)
+		st.flags |= TAB_KILLED;
+
+	strlcpy(st.uri, tab->hist_cur->h, sizeof(st.uri));
+	strlcpy(st.title, tab->buffer.page.title, sizeof(st.title));
+	ui_send_fs(IMSG_SESSION_TAB, 0, &st, sizeof(st));
+
+	future = 0;
+	TAILQ_FOREACH(h, &tab->hist.head, entries) {
+		if (h == tab->hist_cur) {
+			future = 1;
+			continue;
+		}
+
+		memset(&sth, 0, sizeof(sth));
+		strlcpy(sth.uri, h->h, sizeof(sth.uri));
+		sth.future = future;
+		ui_send_fs(IMSG_SESSION_TAB_HIST, 0, &sth, sizeof(sth));
+	}
+
+}
+
+void
+save_session(void)
+{
+	struct tab		*tab;
 
 	if (safe_mode)
 		return;
 
 	ui_send_fs(IMSG_SESSION_START, 0, NULL, 0);
 
-	TAILQ_FOREACH(tab, &tabshead, tabs) {
-		memset(&st, 0, sizeof(st));
-
-		if (tab == current_tab)
-			st.flags = TAB_CURRENT;
-
-		strlcpy(st.uri, tab->hist_cur->h, sizeof(st.uri));
-		strlcpy(st.title, tab->buffer.page.title, sizeof(st.title));
-		ui_send_fs(IMSG_SESSION_TAB, 0, &st, sizeof(st));
-
-		future = 0;
-		TAILQ_FOREACH(h, &tab->hist.head, entries) {
-			if (h == tab->hist_cur) {
-				future = 1;
-				continue;
-			}
-
-			memset(&sth, 0, sizeof(sth));
-			strlcpy(sth.uri, h->h, sizeof(sth.uri));
-			sth.future = future;
-			ui_send_fs(IMSG_SESSION_TAB_HIST, 0, &sth, sizeof(sth));
-		}
-	}
+	TAILQ_FOREACH(tab, &tabshead, tabs)
+		sendtab(tab, 0);
+	TAILQ_FOREACH(tab, &ktabshead, tabs)
+		sendtab(tab, 1);
 
 	ui_send_fs(IMSG_SESSION_END, 0, NULL, 0);
 }
