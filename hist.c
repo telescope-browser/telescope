@@ -35,9 +35,17 @@ hist_clear(struct histhead *head)
 void
 hist_clear_forward(struct histhead *head, struct hist *h)
 {
+	struct hist *i;
+
 	if (h == NULL)
 		return;
-	hist_clear_forward(head, TAILQ_NEXT(h, entries));
+
+	while ((i = TAILQ_NEXT(h, entries)) != NULL) {
+		TAILQ_REMOVE(&head->head, i, entries);
+		free(i);
+		head->len--;
+	}
+
 	TAILQ_REMOVE(&head->head, h, entries);
 	free(h);
 	head->len--;
