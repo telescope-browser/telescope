@@ -40,6 +40,7 @@ hist_clear_forward(struct histhead *head, struct hist *h)
 	hist_clear_forward(head, TAILQ_NEXT(h, entries));
 	TAILQ_REMOVE(&head->head, h, entries);
 	free(h);
+	head->len--;
 }
 
 void
