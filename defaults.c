@@ -542,7 +542,7 @@ config_setvari(const char *var, int val)
 			tab_bar_show = 1;
 	} else if (!strcmp(var, "max-killed-tabs")) {
 		if (val >= 0)
-			max_killed_tabs = val;
+			max_killed_tabs = MIN(val, 128);
 	} else {
 		return 0;
 	}
