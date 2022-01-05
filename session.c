@@ -136,9 +136,8 @@ unkill_tab(void)
 }
 
 /*
- * Free every resource linked to the tab, including the tab itself.
- * Removes the tab from the *killed* tablist, but doesn't update the
- * current_tab though.
+ * Free every resource linked to the tab, including the tab itself, and
+ * removes it from the *killed* tablist.
  */
 void
 free_tab(struct tab *tab)
