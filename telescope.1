@@ -296,6 +296,10 @@ Defaults to zero.
 URL for the new tab page.
 Defaults to
 .Dq about:new .
+.It max-killed-tabs
+.Pq integer
+The maximum number of closed tabs to keep track of, defaults to 10.
+Must be a positive number; if zero, don't save closed tabs at all.
 .It olivetti-mode
 .Pq integer
 If nonzero, enable
@@ -591,6 +595,8 @@ tab-move-to
 previous-page
 .It L
 next-page
+.It u
+tab-undo-close
 .It q
 kill-telescope
 .It ESC
@@ -785,6 +791,8 @@ Focus next tab, wrapping around eventually.
 Focus the previous tab, wrapping around eventually.
 .It Ic tab-select
 Switch to a tab using the minibuffer.
+.It Ic tab-undo-close
+Re-open the most recently closed tab, if any.
 .El
 .Ss Misc commands
 .Bl -tag -width execute-extended-command -compact
