@@ -296,6 +296,7 @@ struct download	*download_by_id(uint32_t);
 void		 recompute_help(void);
 
 /* hist.c */
+void		 hist_clear(struct histhead *);
 void		 hist_clear_forward(struct histhead*, struct hist*);
 void		 hist_push(struct histhead*, struct hist*);
 void		 hist_add_before(struct histhead *, struct hist *, struct hist *);

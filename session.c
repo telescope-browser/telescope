@@ -143,8 +143,8 @@ unkill_tab(void)
 void
 free_tab(struct tab *tab)
 {
-	/* TODO: free the history */
 	TAILQ_REMOVE(&ktabshead, tab, tabs);
+	hist_clear(&tab->hist);
 	free(tab);
 }
 

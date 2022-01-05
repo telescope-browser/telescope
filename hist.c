@@ -21,6 +21,18 @@
 #include "telescope.h"
 
 void
+hist_clear(struct histhead *head)
+{
+	struct hist *h, *th;
+
+	TAILQ_FOREACH_SAFE(h, &head->head, entries, th) {
+		TAILQ_REMOVE(&head->head, h, entries);
+		free(h);
+	}
+	head->len = 0;
+}
+
+void
 hist_clear_forward(struct histhead *head, struct hist *h)
 {
 	if (h == NULL)
