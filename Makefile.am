@@ -20,6 +20,8 @@ telescope_SOURCES =	cmd.c			\
 			hist.c			\
 			keymap.c		\
 			keymap.h		\
+			mcache.c		\
+			mcache.h		\
 			mime.c			\
 			minibuffer.c		\
 			minibuffer.h		\
