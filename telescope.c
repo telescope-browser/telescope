@@ -528,7 +528,7 @@ handle_imsg_session(struct imsg *imsg, size_t datalen)
 		if (st.flags & TAB_CURRENT)
 			curr = tab;
 		if (st.flags & TAB_KILLED)
-			kill_tab(tab);
+			kill_tab(tab, 1);
 		break;
 
 	case IMSG_SESSION_TAB_HIST:

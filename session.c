@@ -85,10 +85,13 @@ new_tab(const char *url, const char *base, struct tab *after)
 
 /*
  * Move a tab from the tablist to the killed tab list and erase its
- * contents.  NB: doesn't update the current_tab.
+ * contents.  Append should always be 0 to prepend tabs so unkill_tab
+ * can work correctly; appending is only useful during startup when
+ * receiving the list of killed tabs to keep the correct order.
+ * NB: doesn't update the current_tab.
  */
 void
-kill_tab(struct tab *tab)
+kill_tab(struct tab *tab, int append)
 {
 	int count;
 
@@ -101,7 +104,10 @@ kill_tab(struct tab *tab)
 	if (evtimer_pending(&tab->loadingev, NULL))
 		evtimer_del(&tab->loadingev);
 
-	TAILQ_INSERT_HEAD(&ktabshead, tab, tabs);
+	if (append)
+		TAILQ_INSERT_TAIL(&ktabshead, tab, tabs);
+	else
+		TAILQ_INSERT_HEAD(&ktabshead, tab, tabs);
 
 	/* gc closed tabs */
 	count = 0;

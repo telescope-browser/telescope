@@ -33,7 +33,7 @@ struct session_tab_hist {
 void		 switch_to_tab(struct tab *);
 unsigned int	 tab_new_id(void);
 struct tab	*new_tab(const char *, const char *base, struct tab *);
-void		 kill_tab(struct tab *);
+void		 kill_tab(struct tab *, int);
 struct tab	*unkill_tab(void);
 void		 free_tab(struct tab *);
 void		 stop_tab(struct tab*);
