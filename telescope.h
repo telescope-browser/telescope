@@ -131,7 +131,6 @@ struct vline {
 };
 
 struct parser;
-struct page;
 
 typedef int	(*parsechunkfn)(struct parser*, const char*, size_t);
 typedef int	(*parserfreefn)(struct parser*);
