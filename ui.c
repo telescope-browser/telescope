@@ -763,7 +763,7 @@ redraw_modeline(struct tab *tab)
 	wattr_on(modeline, modeline_face.background, NULL);
 	wmove(modeline, 0, 0);
 
-	wprintw(modeline, "-%c%c %s ",
+	wprintw(modeline, "-%c%c- %s ",
 	    spin[tab->loading_anim_step],
 	    trust_status_char(tab->trust),
 	    mode == NULL ? "(none)" : mode);
