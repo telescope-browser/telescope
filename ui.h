@@ -119,6 +119,7 @@ enum pairs {
 
 	PMINIBUF,
 
+	PFRINGE_PRFX,
 	PFRINGE,
 	PFRINGE_TRAIL,
 };

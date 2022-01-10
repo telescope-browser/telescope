@@ -34,6 +34,7 @@ int dont_wrap_pre = 0;
 int emojify_link = 1;
 int enable_colors = 1;
 int fill_column = 120;
+int fringe_ignore_offset = 0;
 int hide_pre_blocks = 0;
 int hide_pre_closing_line = 0;
 int hide_pre_context = 0;
@@ -208,7 +209,7 @@ struct line_face line_faces[] = {
 
 	/* misc ui */
 	[LINE_FRINGE] = {
-		.prfx_pair = PFRINGE,
+		.prfx_pair = PFRINGE_PRFX,
 		.pair = PFRINGE,
 		.trail_pair = PFRINGE_TRAIL,
 	}
@@ -567,6 +568,8 @@ config_setvari(const char *var, int val)
 	} else if (!strcmp(var, "max-killed-tabs")) {
 		if (val >= 0)
 			max_killed_tabs = MIN(val, 128);
+	} else if (!strcmp(var, "fringe-ignore-offset")) {
+		fringe_ignore_offset = !!val;
 	} else {
 		return 0;
 	}

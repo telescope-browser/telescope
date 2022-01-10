@@ -25,6 +25,7 @@ extern int	 dont_wrap_pre;
 extern int	 emojify_link;
 extern int	 enable_colors;
 extern int	 fill_column;
+extern int	 fringe_ignore_offset;
 extern int	 hide_pre_blocks;
 extern int	 hide_pre_closing_line;
 extern int	 hide_pre_context;

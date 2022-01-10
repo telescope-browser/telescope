@@ -481,6 +481,9 @@ print_vline(int off, int width, WINDOW *window, struct vline *vl)
 	/* unused, set by getyx */
 	(void)y;
 
+	if (vl->parent->type == LINE_FRINGE && fringe_ignore_offset)
+		off = 0;
+
 	line_prefix_and_text(vl, emojibuf, sizeof(emojibuf), &prfx, &text);
 
 	wattr_on(window, body_face.left, NULL);
@@ -706,7 +709,7 @@ again:
 	buffer->force_redraw = 0;
 end:
 	for (; show_fringe && l < height; l++)
-		print_vline(0, width, win, &fringe);
+		print_vline(off, width, win, &fringe);
 
 	wmove(win, buffer->curs_y, buffer->curs_x);
 }
