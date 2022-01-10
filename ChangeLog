@@ -1,6 +1,7 @@
 2022-01-10  Omar Polo  <op@omarpolo.com>
 
 	* defaults.c (fringe): add vi-like fringes customizable using `style line.fringe { ... }'
+	(config_setvari): allow to ignore olivetti-mode' offset for fringe: fringe-ignore-offset
 
 2022-01-05  Omar Polo  <op@omarpolo.com>
 
