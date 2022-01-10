@@ -106,6 +106,9 @@ enum line_type {
 	LINE_DOWNLOAD,
 	LINE_DOWNLOAD_DONE,
 	LINE_DOWNLOAD_INFO,
+
+	/* misc ui */
+	LINE_FRINGE,
 };
 
 /* for lines: mark as hidden */

@@ -118,6 +118,9 @@ enum pairs {
 	PMODELINE,
 
 	PMINIBUF,
+
+	PFRINGE,
+	PFRINGE_TRAIL,
 };
 
 extern struct thiskey thiskey;

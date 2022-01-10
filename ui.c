@@ -60,7 +60,7 @@ static void		 rearrange_windows(void);
 static void		 line_prefix_and_text(struct vline *, char *, size_t, const char **, const char **);
 static void		 print_vline(int, int, WINDOW*, struct vline*);
 static void		 redraw_tabline(void);
-static void		 redraw_window(WINDOW*, int, int, int, struct buffer*);
+static void		 redraw_window(WINDOW *, int, int, int, int, struct buffer *);
 static void		 redraw_download(void);
 static void		 redraw_help(void);
 static void		 redraw_body(struct tab*);
@@ -639,10 +639,10 @@ adjust_line(struct vline *vl, struct buffer *buffer)
 
 static void
 redraw_window(WINDOW *win, int off, int height, int width,
-    struct buffer *buffer)
+    int show_fringe, struct buffer *buffer)
 {
 	struct vline	*vl;
-	int		 l, onscreen;
+	int		 onscreen = 0, l = 0;
 
 	restore_curs_x(buffer);
 
@@ -670,8 +670,6 @@ again:
 
 	buffer->current_line = adjust_line(buffer->current_line, buffer);
 
-	l = 0;
-	onscreen = 0;
 	for (vl = buffer->top_line; vl != NULL; vl = TAILQ_NEXT(vl, vlines)) {
 		if (vl->parent->flags & L_HIDDEN)
 			continue;
@@ -707,19 +705,22 @@ again:
 	buffer->last_line_off = buffer->line_off;
 	buffer->force_redraw = 0;
 end:
+	for (; show_fringe && l < height; l++)
+		print_vline(0, width, win, &fringe);
+
 	wmove(win, buffer->curs_y, buffer->curs_x);
 }
 
 static void
 redraw_download(void)
 {
-	redraw_window(download, 0, download_lines, COLS, &downloadwin);
+	redraw_window(download, 0, download_lines, COLS, 0, &downloadwin);
 }
 
 static void
 redraw_help(void)
 {
-	redraw_window(help, 0, help_lines, help_cols, &helpwin);
+	redraw_window(help, 0, help_lines, help_cols, 1, &helpwin);
 }
 
 static void
@@ -731,7 +732,7 @@ redraw_body(struct tab *tab)
 		tab->buffer.force_redraw =1;
 	last_tab = tab;
 
-	redraw_window(body, x_offset, body_lines, body_cols, &tab->buffer);
+	redraw_window(body, x_offset, body_lines, body_cols, 1, &tab->buffer);
 }
 
 static inline char
@@ -875,7 +876,7 @@ do_redraw_minibuffer(void)
 static void
 do_redraw_minibuffer_compl(void)
 {
-	redraw_window(minibuffer, 0, 10, COLS,
+	redraw_window(minibuffer, 0, 10, COLS, 1,
 	    &ministate.compl.buffer);
 }
 

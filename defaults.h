@@ -33,6 +33,8 @@ extern int	 olivetti_mode;
 extern int	 set_title;
 extern int	 tab_bar_show;
 
+extern struct vline fringe;
+
 struct lineprefix {
 	const char	*prfx1;
 	const char	*prfx2;

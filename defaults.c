@@ -42,6 +42,18 @@ int olivetti_mode = 1;
 int set_title = 1;
 int tab_bar_show = 1;
 
+static struct line fringe_line = {
+	.type = LINE_FRINGE,
+};
+struct vline fringe = {
+	/*
+	 * This is a special vline, it won't ever be free'd, as it's
+	 * only "virtual" for the UI, it's never added to a buffer.
+	 */
+	.line = (char *)"",
+	.parent = &fringe_line,
+};
+
 struct lineprefix line_prefixes[] = {
 	[LINE_TEXT] =		{ "",		"" },
 	[LINE_LINK] =		{ "→ ",	"  " },
@@ -68,6 +80,8 @@ struct lineprefix line_prefixes[] = {
 	[LINE_DOWNLOAD] =	{" Fetching ", "          "},
 	[LINE_DOWNLOAD_DONE] =	{" Done     ", "          "},
 	[LINE_DOWNLOAD_INFO] =	{" ", " "},
+
+	[LINE_FRINGE] =		{"", ""},
 };
 
 struct line_face line_faces[] = {
@@ -191,6 +205,13 @@ struct line_face line_faces[] = {
 		.pair = PDOWNLOAD_INFO,
 		.trail_pair = PDOWNLOAD_INFO_TRAIL
 	},
+
+	/* misc ui */
+	[LINE_FRINGE] = {
+		.prfx_pair = PFRINGE,
+		.pair = PFRINGE,
+		.trail_pair = PFRINGE_TRAIL,
+	}
 };
 
 struct tab_face tab_face = {
@@ -264,6 +285,9 @@ struct mapping {
 	{"download.ongoing",	LINE_DOWNLOAD},
 	{"download.done",	LINE_DOWNLOAD_DONE},
 	{"download.info",	LINE_DOWNLOAD_INFO},
+
+	/* misc ui */
+	{"fringe",		LINE_FRINGE},
 };
 
 static struct mapping *

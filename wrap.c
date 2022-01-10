@@ -283,6 +283,9 @@ wrap_page(struct buffer *buffer, int width)
 		case LINE_DOWNLOAD_INFO:
 			wrap_one(buffer, prfx, l, width);
 			break;
+		case LINE_FRINGE:
+			/* never, ever wrapped */
+			break;
 		}
 
 		if (top_orig == l && buffer->top_line == NULL) {
