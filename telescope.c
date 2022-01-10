@@ -29,6 +29,7 @@
 
 #include "defaults.h"
 #include "fs.h"
+#include "mcache.h"
 #include "minibuffer.h"
 #include "parser.h"
 #include "session.h"
@@ -605,6 +606,7 @@ handle_imsg_eof(struct imsg *imsg, size_t datalen)
 	if (tab != NULL) {
 		if (!parser_free(tab))
 			die();
+		mcache_buffer(tab->hist_cur->h, &tab->buffer, tab->trust);
 		ui_on_tab_refresh(tab);
 		ui_on_tab_loaded(tab);
 	} else {
@@ -890,6 +892,30 @@ gopher_send_search_req(struct tab *tab, const char *text)
 	make_request(tab, &req, PROTO_GOPHER, NULL);
 }
 
+static int
+try_load_cache(struct tab *tab)
+{
+	struct evbuffer	*evb;
+	int		 trust;
+
+	if (!mcache_lookup(tab->hist_cur->h, &evb, &trust))
+		return 0;
+
+	parser_init(tab, gemtext_initparser);
+	if (!parser_parse(tab, EVBUFFER_DATA(evb), EVBUFFER_LENGTH(evb)))
+		goto err;
+	parser_free(tab);
+	tab->trust = trust;
+	ui_on_tab_refresh(tab);
+	ui_on_tab_loaded(tab);
+	return 1;
+
+err:
+	parser_free(tab);
+	erase_buffer(&tab->buffer);
+	return 0;
+}
+
 /*
  * Effectively load the given url in the given tab.  Return 1 when
  * loading the page asynchronously, and thus when an erase_buffer can
@@ -925,6 +951,9 @@ do_load_url(struct tab *tab, const char *url, const char *base)
 
 	phos_serialize_uri(&tab->uri, tab->hist_cur->h,
 	    sizeof(tab->hist_cur->h));
+
+	if (try_load_cache(tab))
+		return 0;
 
 	for (p = protos; p->schema != NULL; ++p) {
 		if (!strcmp(tab->uri.scheme, p->schema)) {
@@ -1248,6 +1277,9 @@ main(int argc, char * const *argv)
 	tofu_init(&certs, 5, offsetof(struct tofu_entry, domain));
 
 	event_init();
+
+	/* initialize the in-memory cache store */
+	mcache_init();
 
 	/* Setup event handler for the autosave */
 	autosave_init();
