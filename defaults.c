@@ -34,7 +34,7 @@ int dont_wrap_pre = 0;
 int emojify_link = 1;
 int enable_colors = 1;
 int fill_column = 120;
-int fringe_ignore_offset = 0;
+int fringe_ignore_offset = 1;
 int hide_pre_blocks = 0;
 int hide_pre_closing_line = 0;
 int hide_pre_context = 0;
@@ -82,7 +82,7 @@ struct lineprefix line_prefixes[] = {
 	[LINE_DOWNLOAD_DONE] =	{" Done     ", "          "},
 	[LINE_DOWNLOAD_INFO] =	{" ", " "},
 
-	[LINE_FRINGE] =		{"", ""},
+	[LINE_FRINGE] =		{"~", ""},
 };
 
 struct line_face line_faces[] = {
