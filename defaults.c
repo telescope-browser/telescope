@@ -47,11 +47,6 @@ static struct line fringe_line = {
 	.type = LINE_FRINGE,
 };
 struct vline fringe = {
-	/*
-	 * This is a special vline, it won't ever be free'd, as it's
-	 * only "virtual" for the UI, it's never added to a buffer.
-	 */
-	.line = (char *)"",
 	.parent = &fringe_line,
 };
 
