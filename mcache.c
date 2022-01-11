@@ -42,6 +42,7 @@ struct mcache {
 } mcache;
 
 struct mcache_entry {
+	const char	*parser_name;
 	int		 trust;
 	struct evbuffer	*evb;
 	char		 url[];
@@ -101,6 +102,7 @@ mcache_tab(struct tab *tab)
 
 	if ((e = calloc(1, len)) == NULL)
 		return -1;
+	e->parser_name = tab->buffer.page.name;
 	e->trust = tab->trust;
 	memcpy(e->url, url, l);
 
@@ -187,6 +189,7 @@ mcache_lookup(const char *url, struct tab *tab)
 	if (!parser_free(tab))
 		goto err;
 
+	tab->buffer.page.name = e->parser_name;
 	tab->trust = e->trust;
 	return 1;
 
