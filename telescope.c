@@ -608,7 +608,7 @@ handle_imsg_eof(struct imsg *imsg, size_t datalen)
 			die();
 		if (has_prefix(tab->hist_cur->h, "gemini://") ||
 		    has_prefix(tab->hist_cur->h, "gopher://"))
-			mcache_buffer(tab->hist_cur->h, &tab->buffer, tab->trust);
+			mcache_tab(tab);
 		ui_on_tab_refresh(tab);
 		ui_on_tab_loaded(tab);
 	} else {
@@ -893,30 +893,6 @@ gopher_send_search_req(struct tab *tab, const char *text)
 	make_request(tab, &req, PROTO_GOPHER, NULL);
 }
 
-static int
-try_load_cache(struct tab *tab)
-{
-	struct evbuffer	*evb;
-	int		 trust;
-
-	if (!mcache_lookup(tab->hist_cur->h, &evb, &trust))
-		return 0;
-
-	parser_init(tab, gemtext_initparser);
-	if (!parser_parse(tab, EVBUFFER_DATA(evb), EVBUFFER_LENGTH(evb)))
-		goto err;
-	parser_free(tab);
-	tab->trust = trust;
-	ui_on_tab_refresh(tab);
-	ui_on_tab_loaded(tab);
-	return 1;
-
-err:
-	parser_free(tab);
-	erase_buffer(&tab->buffer);
-	return 0;
-}
-
 /*
  * Effectively load the given url in the given tab.  Return 1 when
  * loading the page asynchronously, and thus when an erase_buffer can
@@ -929,6 +905,7 @@ do_load_url(struct tab *tab, const char *url, const char *base, int mode)
 	struct phos_uri	 uri;
 	struct proto	*p;
 	struct proxy	*proxy;
+	int		 nocache = mode & LU_MODE_NOCACHE;
 	char		*t;
 
 	tab->proxy = NULL;
@@ -952,8 +929,11 @@ do_load_url(struct tab *tab, const char *url, const char *base, int mode)
 	phos_serialize_uri(&tab->uri, tab->hist_cur->h,
 	    sizeof(tab->hist_cur->h));
 
-	if (!(mode & LU_MODE_NOCACHE) && try_load_cache(tab))
+	if (!nocache && mcache_lookup(tab->hist_cur->h, tab)) {
+		ui_on_tab_refresh(tab);
+		ui_on_tab_loaded(tab);
 		return 0;
+	}
 
 	for (p = protos; p->schema != NULL; ++p) {
 		if (!strcmp(tab->uri.scheme, p->schema)) {

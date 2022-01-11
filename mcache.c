@@ -22,6 +22,7 @@
 
 #include "telescope.h"
 #include "mcache.h"
+#include "parser.h"
 
 const char *gemtext_prefixes[] = {
 	[LINE_TEXT] = "",
@@ -86,25 +87,27 @@ mcache_init(void)
 }
 
 int
-mcache_buffer(const char *url, struct buffer *buf, int trust)
+mcache_tab(struct tab *tab)
 {
 	struct mcache_entry	*e;
 	struct line		*line;
 	unsigned int		 slot;
 	size_t			 l, len;
+	const char		*url;
 
+	url = tab->hist_cur->h;
 	l = strlen(url);
 	len = sizeof(*e) + l + 1;
 
 	if ((e = calloc(1, len)) == NULL)
 		return -1;
-	e->trust = trust;
+	e->trust = tab->trust;
 	memcpy(e->url, url, l);
 
 	if ((e->evb = evbuffer_new()) == NULL)
 		goto err;
 
-	TAILQ_FOREACH(line, &buf->page.head, lines) {
+	TAILQ_FOREACH(line, &tab->buffer.page.head, lines) {
 		const char	*text, *alt;
 		int		 r;
 
@@ -169,7 +172,7 @@ err:
 }
 
 int
-mcache_lookup(const char *url, struct evbuffer **ret, int *trust)
+mcache_lookup(const char *url, struct tab *tab)
 {
 	struct mcache_entry	*e;
 	unsigned int		 slot;
@@ -178,7 +181,17 @@ mcache_lookup(const char *url, struct evbuffer **ret, int *trust)
 	if ((e = ohash_find(&mcache.h, slot)) == NULL)
 		return 0;
 
-	*ret = e->evb;
-	*trust = e->trust;
+	parser_init(tab, gemtext_initparser);
+	if (!parser_parse(tab, EVBUFFER_DATA(e->evb), EVBUFFER_LENGTH(e->evb)))
+		goto err;
+	if (!parser_free(tab))
+		goto err;
+
+	tab->trust = e->trust;
 	return 1;
+
+err:
+	parser_free(tab);
+	erase_buffer(&tab->buffer);
+	return 0;
 }

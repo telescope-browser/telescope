@@ -17,10 +17,10 @@
 #ifndef MCACHE_H
 #define MCACHE_H
 
-struct buffer;
+struct tab;
 
 void	 mcache_init(void);
-int	 mcache_buffer(const char *, struct buffer *, int);
-int	 mcache_lookup(const char *, struct evbuffer **, int *);
+int	 mcache_tab(struct tab *);
+int	 mcache_lookup(const char *, struct tab *);
 
 #endif
