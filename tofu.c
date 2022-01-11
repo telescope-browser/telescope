@@ -14,36 +14,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "telescope.h"
+#include "compat.h"
 
 #include <stdlib.h>
 #include <string.h>
 
-static void	*hash_alloc(size_t, void*);
-static void	*hash_calloc(size_t, size_t, void*);
-static void	 hash_free(void*, void*);
-
-static void *
-hash_alloc(size_t len, void *d)
-{
-	if ((d = malloc(len)) == NULL)
-		abort();
-	return d;
-}
-
-static void *
-hash_calloc(size_t nmemb, size_t size, void *d)
-{
-	if ((d = calloc(nmemb, size)) == NULL)
-		abort();
-	return d;
-}
-
-static void
-hash_free(void *ptr, void *d)
-{
-	free(ptr);
-}
+#include "telescope.h"
 
 void
 tofu_init(struct ohash *h, unsigned int sz, ptrdiff_t ko)

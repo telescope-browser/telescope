@@ -48,32 +48,6 @@ struct mcache_entry {
 	char		 url[];
 };
 
-static void	*hash_alloc(size_t, void *);
-static void	*hash_calloc(size_t, size_t, void *);
-static void	 hash_free(void *, void *);
-
-static void *
-hash_alloc(size_t len, void *d)
-{
-	if ((d = malloc(len)) == NULL)
-		abort();
-	return d;
-}
-
-static void *
-hash_calloc(size_t nmemb, size_t size, void *d)
-{
-	if ((d = calloc(nmemb, size)) == NULL)
-		abort();
-	return d;
-}
-
-static void
-hash_free(void *ptr, void *d)
-{
-	free(ptr);
-}
-
 void
 mcache_init(void)
 {

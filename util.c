@@ -145,3 +145,25 @@ imsg_compose_event(struct imsgev *iev, uint16_t type, uint32_t peerid,
 
 	return ret;
 }
+
+void *
+hash_alloc(size_t len, void *d)
+{
+	if ((d = malloc(len)) == NULL)
+		abort();
+	return d;
+}
+
+void *
+hash_calloc(size_t nmemb, size_t size, void *d)
+{
+	if ((d = calloc(nmemb, size)) == NULL)
+		abort();
+	return d;
+}
+
+void
+hash_free(void *ptr, void *d)
+{
+	free(ptr);
+}
