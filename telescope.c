@@ -992,14 +992,11 @@ load_url(struct tab *tab, const char *url, const char *base, int mode)
 void
 load_url_in_tab(struct tab *tab, const char *url, const char *base, int mode)
 {
-	if (!operating) {
-		load_url(tab, url, base, mode);
-		return;
+	if (operating) {
+		autosave_hook();
+		message("Loading %s...", url);
 	}
 
-	autosave_hook();
-
-	message("Loading %s...", url);
 	load_url(tab, url, base, mode);
 }
 
