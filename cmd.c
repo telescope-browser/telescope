@@ -22,6 +22,7 @@
 
 #include "compl.h"
 #include "defaults.h"
+#include "mcache.h"
 #include "minibuffer.h"
 #include "session.h"
 #include "telescope.h"
@@ -971,4 +972,18 @@ void
 cmd_toggle_downloads(struct buffer *buffer)
 {
 	ui_toggle_side_window(SIDE_WINDOW_BOTTOM);
+}
+
+void
+cmd_cache_info(struct buffer *buffer)
+{
+	size_t	npages, tot;
+	char	fmt[FMT_SCALED_STRSIZE];
+
+	mcache_info(&npages, &tot);
+
+	if (fmt_scaled(tot, fmt) == 0)
+		message("Cache: pages: %zu, total: %s", npages, fmt);
+	else
+		message("Cache: pages: %zu, total: %zu", npages, tot);
 }
