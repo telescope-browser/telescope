@@ -20,6 +20,7 @@
 #include <string.h>
 
 #include "telescope.h"
+#include "utils.h"
 
 void
 tofu_init(struct ohash *h, unsigned int sz, ptrdiff_t ko)

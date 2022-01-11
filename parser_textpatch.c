@@ -23,6 +23,7 @@
 
 #include "telescope.h"
 #include "parser.h"
+#include "utils.h"
 
 static int	tpatch_parse(struct parser *, const char *, size_t);
 static int	tpatch_emit_line(struct parser *, const char *, size_t);

@@ -24,6 +24,7 @@
 #include "session.h"
 #include "ui.h"
 #include "utf8.h"
+#include "utils.h"
 
 static void		*minibuffer_metadata(void);
 static void		 minibuffer_hist_save_entry(void);

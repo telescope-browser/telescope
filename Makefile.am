@@ -46,6 +46,7 @@ telescope_SOURCES =	cmd.c			\
 			utf8.c			\
 			utf8.h			\
 			util.c			\
+			utils.h			\
 			wrap.c
 
 # phos bundled files

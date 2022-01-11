@@ -23,6 +23,7 @@
 #include "telescope.h"
 #include "mcache.h"
 #include "parser.h"
+#include "utils.h"
 
 const char *gemtext_prefixes[] = {
 	[LINE_TEXT] = "",

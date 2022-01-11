@@ -37,6 +37,7 @@
 #include "pages.h"
 #include "telescope.h"
 #include "session.h"
+#include "utils.h"
 
 static void		 die(void) __attribute__((__noreturn__));
 static void		 send_file(uint32_t, FILE *);

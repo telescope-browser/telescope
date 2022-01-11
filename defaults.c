@@ -25,6 +25,7 @@
 #include "defaults.h"
 #include "telescope.h"
 #include "ui.h"
+#include "utils.h"
 
 char	*download_path = NULL;
 char	*new_tab_url = NULL;

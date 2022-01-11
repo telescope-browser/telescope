@@ -344,16 +344,6 @@ void			 tofu_update(struct ohash*, struct tofu_entry*);
 void			 tofu_temp_trust(struct ohash *, const char *, const char *, const char *);
 
 /* util.c */
-int		 mark_nonblock(int);
-int		 has_prefix(const char*, const char*);
-int		 has_suffix(const char *, const char *);
-int		 unicode_isspace(uint32_t);
-int		 unicode_isgraph(uint32_t);
-int		 dispatch_imsg(struct imsgev *, short, imsg_handlerfn **, size_t);
-int		 imsg_compose_event(struct imsgev *, uint16_t, uint32_t, pid_t, int, const void *, uint16_t);
-void		*hash_alloc(size_t, void *);
-void		*hash_calloc(size_t, size_t, void *);
-void		 hash_free(void *, void *);
 
 /* wrap.c */
 void		 erase_buffer(struct buffer *);

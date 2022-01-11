@@ -22,6 +22,7 @@
 
 #include "keymap.h"
 #include "telescope.h"
+#include "utils.h"
 
 #include <phos/phos.h>
 

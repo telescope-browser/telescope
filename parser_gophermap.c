@@ -21,6 +21,7 @@
 #include <string.h>
 
 #include "parser.h"
+#include "utils.h"
 
 struct gm_selector {
 	char		 type;

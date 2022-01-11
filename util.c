@@ -24,6 +24,7 @@
 #include <unistd.h>
 
 #include "telescope.h"
+#include "utils.h"
 
 static void	 imsg_event_add(struct imsgev *);
 

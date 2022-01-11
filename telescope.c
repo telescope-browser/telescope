@@ -35,6 +35,7 @@
 #include "session.h"
 #include "telescope.h"
 #include "ui.h"
+#include "utils.h"
 
 static struct option longopts[] = {
 	{"colors",      no_argument,    NULL,   'C'},

@@ -22,6 +22,7 @@
 
 #include "parser.h"
 #include "telescope.h"
+#include "utils.h"
 
 static int	check_for_utf8(char*);
 

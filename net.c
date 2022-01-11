@@ -37,6 +37,7 @@
 #endif
 
 #include "telescope.h"
+#include "utils.h"
 
 static struct imsgev		*iev_ui;
 
