@@ -39,6 +39,7 @@ const char *gemtext_prefixes[] = {
 
 struct mcache {
 	struct ohash	h;
+	size_t		npages;
 	size_t		tot;
 } mcache;
 
@@ -58,6 +59,9 @@ mcache_free_entry(const char *url)
 	slot = ohash_qlookup(&mcache.h, url);
 	if ((e = ohash_remove(&mcache.h, slot)) == NULL)
 		return;
+
+	mcache.npages--;
+	mcache.tot -= EVBUFFER_LENGTH(e->evb);
 
 	evbuffer_free(e->evb);
 	free(e);
@@ -156,6 +160,10 @@ mcache_tab(struct tab *tab)
 
 	slot = ohash_qlookup(&mcache.h, url);
 	ohash_insert(&mcache.h, slot, e);
+
+	mcache.npages++;
+	mcache.tot += EVBUFFER_LENGTH(e->evb);
+
 	return 0;
 
 err:
@@ -189,4 +197,11 @@ err:
 	parser_free(tab);
 	erase_buffer(&tab->buffer);
 	return 0;
+}
+
+void
+mcache_info(size_t *npages, size_t *tot)
+{
+	*npages = mcache.npages;
+	*tot = mcache.tot;
 }

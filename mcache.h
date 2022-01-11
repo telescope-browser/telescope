@@ -22,5 +22,6 @@ struct tab;
 void	 mcache_init(void);
 int	 mcache_tab(struct tab *);
 int	 mcache_lookup(const char *, struct tab *);
+void	 mcache_info(size_t *, size_t *);
 
 #endif
