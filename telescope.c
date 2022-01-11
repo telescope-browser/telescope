@@ -606,7 +606,9 @@ handle_imsg_eof(struct imsg *imsg, size_t datalen)
 	if (tab != NULL) {
 		if (!parser_free(tab))
 			die();
-		mcache_buffer(tab->hist_cur->h, &tab->buffer, tab->trust);
+		if (has_prefix(tab->hist_cur->h, "gemini://") ||
+		    has_prefix(tab->hist_cur->h, "gopher://"))
+			mcache_buffer(tab->hist_cur->h, &tab->buffer, tab->trust);
 		ui_on_tab_refresh(tab);
 		ui_on_tab_loaded(tab);
 	} else {
