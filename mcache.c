@@ -37,6 +37,9 @@ const char *gemtext_prefixes[] = {
 	[LINE_PRE_END] = "```",
 };
 
+static struct timeval tv = { 60, 0 };
+static struct event timerev;
+
 struct mcache {
 	struct ohash	h;
 	size_t		npages;
@@ -44,6 +47,7 @@ struct mcache {
 } mcache;
 
 struct mcache_entry {
+	time_t		 ts;
 	const char	*parser_name;
 	int		 trust;
 	struct evbuffer	*evb;
@@ -67,6 +71,22 @@ mcache_free_entry(const char *url)
 	free(e);
 }
 
+static void
+clean_old_entries(int fd, short ev, void *data)
+{
+	struct mcache_entry	*e;
+	unsigned int		 i;
+	time_t			 treshold;
+
+	treshold = time(NULL) - 15 * 60;
+
+	for (e = ohash_first(&mcache.h, &i); e != NULL; e = ohash_next(&mcache.h, &i))
+		if (e->ts < treshold)
+			mcache_free_entry(e->url);
+
+	evtimer_add(&timerev, &tv);
+}
+
 void
 mcache_init(void)
 {
@@ -78,6 +98,8 @@ mcache_init(void)
 	};
 
 	ohash_init(&mcache.h, 5, &info);
+
+	evtimer_set(&timerev, clean_old_entries, NULL);
 }
 
 int
@@ -95,6 +117,7 @@ mcache_tab(struct tab *tab)
 
 	if ((e = calloc(1, len)) == NULL)
 		return -1;
+	e->ts = time(NULL);
 	e->parser_name = tab->buffer.page.name;
 	e->trust = tab->trust;
 	memcpy(e->url, url, l);
@@ -163,6 +186,9 @@ mcache_tab(struct tab *tab)
 
 	mcache.npages++;
 	mcache.tot += EVBUFFER_LENGTH(e->evb);
+
+	if (!evtimer_pending(&timerev, NULL))
+		evtimer_add(&timerev, &tv);
 
 	return 0;
 
