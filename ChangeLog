@@ -1,3 +1,9 @@
+2022-01-11  Omar Polo  <op@omarpolo.com>
+
+	* cmd.c (cmd_cache_info): add command `cache-info' to show cache stats.
+
+	* mcache.c (mcache_tab): add a caching mechanism for gemini and gopher pages.
+
 2022-01-10  Omar Polo  <op@omarpolo.com>
 
 	* defaults.c (fringe): add vi-like fringes customizable using `style line.fringe { ... }'
