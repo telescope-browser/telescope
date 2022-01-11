@@ -49,6 +49,20 @@ struct mcache_entry {
 	char		 url[];
 };
 
+static void
+mcache_free_entry(const char *url)
+{
+	struct mcache_entry	*e;
+	unsigned int		 slot;
+
+	slot = ohash_qlookup(&mcache.h, url);
+	if ((e = ohash_remove(&mcache.h, slot)) == NULL)
+		return;
+
+	evbuffer_free(e->evb);
+	free(e);
+}
+
 void
 mcache_init(void)
 {
@@ -136,6 +150,9 @@ mcache_tab(struct tab *tab)
 		if (r == -1)
 			goto err;
 	}
+
+	/* free any previously cached copies of this page */
+	mcache_free_entry(url);
 
 	slot = ohash_qlookup(&mcache.h, url);
 	ohash_insert(&mcache.h, slot, e);
