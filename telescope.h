@@ -322,6 +322,10 @@ void		 sandbox_fs_process(void);
 extern int operating;
 extern int safe_mode;
 
+#define LU_MODE_NONE	0x0
+#define LU_MODE_NOHIST	0x1
+#define LU_MODE_NOCACHE	0x2
+
 void		 gopher_send_search_req(struct tab *, const char *);
 void		 load_url(struct tab *, const char *, const char *, int);
 void		 load_url_in_tab(struct tab *, const char *, const char *, int);

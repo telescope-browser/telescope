@@ -133,7 +133,7 @@ static int		 load_via_proxy(struct tab *, const char *,
 static int		 make_request(struct tab *, struct get_req *, int,
 			     const char *);
 static int		 make_fs_request(struct tab *, int, const char *);
-static int		 do_load_url(struct tab *, const char *, const char *);
+static int		 do_load_url(struct tab *, const char *, const char *, int);
 static pid_t		 start_child(enum telescope_process, const char *, int);
 
 static struct proto {
@@ -424,7 +424,7 @@ handle_imsg_got_meta(struct imsg *imsg, size_t datalen)
 			load_page_from_str(tab,
 			    err_pages[TOO_MUCH_REDIRECTS]);
 		} else
-			do_load_url(tab, tab->meta, NULL);
+			do_load_url(tab, tab->meta, NULL, LU_MODE_NOCACHE);
 	} else { /* 4x, 5x & 6x */
 		load_page_from_str(tab, err_pages[tab->code]);
 	}
@@ -925,7 +925,7 @@ err:
  * page synchronously.
  */
 static int
-do_load_url(struct tab *tab, const char *url, const char *base)
+do_load_url(struct tab *tab, const char *url, const char *base, int mode)
 {
 	struct phos_uri	 uri;
 	struct proto	*p;
@@ -954,7 +954,7 @@ do_load_url(struct tab *tab, const char *url, const char *base)
 	phos_serialize_uri(&tab->uri, tab->hist_cur->h,
 	    sizeof(tab->hist_cur->h));
 
-	if (try_load_cache(tab))
+	if (!(mode & LU_MODE_NOCACHE) && try_load_cache(tab))
 		return 0;
 
 	for (p = protos; p->schema != NULL; ++p) {
@@ -981,9 +981,10 @@ do_load_url(struct tab *tab, const char *url, const char *base)
  * prepare the url but don't load it.
  */
 void
-load_url(struct tab *tab, const char *url, const char *base, int nohist)
+load_url(struct tab *tab, const char *url, const char *base, int mode)
 {
 	int lazy = tab->flags & TAB_LAZY;
+	int nohist = mode & LU_MODE_NOHIST;
 
 	if (!nohist && (!lazy || tab->hist_cur == NULL)) {
 		if (tab->hist_cur != NULL)
@@ -1006,14 +1007,14 @@ load_url(struct tab *tab, const char *url, const char *base, int nohist)
 	}
 
 	if (!lazy)
-		do_load_url(tab, url, base);
+		do_load_url(tab, url, base, mode);
 }
 
 void
-load_url_in_tab(struct tab *tab, const char *url, const char *base, int nohist)
+load_url_in_tab(struct tab *tab, const char *url, const char *base, int mode)
 {
 	if (!operating) {
-		load_url(tab, url, base, nohist);
+		load_url(tab, url, base, mode);
 		return;
 	}
 
@@ -1021,7 +1022,7 @@ load_url_in_tab(struct tab *tab, const char *url, const char *base, int nohist)
 
 	message("Loading %s...", url);
 	start_loading_anim(tab);
-	load_url(tab, url, base, nohist);
+	load_url(tab, url, base, mode);
 }
 
 int
@@ -1032,7 +1033,7 @@ load_previous_page(struct tab *tab)
 	if ((h = TAILQ_PREV(tab->hist_cur, mhisthead, entries)) == NULL)
 		return 0;
 	tab->hist_cur = h;
-	do_load_url(tab, h->h, NULL);
+	do_load_url(tab, h->h, NULL, LU_MODE_NONE);
 	return 1;
 }
 
@@ -1044,7 +1045,7 @@ load_next_page(struct tab *tab)
 	if ((h = TAILQ_NEXT(tab->hist_cur, entries)) == NULL)
 		return 0;
 	tab->hist_cur = h;
-	do_load_url(tab, h->h, NULL);
+	do_load_url(tab, h->h, NULL, LU_MODE_NONE);
 	return 1;
 }
 

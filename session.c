@@ -39,7 +39,7 @@ switch_to_tab(struct tab *tab)
 
 	if (operating && tab->flags & TAB_LAZY) {
 		tab->flags ^= TAB_LAZY;
-		load_url_in_tab(tab, tab->hist_cur->h, NULL, 1);
+		load_url_in_tab(tab, tab->hist_cur->h, NULL, LU_MODE_NOHIST);
 	}
 }
 

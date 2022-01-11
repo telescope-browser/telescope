@@ -300,7 +300,8 @@ cmd_push_button(struct buffer *buffer)
 
 	switch (vl->parent->type) {
 	case LINE_LINK:
-		load_url_in_tab(current_tab, vl->parent->alt, NULL, 0);
+		load_url_in_tab(current_tab, vl->parent->alt, NULL,
+		    LU_MODE_NOCACHE);
 		break;
 	case LINE_PRE_START:
 		l = TAILQ_NEXT(vl->parent, lines);
@@ -585,7 +586,8 @@ cmd_load_current_url(struct buffer *buffer)
 void
 cmd_reload_page(struct buffer *buffer)
 {
-	load_url_in_tab(current_tab, current_tab->hist_cur->h, NULL, 1);
+	load_url_in_tab(current_tab, current_tab->hist_cur->h, NULL,
+	    LU_MODE_NOHIST|LU_MODE_NOCACHE);
 }
 
 void
@@ -603,7 +605,7 @@ cmd_bookmark_page(struct buffer *buffer)
 void
 cmd_list_bookmarks(struct buffer *buffer)
 {
-	load_url_in_tab(current_tab, "about:bookmarks", NULL, 0);
+	load_url_in_tab(current_tab, "about:bookmarks", NULL, LU_MODE_NONE);
 }
 
 void
