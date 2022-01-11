@@ -842,6 +842,7 @@ make_request(struct tab *tab, struct get_req *req, int proto, const char *r)
 		strlcat(req->req, "\r\n", sizeof(req->req));
 	}
 
+	start_loading_anim(tab);
 	ui_send_net(IMSG_GET_RAW, tab->id, req, sizeof(*req));
 
 	/*
@@ -870,8 +871,6 @@ void
 gopher_send_search_req(struct tab *tab, const char *text)
 {
 	struct get_req	req;
-
-	start_loading_anim(tab);
 
 	memset(&req, 0, sizeof(req));
 	strlcpy(req.host, tab->uri.host, sizeof(req.host));
@@ -933,7 +932,6 @@ do_load_url(struct tab *tab, const char *url, const char *base, int mode)
 	char		*t;
 
 	tab->proxy = NULL;
-
 	tab->trust = TS_UNKNOWN;
 
 	if (base == NULL)
@@ -1021,7 +1019,6 @@ load_url_in_tab(struct tab *tab, const char *url, const char *base, int mode)
 	autosave_hook();
 
 	message("Loading %s...", url);
-	start_loading_anim(tab);
 	load_url(tab, url, base, mode);
 }
 

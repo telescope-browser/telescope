@@ -409,8 +409,6 @@ cmd_previous_page(struct buffer *buffer)
 {
 	if (!load_previous_page(current_tab))
 		message("No previous page");
-	else
-		start_loading_anim(current_tab);
 }
 
 void
@@ -418,8 +416,6 @@ cmd_next_page(struct buffer *buffer)
 {
 	if (!load_next_page(current_tab))
 		message("No next page");
-	else
-		start_loading_anim(current_tab);
 }
 
 void
