@@ -25,7 +25,7 @@
 #include "parser.h"
 #include "utils.h"
 
-const char *gemtext_prefixes[] = {
+static const char *gemtext_prefixes[] = {
 	[LINE_TEXT] = "",
 	[LINE_TITLE_1] = "# ",
 	[LINE_TITLE_2] = "## ",
@@ -40,11 +40,9 @@ const char *gemtext_prefixes[] = {
 static struct timeval tv = { 60, 0 };
 static struct event timerev;
 
-struct mcache {
-	struct ohash	h;
-	size_t		npages;
-	size_t		tot;
-} mcache;
+static struct ohash	h;
+static size_t		npages;
+static size_t		tot;
 
 struct mcache_entry {
 	time_t		 ts;
@@ -60,12 +58,12 @@ mcache_free_entry(const char *url)
 	struct mcache_entry	*e;
 	unsigned int		 slot;
 
-	slot = ohash_qlookup(&mcache.h, url);
-	if ((e = ohash_remove(&mcache.h, slot)) == NULL)
+	slot = ohash_qlookup(&h, url);
+	if ((e = ohash_remove(&h, slot)) == NULL)
 		return;
 
-	mcache.npages--;
-	mcache.tot -= EVBUFFER_LENGTH(e->evb);
+	npages--;
+	tot -= EVBUFFER_LENGTH(e->evb);
 
 	evbuffer_free(e->evb);
 	free(e);
@@ -80,7 +78,7 @@ clean_old_entries(int fd, short ev, void *data)
 
 	treshold = time(NULL) - 15 * 60;
 
-	for (e = ohash_first(&mcache.h, &i); e != NULL; e = ohash_next(&mcache.h, &i))
+	for (e = ohash_first(&h, &i); e != NULL; e = ohash_next(&h, &i))
 		if (e->ts < treshold)
 			mcache_free_entry(e->url);
 
@@ -97,7 +95,7 @@ mcache_init(void)
 		.alloc = hash_alloc,
 	};
 
-	ohash_init(&mcache.h, 5, &info);
+	ohash_init(&h, 5, &info);
 
 	evtimer_set(&timerev, clean_old_entries, NULL);
 }
@@ -181,11 +179,11 @@ mcache_tab(struct tab *tab)
 	/* free any previously cached copies of this page */
 	mcache_free_entry(url);
 
-	slot = ohash_qlookup(&mcache.h, url);
-	ohash_insert(&mcache.h, slot, e);
+	slot = ohash_qlookup(&h, url);
+	ohash_insert(&h, slot, e);
 
-	mcache.npages++;
-	mcache.tot += EVBUFFER_LENGTH(e->evb);
+	npages++;
+	tot += EVBUFFER_LENGTH(e->evb);
 
 	if (!evtimer_pending(&timerev, NULL))
 		evtimer_add(&timerev, &tv);
@@ -205,8 +203,8 @@ mcache_lookup(const char *url, struct tab *tab)
 	struct mcache_entry	*e;
 	unsigned int		 slot;
 
-	slot = ohash_qlookup(&mcache.h, url);
-	if ((e = ohash_find(&mcache.h, slot)) == NULL)
+	slot = ohash_qlookup(&h, url);
+	if ((e = ohash_find(&h, slot)) == NULL)
 		return 0;
 
 	parser_init(tab, gemtext_initparser);
@@ -226,8 +224,8 @@ err:
 }
 
 void
-mcache_info(size_t *npages, size_t *tot)
+mcache_info(size_t *r_npages, size_t *r_tot)
 {
-	*npages = mcache.npages;
-	*tot = mcache.tot;
+	*r_npages = npages;
+	*r_tot = tot;
 }
