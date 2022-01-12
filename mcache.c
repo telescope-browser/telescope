@@ -37,7 +37,7 @@ static const char *gemtext_prefixes[] = {
 	[LINE_PRE_END] = "```",
 };
 
-static struct timeval tv = { 60, 0 };
+static struct timeval tv = { 5 * 60, 0 };
 static struct event timerev;
 
 static struct ohash	h;
@@ -76,7 +76,8 @@ clean_old_entries(int fd, short ev, void *data)
 	unsigned int		 i;
 	time_t			 treshold;
 
-	treshold = time(NULL) - 15 * 60;
+	/* delete pages older than an hour */
+	treshold = time(NULL) - 60 * 60;
 
 	for (e = ohash_first(&h, &i); e != NULL; e = ohash_next(&h, &i))
 		if (e->ts < treshold)
