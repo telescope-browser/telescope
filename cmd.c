@@ -983,7 +983,7 @@ cmd_cache_info(struct buffer *buffer)
 	mcache_info(&npages, &tot);
 
 	if (fmt_scaled(tot, fmt) == 0)
-		message("Cache: pages: %zu, total: %s", npages, fmt);
+		message("pages: %zu, total: %s", npages, fmt);
 	else
-		message("Cache: pages: %zu, total: %zu", npages, tot);
+		message("pages: %zu, total: %zu", npages, tot);
 }
