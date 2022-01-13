@@ -132,6 +132,7 @@ unkill_tab(void)
 	if (TAILQ_EMPTY(&ktabshead))
 		return NULL;
 
+	ui_schedule_redraw();
 	autosave_hook();
 
 	t = TAILQ_FIRST(&ktabshead);
