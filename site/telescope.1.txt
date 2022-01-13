@@ -13,12 +13,13 @@ DESCRIPTION
 
      The arguments are as follows:
 
-     -C, --colors   Show all available colors and exit.
+     -C, --colours  Show all available colors and exit.	 This option can also
+		    be spelled --colors.
 
      -c config	    Specify an alternative configuration file.	By default
 		    ~/.config/telescope/config is loaded.
 
-     -h, --help	    Display version and usage.
+     -h, --help	    Display version, usage and exit.
 
      -n		    Configtest mode.  Only check the configuration file for
 		    validity.
@@ -29,7 +30,7 @@ DESCRIPTION
 		    telescope still loads the session file and the custom
 		    about pages.
 
-     -v, --version  Display version.
+     -v, --version  Display version and exit.
 
 UI CONCEPTS
      telescope interface is divided into four areas: the tabline, the body,
@@ -156,6 +157,9 @@ CONFIGURATION FILE
 	     fill-column    (integer) If greater than zero, lines of text will
 			    be formatted in a way that don't exceed the given
 			    number of columns.	Defaults to 80.
+	     fringe-ignore-offset
+			    (integer) If nonzero, the fringe doesn't obey to
+			    olivetti-mode.  Defaults to 1.
 	     hide-pre-blocks
 			    (integer) If nonzero, hide by default the body of
 			    the preformatted blocks.  Defaults to zero.
@@ -172,14 +176,18 @@ CONFIGURATION FILE
 			    Defaults to zero.
 	     new-tab-url    (string) URL for the new tab page.	Defaults to
 			    about:new.
+	     max-killed-tabs
+			    (integer) The maximum number of closed tabs to
+			    keep track of, defaults to 10.  Must be a positive
+			    number; if zero, don't save closed tabs at all.
 	     olivetti-mode  (integer) If nonzero, enable olivetti-mode
 			    Defaults to 1.
-	     set-title	    (integer) If nonzero, set the terminal title to
-			    the page title.  Defaults to 1.
 	     tab-bar-show   (integer) If tab-bar-show is -1 hide the tab bar
 			    permanently, if 0 show it unconditionally.	If
 			    it's 1, show the bar only when there is more than
 			    one tab.  Defaults to 1.
+	     update-title   (integer) If nonzero, set the terminal title to
+			    the page title.  Defaults to 1.
 
      style name option
 	     Change the styling of the element identified by name.  Multiple
@@ -194,6 +202,8 @@ CONFIGURATION FILE
 		   line.download.done	  a completed download
 		   line.download.info	  informational text in the
 					  *Downloads* buffer.
+		   line.fringe		  (virtual) lines draw after the end
+					  of a buffer.
 		   line.text		  text lines.
 		   line.link		  link lines.
 		   line.title1..3	  headings
@@ -332,6 +342,7 @@ DEFAULT KEY BINDINGS
 	   g M-T	 tab-move-to
 	   H		 previous-page
 	   L		 next-page
+	   u		 tab-undo-close
 	   q		 kill-telescope
 	   ESC		 clear-minibuf
 	   :		 execute-extended-command
@@ -349,6 +360,7 @@ DEFAULT KEY BINDINGS
 	   C-t		 tab-new
 	   M-<prior>	 tab-previous
 	   M-<next>	 tab-next
+	   del		 previous-page
 	   M-<left>	 previous-page
 	   M-<right>	 next-page
 	   <f5>		 reload-page
@@ -440,8 +452,10 @@ INTERACTIVE COMMANDS
      tab-previous	       Focus the previous tab, wrapping around
 			       eventually.
      tab-select		       Switch to a tab using the minibuffer.
+     tab-undo-close	       Re-open the most recently closed tab, if any.
 
    Misc commands
+     cache-info		       Show cache stats.
      clear-minibuf	       Clear the echo area.
      dec-fill-column	       Decrement fill-column by two.
      execute-extended-command  Execute an internal command.
@@ -528,10 +542,7 @@ FILES
 	     Lock file used to prevent multiple instance of telescope from
 	     running at the same time.
      ~/.cache/telescope/session
-	     The list of tabs from the last session.  Every line identifies a
-	     tab and contains three space-separated fields: the full URL, a
-	     comma-separated list of attributes and the cached title.  Is
-	     written by kill-telescope and loaded during startup.
+	     The list of tabs from the last session.
 
 EXAMPLES
      It's possible to browse the small web (i.e. simple websites) by using
@@ -549,16 +560,24 @@ STANDARDS
      XDG Base Directory Specification,
      https://specifications.freedesktop.org/basedir-spec/latest/.
 
+ACKNOWLEDGEMENTS
+     The Trust, but verify (where appropriate) TOFU scheme was firstly
+     suggested by thfr: gemini://thfr.info/gemini/modified-trust-verify.gmi.
+
 AUTHORS
      The telescope program was written by Omar Polo <op@omarpolo.com>.
 
 CAVEATS
-     telescope assumes a UTF-8 environment and doesn't do anything to cope
-     with other encodings.  This can cause weird rendering issues if you're
-     lucky, or possibly worst things depending on your locale and terminal
+     telescope assumes a UTF-8 environment and doesn't try to cope with other
+     encodings.	 This can cause strange rendering issues if you're lucky, or
+     possibly weird thing happening depending on your locale and terminal
      emulator.
+
+     The algorithm used for text-wrapping is naive and doesn't really work for
+     languages that make heavily use of glyphs composed by multiple UNICODE
+     codepoints.
 
 BUGS
      There's no UI for out-of-band certificates validation.
 
-OpenBSD 7.0		       November 29, 2021		   OpenBSD 7.0
+OpenBSD 7.0			January 5, 2022			   OpenBSD 7.0

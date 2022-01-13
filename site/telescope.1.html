@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <!-- This is an automatically generated file.  Do not edit.
-   Copyright (c) 2021 Omar Polo <op@omarpolo.com>
+   Copyright (c) 2021, 2022 Omar Polo <op@omarpolo.com>
   
    Permission to use, copy, modify, and distribute this software for any
    purpose with or without fee is hereby granted, provided that the above
@@ -75,15 +75,16 @@
 <p class="Pp">The arguments are as follows:</p>
 <dl class="Bl-tag">
   <dt id="C"><a class="permalink" href="#C"><code class="Fl">-C</code></a>,
-    <code class="Fl">--colors</code></dt>
-  <dd>Show all available colors and exit.</dd>
+    <code class="Fl">--colours</code></dt>
+  <dd>Show all available colors and exit. This option can also be spelled
+      <code class="Fl">--colors</code>.</dd>
   <dt id="c"><a class="permalink" href="#c"><code class="Fl">-c</code></a>
     <var class="Ar">config</var></dt>
   <dd>Specify an alternative configuration file. By default
       <span class="Pa">~/.config/telescope/config</span> is loaded.</dd>
   <dt id="h"><a class="permalink" href="#h"><code class="Fl">-h</code></a>,
     <code class="Fl">--help</code></dt>
-  <dd>Display version and usage.</dd>
+  <dd>Display version, usage and exit.</dd>
   <dt id="n"><a class="permalink" href="#n"><code class="Fl">-n</code></a></dt>
   <dd>Configtest mode. Only check the configuration file for validity.</dd>
   <dt id="S"><a class="permalink" href="#S"><code class="Fl">-S</code></a>,
@@ -95,7 +96,7 @@
       custom about pages.</dd>
   <dt id="v"><a class="permalink" href="#v"><code class="Fl">-v</code></a>,
     <code class="Fl">--version</code></dt>
-  <dd>Display version.</dd>
+  <dd>Display version and exit.</dd>
 </dl>
 </section>
 <section class="Sh">
@@ -248,6 +249,9 @@
       <dd>(integer) If greater than zero, lines of text will be formatted in a
           way that don't exceed the given number of columns. Defaults to
         80.</dd>
+      <dt>fringe-ignore-offset</dt>
+      <dd>(integer) If nonzero, the fringe doesn't obey to
+          <code class="Ic">olivetti-mode</code>. Defaults to 1.</dd>
       <dt>hide-pre-blocks</dt>
       <dd>(integer) If nonzero, hide by default the body of the preformatted
           blocks. Defaults to zero. <code class="Ic">push-button</code> can be
@@ -262,16 +266,20 @@
       <dt>new-tab-url</dt>
       <dd>(string) URL for the new tab page. Defaults to
           &#x201C;about:new&#x201D;.</dd>
+      <dt>max-killed-tabs</dt>
+      <dd>(integer) The maximum number of closed tabs to keep track of, defaults
+          to 10. Must be a positive number; if zero, don't save closed tabs at
+          all.</dd>
       <dt>olivetti-mode</dt>
       <dd>(integer) If nonzero, enable <code class="Ic">olivetti-mode</code>
-          Defaults to 1.</dd>
-      <dt>set-title</dt>
-      <dd>(integer) If nonzero, set the terminal title to the page title.
           Defaults to 1.</dd>
       <dt>tab-bar-show</dt>
       <dd>(integer) If tab-bar-show is -1 hide the tab bar permanently, if 0
           show it unconditionally. If it's 1, show the bar only when there is
           more than one tab. Defaults to 1.</dd>
+      <dt>update-title</dt>
+      <dd>(integer) If nonzero, set the terminal title to the page title.
+          Defaults to 1.</dd>
     </dl>
   </dd>
   <dt id="style"><a class="permalink" href="#style"><code class="Ic">style</code></a>
@@ -295,6 +303,8 @@
       <dd>a completed download</dd>
       <dt>line.download.info</dt>
       <dd>informational text in the *Downloads* buffer.</dd>
+      <dt>line.fringe</dt>
+      <dd>(virtual) lines draw after the end of a buffer.</dd>
       <dt>line.text</dt>
       <dd>text lines.</dd>
       <dt>line.link</dt>
@@ -554,6 +564,8 @@
   <dd>previous-page</dd>
   <dt>L</dt>
   <dd>next-page</dd>
+  <dt>u</dt>
+  <dd>tab-undo-close</dd>
   <dt>q</dt>
   <dd>kill-telescope</dd>
   <dt>ESC</dt>
@@ -592,6 +604,8 @@
   <dd>tab-previous</dd>
   <dt>M-&lt;next&gt;</dt>
   <dd>tab-next</dd>
+  <dt>del</dt>
+  <dd>previous-page</dd>
   <dt>M-&lt;left&gt;</dt>
   <dd>previous-page</dd>
   <dt>M-&lt;right&gt;</dt>
@@ -774,12 +788,16 @@
   <dd>Focus the previous tab, wrapping around eventually.</dd>
   <dt id="tab-select"><a class="permalink" href="#tab-select"><code class="Ic">tab-select</code></a></dt>
   <dd>Switch to a tab using the minibuffer.</dd>
+  <dt id="tab-undo-close"><a class="permalink" href="#tab-undo-close"><code class="Ic">tab-undo-close</code></a></dt>
+  <dd>Re-open the most recently closed tab, if any.</dd>
 </dl>
 </section>
 <section class="Ss">
 <h2 class="Ss" id="Misc_commands"><a class="permalink" href="#Misc_commands">Misc
   commands</a></h2>
 <dl class="Bl-tag Bl-compact">
+  <dt id="cache-info"><a class="permalink" href="#cache-info"><code class="Ic">cache-info</code></a></dt>
+  <dd>Show cache stats.</dd>
   <dt id="clear-minibuf"><a class="permalink" href="#clear-minibuf"><code class="Ic">clear-minibuf</code></a></dt>
   <dd>Clear the echo area.</dd>
   <dt id="dec-fill-column"><a class="permalink" href="#dec-fill-column"><code class="Ic">dec-fill-column</code></a></dt>
@@ -921,10 +939,7 @@
   <dd>Lock file used to prevent multiple instance of
       <code class="Nm">telescope</code> from running at the same time.</dd>
   <dt><span class="Pa">~/.cache/telescope/session</span></dt>
-  <dd>The list of tabs from the last session. Every line identifies a tab and
-      contains three space-separated fields: the full URL, a comma-separated
-      list of attributes and the cached title. Is written by
-      <code class="Ic">kill-telescope</code> and loaded during startup.</dd>
+  <dd>The list of tabs from the last session.</dd>
 </dl>
 </section>
 <section class="Sh">
@@ -949,6 +964,12 @@ proxy https via &quot;gemini://127.0.0.1:1965&quot;</pre>
     <a class="RsU" href="https://specifications.freedesktop.org/basedir-spec/latest/">https://specifications.freedesktop.org/basedir-spec/latest/</a>.</cite></p>
 </section>
 <section class="Sh">
+<h1 class="Sh" id="ACKNOWLEDGEMENTS"><a class="permalink" href="#ACKNOWLEDGEMENTS">ACKNOWLEDGEMENTS</a></h1>
+<p class="Pp">The &#x201C;Trust, but verify (where appropriate)&#x201D; TOFU
+    scheme was firstly suggested by thfr:
+    <a class="Lk" href="gemini://thfr.info/gemini/modified-trust-verify.gmi">gemini://thfr.info/gemini/modified-trust-verify.gmi</a>.</p>
+</section>
+<section class="Sh">
 <h1 class="Sh" id="AUTHORS"><a class="permalink" href="#AUTHORS">AUTHORS</a></h1>
 <p class="Pp">The <code class="Nm">telescope</code> program was written by
     <span class="An">Omar Polo</span>
@@ -957,9 +978,12 @@ proxy https via &quot;gemini://127.0.0.1:1965&quot;</pre>
 <section class="Sh">
 <h1 class="Sh" id="CAVEATS"><a class="permalink" href="#CAVEATS">CAVEATS</a></h1>
 <p class="Pp"><code class="Nm">telescope</code> assumes a UTF-8 environment and
-    doesn't do anything to cope with other encodings. This can cause weird
-    rendering issues if you're lucky, or possibly worst things depending on your
+    doesn't try to cope with other encodings. This can cause strange rendering
+    issues if you're lucky, or possibly weird thing happening depending on your
     locale and terminal emulator.</p>
+<p class="Pp">The algorithm used for text-wrapping is naive and doesn't really
+    work for languages that make heavily use of glyphs composed by multiple
+    UNICODE codepoints.</p>
 </section>
 <section class="Sh">
 <h1 class="Sh" id="BUGS"><a class="permalink" href="#BUGS">BUGS</a></h1>
@@ -968,7 +992,7 @@ proxy https via &quot;gemini://127.0.0.1:1965&quot;</pre>
 </div>
 <table class="foot">
   <tr>
-    <td class="foot-date">November 29, 2021</td>
+    <td class="foot-date">January 5, 2022</td>
     <td class="foot-os">OpenBSD 7.0</td>
   </tr>
 </table>
