@@ -1,3 +1,7 @@
+2022-01-13  Omar Polo  <op@omarpolo.com>
+
+	* configure.ac: tag 0.7, "Via Paolo Fabbri 43"
+
 2022-01-11  Omar Polo  <op@omarpolo.com>
 
 	* cmd.c (cmd_cache_info): add command `cache-info' to show cache stats.
