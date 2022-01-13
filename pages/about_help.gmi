@@ -39,8 +39,8 @@ By default Telescope includes various keys inspired from either Emacs or vi.  Ho
 * [ and ] to move between tabs;
 * control + t to open a new tab;
 * control + w to close the current tab;
-* u to re-open a closed tab
-* q to quit
+* u to re-open a closed tab;
+* q to quit.
 
 
 ## Operate — Emacs version
