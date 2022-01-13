@@ -784,7 +784,7 @@ redraw_modeline(struct tab *tab)
 	else
 		wprintw(modeline, "%.0f%% ", pct);
 
-	wprintw(modeline, "%d/%d %s ",
+	wprintw(modeline, "%zu/%zu %s ",
 	    buffer->line_off + buffer->curs_y,
 	    buffer->line_max,
 	    tab->hist_cur->h);
@@ -849,7 +849,7 @@ do_redraw_minibuffer(void)
 	wmove(echoarea, 0, 0);
 
 	if (in_minibuffer == MB_COMPREAD)
-		wprintw(echoarea, "(%2d) ",
+		wprintw(echoarea, "(%2zu) ",
 		    cmplbuf->line_max);
 
 	wprintw(echoarea, "%s", ministate.prompt);
