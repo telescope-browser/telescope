@@ -943,7 +943,7 @@ do_load_url(struct tab *tab, const char *url, const char *base, int mode)
 				strlcpy(tab->uri.port, p->port,
 				    sizeof(tab->uri.port));
 
-			return p->loadfn(tab, url);
+			return p->loadfn(tab, tab->hist_cur->h);
 		}
 	}
 
