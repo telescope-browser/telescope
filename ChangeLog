@@ -1,3 +1,7 @@
+2022-01-15  Omar Polo  <op@omarpolo.com>
+
+	* telescope.c (do_load_url): fix use after free when loading an about:* page from about:about.  Reported by Brian Callahan, thanks!
+
 2022-01-13  Omar Polo  <op@omarpolo.com>
 
 	* configure.ac: tag 0.7, "Via Paolo Fabbri 43"
