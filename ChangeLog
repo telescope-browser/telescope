@@ -1,5 +1,8 @@
 2022-01-15  Omar Polo  <op@omarpolo.com>
 
+	* cmd.h: Show aliases before the completions
+	add open alias for load-url, suggested by Florian, thanks :)
+
 	* configure.ac: tag 0.7.1, bugfix release
 
 	* telescope.c (do_load_url): fix use after free when loading an about:* page from about:about.  Reported by Brian Callahan, thanks!
