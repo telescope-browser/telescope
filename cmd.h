@@ -8,6 +8,7 @@ DEFALIAS(tabn, cmd_tab_next)
 DEFALIAS(tabnew, cmd_tab_new)
 DEFALIAS(tabp, cmd_tab_previous)
 DEFALIAS(wq, cmd_kill_telescope)
+DEFALIAS(open, cmd_load_url)
 
 CMD(cmd_backward_char,		"Move point one character backward.");
 CMD(cmd_backward_paragraph,	"Move point on paragraph backward.");
