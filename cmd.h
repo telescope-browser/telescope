@@ -3,6 +3,12 @@ struct buffer;
 #define CMD(fnname, descr)	void fnname(struct buffer *)
 #define DEFALIAS(s, d)		/* nothing */
 
+DEFALIAS(q, cmd_kill_telescope)
+DEFALIAS(tabn, cmd_tab_next)
+DEFALIAS(tabnew, cmd_tab_new)
+DEFALIAS(tabp, cmd_tab_previous)
+DEFALIAS(wq, cmd_kill_telescope)
+
 CMD(cmd_backward_char,		"Move point one character backward.");
 CMD(cmd_backward_paragraph,	"Move point on paragraph backward.");
 CMD(cmd_beginning_of_buffer,	"Move point to the beginning of the buffer.");
@@ -69,9 +75,3 @@ CMD(cmd_toc,			"Jump to a heading using the minibuffer.");
 CMD(cmd_toggle_downloads,	"Toggle the downloads side window.");
 CMD(cmd_toggle_help,		"Toggle side window with help.");
 CMD(cmd_toggle_pre_wrap,	"Toggle the wrapping of preformatted blocks.");
-
-DEFALIAS(q, cmd_kill_telescope)
-DEFALIAS(tabn, cmd_tab_next)
-DEFALIAS(tabnew, cmd_tab_new)
-DEFALIAS(tabp, cmd_tab_previous)
-DEFALIAS(wq, cmd_kill_telescope)
