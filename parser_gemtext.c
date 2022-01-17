@@ -130,7 +130,7 @@ parse_link(struct parser *p, enum line_type t, const char *buf, size_t len)
 	const char *url_start;
 
 	if (len <= 2)
-		return emit_line(p, t, NULL, NULL);
+		return emit_line(p, LINE_TEXT, NULL, NULL);
 	buf += 2;
 	len -= 2;
 
@@ -140,7 +140,7 @@ parse_link(struct parser *p, enum line_type t, const char *buf, size_t len)
 	}
 
 	if (len == 0)
-		return emit_line(p, t, NULL, NULL);
+		return emit_line(p, LINE_TEXT, NULL, NULL);
 
 	url_start = buf;
 	while (len > 0 && !isspace(buf[0])) {
