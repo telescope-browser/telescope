@@ -970,16 +970,14 @@ load_url(struct tab *tab, const char *url, const char *base, int mode)
 	if (operating && lazy) {
 		tab->flags ^= TAB_LAZY;
 		lazy = 0;
-	}
+	} else if (tab->hist_cur != NULL)
+		get_scroll_position(tab, &tab->hist_cur->line_off,
+		    &tab->hist_cur->current_off);
 
 	if (!nohist && (!lazy || tab->hist_cur == NULL)) {
-		if (tab->hist_cur != NULL) {
-			get_scroll_position(tab, &tab->hist_cur->line_off,
-			    &tab->hist_cur->current_off);
-
+		if (tab->hist_cur != NULL)
 			hist_clear_forward(&tab->hist,
 			    TAILQ_NEXT(tab->hist_cur, entries));
-		}
 
 		if ((tab->hist_cur = calloc(1, sizeof(*tab->hist_cur)))
 		    == NULL) {
