@@ -1,3 +1,9 @@
+2022-01-18  Omar Polo  <op@omarpolo.com>
+
+	* session.c (sendtab): persist scroll position on the session file
+
+	* ui.c (ui_on_tab_loaded): restore scroll position when loading a tab if possible
+
 2022-01-17  Omar Polo  <op@omarpolo.com>
 
 	* parser_gemtext.c (parse_link): don't crash on invalid link lines
