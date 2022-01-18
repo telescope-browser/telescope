@@ -702,44 +702,34 @@ fs_init(void)
  *	URL [flags,...] [title]\n
  */
 static void
-parse_session_line(char *line, const char **title, uint32_t *flags)
+parse_session_line(char *line)
 {
+	struct session_tab tab;
 	char *s, *t, *ap;
 
-	*title = "";
-	*flags = 0;
+	memset(&tab, 0, sizeof(tab));
+
 	if ((s = strchr(line, ' ')) == NULL)
 		return;
 
 	*s++ = '\0';
 
+	if (strlcpy(tab.uri, line, sizeof(tab.uri)) >= sizeof(tab.uri))
+		return;
+
 	if ((t = strchr(s, ' ')) != NULL) {
 		*t++ = '\0';
-		*title = t;
+
+		/* don't worry about cached title truncation */
+		strlcpy(tab.title, t, sizeof(tab.title));
 	}
 
 	while ((ap = strsep(&s, ",")) != NULL) {
 		if (!strcmp(ap, "current"))
-			*flags |= TAB_CURRENT;
+			tab.flags |= TAB_CURRENT;
 		else if (!strcmp(ap, "killed"))
-			*flags |= TAB_KILLED;
+			tab.flags |= TAB_KILLED;
 	}
-}
-
-static inline void
-sendtab(uint32_t flags, const char *uri, const char *title)
-{
-	struct session_tab tab;
-
-	memset(&tab, 0, sizeof(tab));
-	tab.flags = flags;
-
-	if (strlcpy(tab.uri, uri, sizeof(tab.uri)) >= sizeof(tab.uri))
-		return;
-
-	/* don't worry about cached title truncation */
-	if (title != NULL)
-		strlcpy(tab.title, title, sizeof(tab.title));
 
 	fs_send_ui(IMSG_SESSION_TAB, 0, -1, &tab, sizeof(tab));
 }
@@ -762,12 +752,10 @@ static void
 load_last_session(void)
 {
 	FILE		*session;
-	uint32_t	 flags;
 	size_t		 linesize = 0;
 	ssize_t		 linelen;
 	int		 first_time = 0;
 	int		 future;
-	const char	*title;
 	char		*nl, *s, *line = NULL;
 
 	if ((session = fopen(session_file, "r")) == NULL) {
@@ -787,16 +775,20 @@ load_last_session(void)
 				continue;
 			sendhist(++s, future);
 		} else {
-			parse_session_line(line, &title, &flags);
-			sendtab(flags, line, title);
+			parse_session_line(line);
 		}
 	}
 
 	fclose(session);
 	free(line);
 
-	if (last_time_crashed())
-		sendtab(TAB_CURRENT, "about:crash", NULL);
+	if (last_time_crashed()) {
+		struct session_tab tab;
+		memset(&tab, 0, sizeof(tab));
+		tab.flags = TAB_CURRENT;
+		strlcpy(tab.uri, "about:crash", sizeof(tab.uri));
+		fs_send_ui(IMSG_SESSION_TAB, 0, -1, &tab, sizeof(tab));
+	}
 
 end:
 	fs_send_ui(IMSG_SESSION_END, 0, -1, &first_time, sizeof(first_time));
