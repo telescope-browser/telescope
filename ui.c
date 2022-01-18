@@ -1209,7 +1209,8 @@ ui_on_tab_loaded(struct tab *tab)
 	stop_loading_anim(tab);
 	message("Loaded %s", tab->hist_cur->h);
 
-	if (tab->hist_cur->current_off != 0) {
+	if (tab->hist_cur->current_off != 0 &&
+	    tab->buffer.current_line == TAILQ_FIRST(&tab->buffer.head)) {
 		set_scroll_position(tab, tab->hist_cur->line_off,
 		    tab->hist_cur->current_off);
 		redraw_tab(tab);
