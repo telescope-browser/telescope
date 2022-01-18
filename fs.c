@@ -725,9 +725,9 @@ parse_session_line(char *line)
 		else if (!strcmp(ap, "killed"))
 			tab.flags |= TAB_KILLED;
 		else if (has_prefix(ap, "top="))
-			tab.top_line = strtonum(ap, 0, UINT32_MAX, NULL);
+			tab.top_line = strtonum(ap+4, 0, UINT32_MAX, NULL);
 		else if (has_prefix(ap, "cur="))
-			tab.current_line = strtonum(ap, 0, UINT32_MAX, NULL);
+			tab.current_line = strtonum(ap+4, 0, UINT32_MAX, NULL);
 	}
 
 	if (tab.top_line > tab.current_line) {
