@@ -37,10 +37,8 @@ switch_to_tab(struct tab *tab)
 	current_tab = tab;
 	tab->flags &= ~TAB_URGENT;
 
-	if (operating && tab->flags & TAB_LAZY) {
-		tab->flags ^= TAB_LAZY;
+	if (operating && tab->flags & TAB_LAZY)
 		load_url_in_tab(tab, tab->hist_cur->h, NULL, LU_MODE_NOHIST);
-	}
 }
 
 unsigned int

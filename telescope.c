@@ -967,6 +967,11 @@ load_url(struct tab *tab, const char *url, const char *base, int mode)
 	int lazy = tab->flags & TAB_LAZY;
 	int nohist = mode & LU_MODE_NOHIST;
 
+	if (operating && lazy) {
+		tab->flags ^= TAB_LAZY;
+		lazy = 0;
+	}
+
 	if (!nohist && (!lazy || tab->hist_cur == NULL)) {
 		if (tab->hist_cur != NULL) {
 			get_scroll_position(tab, &tab->hist_cur->line_off,
