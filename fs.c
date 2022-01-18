@@ -505,20 +505,15 @@ handle_session_tab(struct imsg *imsg, size_t datalen)
 	    tab.title[sizeof(tab.title)-1] != '\0')
 		die();
 
-	fprintf(session, "%s", tab.uri);
+	fprintf(session, "%s ", tab.uri);
 
-	if (tab.flags == 0)
-		fprintf(session, " - ");
-	else {
-		fprintf(session, " ");
-		if (tab.flags & TAB_CURRENT)
-			fprintf(session, "current,");
-		if (tab.flags & TAB_KILLED)
-			fprintf(session, "killed,");
-		fprintf(session, " ");
-	}
+	if (tab.flags & TAB_CURRENT)
+		fprintf(session, "current,");
+	if (tab.flags & TAB_KILLED)
+		fprintf(session, "killed,");
 
-	fprintf(session, "%s\n", tab.title);
+	fprintf(session, "top=%zu,cur=%zu %s\n", tab.top_line,
+	    tab.current_line, tab.title);
 }
 
 static void
@@ -729,6 +724,15 @@ parse_session_line(char *line)
 			tab.flags |= TAB_CURRENT;
 		else if (!strcmp(ap, "killed"))
 			tab.flags |= TAB_KILLED;
+		else if (has_prefix(ap, "top="))
+			tab.top_line = strtonum(ap, 0, UINT32_MAX, NULL);
+		else if (has_prefix(ap, "cur="))
+			tab.current_line = strtonum(ap, 0, UINT32_MAX, NULL);
+	}
+
+	if (tab.top_line > tab.current_line) {
+		tab.top_line = 0;
+		tab.current_line = 0;
 	}
 
 	fs_send_ui(IMSG_SESSION_TAB, 0, -1, &tab, sizeof(tab));

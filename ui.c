@@ -50,6 +50,8 @@
 
 static struct event	stdioev, winchev;
 
+static void		 set_scroll_position(struct tab *, size_t, size_t);
+
 static void		 restore_curs_x(struct buffer *);
 
 static int		 readkey(void);
@@ -120,6 +122,64 @@ update_x_offset(void)
 		x_offset = (body_cols - fill_column)/2;
 	else
 		x_offset = 0;
+}
+
+static void
+set_scroll_position(struct tab *tab, size_t top, size_t cur)
+{
+	struct line *last;
+	struct vline *vl;
+	size_t i = 0;
+	int topfound = 0, curfound = 0;
+
+	last = TAILQ_FIRST(&tab->buffer.page.head);
+	TAILQ_FOREACH(vl, &tab->buffer.head, vlines) {
+		if (last != vl->parent) {
+			last = vl->parent;
+			i++;
+		}
+
+		if (!topfound && i == top) {
+			topfound = 1;
+			tab->buffer.top_line = vl;
+		}
+
+		if (!curfound && i == cur) {
+			curfound = 1;
+			tab->buffer.current_line = vl;
+			return;
+		}
+	}
+
+	if (!topfound) {
+		tab->buffer.top_line = TAILQ_FIRST(&tab->buffer.head);
+		tab->buffer.current_line = tab->buffer.top_line;
+	}
+}
+
+void
+get_scroll_position(struct tab *tab, size_t *top, size_t *cur)
+{
+	struct line *l;
+	int topfound = 0;
+
+	*top = 0;
+	*cur = 0;
+
+	if (tab->buffer.top_line == NULL ||
+	    tab->buffer.current_line == NULL)
+		return;
+
+	TAILQ_FOREACH(l, &tab->buffer.page.head, lines) {
+		if (tab->buffer.top_line->parent == l)
+			topfound = 1;
+		if (tab->buffer.current_line->parent == l)
+			return;
+
+		if (!topfound)
+			(*top)++;
+		(*cur)++;
+	}
 }
 
 void
@@ -1148,6 +1208,13 @@ ui_on_tab_loaded(struct tab *tab)
 {
 	stop_loading_anim(tab);
 	message("Loaded %s", tab->hist_cur->h);
+
+	if (tab->hist_cur->current_off != 0) {
+		set_scroll_position(tab, tab->hist_cur->line_off,
+		    tab->hist_cur->current_off);
+		redraw_tab(tab);
+		return;
+	}
 
 	if (show_tab_bar)
 		redraw_tabline();

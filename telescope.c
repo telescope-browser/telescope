@@ -525,6 +525,8 @@ handle_imsg_session(struct imsg *imsg, size_t datalen)
 		memcpy(&st, imsg->data, sizeof(st));
 		if ((tab = new_tab(st.uri, NULL, NULL)) == NULL)
 			die();
+		tab->hist_cur->line_off = st.top_line;
+		tab->hist_cur->current_off = st.current_line;
 		strlcpy(tab->buffer.page.title, st.title,
 		    sizeof(tab->buffer.page.title));
 		if (st.flags & TAB_CURRENT)
@@ -966,9 +968,13 @@ load_url(struct tab *tab, const char *url, const char *base, int mode)
 	int nohist = mode & LU_MODE_NOHIST;
 
 	if (!nohist && (!lazy || tab->hist_cur == NULL)) {
-		if (tab->hist_cur != NULL)
+		if (tab->hist_cur != NULL) {
+			get_scroll_position(tab, &tab->hist_cur->line_off,
+			    &tab->hist_cur->current_off);
+
 			hist_clear_forward(&tab->hist,
 			    TAILQ_NEXT(tab->hist_cur, entries));
+		}
 
 		if ((tab->hist_cur = calloc(1, sizeof(*tab->hist_cur)))
 		    == NULL) {

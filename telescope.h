@@ -186,6 +186,8 @@ struct histhead {
 };
 struct hist {
 	char			h[1025];
+	size_t			line_off;
+	size_t			current_off;
 	TAILQ_ENTRY(hist)	entries;
 };
 

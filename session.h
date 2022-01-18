@@ -23,6 +23,8 @@ struct session_tab {
 	uint32_t	flags;
 	char		uri[GEMINI_URL_LEN];
 	char		title[TITLE_MAX];
+	size_t		top_line;
+	size_t		current_line;
 };
 
 struct session_tab_hist {

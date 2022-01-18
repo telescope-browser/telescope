@@ -135,6 +135,7 @@ extern struct buffer	 downloadwin;
 extern int		 download_lines;
 extern int		 download_cols;
 
+void		 get_scroll_position(struct tab *, size_t *, size_t *);
 void		 save_excursion(struct excursion *, struct buffer *);
 void		 restore_excursion(struct excursion *, struct buffer *);
 void		 global_key_unbound(void);

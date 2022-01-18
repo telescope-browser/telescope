@@ -175,6 +175,8 @@ sendtab(struct tab *tab, int killed)
 	if (killed)
 		st.flags |= TAB_KILLED;
 
+	get_scroll_position(tab, &st.top_line, &st.current_line);
+
 	strlcpy(st.uri, tab->hist_cur->h, sizeof(st.uri));
 	strlcpy(st.title, tab->buffer.page.title, sizeof(st.title));
 	ui_send_fs(IMSG_SESSION_TAB, 0, &st, sizeof(st));
