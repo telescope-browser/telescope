@@ -25,18 +25,6 @@
 #include "parser.h"
 #include "utils.h"
 
-static const char *gemtext_prefixes[] = {
-	[LINE_TEXT] = "",
-	[LINE_TITLE_1] = "# ",
-	[LINE_TITLE_2] = "## ",
-	[LINE_TITLE_3] = "### ",
-	[LINE_ITEM] = "* ",
-	[LINE_QUOTE] = "> ",
-	[LINE_PRE_START] = "``` ",
-	[LINE_PRE_CONTENT] = "",
-	[LINE_PRE_END] = "```",
-};
-
 static struct timeval tv = { 5 * 60, 0 };
 static struct event timerev;
 
@@ -46,7 +34,7 @@ static size_t		tot;
 
 struct mcache_entry {
 	time_t		 ts;
-	const char	*parser_name;
+	parserfn	 parser;
 	int		 trust;
 	struct evbuffer	*evb;
 	char		 url[];
@@ -105,7 +93,6 @@ int
 mcache_tab(struct tab *tab)
 {
 	struct mcache_entry	*e;
-	struct line		*line;
 	unsigned int		 slot;
 	size_t			 l, len;
 	const char		*url;
@@ -117,65 +104,15 @@ mcache_tab(struct tab *tab)
 	if ((e = calloc(1, len)) == NULL)
 		return -1;
 	e->ts = time(NULL);
-	e->parser_name = tab->buffer.page.name;
+	e->parser = tab->buffer.page.init;
 	e->trust = tab->trust;
 	memcpy(e->url, url, l);
 
 	if ((e->evb = evbuffer_new()) == NULL)
 		goto err;
 
-	TAILQ_FOREACH(line, &tab->buffer.page.head, lines) {
-		const char	*text, *alt;
-		int		 r;
-
-		if ((text = line->line) == NULL)
-			text = "";
-
-		if ((alt = line->alt) == NULL)
-			alt = "";
-
-		switch (line->type) {
-		case LINE_TEXT:
-		case LINE_TITLE_1:
-		case LINE_TITLE_2:
-		case LINE_TITLE_3:
-		case LINE_ITEM:
-		case LINE_QUOTE:
-		case LINE_PRE_START:
-		case LINE_PRE_CONTENT:
-		case LINE_PRE_END:
-			r = evbuffer_add_printf(e->evb, "%s%s\n",
-			    gemtext_prefixes[line->type], text);
-			break;
-
-		case LINE_LINK:
-			r = evbuffer_add_printf(e->evb, "=> %s %s\n",
-			    alt, text);
-			break;
-
-		case LINE_PATCH:
-		case LINE_PATCH_HDR:
-		case LINE_PATCH_HUNK_HDR:
-		case LINE_PATCH_ADD:
-		case LINE_PATCH_DEL:
-			/* TODO */
-			r = -1;
-			break;
-
-		case LINE_COMPL:
-		case LINE_COMPL_CURRENT:
-		case LINE_HELP:
-		case LINE_DOWNLOAD:
-		case LINE_DOWNLOAD_DONE:
-		case LINE_DOWNLOAD_INFO:
-		case LINE_FRINGE:
-			/* not reached */
-			abort();
-		}
-
-		if (r == -1)
-			goto err;
-	}
+	if (!parser_serialize(tab, e->evb))
+		goto err;
 
 	/* free any previously cached copies of this page */
 	mcache_free_entry(url);
@@ -208,13 +145,12 @@ mcache_lookup(const char *url, struct tab *tab)
 	if ((e = ohash_find(&h, slot)) == NULL)
 		return 0;
 
-	parser_init(tab, gemtext_initparser);
+	parser_init(tab, e->parser);
 	if (!parser_parse(tab, EVBUFFER_DATA(e->evb), EVBUFFER_LENGTH(e->evb)))
 		goto err;
 	if (!parser_free(tab))
 		goto err;
 
-	tab->buffer.page.name = e->parser_name;
 	tab->trust = e->trust;
 	return 1;
 
