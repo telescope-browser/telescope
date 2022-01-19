@@ -140,6 +140,7 @@ CC_ADD_CHECK_FLAGS([-Wno-unused-parameter])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([
 	Makefile
+	test/Makefile
 	pages/about_new.gmi
 	pages/about_crash.gmi
 ])

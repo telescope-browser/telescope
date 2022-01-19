@@ -1,0 +1,8 @@
+#!/bin/sh
+
+set -e
+
+for f in gm-*; do
+	./gmparser < "$f" > "$f.serialized"
+	diff -u "$f" "$f.serialized"
+done

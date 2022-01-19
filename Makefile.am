@@ -1,3 +1,5 @@
+SUBDIRS = test
+
 bin_PROGRAMS =		telescope
 
 EXTRA_telescope_SOURCES = compat/ohash.h compat/queue.h compat/imsg.h contrib
