@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Omar Polo <op@omarpolo.com>
+ * Copyright (c) 2021, 2022 Omar Polo <op@omarpolo.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -32,9 +32,10 @@
 #include "parser.h"
 #include "utf8.h"
 
-static int	gemtext_parse(struct parser*, const char*, size_t);
-static int	gemtext_foreach_line(struct parser*, const char*, size_t);
-static int	gemtext_free(struct parser*);
+static int	gemtext_parse(struct parser *, const char *, size_t);
+static int	gemtext_foreach_line(struct parser *, const char *, size_t);
+static int	gemtext_free(struct parser *);
+static int	gemtext_serialize(struct parser *, struct evbuffer *);
 
 static int	parse_text(struct parser*, enum line_type, const char*, size_t);
 static int	parse_link(struct parser*, enum line_type, const char*, size_t);
@@ -69,6 +70,7 @@ gemtext_initparser(struct parser *p)
 	p->name = "text/gemini";
 	p->parse = &gemtext_parse;
 	p->free  = &gemtext_free;
+	p->serialize = &gemtext_serialize;
 
 	TAILQ_INIT(&p->head);
 }
@@ -425,4 +427,62 @@ search_title(struct parser *p, enum line_type level)
 			break;
 		}
 	}
+}
+
+static const char *gemtext_prefixes[] = {
+	[LINE_TEXT] = "",
+	[LINE_TITLE_1] = "# ",
+	[LINE_TITLE_2] = "## ",
+	[LINE_TITLE_3] = "### ",
+	[LINE_ITEM] = "* ",
+	[LINE_QUOTE] = "> ",
+	[LINE_PRE_START] = "``` ",
+	[LINE_PRE_CONTENT] = "",
+	[LINE_PRE_END] = "```",
+};
+
+static int
+gemtext_serialize(struct parser *p, struct evbuffer *evb)
+{
+	struct line	*line;
+	const char	*text;
+	const char	*alt;
+	int		 r;
+
+	TAILQ_FOREACH(line, &p->head, lines) {
+		if ((text = line->line) == NULL)
+			text = "";
+
+		if ((alt = line->alt) == NULL)
+			alt = "";
+
+		switch (line->type) {
+		case LINE_TEXT:
+		case LINE_TITLE_1:
+		case LINE_TITLE_2:
+		case LINE_TITLE_3:
+		case LINE_ITEM:
+		case LINE_QUOTE:
+		case LINE_PRE_START:
+		case LINE_PRE_CONTENT:
+		case LINE_PRE_END:
+			r = evbuffer_add_printf(evb, "%s%s\n",
+			    gemtext_prefixes[line->type], text);
+			break;
+
+		case LINE_LINK:
+			r = evbuffer_add_printf(evb, "=> %s %s\n",
+			    alt, text);
+			break;
+
+		default:
+			/* not reached */
+			abort();
+		}
+
+		if (r == -1)
+			return 0;
+	}
+
+	return 1;
 }

@@ -82,6 +82,29 @@ parser_free(struct tab *tab)
 }
 
 int
+parser_serialize(struct tab *tab, struct evbuffer *evb)
+{
+	struct line	*line;
+	const char	*text;
+	int		 r;
+
+	if (tab->buffer.page.serialize != NULL)
+		return tab->buffer.page.serialize(&tab->buffer.page, evb);
+
+	/* a default implementation good enough for plain text */
+	TAILQ_FOREACH(line, &tab->buffer.page.head, lines) {
+		if ((text = line->line) == NULL)
+			text = "";
+
+		r = evbuffer_add_printf(evb, "%s\n", text);
+		if (r == -1)
+			return 0;
+	}
+
+	return 1;
+}
+
+int
 parser_append(struct parser *p, const char *buf, size_t len)
 {
 	size_t newlen;

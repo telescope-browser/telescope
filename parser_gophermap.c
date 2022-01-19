@@ -23,6 +23,8 @@
 #include "parser.h"
 #include "utils.h"
 
+#define evap evbuffer_add_printf
+
 struct gm_selector {
 	char		 type;
 	const char	*ds;
@@ -36,6 +38,7 @@ static void	gm_parse_selector(char *, struct gm_selector *);
 static int	gm_parse(struct parser *, const char *, size_t);
 static int	gm_foreach_line(struct parser *, const char *, size_t);
 static int	gm_free(struct parser *);
+static int	gm_serialize(struct parser *, struct evbuffer *);
 
 void
 gophermap_initparser(struct parser *p)
@@ -45,6 +48,7 @@ gophermap_initparser(struct parser *p)
 	p->name = "gophermap";
 	p->parse = &gm_parse;
 	p->free = &gm_free;
+	p->serialize = &gm_serialize;
 
 	TAILQ_INIT(&p->head);
 }
@@ -186,6 +190,118 @@ gm_free(struct parser *p)
 		gm_foreach_line(p, p->buf, p->len);
 
 	free(p->buf);
+
+	return 1;
+}
+
+static inline const char *
+gopher_skip_selector(const char *path, int *ret_type)
+{
+	*ret_type = 0;
+
+	if (!strcmp(path, "/") || *path == '\0') {
+		*ret_type = '1';
+		return path;
+	}
+
+	if (*path != '/')
+		return path;
+	path++;
+
+	switch (*ret_type = *path) {
+	case '0':
+	case '1':
+	case '7':
+		break;
+
+	default:
+		*ret_type = 0;
+		path -= 1;
+		return path;
+	}
+
+	return ++path;
+}
+
+static int
+serialize_link(struct line *line, const char *text, struct evbuffer *evb)
+{
+	size_t		 portlen = 0;
+	int		 type;
+	const char	*uri, *endhost, *port, *path, *colon;
+
+	if ((uri = line->alt) == NULL)
+		return -1;
+
+	if (!has_prefix(uri, "gopher://"))
+		return evap(evb, "h%s\tURL:%s\terror.host\t1\n",
+		    text, line->alt);
+
+	uri += 9; /* skip gopher:// */
+
+	path = strchr(uri, '/');
+	colon = strchr(uri, ':');
+
+	if (path != NULL && colon > path)
+		colon = NULL;
+
+	if ((endhost = colon) == NULL &&
+	    (endhost = path) == NULL)
+		endhost = strchr(path, '\0');
+
+	if (colon != NULL) {
+		for (port = colon+1; *port && *port != '/'; ++port)
+			++portlen;
+		port = colon+1;
+	} else {
+		port = "70";
+		portlen = 2;
+	}
+
+	if (path == NULL) {
+		type = '1';
+		path = "";
+	} else
+		path = gopher_skip_selector(path, &type);
+
+	return evap(evb, "%c%s\t%s\t%.*s\t%.*s\n", type, text,
+	    path, (int)(endhost - uri), uri, (int)portlen, port);
+}
+
+static int
+gm_serialize(struct parser *p, struct evbuffer *evb)
+{
+	struct line	*line;
+	const char	*text;
+	int		 r;
+
+	TAILQ_FOREACH(line, &p->head, lines) {
+		if ((text = line->line) == NULL)
+			text = "";
+
+		switch (line->type) {
+		case LINE_LINK:
+			r = serialize_link(line, text, evb);
+			break;
+
+		case LINE_TEXT:
+			r = evap(evb, "i%s\t\terror.host\t1\n",
+			    text);
+			break;
+
+		case LINE_QUOTE:
+			r = evap(evb, "3%s\t\terror.host\t1\n",
+			    text);
+			break;
+
+		default:
+			/* unreachable */
+			abort();
+		}
+
+		if (r == -1)
+			return 0;
+	}
 
 	return 1;
 }

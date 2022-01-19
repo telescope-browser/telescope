@@ -137,6 +137,7 @@ struct parser;
 
 typedef int	(*parsechunkfn)(struct parser*, const char*, size_t);
 typedef int	(*parserfreefn)(struct parser*);
+typedef int	(*parserserial)(struct parser*, struct evbuffer *);
 
 typedef void (imsg_handlerfn)(struct imsg*, size_t);
 
@@ -154,6 +155,7 @@ struct parser {
 	void		(*init)(struct parser *);
 	parsechunkfn	 parse;
 	parserfreefn	 free;
+	parserserial	 serialize;
 
 	TAILQ_HEAD(, line)	 head;
 };

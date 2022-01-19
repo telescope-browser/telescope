@@ -27,6 +27,7 @@ int	 load_page_from_str(struct tab *, const char *);
 void	 parser_init(struct tab *, parserfn);
 int	 parser_parse(struct tab *, const char *, size_t);
 int	 parser_free(struct tab *);
+int	 parser_serialize(struct tab *, struct evbuffer *);
 
 int	 parser_append(struct parser*, const char*, size_t);
 int	 parser_set_buf(struct parser*, const char*, size_t);
