@@ -332,6 +332,7 @@ extern int safe_mode;
 #define LU_MODE_NOCACHE	0x2
 
 void		 gopher_send_search_req(struct tab *, const char *);
+int		 load_page_from_str(struct tab *, const char *);
 void		 load_url(struct tab *, const char *, const char *, int);
 void		 load_url_in_tab(struct tab *, const char *, const char *, int);
 int		 load_previous_page(struct tab*);

@@ -896,6 +896,19 @@ gopher_send_search_req(struct tab *tab, const char *text)
 	make_request(tab, &req, PROTO_GOPHER, NULL);
 }
 
+int
+load_page_from_str(struct tab *tab, const char *page)
+{
+	parser_init(tab, gemtext_initparser);
+	if (!tab->buffer.page.parse(&tab->buffer.page, page, strlen(page)))
+		abort();
+	if (!tab->buffer.page.free(&tab->buffer.page))
+		abort();
+	ui_on_tab_refresh(tab);
+	ui_on_tab_loaded(tab);
+	return 0;
+}
+
 /*
  * Effectively load the given url in the given tab.  Return 1 when
  * loading the page asynchronously, and thus when an erase_buffer can

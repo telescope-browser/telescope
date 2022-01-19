@@ -21,23 +21,6 @@
 
 #include "parser.h"
 #include "telescope.h"
-#include "ui.h"
-
-/*
- * Load a text/gemini page given the string page.  Always returns 0.
- */
-int
-load_page_from_str(struct tab *tab, const char *page)
-{
-	parser_init(tab, gemtext_initparser);
-	if (!tab->buffer.page.parse(&tab->buffer.page, page, strlen(page)))
-		abort();
-	if (!tab->buffer.page.free(&tab->buffer.page))
-		abort();
-	ui_on_tab_refresh(tab);
-	ui_on_tab_loaded(tab);
-	return 0;
-}
 
 void
 parser_init(struct tab *tab, parserfn fn)
