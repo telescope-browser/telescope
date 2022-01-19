@@ -86,7 +86,7 @@ setup_parser_for(struct tab *tab)
 
 	for (t = ptable; t->mediatype != NULL; ++t) {
 		if (!fnmatch(t->mediatype, buf, 0)) {
-			t->parserinit(&tab->buffer.page);
+			parser_init(tab, t->parserinit);
 			return 1;
 		}
 	}
