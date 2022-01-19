@@ -44,6 +44,7 @@ parser_init(struct tab *tab, parserfn fn)
 {
 	erase_buffer(&tab->buffer);
 	fn(&tab->buffer.page);
+	tab->buffer.page.init = fn;
 }
 
 int

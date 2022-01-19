@@ -151,6 +151,7 @@ struct parser {
 #define PARSER_IN_PRE	2
 #define PARSER_IN_PATCH_HDR 4
 	int		 flags;
+	void		(*init)(struct parser *);
 	parsechunkfn	 parse;
 	parserfreefn	 free;
 
