@@ -552,7 +552,7 @@ net_read(struct bufferevent *bev, void *d)
 {
 	struct req	*req = d;
 	struct evbuffer	*src = EVBUFFER_INPUT(bev);
-	void		*data;
+	uint8_t		*data;
 	size_t		 len, chunk;
 	int		 r;
 	char		*header;
