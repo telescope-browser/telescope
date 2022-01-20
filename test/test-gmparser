@@ -2,7 +2,8 @@
 
 set -e
 
-for f in gm-*; do
-	./gmparser < "$f" > "$f.serialized"
-	diff -u "$f" "$f.serialized"
+for f in "$srcdir"/gm-*; do
+	name="$(basename "$f").serialized"
+	./gmparser < "$f" > "$name"
+	diff -u "$f" "$name"
 done
