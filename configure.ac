@@ -132,10 +132,14 @@ AC_DEFUN([CC_ADD_CHECK_FLAGS], [
 ])
 CC_ADD_CHECK_FLAGS([-Wall])
 CC_ADD_CHECK_FLAGS([-Wextra])
+CC_ADD_CHECK_FLAGS([-Wmissing-declarations])
 CC_ADD_CHECK_FLAGS([-Wmissing-prototypes])
 CC_ADD_CHECK_FLAGS([-Wstrict-prototypes])
 CC_ADD_CHECK_FLAGS([-Wwrite-strings])
 CC_ADD_CHECK_FLAGS([-Wno-unused-parameter])
+CC_ADD_CHECK_FLAGS([-Wpointer-arith])
+CC_ADD_CHECK_FLAGS([-Wsign-compare])
+CC_ADD_CHECK_FLAGS([-Wcast-align])
 
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([
