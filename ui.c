@@ -145,7 +145,6 @@ set_scroll_position(struct tab *tab, size_t top, size_t cur)
 		}
 
 		if (!curfound && i == cur) {
-			curfound = 1;
 			tab->buffer.current_line = vl;
 			return;
 		}
@@ -155,6 +154,9 @@ set_scroll_position(struct tab *tab, size_t top, size_t cur)
 		tab->buffer.top_line = TAILQ_FIRST(&tab->buffer.head);
 		tab->buffer.current_line = tab->buffer.top_line;
 	}
+
+	if (!curfound)
+		tab->buffer.current_line = tab->buffer.top_line;
 }
 
 void
