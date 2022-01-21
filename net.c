@@ -510,9 +510,7 @@ gemini_parse_reply(struct req *req, const char *header, size_t len)
 
 	bufferevent_disable(req->bev, EV_READ|EV_WRITE);
 
-	if (code < 20 || code >= 30)
-		close_conn(0, 0, req);
-	return 1;
+	return code;
 }
 
 /* called when we're ready to read/write */
@@ -565,9 +563,11 @@ net_read(struct bufferevent *bev, void *d)
 			return;
 		r = gemini_parse_reply(req, header, len);
 		free(header);
-		if (!r)
-			goto err;
 		req->done_header = 1;
+		if (r == 0)
+			goto err;
+		else if (r < 20 || r >= 30)
+			close_conn(0, 0, req);
 		return;
 	}
 
