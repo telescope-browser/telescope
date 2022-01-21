@@ -130,7 +130,7 @@ set_scroll_position(struct tab *tab, size_t top, size_t cur)
 	struct line *last;
 	struct vline *vl;
 	size_t i = 0;
-	int topfound = 0, curfound = 0;
+	int topfound = 0;
 
 	last = TAILQ_FIRST(&tab->buffer.page.head);
 	TAILQ_FOREACH(vl, &tab->buffer.head, vlines) {
@@ -144,19 +144,16 @@ set_scroll_position(struct tab *tab, size_t top, size_t cur)
 			tab->buffer.top_line = vl;
 		}
 
-		if (!curfound && i == cur) {
+		if (i == cur) {
 			tab->buffer.current_line = vl;
 			return;
 		}
 	}
 
-	if (!topfound) {
+	if (!topfound)
 		tab->buffer.top_line = TAILQ_FIRST(&tab->buffer.head);
-		tab->buffer.current_line = tab->buffer.top_line;
-	}
 
-	if (!curfound)
-		tab->buffer.current_line = tab->buffer.top_line;
+	tab->buffer.current_line = tab->buffer.top_line;
 }
 
 void
