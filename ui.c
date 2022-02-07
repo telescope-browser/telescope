@@ -1284,17 +1284,8 @@ ui_schedule_redraw(void)
 }
 
 void
-ui_require_input(struct tab *tab, int hide, int proto)
+ui_require_input(struct tab *tab, int hide, void (*fn)(void))
 {
-	void (*fn)(void);
-
-	if (proto == PROTO_GEMINI)
-		fn = ir_select_gemini;
-	else if (proto == PROTO_GOPHER)
-		fn = ir_select_gopher;
-	else
-		abort();
-
 	/* TODO: hard-switching to another tab is ugly */
 	switch_to_tab(tab);
 

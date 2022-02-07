@@ -401,7 +401,7 @@ handle_imsg_got_meta(struct imsg *imsg, size_t datalen)
 		load_page_from_str(tab, err_pages[tab->code]);
 	} else if (tab->code < 20) {	/* 1x */
 		load_page_from_str(tab, err_pages[tab->code]);
-		ui_require_input(tab, tab->code == 11, PROTO_GEMINI);
+		ui_require_input(tab, tab->code == 11, ir_select_gemini);
 	} else if (tab->code == 20) {
 		if (setup_parser_for(tab)) {
 			ui_send_net(IMSG_PROCEED, tab->id, NULL, 0);
@@ -803,7 +803,7 @@ load_gopher_url(struct tab *tab, const char *url)
 		parser_init(tab, gophermap_initparser);
 		break;
 	case '7':
-		ui_require_input(tab, 0, PROTO_GOPHER);
+		ui_require_input(tab, 0, ir_select_gopher);
 		return load_page_from_str(tab, err_pages[10]);
 	default:
 		return load_page_from_str(tab, "Unknown gopher selector");
