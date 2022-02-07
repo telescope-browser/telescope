@@ -232,6 +232,7 @@ struct tab {
 	struct histhead		 hist;
 	struct hist		*hist_cur;
 	size_t			 hist_off;
+	char			*last_input_url;
 
 	int			 code;
 	char			 meta[GEMINI_URL_LEN];

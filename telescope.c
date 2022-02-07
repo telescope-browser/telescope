@@ -400,6 +400,11 @@ handle_imsg_got_meta(struct imsg *imsg, size_t datalen)
 	if (tab->code < 10) {	/* internal errors */
 		load_page_from_str(tab, err_pages[tab->code]);
 	} else if (tab->code < 20) {	/* 1x */
+		free(tab->last_input_url);
+		tab->last_input_url = strdup(tab->hist_cur->h);
+		if (tab->last_input_url == NULL)
+			die();
+
 		load_page_from_str(tab, err_pages[tab->code]);
 		ui_require_input(tab, tab->code == 11, ir_select_gemini);
 	} else if (tab->code == 20) {

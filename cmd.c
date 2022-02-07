@@ -987,3 +987,17 @@ cmd_cache_info(struct buffer *buffer)
 	else
 		message("pages: %zu, total: %zu", npages, tot);
 }
+
+void
+cmd_reply_last_input(struct buffer *buffer)
+{
+	GUARD_RECURSIVE_MINIBUFFER();
+
+	if (current_tab->last_input_url == NULL) {
+		message("there was no previous input request in this tab");
+		return;
+	}
+
+	message("%s", current_tab->last_input_url);
+	ui_require_input(current_tab, 0, ir_select_reply);
+}

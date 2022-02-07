@@ -75,6 +75,7 @@ void	 minibuffer_self_insert(void);
 void	 sensible_self_insert(void);
 void	 eecmd_select(void);
 void	 ir_select_gemini(void);
+void	 ir_select_reply(void);
 void	 ir_select_gopher(void);
 void	 lu_select(void);
 void	 bp_select(void);

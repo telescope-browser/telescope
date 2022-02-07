@@ -57,6 +57,7 @@ CMD(cmd_push_button,		"Follow link at point or toggle pre-visibility.");
 CMD(cmd_push_button_new_tab,	"Follow link at point in a new tab.n");
 CMD(cmd_redraw,			"Redraw the screen.");
 CMD(cmd_reload_page,		"Reload the current page.");
+CMD(cmd_reply_last_input,	"Reply last input request.");
 CMD(cmd_scroll_down,		"Scroll down by one visual page");
 CMD(cmd_scroll_line_down,	"Scroll down by one line");
 CMD(cmd_scroll_line_up,		"Scroll up by one line.");

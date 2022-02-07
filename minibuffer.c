@@ -236,6 +236,24 @@ ir_select_gemini(void)
 }
 
 void
+ir_select_reply(void)
+{
+	char		 buf[1025] = {0};
+	struct phos_uri	 uri;
+	struct tab	*tab = current_tab;
+
+	exit_minibuffer();
+	minibuffer_hist_save_entry();
+
+	/* a bit ugly but... */
+	strlcpy(buf, tab->last_input_url, sizeof(buf));
+	phos_parse_absolute_uri(buf, &uri);
+	phos_uri_set_query(&uri, ministate.buf);
+	phos_serialize_uri(&uri, buf, sizeof(buf));
+	load_url_in_tab(tab, buf, NULL, LU_MODE_NOCACHE);
+}
+
+void
 ir_select_gopher(void)
 {
 	exit_minibuffer();
