@@ -25,7 +25,6 @@
 #include "defaults.h"
 #include "fs.h"
 #include "minibuffer.h"
-#include "parser.h"
 #include "session.h"
 #include "ui.h"
 
