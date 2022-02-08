@@ -3,7 +3,7 @@
 set -e
 
 for f in "$srcdir"/gm-*; do
-	name="$(basename "$f").serialized"
+	name=serialized."$(basename "$f")"
 	./gmparser < "$f" > "$name"
 	diff -u "$f" "$name"
 done
