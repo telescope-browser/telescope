@@ -34,10 +34,10 @@ const char *varname;
 int
 main(int argc, char **argv)
 {
-	size_t len, r, i;
-	int ch, did;
-	FILE *f;
-	uint8_t buf[64];
+	size_t	 len, r, i;
+	int	 ch, did;
+	FILE	*f;
+	uint8_t	 buf[64];
 
 	while ((ch = getopt(argc, argv, "f:v:")) != -1) {
 		switch (ch) {
