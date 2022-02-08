@@ -90,10 +90,10 @@ PAGES =	$(srcdir)/pages/about_about.gmi		\
 pages.c: pagebundler $(srcdir)/pages.h ${PAGES}
 	echo > $@
 	echo "#include \"pages.h\"" >> $@
-	./pagebundler -f $(srcdir)/pages/about_about.gmi   -v about_about   >> $@
-	./pagebundler -f $(srcdir)/pages/about_blank.gmi   -v about_blank   >> $@
-	./pagebundler -f $(srcdir)/pages/about_crash.gmi   -v about_crash   >> $@
-	./pagebundler -f $(srcdir)/pages/about_help.gmi    -v about_help    >> $@
-	./pagebundler -f $(srcdir)/pages/about_license.gmi -v about_license >> $@
-	./pagebundler -f $(srcdir)/pages/about_new.gmi     -v about_new     >> $@
-	./pagebundler -f $(srcdir)/pages/bookmarks.gmi     -v bookmarks     >> $@
+	./pagebundler $(srcdir)/pages/about_about.gmi   >> $@
+	./pagebundler $(srcdir)/pages/about_blank.gmi   >> $@
+	./pagebundler $(srcdir)/pages/about_crash.gmi   >> $@
+	./pagebundler $(srcdir)/pages/about_help.gmi    >> $@
+	./pagebundler $(srcdir)/pages/about_license.gmi >> $@
+	./pagebundler $(srcdir)/pages/about_new.gmi     >> $@
+	./pagebundler $(srcdir)/pages/bookmarks.gmi     >> $@

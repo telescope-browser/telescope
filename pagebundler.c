@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Omar Polo <op@omarpolo.com>
+ * Copyright (c) 2022, 2021 Omar Polo <op@omarpolo.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -19,49 +19,60 @@
  * be compiled.  The generated code provides a variable that holds the
  * content of the original file and a _len variable with the size.
  *
- * Usage: pagebundler -f file -v varname > outfile
+ * Usage: pagebundler file > outfile
  */
 
 #include <errno.h>
+#include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-const char *file;
-const char *varname;
+static void
+setfname(const char *fname, char *buf, size_t siz)
+{
+	const char	*c, *d;
+	size_t		 len;
+
+	if ((c = strrchr(fname, '/')) != NULL)
+		c++;
+	else
+		c = fname;
+
+	if ((d = strrchr(fname, '.')) == NULL || c > d)
+		d = strchr(fname, '\0');
+
+	len = d - c;
+	if (len >= siz) {
+		fprintf(stderr, "file name too long: %s\n", fname);
+		exit(1);
+	}
+
+	memcpy(buf, c, len);
+	buf[len] = '\0';
+}
 
 int
 main(int argc, char **argv)
 {
 	size_t	 len, r, i;
-	int	 ch, did;
+	int	 did;
 	FILE	*f;
 	uint8_t	 buf[BUFSIZ];
+	char	 varname[PATH_MAX];
 
-	while ((ch = getopt(argc, argv, "f:v:")) != -1) {
-		switch (ch) {
-		case 'f':
-			file = optarg;
-			break;
-		case 'v':
-			varname = optarg;
-			break;
-		default:
-			fprintf(stderr, "%s: wrong usage\n",
-			    argv[0]);
-			return 1;
-		}
-	}
-
-	if (file == NULL || varname == NULL) {
-		fprintf(stderr, "%s: wrong usage\n", argv[0]);
+	if (argc != 2) {
+		fprintf(stderr, "usage: %s file\n", *argv);
 		return 1;
 	}
 
-	if ((f = fopen(file, "r")) == NULL) {
+	setfname(argv[1], varname, sizeof(varname));
+
+	if ((f = fopen(argv[1], "r")) == NULL) {
 		fprintf(stderr, "%s: can't open %s: %s",
-		    argv[0], file, strerror(errno));
+		    argv[0], argv[1], strerror(errno));
 		return 1;
 	}
 
