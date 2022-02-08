@@ -16,7 +16,7 @@ telescope_SOURCES =	cmd.c			\
 			emoji-matcher.c		\
 			fs.c			\
 			fs.h			\
-			gen-emoji-matcher.sh	\
+			genemoji.sh		\
 			gencmd.awk		\
 			help.c			\
 			hist.c			\
@@ -75,8 +75,8 @@ dist_man1_MANS =	telescope.1
 cmd.gen.c: $(srcdir)/cmd.h $(srcdir)/gencmd.awk
 	${AWK} -f $(srcdir)/gencmd.awk < $(srcdir)/cmd.h > $@
 
-emoji-matcher.c: $(srcdir)/data/emoji.txt $(srcdir)/gen-emoji-matcher.sh
-	$(srcdir)/gen-emoji-matcher.sh $(srcdir)/data/emoji.txt > $@
+emoji-matcher.c: $(srcdir)/data/emoji.txt $(srcdir)/genemoji.sh
+	$(srcdir)/genemoji.sh $(srcdir)/data/emoji.txt > $@
 
 compile_flags.txt:
 	printf "%s\n" ${CFLAGS} > compile_flags.txt
