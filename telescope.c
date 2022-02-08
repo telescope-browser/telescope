@@ -808,6 +808,10 @@ load_gopher_url(struct tab *tab, const char *url)
 		parser_init(tab, gophermap_initparser);
 		break;
 	case '7':
+		free(tab->last_input_url);
+		tab->last_input_url = strdup(url);
+		if (tab->last_input_url == NULL)
+			die();
 		ui_require_input(tab, 0, ir_select_gopher);
 		return load_page_from_str(tab, err_pages[10]);
 	default:

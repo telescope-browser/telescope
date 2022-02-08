@@ -998,6 +998,12 @@ cmd_reply_last_input(struct buffer *buffer)
 		return;
 	}
 
+	if (has_prefix(current_tab->last_input_url, "gopher")) {
+		load_url_in_tab(current_tab, current_tab->last_input_url,
+		    NULL, LU_MODE_NOCACHE);
+		return;
+	}
+
 	message("%s", current_tab->last_input_url);
 	ui_require_input(current_tab, 0, ir_select_reply);
 }
