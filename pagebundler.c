@@ -22,6 +22,7 @@
  * Usage: pagebundler file > outfile
  */
 
+#include <ctype.h>
 #include <errno.h>
 #include <limits.h>
 #include <stdint.h>
@@ -54,10 +55,16 @@ setfname(const char *fname, char *buf, size_t siz)
 	buf[len] = '\0';
 }
 
+static int
+validc(int c)
+{
+	return isprint(c) && c != '\\' && c != '\'' && c != '\n';
+}
+
 int
 main(int argc, char **argv)
 {
-	size_t	 len, r, i;
+	size_t	 len, r, i, n;
 	int	 did;
 	FILE	*f;
 	uint8_t	 buf[BUFSIZ];
@@ -76,10 +83,11 @@ main(int argc, char **argv)
 		return 1;
 	}
 
-	printf("const uint8_t %s[] = {\n", varname);
+	printf("const uint8_t %s[] = {", varname);
 
 	did = 0;
 	len = 0;
+	n = 0;
 	for (;;) {
 		r = fread(buf, 1, sizeof(buf), f);
 		len += r;
@@ -87,9 +95,18 @@ main(int argc, char **argv)
 		if (r != 0)
 			did = 1;
 
-		printf("\t");
-		for (i = 0; i < r; ++i) {
-			printf("0x%x, ", buf[i]);
+		for (i = 0; i < r; ++i, ++n) {
+			if (n % 12 == 0)
+				printf("\n\t");
+			else
+				printf(" ");
+
+			if (validc(buf[i]))
+				printf("'%c',", buf[i]);
+			else if (buf[i] == '\n')
+				printf("'\\n',");
+			else
+				printf("0x%x,", buf[i]);
 		}
 		printf("\n");
 
