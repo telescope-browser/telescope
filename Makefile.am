@@ -31,12 +31,12 @@ telescope_SOURCES =	cmd.c			\
 			pages.c			\
 			pages.h			\
 			parse.y			\
-			parser.c		\
 			parser.h		\
-			parser_gemtext.c	\
-			parser_gophermap.c	\
-			parser_textpatch.c	\
-			parser_textplain.c	\
+			parser/parser.c			\
+			parser/parser_gemtext.c		\
+			parser/parser_gophermap.c	\
+			parser/parser_textpatch.c	\
+			parser/parser_textplain.c	\
 			sandbox.c		\
 			session.c		\
 			session.h		\
