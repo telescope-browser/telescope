@@ -28,6 +28,7 @@
 #include "telescope.h"
 #include "ui.h"
 #include "utf8.h"
+#include "utils.h"
 
 #define GUARD_RECURSIVE_MINIBUFFER()				\
 	do {							\
