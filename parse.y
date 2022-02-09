@@ -24,8 +24,6 @@
 #include "telescope.h"
 #include "utils.h"
 
-#include <phos/phos.h>
-
 #include <assert.h>
 #include <ctype.h>
 #include <limits.h>
