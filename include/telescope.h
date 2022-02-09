@@ -22,7 +22,7 @@
 #include <limits.h>
 
 #include "cmd.h"
-#include "phos/phos.h"
+#include "phos.h"
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
