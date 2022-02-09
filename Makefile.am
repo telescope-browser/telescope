@@ -13,10 +13,8 @@ telescope_SOURCES =	cmd.c			\
 			defaults.c		\
 			defaults.h		\
 			downloads.c		\
-			emoji-matcher.c		\
 			fs.c			\
 			fs.h			\
-			genemoji.sh		\
 			gencmd.awk		\
 			help.c			\
 			hist.c			\
@@ -43,13 +41,15 @@ telescope_SOURCES =	cmd.c			\
 			telescope.c		\
 			telescope.h		\
 			tofu.c			\
+			u/emoji-matcher.c	\
+			u/genemoji.sh		\
+			u/utf8.c		\
+			u/wrap.c		\
 			ui.c			\
 			ui.h			\
-			utf8.c			\
 			utf8.h			\
 			utils.c			\
-			utils.h			\
-			wrap.c
+			utils.h	
 
 # phos bundled files
 telescope_SOURCES +=	phos/phos.h	\
@@ -61,9 +61,9 @@ pagebundler_SOURCES =	pagebundler.c
 pagebundler$(EXEEXT): pagebundler.c
 	$(HOSTCC) $(HOSTCFLAGS) -o $@ $(srcdir)/pagebundler.c
 
-BUILT_SOURCES =		cmd.gen.c compile_flags.txt emoji-matcher.c pages.c
+BUILT_SOURCES =		cmd.gen.c compile_flags.txt u/emoji-matcher.c pages.c
 
-CLEANFILES =		cmd.gen.c compile_flags.txt emoji-matcher.c pages.c \
+CLEANFILES =		cmd.gen.c compile_flags.txt u/emoji-matcher.c pages.c \
 			parse.c
 
 LDADD =			$(LIBOBJS)
@@ -75,8 +75,8 @@ dist_man1_MANS =	telescope.1
 cmd.gen.c: $(srcdir)/cmd.h $(srcdir)/gencmd.awk
 	${AWK} -f $(srcdir)/gencmd.awk < $(srcdir)/cmd.h > $@
 
-emoji-matcher.c: $(srcdir)/data/emoji.txt $(srcdir)/genemoji.sh
-	$(srcdir)/genemoji.sh $(srcdir)/data/emoji.txt > $@
+u/emoji-matcher.c: $(srcdir)/data/emoji.txt $(srcdir)/u/genemoji.sh
+	$(srcdir)/u/genemoji.sh $(srcdir)/data/emoji.txt > $@
 
 compile_flags.txt:
 	printf "%s\n" ${CFLAGS} > compile_flags.txt

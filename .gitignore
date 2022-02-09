@@ -26,4 +26,4 @@ telescope
 pagebundler
 compile_flags.txt
 telescope-*.tar.gz
-emoji-matcher.c
+u/emoji-matcher.c
