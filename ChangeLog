@@ -1,3 +1,7 @@
+2022-02-09  Omar Polo  <op@omarpolo.com>
+
+	* emoji.txt: update to emoji-data-14.0.0.txt
+
 2022-02-07  Omar Polo  <op@omarpolo.com>
 
 	* defaults.c (load_default_keys): bind M-r to reply-last-input
