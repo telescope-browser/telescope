@@ -13,6 +13,6 @@ EXTRA_DIST =		test-gmparser	\
 			gm-00		\
 			gm-01
 
-CLEANFILES =		*.serialized
+CLEANFILES =		serialized.*
 
 TESTS =	test-gmparser
