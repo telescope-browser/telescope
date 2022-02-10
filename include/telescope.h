@@ -350,8 +350,6 @@ void			 tofu_add(struct ohash*, struct tofu_entry*);
 void			 tofu_update(struct ohash*, struct tofu_entry*);
 void			 tofu_temp_trust(struct ohash *, const char *, const char *, const char *);
 
-/* util.c */
-
 /* wrap.c */
 void		 erase_buffer(struct buffer *);
 void		 empty_linelist(struct buffer*);
