@@ -30,6 +30,8 @@ Copyright owners: (alphabetically sorted)
 * The Regents of the University of California
 * Todd C. Miller <millert@openbsd.org>
 
+Note the all of them probably don't know their code is being re-used here.
+
 ## data/emoji.txt
 
 emoji.txt contains information about various UNICODE codepoints and it’s copyright © 1991-2021 Unicode, Inc.
