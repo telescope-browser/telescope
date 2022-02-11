@@ -26,8 +26,6 @@
 #include "telescope.h"
 #include "utils.h"
 
-static void	 imsg_event_add(struct imsgev *);
-
 int
 mark_nonblock(int fd)
 {
@@ -81,7 +79,7 @@ unicode_isgraph(uint32_t cp)
 	return 1;
 }
 
-static void
+void
 imsg_event_add(struct imsgev *iev)
 {
 	iev->events = EV_READ;
