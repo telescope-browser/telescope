@@ -7,6 +7,7 @@ EXTRA_telescope_SOURCES = compat/ohash.h compat/queue.h compat/imsg.h contrib
 telescope_SOURCES =	cmd.c			\
 			cmd.gen.c		\
 			compl.c			\
+			control.c		\
 			defaults.c		\
 			downloads.c		\
 			fs.c			\
@@ -16,6 +17,7 @@ telescope_SOURCES =	cmd.c			\
 			include/cmd.h		\
 			include/compat.h	\
 			include/compl.h		\
+			include/control.h	\
 			include/defaults.h	\
 			include/fs.h		\
 			include/keymap.h	\

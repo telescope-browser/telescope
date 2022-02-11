@@ -17,6 +17,7 @@
 #include "compat.h"
 
 #include <sys/socket.h>
+#include <sys/un.h>
 #include <sys/wait.h>
 
 #include <errno.h>
@@ -27,6 +28,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "control.h"
 #include "defaults.h"
 #include "fs.h"
 #include "mcache.h"
@@ -136,6 +138,7 @@ static int		 make_request(struct tab *, struct get_req *, int,
 static int		 make_fs_request(struct tab *, int, const char *);
 static int		 do_load_url(struct tab *, const char *, const char *, int);
 static pid_t		 start_child(enum telescope_process, const char *, int);
+static void		 send_url(const char *);
 
 static struct proto {
 	const char	*schema;
@@ -1142,6 +1145,30 @@ start_child(enum telescope_process p, const char *argv0, int fd)
 	err(1, "execvp(%s)", argv0);
 }
 
+static void
+send_url(const char *url)
+{
+	struct sockaddr_un	 sun;
+	struct imsgbuf		 ibuf;
+	int			 ctl_sock;
+
+	if ((ctl_sock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
+		err(1, "socket");
+
+	memset(&sun, 0, sizeof(sun));
+	sun.sun_family = AF_UNIX;
+	strlcpy(sun.sun_path, ctlsock_path, sizeof(sun.sun_path));
+
+	if (connect(ctl_sock, (struct sockaddr *)&sun, sizeof(sun)) == -1)
+		err(1, "connect: %s", ctlsock_path);
+
+	imsg_init(&ibuf, ctl_sock);
+	imsg_compose(&ibuf, IMSG_CTL_OPEN_URL, 0, 0, -1, url,
+	    strlen(url) + 1);
+	imsg_flush(&ibuf);
+	close(ctl_sock);
+}
+
 int
 ui_send_net(int type, uint32_t peerid, const void *data,
     uint16_t datalen)
@@ -1171,6 +1198,7 @@ main(int argc, char * const *argv)
 {
 	struct imsgev	 net_ibuf, fs_ibuf;
 	pid_t		 pid;
+	int		 control_fd;
 	int		 pipe2net[2], pipe2fs[2];
 	int		 ch, configtest = 0, fail = 0;
 	int		 proc = -1;
@@ -1261,9 +1289,15 @@ main(int argc, char * const *argv)
 	    (download_path = strdup("/tmp/")) == NULL)
 		errx(1, "strdup");
 
-	if (!safe_mode && (sessionfd = lock_session()) == -1)
+	if (!safe_mode && (sessionfd = lock_session()) == -1) {
+		if (has_url) {
+			send_url(url);
+			exit(0);
+		}
+
 		errx(1, "can't lock session, is another instance of "
 		    "telescope already running?");
+	}
 
 	/* Start children. */
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe2fs) == -1)
@@ -1286,6 +1320,12 @@ main(int argc, char * const *argv)
 	tofu_init(&certs, 5, offsetof(struct tofu_entry, domain));
 
 	event_init();
+
+	if (!safe_mode) {
+		if ((control_fd = control_init(ctlsock_path)) == -1)
+			err(1, "control_init %s", ctlsock_path);
+		control_listen(control_fd);
+	}
 
 	/* initialize the in-memory cache store */
 	mcache_init();

@@ -25,6 +25,7 @@ extern char	config_path_base[PATH_MAX];
 extern char	data_path_base[PATH_MAX];
 extern char	cache_path_base[PATH_MAX];
 
+extern char	ctlsock_path[PATH_MAX];
 extern char	config_path[PATH_MAX];
 extern char	lockfile_path[PATH_MAX];
 extern char	bookmark_file[PATH_MAX];

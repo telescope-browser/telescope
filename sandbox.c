@@ -37,7 +37,7 @@ sandbox_net_process(void)
 void
 sandbox_ui_process(void)
 {
-	if (pledge("stdio tty recvfd", NULL) == -1)
+	if (pledge("stdio tty unix recvfd", NULL) == -1)
 		err(1, "pledge");
 }
 

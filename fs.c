@@ -75,6 +75,7 @@ char		config_path_base[PATH_MAX];
 char		data_path_base[PATH_MAX];
 char		cache_path_base[PATH_MAX];
 
+char		ctlsock_path[PATH_MAX];
 char		config_path[PATH_MAX];
 char		lockfile_path[PATH_MAX];
 char		bookmark_file[PATH_MAX];
@@ -673,6 +674,8 @@ fs_init(void)
 {
 	init_paths();
 
+	join_path(ctlsock_path, cache_path_base, "/ctl",
+	    sizeof(ctlsock_path));
 	join_path(config_path, config_path_base, "/config",
 	    sizeof(config_path));
 	join_path(lockfile_path, cache_path_base, "/lock",

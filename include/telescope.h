@@ -75,6 +75,8 @@ enum imsg_type {
 	IMSG_SESSION_TAB,
 	IMSG_SESSION_TAB_HIST,
 	IMSG_SESSION_END,
+
+	IMSG_CTL_OPEN_URL,
 };
 
 enum line_type {
