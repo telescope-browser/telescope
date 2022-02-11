@@ -122,7 +122,7 @@ dispatch_imsg(struct imsgev *iev, short event, imsg_handlerfn **handlers,
 			_exit(1);
 		if (n == 0)
 			break;
-		datalen = imsg.hdr.len - IMSG_HEADER_SIZE;
+		datalen = IMSG_DATA_SIZE(imsg);
 		i = imsg.hdr.type;
 		if (i > (size / sizeof(imsg_handlerfn*)) || handlers[i] == NULL)
 			abort();

@@ -40,6 +40,8 @@ struct imsgev {
 	short		 events;
 };
 
+#define IMSG_DATA_SIZE(imsg)	((imsg).hdr.len - IMSG_HEADER_SIZE)
+
 enum imsg_type {
 	/* ui <-> client/fs */
 	IMSG_GET,		/* data is URL, peerid the tab id */
