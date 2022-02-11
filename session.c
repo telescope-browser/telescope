@@ -62,9 +62,9 @@ new_tab(const char *url, const char *base, struct tab *after)
 	}
 
 	TAILQ_INIT(&tab->hist.head);
-
 	TAILQ_INIT(&tab->buffer.head);
 	TAILQ_INIT(&tab->buffer.page.head);
+	evtimer_set(&tab->loadingev, NULL, NULL);
 
 	tab->id = tab_new_id();
 
