@@ -1,5 +1,7 @@
 2022-02-11  Omar Polo  <op@omarpolo.com>
 
+	* session.c (new_tab): initialize each tab loadingev timer event,
+	fixes an error print by libevent 2 upon closing a tab.
 	* telescope.c (main): allow telescope to be ``comanded'' to open an URL
 
 2022-02-09  Omar Polo  <op@omarpolo.com>
