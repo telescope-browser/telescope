@@ -76,8 +76,8 @@ At the moment there is no UI for oob-verification though.
 ## Building
 
 Telescope depends on ncursesw, libtls (from either LibreSSL or
-libretls), libevent (either v1 or v2).  When building from a git
-checkout, yacc (or bison) is also needed.
+libretls), libevent (either v1 or v2) and pkg-config.  When building
+from a git checkout, yacc (or bison) is also needed.
 
 To build from a release tarball just execute:
 
