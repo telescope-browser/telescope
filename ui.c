@@ -1242,6 +1242,17 @@ ui_on_download_refresh(void)
 	}
 }
 
+void
+ui_remotely_open_link(const char *uri)
+{
+	new_tab(uri, NULL, NULL);
+	ui_on_tab_refresh(current_tab);
+
+	/* ring the bell */
+	printf("\a");
+	fflush(stdout);
+}
+
 const char *
 ui_keyname(int k)
 {

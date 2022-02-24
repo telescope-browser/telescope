@@ -31,7 +31,6 @@
 
 #include "control.h"
 #include "minibuffer.h"
-#include "session.h"
 #include "telescope.h"
 #include "utils.h"
 #include "ui.h"
@@ -256,8 +255,7 @@ control_dispatch_imsg(int fd, short event, void *bula)
 			if (uri[IMSG_DATA_SIZE(imsg)-1] != '\0')
 				break;
 
-			new_tab(uri, NULL, NULL);
-			ui_on_tab_refresh(current_tab);
+			ui_remotely_open_link(uri);
 			break;
 		}
 		default:
