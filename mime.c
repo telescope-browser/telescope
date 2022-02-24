@@ -26,7 +26,7 @@
 
 static int	check_for_utf8(char*);
 
-static struct parser_table {
+static const struct parser_table {
 	const char	*mediatype;
 	void		(*parserinit)(struct parser*);
 } ptable[] = {
@@ -68,8 +68,8 @@ check_for_utf8(char *b)
 int
 setup_parser_for(struct tab *tab)
 {
-	char			*b, buf[GEMINI_URL_LEN] = {0};
-	struct parser_table	*t;
+	char *b, buf[GEMINI_URL_LEN] = {0};
+	const struct parser_table *t;
 
 	memcpy(buf, tab->meta, sizeof(tab->meta));
 

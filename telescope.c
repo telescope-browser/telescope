@@ -39,7 +39,7 @@
 #include "ui.h"
 #include "utils.h"
 
-static struct option longopts[] = {
+static const struct option longopts[] = {
 	{"colors",      no_argument,    NULL,   'C'},
 	{"colours",	no_argument,    NULL,   'C'},
 	{"help",	no_argument,	NULL,	'h'},
@@ -140,7 +140,7 @@ static int		 do_load_url(struct tab *, const char *, const char *, int);
 static pid_t		 start_child(enum telescope_process, const char *, int);
 static void		 send_url(const char *);
 
-static struct proto {
+static const struct proto {
 	const char	*schema;
 	const char	*port;
 	int		 (*loadfn)(struct tab *, const char *);
@@ -930,8 +930,8 @@ load_page_from_str(struct tab *tab, const char *page)
 static int
 do_load_url(struct tab *tab, const char *url, const char *base, int mode)
 {
+	const struct proto	*p;
 	struct phos_uri	 uri;
-	struct proto	*p;
 	struct proxy	*proxy;
 	int		 nocache = mode & LU_MODE_NOCACHE;
 	char		*t;
