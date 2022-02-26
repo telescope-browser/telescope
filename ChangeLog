@@ -1,4 +1,8 @@
-2022-02-26  Omar Polo  <op@openbsd.org>
+2022-02-26  Omar Polo  <op@omarpolo.com>
+
+	* minibuffer.c (recompute_completions): split the minibuffer input
+	into words and try to match every one of the independently from
+	the others.
 
 	* cmd.c (cmd_load_url): remember visited URLs and provide
 	completions during load-url.

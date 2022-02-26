@@ -26,6 +26,8 @@
 #include "utf8.h"
 #include "utils.h"
 
+#define nitems(x) (sizeof(x)/sizeof(x[0]))
+
 static void		*minibuffer_metadata(void);
 static void		 minibuffer_hist_save_entry(void);
 static void		 yornp_self_insert(void);
@@ -56,6 +58,28 @@ struct buffer minibufferwin;
 
 int in_minibuffer;
 
+static inline int
+matches(char **words, size_t len, struct line *l)
+{
+	size_t	i;
+	int	lm, am;
+
+	for (i = 0; i < len; ++i) {
+		lm = am = 0;
+
+		if (strcasestr(l->line, words[i]) != NULL)
+			lm = 1;
+		if (l->alt != NULL &&
+		    strcasestr(l->alt, words[i]) != NULL)
+			am = 1;
+
+		if (!lm && !am)
+			return 0;
+	}
+
+	return 1;
+}
+
 /*
  * Recompute the visible completions.  If add is 1, don't consider the
  * ones already hidden.
@@ -63,6 +87,9 @@ int in_minibuffer;
 void
 recompute_completions(int add)
 {
+	static char	 buf[GEMINI_URL_LEN];
+	char		*input, **ap, *words[10];
+	size_t		 len = 0;
 	struct line	*l;
 	struct vline	*vl;
 	struct buffer	*b;
@@ -70,13 +97,22 @@ recompute_completions(int add)
 	if (in_minibuffer != MB_COMPREAD)
 		return;
 
+	strlcpy(buf, ministate.buf, sizeof(buf));
+	input = buf;
+
+	/* tokenize the input */
+	for (ap = words; ap < words + nitems(words) &&
+	    (*ap = strsep(&input, " ")) != NULL;) {
+		if (**ap != '\0')
+			ap++, len++;
+	}
+
 	b = &ministate.compl.buffer;
 	TAILQ_FOREACH(l, &b->page.head, lines) {
 		l->type = LINE_COMPL;
 		if (add && l->flags & L_HIDDEN)
 			continue;
-		if (strcasestr(l->line, ministate.buf) != NULL ||
-		    (l->alt != NULL && strcasestr(l->alt, ministate.buf) != NULL)) {
+		if (matches(words, len, l)) {
 			if (l->flags & L_HIDDEN)
 				b->line_max++;
 			l->flags &= ~L_HIDDEN;
