@@ -244,79 +244,79 @@ to the value
 Valid options are:
 .Pp
 .Bl -tag -width twelveletters -compact
-.It autosave
+.It Ic autosave
 .Pq integer
 If greater than zero, save the session after the specified amount of
 seconds after some events happens
 .Pq new or closed tabs, visited a link ...
 Defaults to 20.
-.It dont-wrap-pre
+.It Ic dont-wrap-pre
 .Pq integer
 If nonzero, don't wrap preformatted blocks.
 Defaults to 0.
-.It download-path
+.It Ic download-path
 .Pq string
 The default download path.
 Defaults to
 .Pa /tmp .
-.It emojify-link
+.It Ic emojify-link
 .Pq integer
 If nonzero, when the text of a link starts with an emoji followed by a
 space, use that emoji as line prefix.
 Defaults to 1.
-.It enable-colors
+.It Ic enable-colors
 .Pq integer
 If nonzero, enable colours.
 Defaults to 0 if
 .Ev NO_COLORS
 is set, 1 otherwise.
-.It fill-column
+.It Ic fill-column
 .Pq integer
 If greater than zero, lines of text will be formatted in a way that
 don't exceed the given number of columns.
 Defaults to 80.
-.It fringe-ignore-offset
+.It Ic fringe-ignore-offset
 .Pq integer
 If nonzero, the fringe doesn't obey to
 .Ic olivetti-mode .
 Defaults to 1.
-.It hide-pre-blocks
+.It Ic hide-pre-blocks
 .Pq integer
 If nonzero, hide by default the body of the preformatted blocks.
 Defaults to zero.
 .Ic push-button
 can be used to toggle the visibility per-block.
-.It hide-pre-closing-line
+.It Ic hide-pre-closing-line
 .Pq integer
 If nonzero, hide the closing line of preformatted blocks.
 Defaults to 0.
-.It hide-pre-context
+.It Ic hide-pre-context
 .Pq integer
 If nonzero, hide the start and end line of the preformatted blocks.
 If both hide-pre-context and hide-pre-blocks are nonzero, preformatted
 blocks are irremediably hidden.
 Defaults to zero.
-.It new-tab-url
+.It Ic new-tab-url
 .Pq string
 URL for the new tab page.
 Defaults to
 .Dq about:new .
-.It max-killed-tabs
+.It Ic max-killed-tabs
 .Pq integer
 The maximum number of closed tabs to keep track of, defaults to 10.
 Must be a positive number; if zero, don't save closed tabs at all.
-.It olivetti-mode
+.It Ic olivetti-mode
 .Pq integer
 If nonzero, enable
 .Ic olivetti-mode
 Defaults to 1.
-.It tab-bar-show
+.It Ic tab-bar-show
 .Pq integer
 If tab-bar-show is -1 hide the tab bar permanently, if 0 show it
 unconditionally.
 If it's 1, show the bar only when there is more than one tab.
 Defaults to 1.
-.It update-title
+.It Ic update-title
 .Pq integer
 If nonzero, set the terminal title to the page title.
 Defaults to 1.
