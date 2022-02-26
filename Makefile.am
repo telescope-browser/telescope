@@ -63,9 +63,9 @@ pagebundler_SOURCES =	pagebundler.c
 pagebundler$(EXEEXT): pagebundler.c
 	$(HOSTCC) $(HOSTCFLAGS) -o $@ $(srcdir)/pagebundler.c
 
-BUILT_SOURCES =		cmd.gen.c compile_flags.txt u/emoji-matcher.c pages.c
+BUILT_SOURCES =		cmd.gen.c u/emoji-matcher.c pages.c
 
-CLEANFILES =		cmd.gen.c compile_flags.txt u/emoji-matcher.c pages.c \
+CLEANFILES =		cmd.gen.c u/emoji-matcher.c pages.c \
 			parse.c
 
 AM_CPPFLAGS =		-I$(top_srcdir)/phos -I$(top_srcdir)/include
@@ -80,9 +80,6 @@ cmd.gen.c: $(srcdir)/include/cmd.h $(srcdir)/gencmd.awk
 
 u/emoji-matcher.c: $(srcdir)/data/emoji.txt $(srcdir)/u/genemoji.sh
 	$(srcdir)/u/genemoji.sh $(srcdir)/data/emoji.txt > $@
-
-compile_flags.txt:
-	printf "%s\n" ${CFLAGS} > compile_flags.txt
 
 PAGES =	$(srcdir)/pages/about_about.gmi		\
 	$(srcdir)/pages/about_blank.gmi		\

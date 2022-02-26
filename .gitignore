@@ -25,6 +25,5 @@ parse.c
 pages.c
 telescope
 pagebundler
-compile_flags.txt
 telescope-*.tar.gz
 u/emoji-matcher.c
