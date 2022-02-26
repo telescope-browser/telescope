@@ -32,6 +32,25 @@ struct session_tab_hist {
 	int		future;
 };
 
+struct histitem {
+	time_t	ts;
+	char	uri[GEMINI_URL_LEN];
+};
+
+struct history_item {
+	time_t	 ts;
+	char	*uri;
+	int	 dirty;
+};
+
+#define HISTORY_CAP 1000
+struct history {
+	struct history_item	items[HISTORY_CAP];
+	size_t			len;
+	size_t			dirty;
+};
+extern struct history history;
+
 void		 switch_to_tab(struct tab *);
 unsigned int	 tab_new_id(void);
 struct tab	*new_tab(const char *, const char *base, struct tab *);
@@ -41,6 +60,10 @@ void		 free_tab(struct tab *);
 void		 stop_tab(struct tab*);
 
 void		 save_session(void);
+
+void		 history_push(struct histitem *);
+void		 history_sort(void);
+void		 history_add(const char *);
 
 void		 autosave_init(void);
 void		 autosave_timer(int, short, void *);

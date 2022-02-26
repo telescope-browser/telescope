@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "defaults.h"
@@ -27,6 +28,8 @@
 #include "minibuffer.h"
 #include "session.h"
 #include "ui.h"
+
+struct history	history;
 
 static struct event	 autosaveev;
 
@@ -197,6 +200,8 @@ void
 save_session(void)
 {
 	struct tab		*tab;
+	struct histitem		 hi;
+	size_t			 i;
 
 	if (safe_mode)
 		return;
@@ -209,6 +214,123 @@ save_session(void)
 		sendtab(tab, 1);
 
 	ui_send_fs(IMSG_SESSION_END, 0, NULL, 0);
+
+	if (history.dirty) {
+		for (i = 0; i < history.len && history.dirty > 0; ++i) {
+			if (!history.items[i].dirty)
+				continue;
+			history.dirty--;
+			history.items[i].dirty = 0;
+
+			memset(&hi, 0, sizeof(hi));
+			hi.ts = history.items[i].ts;
+			strlcpy(hi.uri, history.items[i].uri, sizeof(hi.uri));
+			ui_send_fs(IMSG_HIST_ITEM, 0, &hi, sizeof(hi));
+		}
+		ui_send_fs(IMSG_HIST_END, 0, NULL, 0);
+		history.dirty = 0;
+	}
+}
+
+void
+history_push(struct histitem *hi)
+{
+	size_t		 i, oldest = 0;
+	char		*uri;
+
+	for (i = 0; i < history.len; ++i) {
+		if (history.items[i].ts < history.items[oldest].ts)
+			oldest = i;
+
+		/* remove duplicates */
+		if (!strcmp(history.items[i].uri, hi->uri))
+			return;
+	}
+
+	if ((uri = strdup(hi->uri)) == NULL)
+		abort();
+
+	/* don't grow too much; replace the oldest */
+	if (history.len == HISTORY_CAP) {
+		history.items[oldest].ts = hi->ts;
+		free(history.items[oldest].uri);
+		history.items[oldest].uri = uri;
+		return;
+	}
+
+	history.items[history.len].ts = hi->ts;
+	history.items[history.len].uri = uri;
+	history.len++;
+}
+
+static int
+history_cmp(const void *a, const void *b)
+{
+	const struct history_item *i = a, *j = b;
+	return strcmp(i->uri, j->uri);
+}
+
+void
+history_sort(void)
+{
+	qsort(history.items, history.len, sizeof(history.items[0]),
+	    history_cmp);
+}
+
+void
+history_add(const char *uri)
+{
+	size_t	 i, j, insert = 0, oldest = 0;
+	char	*u;
+	int	 c;
+
+	for (i = 0; i < history.len; ++i) {
+		if (history.items[i].ts < history.items[oldest].ts)
+			oldest = i;
+
+		if (insert != 0 && insert < i)
+			continue;
+
+		c = strcmp(uri, history.items[i].uri);
+		if (c == 0) {
+			history.items[i].ts = time(NULL);
+			history.items[i].dirty = 1;
+			history.dirty++;
+			autosave_hook();
+			return;
+		}
+
+		if (c > 0)
+			insert = i;
+	}
+
+	if ((u = strdup(uri)) == NULL)
+		return;
+
+	/* if history is full, replace the oldest one */
+	if (history.len == HISTORY_CAP) {
+		free(history.items[oldest].uri);
+		history.items[oldest].uri = u;
+		history.items[oldest].ts = time(NULL);
+		history.items[oldest].dirty = 1;
+		history.dirty++;
+		history_sort();
+		autosave_hook();
+		return;
+	}
+
+	/* otherwise just insert in the right spot */
+
+	for (j = history.len; j > insert; --j)
+		memcpy(&history.items[j], &history.items[j-1],
+		    sizeof(history.items[j]));
+
+	history.items[insert].ts = time(NULL);
+	history.items[insert].uri = u;
+	history.items[insert].dirty = 1;
+	history.dirty++;
+	history.len++;
+	autosave_hook();
 }
 
 void

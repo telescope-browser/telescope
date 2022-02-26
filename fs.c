@@ -54,6 +54,7 @@ static void		 handle_session_start(struct imsg*, size_t);
 static void		 handle_session_tab(struct imsg*, size_t);
 static void		 handle_session_tab_hist(struct imsg*, size_t);
 static void		 handle_session_end(struct imsg*, size_t);
+static void		 handle_hist(struct imsg *, size_t);
 static void		 handle_dispatch_imsg(int, short, void*);
 static int		 fs_send_ui(int, uint32_t, int, const void *, uint16_t);
 static size_t		 join_path(char*, const char*, const char*, size_t);
@@ -61,6 +62,7 @@ static void		 getenv_default(char*, const char*, const char*, size_t);
 static void		 mkdirs(const char*, mode_t);
 static void		 init_paths(void);
 static void		 load_last_session(void);
+static void		 load_hist(void);
 static int		 last_time_crashed(void);
 static void		 load_certs(void);
 
@@ -82,6 +84,7 @@ char		bookmark_file[PATH_MAX];
 char		known_hosts_file[PATH_MAX], known_hosts_tmp[PATH_MAX];
 char		crashed_file[PATH_MAX];
 char		session_file[PATH_MAX];
+static char	history_file[PATH_MAX];
 
 static imsg_handlerfn *handlers[] = {
 	[IMSG_GET] = handle_get,
@@ -96,6 +99,8 @@ static imsg_handlerfn *handlers[] = {
 	[IMSG_SESSION_TAB] = handle_session_tab,
 	[IMSG_SESSION_TAB_HIST] = handle_session_tab_hist,
 	[IMSG_SESSION_END] = handle_session_end,
+	[IMSG_HIST_ITEM] = handle_hist,
+	[IMSG_HIST_END] = handle_hist,
 };
 
 static void __attribute__((__noreturn__))
@@ -337,6 +342,7 @@ handle_misc(struct imsg *imsg, size_t datalen)
 	switch (imsg->hdr.type) {
 	case IMSG_INIT:
 		load_certs();
+		load_hist();
 		load_last_session();
 		break;
 
@@ -545,6 +551,36 @@ handle_session_end(struct imsg *imsg, size_t datalen)
 }
 
 static void
+handle_hist(struct imsg *imsg, size_t datalen)
+{
+	static FILE *hist;
+	struct histitem hi;
+
+	switch (imsg->hdr.type) {
+	case IMSG_HIST_ITEM:
+		if (hist == NULL) {
+			if ((hist = fopen(history_file, "a")) == NULL)
+				return;
+		}
+		if (datalen != sizeof(hi))
+			abort();
+		memcpy(&hi, imsg->data, sizeof(hi));
+		fprintf(hist, "%lld %s\n", (long long)hi.ts, hi.uri);
+		break;
+
+	case IMSG_HIST_END:
+		if (hist == NULL)
+			return;
+		fclose(hist);
+		hist = NULL;
+		break;
+
+	default:
+		abort();
+	}
+}
+
+static void
 handle_dispatch_imsg(int fd, short ev, void *d)
 {
 	struct imsgev	*iev = d;
@@ -688,6 +724,8 @@ fs_init(void)
 	    "/known_hosts.tmp.XXXXXXXXXX", sizeof(known_hosts_tmp));
 	join_path(session_file, cache_path_base, "/session",
 	    sizeof(session_file));
+	join_path(history_file, cache_path_base, "/history",
+	    sizeof(history_file));
 	join_path(crashed_file, cache_path_base, "/crashed",
 	    sizeof(crashed_file));
 
@@ -799,6 +837,43 @@ load_last_session(void)
 
 end:
 	fs_send_ui(IMSG_SESSION_END, 0, -1, &first_time, sizeof(first_time));
+}
+
+static void
+load_hist(void)
+{
+	FILE		*hist;
+	size_t		 linesize = 0;
+	ssize_t		 linelen;
+	char		*nl, *spc, *line = NULL;
+	const char	*errstr;
+	struct histitem	 hi;
+
+	if ((hist = fopen(history_file, "r")) == NULL)
+		goto end;
+
+	while ((linelen = getline(&line, &linesize, hist)) != -1) {
+		if ((nl = strchr(line, '\n')) != NULL)
+			*nl = '\0';
+		if ((spc = strchr(line, ' ')) == NULL)
+			continue;
+		*spc = '\0';
+		spc++;
+
+		memset(&hi, 0, sizeof(hi));
+		hi.ts = strtonum(line, INT64_MIN, INT64_MAX, &errstr);
+		if (errstr != NULL)
+			continue;
+		if (strlcpy(hi.uri, spc, sizeof(hi.uri)) >= sizeof(hi.uri))
+			continue;
+
+		fs_send_ui(IMSG_HIST_ITEM, 0, -1, &hi, sizeof(hi));
+	}
+
+	fclose(hist);
+	free(line);
+end:
+	fs_send_ui(IMSG_HIST_END, 0, -1, NULL, 0);
 }
 
 int

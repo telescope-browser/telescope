@@ -125,6 +125,7 @@ static void		 handle_imsg_bookmark_ok(struct imsg *, size_t);
 static void		 handle_imsg_save_cert_ok(struct imsg *, size_t);
 static void		 handle_imsg_update_cert_ok(struct imsg *, size_t);
 static void		 handle_imsg_session(struct imsg *, size_t);
+static void		 handle_imsg_history(struct imsg *, size_t);
 static void		 handle_dispatch_imsg(int, short, void *);
 static int		 load_about_url(struct tab *, const char *);
 static int		 load_file_url(struct tab *, const char *);
@@ -168,6 +169,8 @@ static imsg_handlerfn *handlers[] = {
 	[IMSG_SESSION_TAB] = handle_imsg_session,
 	[IMSG_SESSION_TAB_HIST] = handle_imsg_session,
 	[IMSG_SESSION_END] = handle_imsg_session,
+	[IMSG_HIST_ITEM] = handle_imsg_history,
+	[IMSG_HIST_END] = handle_imsg_history,
 };
 
 static struct ohash	certs;
@@ -411,6 +414,7 @@ handle_imsg_got_meta(struct imsg *imsg, size_t datalen)
 		load_page_from_str(tab, err_pages[tab->code]);
 		ui_require_input(tab, tab->code == 11, ir_select_gemini);
 	} else if (tab->code == 20) {
+		history_add(tab->hist_cur->h);
 		if (setup_parser_for(tab)) {
 			ui_send_net(IMSG_PROCEED, tab->id, NULL, 0);
 		} else if (safe_mode) {
@@ -576,6 +580,37 @@ handle_imsg_session(struct imsg *imsg, size_t datalen)
 		if (has_url || TAILQ_EMPTY(&tabshead))
 			new_tab(url, NULL, NULL);
 		ui_main_loop();
+		break;
+
+	default:
+		die();
+	}
+}
+
+static void
+handle_imsg_history(struct imsg *imsg, size_t datalen)
+{
+	struct histitem hi;
+
+	/*
+	 * The fs process tried to send history item after it
+	 * has announced that it's done.  Something fishy is
+	 * going on, better die
+	 */
+	if (operating)
+		die();
+
+	switch (imsg->hdr.type) {
+	case IMSG_HIST_ITEM:
+		if (datalen != sizeof(hi))
+			die();
+
+		memcpy(&hi, imsg->data, sizeof(hi));
+		history_push(&hi);
+		break;
+
+	case IMSG_HIST_END:
+		history_sort();
 		break;
 
 	default:

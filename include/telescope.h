@@ -76,6 +76,9 @@ enum imsg_type {
 	IMSG_SESSION_TAB_HIST,
 	IMSG_SESSION_END,
 
+	IMSG_HIST_ITEM,		/* struct histitem */
+	IMSG_HIST_END,		/* empty */
+
 	IMSG_CTL_OPEN_URL,
 };
 
