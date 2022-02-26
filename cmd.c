@@ -565,7 +565,7 @@ cmd_load_url(struct buffer *buffer)
 	GUARD_RECURSIVE_MINIBUFFER();
 
 	enter_minibuffer(sensible_self_insert, lu_select, exit_minibuffer,
-	    &lu_history, NULL, NULL);
+	    &lu_history, compl_lu, NULL);
 	strlcpy(ministate.prompt, "Load URL: ", sizeof(ministate.prompt));
 }
 
@@ -575,7 +575,7 @@ cmd_load_current_url(struct buffer *buffer)
 	GUARD_RECURSIVE_MINIBUFFER();
 
 	enter_minibuffer(sensible_self_insert, lu_select, exit_minibuffer,
-	    &lu_history, NULL, NULL);
+	    &lu_history, compl_lu, NULL);
 	strlcpy(ministate.prompt, "Load URL: ", sizeof(ministate.prompt));
 	strlcpy(ministate.buf, current_tab->hist_cur->h, sizeof(ministate.buf));
 	ministate.buffer.cpoff = utf8_cplen(ministate.buf);

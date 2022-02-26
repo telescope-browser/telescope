@@ -20,6 +20,25 @@
 
 #include "compl.h"
 #include "telescope.h"
+#include "session.h"
+
+/*
+ * Provide completions for load-url (lu).
+ */
+const char *
+compl_lu(void **data, void **ret, const char **descr)
+{
+	struct history_item **state = (struct history_item **)data;
+
+	/* first time: init the state */
+	if (*state == NULL)
+		*state = history.items;
+
+	if (*state == history.items + history.len)
+		return NULL;
+
+	return (*state)++->uri;
+}
 
 /*
  * Provide completions for execute-extended-command (eecmd).
