@@ -146,8 +146,13 @@ AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([
 	Makefile
 	test/Makefile
-	pages/about_new.gmi
+	pages/about_about.gmi
+	pages/about_blank.gmi
 	pages/about_crash.gmi
+	pages/about_help.gmi
+	pages/about_license.gmi
+	pages/about_new.gmi
+	pages/bookmarks.gmi
 ])
 
 AC_OUTPUT

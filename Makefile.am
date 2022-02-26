@@ -81,19 +81,19 @@ cmd.gen.c: $(srcdir)/include/cmd.h $(srcdir)/gencmd.awk
 u/emoji-matcher.c: $(srcdir)/data/emoji.txt $(srcdir)/u/genemoji.sh
 	$(srcdir)/u/genemoji.sh $(srcdir)/data/emoji.txt > $@
 
-PAGES =	$(srcdir)/pages/about_about.gmi		\
-	$(srcdir)/pages/about_blank.gmi		\
-	$(srcdir)/pages/about_crash.gmi		\
-	$(srcdir)/pages/about_help.gmi		\
-	$(srcdir)/pages/about_license.gmi	\
-	$(srcdir)/pages/about_new.gmi
+PAGES =	$(builddir)/pages/about_about.gmi	\
+	$(builddir)/pages/about_blank.gmi	\
+	$(builddir)/pages/about_crash.gmi	\
+	$(builddir)/pages/about_help.gmi	\
+	$(builddir)/pages/about_license.gmi	\
+	$(builddir)/pages/about_new.gmi
 pages.c: pagebundler $(srcdir)/include/pages.h ${PAGES}
 	echo > $@
 	echo "#include \"include/pages.h\"" >> $@
-	./pagebundler $(srcdir)/pages/about_about.gmi   >> $@
-	./pagebundler $(srcdir)/pages/about_blank.gmi   >> $@
-	./pagebundler $(srcdir)/pages/about_crash.gmi   >> $@
-	./pagebundler $(srcdir)/pages/about_help.gmi    >> $@
-	./pagebundler $(srcdir)/pages/about_license.gmi >> $@
-	./pagebundler $(srcdir)/pages/about_new.gmi     >> $@
-	./pagebundler $(srcdir)/pages/bookmarks.gmi     >> $@
+	./pagebundler $(builddir)/pages/about_about.gmi   >> $@
+	./pagebundler $(builddir)/pages/about_blank.gmi   >> $@
+	./pagebundler $(builddir)/pages/about_crash.gmi   >> $@
+	./pagebundler $(builddir)/pages/about_help.gmi    >> $@
+	./pagebundler $(builddir)/pages/about_license.gmi >> $@
+	./pagebundler $(builddir)/pages/about_new.gmi     >> $@
+	./pagebundler $(builddir)/pages/bookmarks.gmi     >> $@
