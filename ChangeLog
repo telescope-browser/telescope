@@ -1,3 +1,8 @@
+2022-02-26  Omar Polo  <op@openbsd.org>
+
+	* cmd.c (cmd_load_url): remember visited URLs and provide
+	completions during load-url.
+
 2022-02-11  Omar Polo  <op@omarpolo.com>
 
 	* session.c (new_tab): initialize each tab loadingev timer event,
