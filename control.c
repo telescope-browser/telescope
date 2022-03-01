@@ -247,10 +247,11 @@ control_dispatch_imsg(int fd, short event, void *bula)
 
 		switch (imsg.hdr.type) {
 		case IMSG_CTL_OPEN_URL: {
-			char uri[GEMINI_URL_LEN] = { 0 };
+			static char uri[GEMINI_URL_LEN];
 
-			if (IMSG_DATA_SIZE(imsg) > sizeof(uri)-1)
+			if (IMSG_DATA_SIZE(imsg) >= sizeof(uri))
 				break;
+			memset(uri, 0, sizeof(uri));
 			memcpy(uri, imsg.data, sizeof(uri));
 			if (uri[IMSG_DATA_SIZE(imsg)-1] != '\0')
 				break;
