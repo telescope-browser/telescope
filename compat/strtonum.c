@@ -1,3 +1,5 @@
+/*	$OpenBSD: strtonum.c,v 1.8 2015/09/13 08:31:48 guenther Exp $	*/
+
 /*
  * Copyright (c) 2004 Ted Unangst and Todd Miller
  * All rights reserved.
