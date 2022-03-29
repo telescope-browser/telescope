@@ -104,8 +104,8 @@ Please keep in mind that the main branch, from time to time, may be
 accidentally broken on some platforms.  Telescope is developed
 primarily on OpenBSD/amd64 and commits on the main branch don't get
 always tested in other OSes.  Before tagging a release however, a
-comprehensive testing on various platforms is done to ensure everything
-is working as intended.
+comprehensive testing on various platforms is done to ensure
+everything is working as intended.
 
 
 ## Contributing
@@ -115,7 +115,8 @@ reports: feel free to open an issue or send an email to
 `telescope@omarpolo.com`.
 
 If you have a sample configuration, custom theme, a script or anything
-that could be helpful to others, consider adding it to the `contrib` directory.
+that could be helpful to others, consider adding it to the `contrib`
+directory.
 
 
 ## User files
@@ -133,7 +134,8 @@ Telescope is distributed under a BSD-style licence.  The main code is
 under the ISC but for files under `compat/` it varies.
 
 `data/emoji.txt` is copyright © 1991-2021 Unicode, Inc. and
-distributed under the [UNICODE, Inc license agreement][unicode-license].
+distributed under the [UNICODE, Inc license
+agreement][unicode-license].
 
 
 [unicode-license]: https://www.unicode.org/license.html
