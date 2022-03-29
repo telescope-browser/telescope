@@ -15,5 +15,5 @@ serve-gemini:
 	gmid -p 1966 .
 
 upload:
-	rsync --delete -a . op:sites/telescope.omarpolo.com
-	rsync --delete -a . op:gemini/telescope.omarpolo.com
+	openrsync --rsync-path=openrsync --del -a . antartica:/var/www/telescope.omarpolo.com
+	openrsync --rsync-path=openrsync --del -a . antartica:/var/gemini/telescope.omarpolo.com
