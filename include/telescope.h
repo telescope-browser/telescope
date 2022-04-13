@@ -302,11 +302,13 @@ struct download {
 	int			 fd;
 	size_t			 bytes;
 	char			*path;
+	int			 buffer;
 	STAILQ_ENTRY(download)	 entries;
 };
 
 void		 recompute_downloads(void);
-void		 enqueue_download(uint32_t, const char *);
+void		 enqueue_download(uint32_t, const char *, int);
+void		 dequeue_first_download(void);
 struct download	*download_by_id(uint32_t);
 
 /* help.c */
@@ -348,6 +350,7 @@ void		 load_url_in_tab(struct tab *, const char *, const char *, int);
 int		 load_previous_page(struct tab*);
 int		 load_next_page(struct tab*);
 void		 add_to_bookmarks(const char*);
+void		 write_buffer(const char *, struct tab *);
 void		 humanify_url(const char *, char *, size_t);
 int		 ui_send_net(int, uint32_t, const void *, uint16_t);
 int		 ui_send_fs(int, uint32_t, const void *, uint16_t);

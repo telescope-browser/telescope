@@ -77,3 +77,4 @@ CMD(cmd_toc,			"Jump to a heading using the minibuffer.");
 CMD(cmd_toggle_downloads,	"Toggle the downloads side window.");
 CMD(cmd_toggle_help,		"Toggle side window with help.");
 CMD(cmd_toggle_pre_wrap,	"Toggle the wrapping of preformatted blocks.");
+CMD(cmd_write_buffer,		"Save the current buffer to the disk.");

@@ -478,7 +478,7 @@ handle_save_page_path(const char *path, struct tab *tab)
 
 	ui_show_downloads_pane();
 
-	enqueue_download(tab->id, path);
+	enqueue_download(tab->id, path, 0);
 	ui_send_fs(IMSG_FILE_OPEN, tab->id, path, strlen(path)+1);
 
 	/*
@@ -506,7 +506,20 @@ handle_imsg_file_opened(struct imsg *imsg, size_t datalen)
 		if (e[datalen-1] != '\0')
 			die();
 		message("Can't open file %s: %s", d->path, e);
-	} else {
+	} else if (d->buffer) {
+		FILE *fp;
+		int r;
+
+		if ((fp = fdopen(imsg->fd, "w")) != NULL) {
+			r = parser_serialize(current_tab, (printfn)fprintf,
+			    fp);
+			if (!r)
+				message("Failed to save the page.");
+			fclose(fp);
+		}
+
+		dequeue_first_download();
+	}else {
 		d->fd = imsg->fd;
 		ui_send_net(IMSG_PROCEED, d->id, NULL, 0);
 	}
@@ -1098,6 +1111,16 @@ add_to_bookmarks(const char *str)
 {
 	ui_send_fs(IMSG_BOOKMARK_PAGE, 0,
 	    str, strlen(str)+1);
+}
+
+void
+write_buffer(const char *path, struct tab *tab)
+{
+	if (path == NULL)
+		return;
+
+	enqueue_download(tab->id, path, 1);
+	ui_send_fs(IMSG_FILE_OPEN, tab->id, path, strlen(path)+1);
 }
 
 /*

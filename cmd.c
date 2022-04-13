@@ -1008,3 +1008,34 @@ cmd_reply_last_input(struct buffer *buffer)
 	message("%s", current_tab->last_input_url);
 	ui_require_input(current_tab, 0, ir_select_reply);
 }
+
+void
+cmd_write_buffer(struct buffer *buffer)
+{
+	const char *f, *url;
+	char path[PATH_MAX];
+
+	GUARD_RECURSIVE_MINIBUFFER();
+
+	if (safe_mode) {
+		message("Can't write buffer in safe-mode.");
+		return;
+	}
+
+	url = current_tab->hist_cur->h;
+
+	if ((f = strrchr(url, '/')) != NULL)
+		f++;
+	if (f == NULL || *f == '\0') {
+		/* guess a decent file name based on the protocol used */
+		if (!strncmp(url, "gemini://", 9))
+			f = "index.gmi";
+		else
+			f = "index.txt";
+	}
+
+	strlcpy(path, download_path, sizeof(path));
+	strlcat(path, f, sizeof(path));
+
+	ui_read("Write file", write_buffer, current_tab, path);
+}
