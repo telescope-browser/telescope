@@ -29,6 +29,7 @@
 #define nitems(x) (sizeof(x)/sizeof(x[0]))
 
 static void		*minibuffer_metadata(void);
+static const char	*minibuffer_compl_text(void);
 static void		 minibuffer_hist_save_entry(void);
 static void		 yornp_self_insert(void);
 static void		 yornp_abort(void);
@@ -156,10 +157,23 @@ minibuffer_metadata(void)
 	return vl->parent->data;
 }
 
+static const char *
+minibuffer_compl_text(void)
+{
+	struct vline	*vl;
+
+	vl = ministate.compl.buffer.current_line;
+	if (vl == NULL || vl->parent->flags & L_HIDDEN ||
+	    vl->parent->type == LINE_COMPL || vl->parent->line == NULL)
+		return ministate.buf;
+	return vl->parent->line;
+}
+
 static void
 minibuffer_hist_save_entry(void)
 {
 	struct hist	*hist;
+	const char	*t;
 
 	if (ministate.history == NULL)
 		return;
@@ -167,7 +181,8 @@ minibuffer_hist_save_entry(void)
 	if ((hist = calloc(1, sizeof(*hist))) == NULL)
 		abort();
 
-	strlcpy(hist->h, ministate.buf, sizeof(hist->h));
+	t = minibuffer_compl_text();
+	strlcpy(hist->h, t, sizeof(hist->h));
 
 	TAILQ_INSERT_TAIL(&ministate.history->head, hist, entries);
 	ministate.history->len++;
@@ -228,25 +243,19 @@ void
 eecmd_select(void)
 {
 	struct cmd	*cmd;
-	struct vline	*vl;
 	const char	*t;
 
-	vl = ministate.compl.buffer.current_line;
-	if (vl == NULL || vl->parent->flags & L_HIDDEN)
-		goto end;
-
-	t = vl->parent->line;
+	t = minibuffer_compl_text();
 	for (cmd = cmds; cmd->cmd != NULL; ++cmd) {
 		if (!strcmp(cmd->cmd, t)) {
 			minibuffer_insert_current_candidate();
-			exit_minibuffer();
 			minibuffer_hist_save_entry();
+			exit_minibuffer();
 			cmd->fn(current_buffer());
 			return;
 		}
 	}
 
-end:
 	message("No match");
 }
 
@@ -257,13 +266,14 @@ ir_select_gemini(void)
 	struct phos_uri	 uri;
 	struct tab	*tab = current_tab;
 
-	exit_minibuffer();
 	minibuffer_hist_save_entry();
 
 	/* a bit ugly but... */
 	memcpy(&uri, &tab->uri, sizeof(tab->uri));
-	phos_uri_set_query(&uri, ministate.buf);
+	phos_uri_set_query(&uri, minibuffer_compl_text());
 	phos_serialize_uri(&uri, buf, sizeof(buf));
+
+	exit_minibuffer();
 	load_url_in_tab(tab, buf, NULL, LU_MODE_NOCACHE);
 }
 
@@ -274,24 +284,24 @@ ir_select_reply(void)
 	struct phos_uri	 uri;
 	struct tab	*tab = current_tab;
 
-	exit_minibuffer();
 	minibuffer_hist_save_entry();
 
 	/* a bit ugly but... */
 	strlcpy(buf, tab->last_input_url, sizeof(buf));
 	phos_parse_absolute_uri(buf, &uri);
-	phos_uri_set_query(&uri, ministate.buf);
+	phos_uri_set_query(&uri, minibuffer_compl_text());
 	phos_serialize_uri(&uri, buf, sizeof(buf));
+
+	exit_minibuffer();
 	load_url_in_tab(tab, buf, NULL, LU_MODE_NOCACHE);
 }
 
 void
 ir_select_gopher(void)
 {
-	exit_minibuffer();
 	minibuffer_hist_save_entry();
-
-	gopher_send_search_req(current_tab, ministate.buf);
+	gopher_send_search_req(current_tab, minibuffer_compl_text());
+	exit_minibuffer();
 }
 
 void
@@ -299,10 +309,9 @@ lu_select(void)
 {
 	char url[GEMINI_URL_LEN+1];
 
-	exit_minibuffer();
 	minibuffer_hist_save_entry();
-
-	humanify_url(ministate.buf, url, sizeof(url));
+	humanify_url(minibuffer_compl_text(), url, sizeof(url));
+	exit_minibuffer();
 	load_url_in_tab(current_tab, url, NULL, LU_MODE_NOCACHE);
 }
 
