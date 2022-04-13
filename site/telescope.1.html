@@ -228,56 +228,56 @@
       <var class="Ar">val</var>. Valid options are:
     <p class="Pp"></p>
     <dl class="Bl-tag Bl-compact">
-      <dt>autosave</dt>
+      <dt id="autosave"><a class="permalink" href="#autosave"><code class="Ic">autosave</code></a></dt>
       <dd>(integer) If greater than zero, save the session after the specified
           amount of seconds after some events happens (new or closed tabs,
           visited a link ...) Defaults to 20.</dd>
-      <dt>dont-wrap-pre</dt>
+      <dt id="dont-wrap-pre"><a class="permalink" href="#dont-wrap-pre"><code class="Ic">dont-wrap-pre</code></a></dt>
       <dd>(integer) If nonzero, don't wrap preformatted blocks. Defaults to
         0.</dd>
-      <dt>download-path</dt>
+      <dt id="download-path"><a class="permalink" href="#download-path"><code class="Ic">download-path</code></a></dt>
       <dd>(string) The default download path. Defaults to
           <span class="Pa">/tmp</span>.</dd>
-      <dt>emojify-link</dt>
+      <dt id="emojify-link"><a class="permalink" href="#emojify-link"><code class="Ic">emojify-link</code></a></dt>
       <dd>(integer) If nonzero, when the text of a link starts with an emoji
           followed by a space, use that emoji as line prefix. Defaults to
         1.</dd>
-      <dt>enable-colors</dt>
+      <dt id="enable-colors"><a class="permalink" href="#enable-colors"><code class="Ic">enable-colors</code></a></dt>
       <dd>(integer) If nonzero, enable colours. Defaults to 0 if
           <code class="Ev">NO_COLORS</code> is set, 1 otherwise.</dd>
-      <dt>fill-column</dt>
+      <dt id="fill-column"><a class="permalink" href="#fill-column"><code class="Ic">fill-column</code></a></dt>
       <dd>(integer) If greater than zero, lines of text will be formatted in a
           way that don't exceed the given number of columns. Defaults to
         80.</dd>
-      <dt>fringe-ignore-offset</dt>
+      <dt id="fringe-ignore-offset"><a class="permalink" href="#fringe-ignore-offset"><code class="Ic">fringe-ignore-offset</code></a></dt>
       <dd>(integer) If nonzero, the fringe doesn't obey to
           <code class="Ic">olivetti-mode</code>. Defaults to 1.</dd>
-      <dt>hide-pre-blocks</dt>
+      <dt id="hide-pre-blocks"><a class="permalink" href="#hide-pre-blocks"><code class="Ic">hide-pre-blocks</code></a></dt>
       <dd>(integer) If nonzero, hide by default the body of the preformatted
           blocks. Defaults to zero. <code class="Ic">push-button</code> can be
           used to toggle the visibility per-block.</dd>
-      <dt>hide-pre-closing-line</dt>
+      <dt id="hide-pre-closing-line"><a class="permalink" href="#hide-pre-closing-line"><code class="Ic">hide-pre-closing-line</code></a></dt>
       <dd>(integer) If nonzero, hide the closing line of preformatted blocks.
           Defaults to 0.</dd>
-      <dt>hide-pre-context</dt>
+      <dt id="hide-pre-context"><a class="permalink" href="#hide-pre-context"><code class="Ic">hide-pre-context</code></a></dt>
       <dd>(integer) If nonzero, hide the start and end line of the preformatted
           blocks. If both hide-pre-context and hide-pre-blocks are nonzero,
           preformatted blocks are irremediably hidden. Defaults to zero.</dd>
-      <dt>new-tab-url</dt>
+      <dt id="new-tab-url"><a class="permalink" href="#new-tab-url"><code class="Ic">new-tab-url</code></a></dt>
       <dd>(string) URL for the new tab page. Defaults to
           &#x201C;about:new&#x201D;.</dd>
-      <dt>max-killed-tabs</dt>
+      <dt id="max-killed-tabs"><a class="permalink" href="#max-killed-tabs"><code class="Ic">max-killed-tabs</code></a></dt>
       <dd>(integer) The maximum number of closed tabs to keep track of, defaults
           to 10. Must be a positive number; if zero, don't save closed tabs at
           all.</dd>
-      <dt>olivetti-mode</dt>
+      <dt id="olivetti-mode"><a class="permalink" href="#olivetti-mode"><code class="Ic">olivetti-mode</code></a></dt>
       <dd>(integer) If nonzero, enable <code class="Ic">olivetti-mode</code>
           Defaults to 1.</dd>
-      <dt>tab-bar-show</dt>
+      <dt id="tab-bar-show"><a class="permalink" href="#tab-bar-show"><code class="Ic">tab-bar-show</code></a></dt>
       <dd>(integer) If tab-bar-show is -1 hide the tab bar permanently, if 0
           show it unconditionally. If it's 1, show the bar only when there is
           more than one tab. Defaults to 1.</dd>
-      <dt>update-title</dt>
+      <dt id="update-title"><a class="permalink" href="#update-title"><code class="Ic">update-title</code></a></dt>
       <dd>(integer) If nonzero, set the terminal title to the page title.
           Defaults to 1.</dd>
     </dl>
@@ -648,6 +648,8 @@
   <dd>link-select</dd>
   <dt>M-/</dt>
   <dd>swiper</dd>
+  <dt>M-r</dt>
+  <dd>reply-last-input</dd>
 </dl>
 </div>
 </section>
@@ -816,7 +818,7 @@
   <dd>Prompt for an URL.</dd>
   <dt id="next-page"><a class="permalink" href="#next-page"><code class="Ic">next-page</code></a></dt>
   <dd>Go forward in the page history.</dd>
-  <dt id="olivetti-mode"><a class="permalink" href="#olivetti-mode"><code class="Ic">olivetti-mode</code></a></dt>
+  <dt id="olivetti-mode~2"><a class="permalink" href="#olivetti-mode~2"><code class="Ic">olivetti-mode</code></a></dt>
   <dd>Toggle olivetti mode (i.e. horizontal centering of the lines of the
       window.)</dd>
   <dt id="other-window"><a class="permalink" href="#other-window"><code class="Ic">other-window</code></a></dt>
@@ -834,6 +836,8 @@
       display.</dd>
   <dt id="reload-page"><a class="permalink" href="#reload-page"><code class="Ic">reload-page</code></a></dt>
   <dd>Reload the current page.</dd>
+  <dt id="reply-last-input"><a class="permalink" href="#reply-last-input"><code class="Ic">reply-last-input</code></a></dt>
+  <dd>Reply the last input request.</dd>
   <dt id="scroll-down"><a class="permalink" href="#scroll-down"><code class="Ic">scroll-down</code></a></dt>
   <dd>Scroll down by one visual page.</dd>
   <dt id="scroll-line-down"><a class="permalink" href="#scroll-line-down"><code class="Ic">scroll-line-down</code></a></dt>
@@ -884,6 +888,8 @@
 <p class="Pp">The following aliases are available during
     <code class="Ic">execute-extended-command</code>:</p>
 <dl class="Bl-tag Bl-compact">
+  <dt id="open"><a class="permalink" href="#open"><code class="Ic">open</code></a></dt>
+  <dd><a class="permalink" href="#load-url~2"><code class="Ic" id="load-url~2">load-url</code></a></dd>
   <dt id="tabn"><a class="permalink" href="#tabn"><code class="Ic">tabn</code></a></dt>
   <dd><a class="permalink" href="#tab-next~2"><code class="Ic" id="tab-next~2">tab-next</code></a></dd>
   <dt id="tabnew"><a class="permalink" href="#tabnew"><code class="Ic">tabnew</code></a></dt>
@@ -993,7 +999,7 @@ proxy https via &quot;gemini://127.0.0.1:1965&quot;</pre>
 <table class="foot">
   <tr>
     <td class="foot-date">January 5, 2022</td>
-    <td class="foot-os">OpenBSD 7.0</td>
+    <td class="foot-os">OpenBSD 7.1</td>
   </tr>
 </table>
 </body>

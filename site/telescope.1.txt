@@ -380,6 +380,7 @@ DEFAULT KEY BINDINGS
 	   M-]		 tab-move
 	   M-l		 link-select
 	   M-/		 swiper
+	   M-r		 reply-last-input
 
    Minibuffer-specific keys
 	   enter	 mini-complete-and-exit
@@ -476,6 +477,7 @@ INTERACTIVE COMMANDS
      redraw		       Redraw the screen, useful if some background
 			       program messed up the display.
      reload-page	       Reload the current page.
+     reply-last-input	       Reply the last input request.
      scroll-down	       Scroll down by one visual page.
      scroll-line-down	       Scroll down by one line.
      scroll-line-up	       Scroll up by one line.
@@ -503,6 +505,7 @@ INTERACTIVE COMMANDS
 
    Aliases
      The following aliases are available during execute-extended-command:
+     open	       load-url
      tabn	       tab-next
      tabnew	       tab-new
      tabp	       tab-previous
@@ -580,4 +583,4 @@ CAVEATS
 BUGS
      There's no UI for out-of-band certificates validation.
 
-OpenBSD 7.0			January 5, 2022			   OpenBSD 7.0
+OpenBSD 7.1			January 5, 2022			   OpenBSD 7.1
