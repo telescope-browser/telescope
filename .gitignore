@@ -2,6 +2,7 @@ TAGS
 pages/about_crash.gmi
 pages/about_new.gmi
 
+**/etc
 **/.deps
 **/.dirstamp
 **/Makefile
