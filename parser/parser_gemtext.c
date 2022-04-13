@@ -35,7 +35,7 @@
 static int	gemtext_parse(struct parser *, const char *, size_t);
 static int	gemtext_foreach_line(struct parser *, const char *, size_t);
 static int	gemtext_free(struct parser *);
-static int	gemtext_serialize(struct parser *, printfn, void *);
+static int	gemtext_serialize(struct parser *, FILE *);
 
 static int	parse_text(struct parser*, enum line_type, const char*, size_t);
 static int	parse_link(struct parser*, enum line_type, const char*, size_t);
@@ -442,7 +442,7 @@ static const char *gemtext_prefixes[] = {
 };
 
 static int
-gemtext_serialize(struct parser *p, printfn fn, void *d)
+gemtext_serialize(struct parser *p, FILE *fp)
 {
 	struct line	*line;
 	const char	*text;
@@ -466,12 +466,12 @@ gemtext_serialize(struct parser *p, printfn fn, void *d)
 		case LINE_PRE_START:
 		case LINE_PRE_CONTENT:
 		case LINE_PRE_END:
-			r = fn(d, "%s%s\n", gemtext_prefixes[line->type],
+			r = fprintf(fp, "%s%s\n", gemtext_prefixes[line->type],
 			    text);
 			break;
 
 		case LINE_LINK:
-			r = fn(d, "=> %s %s\n", alt, text);
+			r = fprintf(fp, "=> %s %s\n", alt, text);
 			break;
 
 		default:

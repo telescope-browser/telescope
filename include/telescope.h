@@ -20,6 +20,7 @@
 #include "compat.h"
 
 #include <limits.h>
+#include <stdio.h>		/* XXX: for parsers.h */
 
 #include "cmd.h"
 #include "phos.h"
@@ -146,7 +147,7 @@ typedef int	(*printfn)(void *, const char *, ...);
 
 typedef int	(*parsechunkfn)(struct parser *, const char *, size_t);
 typedef int	(*parserfreefn)(struct parser *);
-typedef int	(*parserserial)(struct parser *, printfn, void *);
+typedef int	(*parserserial)(struct parser *, FILE *);
 
 typedef void (imsg_handlerfn)(struct imsg*, size_t);
 

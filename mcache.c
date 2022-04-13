@@ -36,23 +36,10 @@ struct mcache_entry {
 	time_t		 ts;
 	parserfn	 parser;
 	int		 trust;
-	struct evbuffer	*evb;
+	char		*buf;
+	size_t		 buflen;
 	char		 url[];
 };
-
-static int
-mcache_printf(void *d, const char *fmt, ...)
-{
-	struct evbuffer *evb = d;
-	int r;
-	va_list ap;
-
-	va_start(ap, fmt);
-	r = evbuffer_add_vprintf(evb, fmt, ap);
-	va_end(ap);
-
-	return r;
-}
 
 static void
 mcache_free_entry(const char *url)
@@ -65,9 +52,9 @@ mcache_free_entry(const char *url)
 		return;
 
 	npages--;
-	tot -= EVBUFFER_LENGTH(e->evb);
+	tot -= e->buflen;
 
-	evbuffer_free(e->evb);
+	free(e->buf);
 	free(e);
 }
 
@@ -110,6 +97,7 @@ mcache_tab(struct tab *tab)
 	unsigned int		 slot;
 	size_t			 l, len;
 	const char		*url;
+	FILE			*fp;
 
 	url = tab->hist_cur->h;
 	l = strlen(url);
@@ -122,11 +110,13 @@ mcache_tab(struct tab *tab)
 	e->trust = tab->trust;
 	memcpy(e->url, url, l);
 
-	if ((e->evb = evbuffer_new()) == NULL)
+	if ((fp = open_memstream(&e->buf, &e->buflen)) == NULL)
 		goto err;
 
-	if (!parser_serialize(tab, mcache_printf, e->evb))
+	if (!parser_serialize(tab, fp))
 		goto err;
+
+	fclose(fp);
 
 	/* free any previously cached copies of this page */
 	mcache_free_entry(url);
@@ -135,7 +125,7 @@ mcache_tab(struct tab *tab)
 	ohash_insert(&h, slot, e);
 
 	npages++;
-	tot += EVBUFFER_LENGTH(e->evb);
+	tot += e->buflen;
 
 	if (!evtimer_pending(&timerev, NULL))
 		evtimer_add(&timerev, &tv);
@@ -143,8 +133,10 @@ mcache_tab(struct tab *tab)
 	return 0;
 
 err:
-	if (e->evb != NULL)
-		evbuffer_free(e->evb);
+	if (fp != NULL)
+		fclose(fp);
+	if (e->buf != NULL)
+		free(e->buf);
 	free(e);
 	return -1;
 }
@@ -160,7 +152,7 @@ mcache_lookup(const char *url, struct tab *tab)
 		return 0;
 
 	parser_init(tab, e->parser);
-	if (!parser_parse(tab, EVBUFFER_DATA(e->evb), EVBUFFER_LENGTH(e->evb)))
+	if (!parser_parse(tab, e->buf, e->buflen))
 		goto err;
 	if (!parser_free(tab))
 		goto err;

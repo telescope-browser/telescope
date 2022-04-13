@@ -511,8 +511,7 @@ handle_imsg_file_opened(struct imsg *imsg, size_t datalen)
 		int r;
 
 		if ((fp = fdopen(imsg->fd, "w")) != NULL) {
-			r = parser_serialize(current_tab, (printfn)fprintf,
-			    fp);
+			r = parser_serialize(current_tab, fp);
 			if (!r)
 				message("Failed to save the page.");
 			fclose(fp);
