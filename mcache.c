@@ -40,6 +40,20 @@ struct mcache_entry {
 	char		 url[];
 };
 
+static int
+mcache_printf(void *d, const char *fmt, ...)
+{
+	struct evbuffer *evb = d;
+	int r;
+	va_list ap;
+
+	va_start(ap, fmt);
+	r = evbuffer_add_vprintf(evb, fmt, ap);
+	va_end(ap);
+
+	return r;
+}
+
 static void
 mcache_free_entry(const char *url)
 {
@@ -111,7 +125,7 @@ mcache_tab(struct tab *tab)
 	if ((e->evb = evbuffer_new()) == NULL)
 		goto err;
 
-	if (!parser_serialize(tab, e->evb))
+	if (!parser_serialize(tab, mcache_printf, e->evb))
 		goto err;
 
 	/* free any previously cached copies of this page */

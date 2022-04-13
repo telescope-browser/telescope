@@ -23,8 +23,6 @@
 #include "parser.h"
 #include "utils.h"
 
-#define evap evbuffer_add_printf
-
 struct gm_selector {
 	char		 type;
 	const char	*ds;
@@ -38,7 +36,7 @@ static void	gm_parse_selector(char *, struct gm_selector *);
 static int	gm_parse(struct parser *, const char *, size_t);
 static int	gm_foreach_line(struct parser *, const char *, size_t);
 static int	gm_free(struct parser *);
-static int	gm_serialize(struct parser *, struct evbuffer *);
+static int	gm_serialize(struct parser *, printfn, void *);
 
 void
 gophermap_initparser(struct parser *p)
@@ -224,7 +222,7 @@ gopher_skip_selector(const char *path, int *ret_type)
 }
 
 static int
-serialize_link(struct line *line, const char *text, struct evbuffer *evb)
+serialize_link(struct line *line, const char *text, printfn fn, void *d)
 {
 	size_t		 portlen = 0;
 	int		 type;
@@ -234,7 +232,7 @@ serialize_link(struct line *line, const char *text, struct evbuffer *evb)
 		return -1;
 
 	if (!has_prefix(uri, "gopher://"))
-		return evap(evb, "h%s\tURL:%s\terror.host\t1\n",
+		return fn(d, "h%s\tURL:%s\terror.host\t1\n",
 		    text, line->alt);
 
 	uri += 9; /* skip gopher:// */
@@ -264,12 +262,12 @@ serialize_link(struct line *line, const char *text, struct evbuffer *evb)
 	} else
 		path = gopher_skip_selector(path, &type);
 
-	return evap(evb, "%c%s\t%s\t%.*s\t%.*s\n", type, text,
+	return fn(d, "%c%s\t%s\t%.*s\t%.*s\n", type, text,
 	    path, (int)(endhost - uri), uri, (int)portlen, port);
 }
 
 static int
-gm_serialize(struct parser *p, struct evbuffer *evb)
+gm_serialize(struct parser *p, printfn fn, void *d)
 {
 	struct line	*line;
 	const char	*text;
@@ -281,17 +279,15 @@ gm_serialize(struct parser *p, struct evbuffer *evb)
 
 		switch (line->type) {
 		case LINE_LINK:
-			r = serialize_link(line, text, evb);
+			r = serialize_link(line, text, fn, d);
 			break;
 
 		case LINE_TEXT:
-			r = evap(evb, "i%s\t\terror.host\t1\n",
-			    text);
+			r = fn(d, "i%s\t\terror.host\t1\n", text);
 			break;
 
 		case LINE_QUOTE:
-			r = evap(evb, "3%s\t\terror.host\t1\n",
-			    text);
+			r = fn(d, "3%s\t\terror.host\t1\n", text);
 			break;
 
 		default:

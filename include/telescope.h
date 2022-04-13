@@ -142,9 +142,11 @@ struct vline {
 
 struct parser;
 
-typedef int	(*parsechunkfn)(struct parser*, const char*, size_t);
-typedef int	(*parserfreefn)(struct parser*);
-typedef int	(*parserserial)(struct parser*, struct evbuffer *);
+typedef int	(*printfn)(void *, const char *, ...);
+
+typedef int	(*parsechunkfn)(struct parser *, const char *, size_t);
+typedef int	(*parserfreefn)(struct parser *);
+typedef int	(*parserserial)(struct parser *, printfn, void *);
 
 typedef void (imsg_handlerfn)(struct imsg*, size_t);
 
