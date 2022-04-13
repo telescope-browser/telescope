@@ -514,6 +514,8 @@ beginning-of-buffer
 end-of-buffer
 .It C-x C-c
 kill-telescope
+.It C-x C-w
+write-buffer
 .It C-g
 clear-minibuf
 .It M-x
@@ -867,6 +869,8 @@ Toggle side window with help about available keys and their associated
 interactive command.
 .It Ic toggle-pre-wrap
 Toggle the wrapping of preformatted blocks.
+.It Ic write-buffer
+Save the current buffer to the disk.
 .El
 .Ss Minibuffer commands
 .Bl -tag -width execute-extended-command -compact
@@ -903,6 +907,8 @@ The following aliases are available during
 .Ic tab-previous
 .It Ic q No and Ic wq
 .Ic kill-telescope
+.It Ic w
+.Ic write-buffer
 .El
 .Sh ENVIRONMENT
 When
