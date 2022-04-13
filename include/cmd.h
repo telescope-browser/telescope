@@ -4,6 +4,7 @@ struct buffer;
 #define DEFALIAS(s, d)		/* nothing */
 
 DEFALIAS(q, cmd_kill_telescope)
+DEFALIAS(w, cmd_write_buffer)
 DEFALIAS(tabn, cmd_tab_next)
 DEFALIAS(tabnew, cmd_tab_new)
 DEFALIAS(tabp, cmd_tab_previous)

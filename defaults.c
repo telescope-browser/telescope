@@ -338,6 +338,7 @@ load_default_keys(void)
 	global_set_key("M->",		cmd_end_of_buffer);
 
 	global_set_key("C-x C-c",	cmd_kill_telescope);
+	global_set_key("C-x C-w",	cmd_write_buffer);
 
 	global_set_key("C-g",		cmd_clear_minibuf);
 
