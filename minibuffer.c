@@ -485,7 +485,7 @@ populate_compl_buffer(complfn *fn, void *data)
 void
 enter_minibuffer(void (*self_insert_fn)(void), void (*donefn)(void),
     void (*abortfn)(void), struct histhead *hist,
-    complfn *complfn, void *compldata)
+    complfn *complfn, void *compldata, int must_select)
 {
 	in_minibuffer = complfn == NULL ? MB_READ : MB_COMPREAD;
 	if (in_minibuffer == MB_COMPREAD) {
@@ -493,6 +493,7 @@ enter_minibuffer(void (*self_insert_fn)(void), void (*donefn)(void),
 
 		ministate.compl.fn = complfn;
 		ministate.compl.data = compldata;
+		ministate.compl.must_select = must_select;
 		populate_compl_buffer(complfn, compldata);
 	}
 
@@ -541,7 +542,7 @@ yornp(const char *prompt, void (*fn)(int, struct tab*),
 	yornp_cb = fn;
 	yornp_data = data;
 	enter_minibuffer(yornp_self_insert, yornp_self_insert,
-	    yornp_abort, NULL, NULL, NULL);
+	    yornp_abort, NULL, NULL, NULL, 0);
 
 	len = sizeof(ministate.prompt);
 	strlcpy(ministate.prompt, prompt, len);
@@ -560,7 +561,7 @@ minibuffer_read(const char *prompt, void (*fn)(const char *, struct tab *),
 	read_cb = fn;
 	read_data = data;
 	enter_minibuffer(read_self_insert, read_select, read_abort,
-	    &read_history, NULL, NULL);
+	    &read_history, NULL, NULL, 0);
 
 	len = sizeof(ministate.prompt);
 	strlcpy(ministate.prompt, prompt, len);

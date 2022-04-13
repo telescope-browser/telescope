@@ -434,7 +434,7 @@ cmd_execute_extended_command(struct buffer *buffer)
 	GUARD_RECURSIVE_MINIBUFFER();
 
 	enter_minibuffer(sensible_self_insert, eecmd_select, exit_minibuffer,
-	    &eecmd_history, compl_eecmd, NULL);
+	    &eecmd_history, compl_eecmd, NULL, 1);
 
 	len = sizeof(ministate.prompt);
 	strlcpy(ministate.prompt, "", len);
@@ -555,7 +555,7 @@ cmd_tab_select(struct buffer *buffer)
 	GUARD_RECURSIVE_MINIBUFFER();
 
 	enter_minibuffer(sensible_self_insert, ts_select, exit_minibuffer,
-	    NULL, compl_ts, NULL);
+	    NULL, compl_ts, NULL, 1);
 	strlcpy(ministate.prompt, "Select tab: ", sizeof(ministate.prompt));
 }
 
@@ -565,7 +565,7 @@ cmd_load_url(struct buffer *buffer)
 	GUARD_RECURSIVE_MINIBUFFER();
 
 	enter_minibuffer(sensible_self_insert, lu_select, exit_minibuffer,
-	    &lu_history, compl_lu, NULL);
+	    &lu_history, compl_lu, NULL, 0);
 	strlcpy(ministate.prompt, "Load URL: ", sizeof(ministate.prompt));
 }
 
@@ -575,7 +575,7 @@ cmd_load_current_url(struct buffer *buffer)
 	GUARD_RECURSIVE_MINIBUFFER();
 
 	enter_minibuffer(sensible_self_insert, lu_select, exit_minibuffer,
-	    &lu_history, compl_lu, NULL);
+	    &lu_history, compl_lu, NULL, 0);
 	strlcpy(ministate.prompt, "Load URL: ", sizeof(ministate.prompt));
 	strlcpy(ministate.buf, current_tab->hist_cur->h, sizeof(ministate.buf));
 	ministate.buffer.cpoff = utf8_cplen(ministate.buf);
@@ -594,7 +594,7 @@ cmd_bookmark_page(struct buffer *buffer)
 	GUARD_RECURSIVE_MINIBUFFER();
 
 	enter_minibuffer(sensible_self_insert, bp_select, exit_minibuffer, NULL,
-	    NULL, NULL);
+	    NULL, NULL, 0);
 	strlcpy(ministate.prompt, "Bookmark URL: ", sizeof(ministate.prompt));
 	strlcpy(ministate.buf, current_tab->hist_cur->h, sizeof(ministate.buf));
 	ministate.buffer.cpoff = utf8_cplen(ministate.buf);
@@ -629,7 +629,7 @@ cmd_link_select(struct buffer *buffer)
 	}
 
 	enter_minibuffer(sensible_self_insert, ls_select, exit_minibuffer,
-	    NULL, compl_ls, l);
+	    NULL, compl_ls, l, 1);
 	strlcpy(ministate.prompt, "Select link: ", sizeof(ministate.prompt));
 }
 
@@ -639,7 +639,7 @@ cmd_swiper(struct buffer *buffer)
 	GUARD_RECURSIVE_MINIBUFFER();
 
 	enter_minibuffer(sensible_self_insert, swiper_select, exit_minibuffer,
-	    NULL, compl_swiper, TAILQ_FIRST(&buffer->page.head));
+	    NULL, compl_swiper, TAILQ_FIRST(&buffer->page.head), 1);
 	strlcpy(ministate.prompt, "Select line: ", sizeof(ministate.prompt));
 }
 
@@ -663,7 +663,7 @@ cmd_toc(struct buffer *buffer)
 	}
 
 	enter_minibuffer(sensible_self_insert, toc_select, exit_minibuffer,
-	    NULL, compl_toc, l);
+	    NULL, compl_toc, l, 1);
 	strlcpy(ministate.prompt, "Select heading: ",
 	    sizeof(ministate.prompt));
 }
@@ -770,8 +770,19 @@ cmd_mini_abort(struct buffer *buffer)
 void
 cmd_mini_complete_and_exit(struct buffer *buffer)
 {
+	struct vline *vl;
+
 	if (!in_minibuffer)
 		return;
+
+	if (ministate.compl.must_select) {
+		vl = ministate.compl.buffer.current_line;
+		if (vl == NULL || vl->parent->flags & L_HIDDEN ||
+		    vl->parent->type == LINE_COMPL) {
+			message("no match");
+			return;
+		}
+	}
 
 	minibuffer_taint_hist();
 	ministate.donefn();

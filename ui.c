@@ -1301,7 +1301,7 @@ ui_require_input(struct tab *tab, int hide, void (*fn)(void))
 	switch_to_tab(tab);
 
 	enter_minibuffer(sensible_self_insert, fn, exit_minibuffer,
-	    &ir_history, NULL, NULL);
+	    &ir_history, NULL, NULL, 0);
 	strlcpy(ministate.prompt, "Input required: ",
 	    sizeof(ministate.prompt));
 	redraw_tab(tab);

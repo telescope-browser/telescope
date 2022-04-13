@@ -61,6 +61,7 @@ struct ministate {
 		struct buffer	 buffer;
 		complfn		*fn;
 		void		*data;
+		int		 must_select;
 	} compl;
 };
 extern struct ministate	 ministate;
@@ -85,7 +86,7 @@ void	 swiper_select(void);
 void	 toc_select(void);
 
 void	 enter_minibuffer(void(*)(void), void(*)(void), void(*)(void),
-    struct histhead *, complfn *, void *);
+    struct histhead *, complfn *, void *, int);
 
 void	 exit_minibuffer(void);
 void	 yornp(const char *, void (*)(int, struct tab *), struct tab *);
