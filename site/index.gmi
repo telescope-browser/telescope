@@ -43,7 +43,7 @@ The dependencies are:
 Once all the dependencies are installed, building is as easy as:
 
 ```Example of how to compile from source
-$ curl -LO https://github.com/omar-polo/telescope/releases/download/0.7/telescope-0.7.1.tar.gz
+$ curl -LO https://github.com/omar-polo/telescope/releases/download/0.7.1/telescope-0.7.1.tar.gz
 $ tar xzvf telescope-0.7.1.tar.gz
 $ cd telescope-0.7.1
 $ ./configure
