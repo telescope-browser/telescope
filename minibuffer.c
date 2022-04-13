@@ -92,6 +92,7 @@ recompute_completions(int add)
 	char		*input, **ap, *words[10];
 	size_t		 len = 0;
 	struct line	*l;
+	struct vline	*vl;
 	struct buffer	*b;
 
 	if (in_minibuffer != MB_COMPREAD)
@@ -126,6 +127,9 @@ recompute_completions(int add)
 	if (b->current_line == NULL)
 		b->current_line = TAILQ_FIRST(&b->head);
 	b->current_line = adjust_line(b->current_line, b);
+	vl = b->current_line;
+	if (ministate.compl.must_select)
+		vl->parent->type = LINE_COMPL_CURRENT;
 }
 
 int
@@ -480,6 +484,10 @@ populate_compl_buffer(complfn *fn, void *data)
 		linedata = NULL;
 		descr = NULL;
 	}
+
+	if ((l = TAILQ_FIRST(&p->head)) != NULL &&
+	    ministate.compl.must_select)
+		l->type = LINE_COMPL_CURRENT;
 }
 
 void
