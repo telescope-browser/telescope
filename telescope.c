@@ -518,7 +518,7 @@ handle_imsg_file_opened(struct imsg *imsg, size_t datalen)
 		}
 
 		dequeue_first_download();
-	}else {
+	} else {
 		d->fd = imsg->fd;
 		ui_send_net(IMSG_PROCEED, d->id, NULL, 0);
 	}
