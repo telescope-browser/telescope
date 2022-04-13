@@ -1,3 +1,15 @@
+2022-04-13  Omar Polo  <op@omarpolo.com>
+
+	* defaults.c (load_default_keys): bind C-x C-w to write-buffer
+
+	* include/cmd.h: add an alias for write-buffer: w
+
+	* cmd.c (cmd_write_buffer): add write-buffer: saves the current
+	buffer to the disk.
+
+	* downloads.c (enqueue_download): change downloads order: the new
+	one is always at the top.
+
 2022-02-26  Omar Polo  <op@omarpolo.com>
 
 	* minibuffer.c (recompute_completions): split the minibuffer input
