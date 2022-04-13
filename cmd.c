@@ -828,13 +828,13 @@ cmd_previous_completion(struct buffer *buffer)
 		return;
 
 	buffer = &ministate.compl.buffer;
+	if (buffer->current_line == NULL)
+		return;
 
-	if (buffer->current_line != NULL)
+	buffer->current_line->parent->type = LINE_COMPL;
+	if (!forward_line(buffer, -1))
 		buffer->current_line->parent->type = LINE_COMPL;
-
-	forward_line(buffer, -1);
-
-	if (buffer->current_line != NULL)
+	else
 		buffer->current_line->parent->type = LINE_COMPL_CURRENT;
 }
 
@@ -845,11 +845,13 @@ cmd_next_completion(struct buffer *buffer)
 		return;
 
 	buffer = &ministate.compl.buffer;
+	if (buffer->current_line == NULL)
+		return;
 
-	if (buffer->current_line != NULL)
+	if (buffer->current_line->parent->type == LINE_COMPL_CURRENT) {
 		buffer->current_line->parent->type = LINE_COMPL;
-
-	forward_line(buffer, +1);
+		forward_line(buffer, +1);
+	}
 
 	if (buffer->current_line != NULL)
 		buffer->current_line->parent->type = LINE_COMPL_CURRENT;
