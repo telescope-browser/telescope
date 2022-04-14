@@ -128,7 +128,7 @@ recompute_completions(int add)
 		b->current_line = TAILQ_FIRST(&b->head);
 	b->current_line = adjust_line(b->current_line, b);
 	vl = b->current_line;
-	if (ministate.compl.must_select)
+	if (ministate.compl.must_select && vl != NULL)
 		vl->parent->type = LINE_COMPL_CURRENT;
 }
 
