@@ -89,6 +89,7 @@ void
 recompute_completions(int add)
 {
 	static char	 buf[GEMINI_URL_LEN];
+	const char	*text;
 	char		*input, **ap, *words[10];
 	size_t		 len = 0;
 	struct line	*l;
@@ -98,7 +99,12 @@ recompute_completions(int add)
 	if (in_minibuffer != MB_COMPREAD)
 		return;
 
-	strlcpy(buf, ministate.buf, sizeof(buf));
+	if (ministate.hist_cur != NULL)
+		text = ministate.hist_cur->h;
+	else
+		text = ministate.buf;
+
+	strlcpy(buf, text, sizeof(buf));
 	input = buf;
 
 	/* tokenize the input */
