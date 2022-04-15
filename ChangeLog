@@ -1,5 +1,8 @@
 2022-04-15  Omar Polo  <op@omarpolo.com>
 
+	* minibuffer.c: lots of small tweaks to the completion handling.
+	Now the selected item is consistently the one used upon RET.
+
 	* defaults.c (load_default_keys): bind mini-kill-whole-line to C-u
 	in the minibuffer
 
