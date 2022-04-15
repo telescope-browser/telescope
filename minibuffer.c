@@ -166,6 +166,9 @@ minibuffer_compl_text(void)
 {
 	struct vline	*vl;
 
+	if (ministate.hist_cur != NULL)
+		return ministate.hist_cur->h;
+
 	vl = ministate.compl.buffer.current_line;
 	if (vl == NULL || vl->parent->flags & L_HIDDEN ||
 	    vl->parent->type == LINE_COMPL || vl->parent->line == NULL)
