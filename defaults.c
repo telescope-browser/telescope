@@ -454,42 +454,42 @@ load_default_keys(void)
 	global_set_key("M-r",		cmd_reply_last_input);
 
 	/* === minibuffer map === */
-	minibuffer_set_key("ret",		cmd_mini_complete_and_exit);
-	minibuffer_set_key("C-g",		cmd_mini_abort);
-	minibuffer_set_key("esc",		cmd_mini_abort);
-	minibuffer_set_key("C-d",		cmd_mini_delete_char);
-	minibuffer_set_key("del",		cmd_mini_delete_backward_char);
-	minibuffer_set_key("backspace",		cmd_mini_delete_backward_char);
-	minibuffer_set_key("C-h",		cmd_mini_delete_backward_char);
+	minibuffer_set_key("ret",	cmd_mini_complete_and_exit);
+	minibuffer_set_key("C-g",	cmd_mini_abort);
+	minibuffer_set_key("esc",	cmd_mini_abort);
+	minibuffer_set_key("C-d",	cmd_mini_delete_char);
+	minibuffer_set_key("del",	cmd_mini_delete_backward_char);
+	minibuffer_set_key("backspace",	cmd_mini_delete_backward_char);
+	minibuffer_set_key("C-h",	cmd_mini_delete_backward_char);
 
-	minibuffer_set_key("C-b",		cmd_backward_char);
-	minibuffer_set_key("C-f",		cmd_forward_char);
-	minibuffer_set_key("<left>",		cmd_backward_char);
-	minibuffer_set_key("<right>",		cmd_forward_char);
-	minibuffer_set_key("C-e",		cmd_move_end_of_line);
-	minibuffer_set_key("C-a",		cmd_move_beginning_of_line);
-	minibuffer_set_key("<end>",		cmd_move_end_of_line);
-	minibuffer_set_key("<home>",		cmd_move_beginning_of_line);
-	minibuffer_set_key("C-k",		cmd_mini_kill_line);
-	minibuffer_set_key("C-u",		cmd_mini_kill_whole_line);
+	minibuffer_set_key("C-b",	cmd_backward_char);
+	minibuffer_set_key("C-f",	cmd_forward_char);
+	minibuffer_set_key("<left>",	cmd_backward_char);
+	minibuffer_set_key("<right>",	cmd_forward_char);
+	minibuffer_set_key("C-e",	cmd_move_end_of_line);
+	minibuffer_set_key("C-a",	cmd_move_beginning_of_line);
+	minibuffer_set_key("<end>",	cmd_move_end_of_line);
+	minibuffer_set_key("<home>",	cmd_move_beginning_of_line);
+	minibuffer_set_key("C-k",	cmd_mini_kill_line);
+	minibuffer_set_key("C-u",	cmd_mini_kill_whole_line);
 
-	minibuffer_set_key("M-p",		cmd_mini_previous_history_element);
-	minibuffer_set_key("M-n",		cmd_mini_next_history_element);
+	minibuffer_set_key("M-p",	cmd_mini_previous_history_element);
+	minibuffer_set_key("M-n",	cmd_mini_next_history_element);
 
-	minibuffer_set_key("C-p",		cmd_previous_completion);
-	minibuffer_set_key("C-n",		cmd_next_completion);
-	minibuffer_set_key("<up>",		cmd_previous_completion);
-	minibuffer_set_key("<down>",		cmd_next_completion);
+	minibuffer_set_key("C-p",	cmd_previous_completion);
+	minibuffer_set_key("C-n",	cmd_next_completion);
+	minibuffer_set_key("<up>",	cmd_previous_completion);
+	minibuffer_set_key("<down>",	cmd_next_completion);
 
-	minibuffer_set_key("C-v",		cmd_mini_scroll_down);
-	minibuffer_set_key("M-v",		cmd_mini_scroll_up);
-	minibuffer_set_key("<next>",		cmd_mini_scroll_down);
-	minibuffer_set_key("<prior>",		cmd_mini_scroll_up);
+	minibuffer_set_key("C-v",	cmd_mini_scroll_down);
+	minibuffer_set_key("M-v",	cmd_mini_scroll_up);
+	minibuffer_set_key("<next>",	cmd_mini_scroll_down);
+	minibuffer_set_key("<prior>",	cmd_mini_scroll_up);
 
-	minibuffer_set_key("M-<",		cmd_mini_goto_beginning);
-	minibuffer_set_key("M->",		cmd_mini_goto_end);
+	minibuffer_set_key("M-<",	cmd_mini_goto_beginning);
+	minibuffer_set_key("M->",	cmd_mini_goto_end);
 
-	minibuffer_set_key("tab",		cmd_insert_current_candidate);
+	minibuffer_set_key("tab",	cmd_insert_current_candidate);
 }
 
 void
