@@ -716,6 +716,8 @@ move-end-of-line
 move-beginning-of-line
 .It C-k
 mini-kill-line
+.It C-u
+mini-kill-whole-line
 .It M-p
 mini-previous-history-element
 .It M-n
@@ -888,6 +890,8 @@ Select the first completion, if any.
 Select the last completion, if any.
 .It Ic mini-kill-line
 Delete from point until the end of the line.
+.It Ic mini-kill-whole-line
+Delete the whole line.
 .It Ic mini-next-history-element
 Load the previous history element.
 .It Ic mini-previous-history-element

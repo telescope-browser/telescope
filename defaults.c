@@ -471,6 +471,7 @@ load_default_keys(void)
 	minibuffer_set_key("<end>",		cmd_move_end_of_line);
 	minibuffer_set_key("<home>",		cmd_move_beginning_of_line);
 	minibuffer_set_key("C-k",		cmd_mini_kill_line);
+	minibuffer_set_key("C-u",		cmd_mini_kill_whole_line);
 
 	minibuffer_set_key("M-p",		cmd_mini_previous_history_element);
 	minibuffer_set_key("M-n",		cmd_mini_next_history_element);

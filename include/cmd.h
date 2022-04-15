@@ -36,6 +36,7 @@ CMD(cmd_mini_delete_char,	"Delete the character after the point.");
 CMD(cmd_mini_goto_beginning,	"Select the first completion.");
 CMD(cmd_mini_goto_end,		"Select the last completion.");
 CMD(cmd_mini_kill_line,		"Delete from point until the end of the line.");
+CMD(cmd_mini_kill_whole_line,	"Delete the whole line.");
 CMD(cmd_mini_next_history_element, "Load the next history element.");
 CMD(cmd_mini_previous_history_element, "Load the previous history element.");
 CMD(cmd_mini_scroll_down,	"Scroll completions up by one visual page");

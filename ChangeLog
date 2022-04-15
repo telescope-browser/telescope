@@ -1,3 +1,10 @@
+2022-04-15  Omar Polo  <op@omarpolo.com>
+
+	* defaults.c (load_default_keys): bind mini-kill-whole-line to C-u
+	in the minibuffer
+
+	* cmd.c (cmd_mini_kill_whole_line): add mini-kill-whole-line
+
 2022-04-13  Omar Polo  <op@omarpolo.com>
 
 	* defaults.c (load_default_keys): bind C-x C-w to write-buffer

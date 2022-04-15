@@ -759,6 +759,16 @@ cmd_mini_kill_line(struct buffer *buffer)
 }
 
 void
+cmd_mini_kill_whole_line(struct buffer *buffer)
+{
+	GUARD_READ_ONLY();
+
+	minibuffer_taint_hist();
+	*buffer->current_line->line = '\0';
+	buffer->cpoff = 0;
+}
+
+void
 cmd_mini_abort(struct buffer *buffer)
 {
 	if (!in_minibuffer)
