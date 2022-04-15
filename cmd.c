@@ -816,8 +816,10 @@ cmd_mini_previous_history_element(struct buffer *buffer)
 		ministate.hist_off--;
 	}
 
-	if (ministate.hist_cur != NULL)
+	if (ministate.hist_cur != NULL) {
 		buffer->current_line->line = ministate.hist_cur->h;
+		recompute_completions(0);
+	}
 }
 
 void
@@ -838,8 +840,10 @@ cmd_mini_next_history_element(struct buffer *buffer)
 		ministate.hist_off++;
 	}
 
-	if (ministate.hist_cur != NULL)
+	if (ministate.hist_cur != NULL) {
 		buffer->current_line->line = ministate.hist_cur->h;
+		recompute_completions(0);
+	}
 }
 
 void
