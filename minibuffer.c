@@ -252,7 +252,6 @@ eecmd_select(void)
 	t = minibuffer_compl_text();
 	for (cmd = cmds; cmd->cmd != NULL; ++cmd) {
 		if (!strcmp(cmd->cmd, t)) {
-			minibuffer_insert_current_candidate();
 			minibuffer_hist_save_entry();
 			exit_minibuffer();
 			cmd->fn(current_buffer());
