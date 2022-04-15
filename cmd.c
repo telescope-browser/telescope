@@ -785,7 +785,7 @@ cmd_mini_complete_and_exit(struct buffer *buffer)
 	if (!in_minibuffer)
 		return;
 
-	if (ministate.compl.must_select) {
+	if (ministate.compl.must_select && ministate.hist_cur == NULL) {
 		vl = ministate.compl.buffer.current_line;
 		if (vl == NULL || vl->parent->flags & L_HIDDEN ||
 		    vl->parent->type == LINE_COMPL) {
