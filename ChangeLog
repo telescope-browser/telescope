@@ -1,3 +1,9 @@
+2022-04-24  Omar Polo  <op@omarpolo.com>
+
+	* session.c (save_session): generate session and histfile atomically
+
+	* telescope.c (main): merge fs and ui processes
+
 2022-04-15  Omar Polo  <op@omarpolo.com>
 
 	* minibuffer.c: lots of small tweaks to the completion handling.
