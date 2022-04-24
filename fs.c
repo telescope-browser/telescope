@@ -33,30 +33,21 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "fs.h"
 #include "pages.h"
-#include "telescope.h"
+#include "parser.h"
 #include "session.h"
+#include "telescope.h"
 #include "utils.h"
 
+#include "fs.h"
+
+#ifndef nitems
+#define nitems(x)  (sizeof(x) / sizeof(x[0]))
+#endif
+
 static void		 die(void) __attribute__((__noreturn__));
-static void		 send_file(uint32_t, FILE *);
-static void		 handle_get(struct imsg*, size_t);
 static int		 select_non_dot(const struct dirent *);
 static int		 select_non_dotdot(const struct dirent *);
-static void		 handle_get_file(struct imsg*, size_t);
-static void		 handle_misc(struct imsg *, size_t);
-static void		 handle_bookmark_page(struct imsg*, size_t);
-static void		 handle_save_cert(struct imsg*, size_t);
-static void		 handle_update_cert(struct imsg*, size_t);
-static void		 handle_file_open(struct imsg*, size_t);
-static void		 handle_session_start(struct imsg*, size_t);
-static void		 handle_session_tab(struct imsg*, size_t);
-static void		 handle_session_tab_hist(struct imsg*, size_t);
-static void		 handle_session_end(struct imsg*, size_t);
-static void		 handle_hist(struct imsg *, size_t);
-static void		 handle_dispatch_imsg(int, short, void*);
-static int		 fs_send_ui(int, uint32_t, int, const void *, uint16_t);
 static size_t		 join_path(char*, const char*, const char*, size_t);
 static void		 getenv_default(char*, const char*, const char*, size_t);
 static void		 mkdirs(const char*, mode_t);
@@ -64,10 +55,7 @@ static void		 init_paths(void);
 static void		 load_last_session(void);
 static void		 load_hist(void);
 static int		 last_time_crashed(void);
-static void		 load_certs(void);
-
-static struct imsgev		*iev_ui;
-static FILE			*session;
+static void		 load_certs(struct ohash *);
 
 /*
  * Where to store user data.  These are all equal to ~/.telescope if
@@ -84,24 +72,7 @@ char		bookmark_file[PATH_MAX];
 char		known_hosts_file[PATH_MAX], known_hosts_tmp[PATH_MAX];
 char		crashed_file[PATH_MAX];
 char		session_file[PATH_MAX];
-static char	history_file[PATH_MAX];
-
-static imsg_handlerfn *handlers[] = {
-	[IMSG_GET] = handle_get,
-	[IMSG_GET_FILE] = handle_get_file,
-	[IMSG_QUIT] = handle_misc,
-	[IMSG_INIT] = handle_misc,
-	[IMSG_BOOKMARK_PAGE] = handle_bookmark_page,
-	[IMSG_SAVE_CERT] = handle_save_cert,
-	[IMSG_UPDATE_CERT] = handle_update_cert,
-	[IMSG_FILE_OPEN] = handle_file_open,
-	[IMSG_SESSION_START] = handle_session_start,
-	[IMSG_SESSION_TAB] = handle_session_tab,
-	[IMSG_SESSION_TAB_HIST] = handle_session_tab_hist,
-	[IMSG_SESSION_END] = handle_session_end,
-	[IMSG_HIST_ITEM] = handle_hist,
-	[IMSG_HIST_END] = handle_hist,
-};
+char		history_file[PATH_MAX];
 
 static void __attribute__((__noreturn__))
 die(void)
@@ -109,31 +80,112 @@ die(void)
 	abort(); 		/* TODO */
 }
 
-static void
-send_file(uint32_t peerid, FILE *f)
+static int
+select_non_dot(const struct dirent *d)
 {
-	ssize_t	 r;
-	char	 buf[BUFSIZ];
+	return strcmp(d->d_name, ".");
+}
 
-	for (;;) {
-		r = fread(buf, 1, sizeof(buf), f);
-		if (r != 0)
-			fs_send_ui(IMSG_BUF, peerid, -1, buf, r);
-		if (r != sizeof(buf))
-			break;
-	}
-	fs_send_ui(IMSG_EOF, peerid, -1, NULL, 0);
-	fclose(f);
+static int
+select_non_dotdot(const struct dirent *d)
+{
+	return strcmp(d->d_name, ".") && strcmp(d->d_name, "..");
 }
 
 static void
-handle_get(struct imsg *imsg, size_t datalen)
+send_dir(struct tab *tab, const char *path)
 {
-	const char	*bpath = "bookmarks.gmi";
+	struct dirent	**names;
+	int		(*selector)(const struct dirent *) = select_non_dot;
+	int		  i, len;
+
+#if notyet
+	/*
+	 * need something to fake a redirect
+	 */
+
+	if (!has_suffix(path, "/")) {
+		if (asprintf(&s, "%s/", path) == -1)
+			die();
+		send_hdr(peerid, 30, s);
+		free(s);
+		return;
+	}
+#endif
+
+	if (!strcmp(path, "/"))
+		selector = select_non_dotdot;
+
+	if ((len = scandir(path, &names, selector, alphasort)) == -1) {
+		load_page_from_str(tab, "# failure reading the directory\n");
+		return;
+	}
+
+	parser_init(tab, gemtext_initparser);
+	parser_parsef(tab, "# Index of %s\n\n", path);
+
+	for (i = 0; i < len; ++i) {
+		const char *sufx = "";
+
+		if (names[i]->d_type == DT_DIR)
+			sufx = "/";
+
+		parser_parsef(tab, "=> %s%s\n", names[i]->d_name, sufx);
+	}
+
+	parser_free(tab);
+	free(names);
+}
+
+static int
+is_dir(FILE *fp)
+{
+	struct stat sb;
+
+	if (fstat(fileno(fp), &sb) == -1)
+		return 0;
+
+	return S_ISDIR(sb.st_mode);
+}
+
+static parserinit
+file_type(const char *path)
+{
+	struct mapping {
+		const char	*ext;
+		parserinit	 fn;
+	} ms[] = {
+		{"diff",	textpatch_initparser},
+		{"gemini",	gemtext_initparser},
+		{"gmi",		gemtext_initparser},
+		{"markdown",	textplain_initparser},
+		{"md",		textplain_initparser},
+		{"patch",	gemtext_initparser},
+		{NULL, NULL},
+	}, *m;
+	char *dot;
+
+	if ((dot = strrchr(path, '.')) == NULL)
+		return textplain_initparser;
+
+	dot++;
+
+	for (m = ms; m->ext != NULL; ++m)
+		if (!strcmp(m->ext, dot))
+			return m->fn;
+
+	return textplain_initparser;
+}
+
+void
+fs_load_url(struct tab *tab, const char *url)
+{
+	const char	*bpath = "bookmarks.gmi", *fallback = "# Not found\n";
+	parserinit	 initfn = gemtext_initparser;
 	char		 path[PATH_MAX];
-	FILE		*f;
-	const char	*data, *p;
+	FILE		*fp = NULL;
 	size_t		 i;
+	char		 buf[BUFSIZ];
 	struct page {
 		const char	*name;
 		const char	*path;
@@ -149,276 +201,95 @@ handle_get(struct imsg *imsg, size_t datalen)
 		{"new",		NULL,	about_new,	about_new_len},
 	}, *page = NULL;
 
-	data = imsg->data;
-	if (data[datalen-1] != '\0') /* make sure it's NUL-terminated */
-		die();
-	if ((data = strchr(data, ':')) == NULL)
-		goto notfound;
-	data++;
+	if (!strncmp(url, "about:", 6)) {
+		url += 6;
 
-	for (i = 0; i < sizeof(pages)/sizeof(pages[0]); ++i)
-		if (!strcmp(data, pages[i].name)) {
-			page = &pages[i];
-			break;
+		for (i = 0; page == NULL && i < nitems(pages); ++i) {
+			if (!strcmp(url, pages[i].name))
+				page = &pages[i];
 		}
 
-	if (page == NULL)
-		goto notfound;
+		if (page == NULL)
+			goto done;
 
-	strlcpy(path, data_path_base, sizeof(path));
-	strlcat(path, "/", sizeof(path));
-	if (page->path != NULL)
-		strlcat(path, page->path, sizeof(path));
-	else {
-		strlcat(path, "pages/about_", sizeof(path));
-		strlcat(path, page->name, sizeof(path));
-		strlcat(path, ".gmi", sizeof(path));
+		strlcpy(path, data_path_base, sizeof(path));
+		strlcat(path, "/", sizeof(path));
+		if (page->path != NULL)
+			strlcat(path, page->path, sizeof(path));
+		else {
+			strlcat(path, "page/about_", sizeof(path));
+			strlcat(path, page->name, sizeof(path));
+			strlcat(path, ".gmi", sizeof(path));
+		}
+
+		fallback = page->data;
+	} else if (!strncmp(url, "file://", 7)) {
+		url += 7;
+		strlcpy(path, url, sizeof(path));
+		initfn = file_type(url);
+	} else
+		goto done;
+
+	if ((fp = fopen(path, "r")) == NULL)
+		goto done;
+
+	if (is_dir(fp)) {
+		fclose(fp);
+		send_dir(tab, path);
+		goto done;
 	}
 
-	if ((f = fopen(path, "r")) == NULL) {
-		fs_send_ui(IMSG_BUF, imsg->hdr.peerid, -1,
-		    page->data, page->len);
-		fs_send_ui(IMSG_EOF, imsg->hdr.peerid, -1,
-		    NULL, 0);
-		return;
+	parser_init(tab, initfn);
+	for (;;) {
+		size_t r;
+
+		r = fread(buf, 1, sizeof(buf), fp);
+		if (!parser_parse(tab, buf, r))
+			break;
+		if (r != sizeof(buf))
+			break;
 	}
+	parser_free(tab);
 
-	send_file(imsg->hdr.peerid, f);
-	return;
-
-notfound:
-	p = "# not found!\n";
-	fs_send_ui(IMSG_BUF, imsg->hdr.peerid, -1, p, strlen(p));
-	fs_send_ui(IMSG_EOF, imsg->hdr.peerid, -1, NULL, 0);
+done:
+	if (fp != NULL)
+		fclose(fp);
+	else
+		load_page_from_str(tab, fallback);
 }
 
-static inline void
-send_hdr(uint32_t peerid, int code, const char *meta)
+int
+bookmark_page(const char *url)
 {
-	fs_send_ui(IMSG_GOT_CODE, peerid, -1, &code, sizeof(code));
-	fs_send_ui(IMSG_GOT_META, peerid, -1, meta, strlen(meta)+1);
-}
+	FILE *f;
 
-static inline void
-send_errno(uint32_t peerid, int code, const char *str, int no)
-{
-	char *s;
-
-	if (asprintf(&s, "%s: %s", str, strerror(no)) == -1)
-		s = NULL;
-
-	send_hdr(peerid, code, s == NULL ? str : s);
-	free(s);
-}
-
-static inline const char *
-file_type(const char *path)
-{
-	struct mapping {
-		const char	*ext;
-		const char	*mime;
-	} ms[] = {
-		{"diff",	"text/x-patch"},
-		{"gemini",	"text/gemini"},
-		{"gmi",		"text/gemini"},
-		{"markdown",	"text/plain"},
-		{"md",		"text/plain"},
-		{"patch",	"text/x-patch"},
-		{"txt",		"text/plain"},
-		{NULL, NULL},
-	}, *m;
-	char *dot;
-
-	if ((dot = strrchr(path, '.')) == NULL)
-		return NULL;
-
-	dot++;
-
-	for (m = ms; m->ext != NULL; ++m)
-		if (!strcmp(m->ext, dot))
-			return m->mime;
-
-	return NULL;
-}
-
-static int
-select_non_dot(const struct dirent *d)
-{
-	return strcmp(d->d_name, ".");
-}
-
-static int
-select_non_dotdot(const struct dirent *d)
-{
-	return strcmp(d->d_name, ".") && strcmp(d->d_name, "..");
-}
-
-static inline void
-send_dir(uint32_t peerid, const char *path)
-{
-	struct dirent	**names;
-	struct evbuffer	 *ev;
-	char		 *s;
-	int		(*selector)(const struct dirent *) = select_non_dot;
-	int		  i, len, no;
-
-	if (!has_suffix(path, "/")) {
-		if (asprintf(&s, "%s/", path) == -1)
-			die();
-		send_hdr(peerid, 30, s);
-		free(s);
-		return;
-	}
-
-	if (!strcmp(path, "/"))
-		selector = select_non_dotdot;
-
-	if ((ev = evbuffer_new()) == NULL ||
-	    (len = scandir(path, &names, selector, alphasort)) == -1) {
-		no = errno;
-		evbuffer_free(ev);
-		send_errno(peerid, 40, "failure reading the directory", no);
-		return;
-	}
-
-	evbuffer_add_printf(ev, "# Index of %s\n\n", path);
-	for (i = 0; i < len; ++i) {
-		evbuffer_add_printf(ev, "=> %s", names[i]->d_name);
-		if (names[i]->d_type == DT_DIR)
-			evbuffer_add(ev, "/", 1);
-		evbuffer_add(ev, "\n", 1);
-	}
-
-	send_hdr(peerid, 20, "text/gemini");
-	fs_send_ui(IMSG_BUF, peerid, -1,
-	    EVBUFFER_DATA(ev), EVBUFFER_LENGTH(ev));
-	fs_send_ui(IMSG_EOF, peerid, -1, NULL, 0);
-
-	evbuffer_free(ev);
-	free(names);
-}
-
-static void
-handle_get_file(struct imsg *imsg, size_t datalen)
-{
-	struct stat	 sb;
-	FILE		*f;
-	char		*data;
-	const char	*meta = NULL;
-
-	data = imsg->data;
-	data[datalen-1] = '\0';
-
-	if ((f = fopen(data, "r")) == NULL) {
-		send_errno(imsg->hdr.peerid, 51, "can't open", errno);
-		return;
-	}
-
-	if (fstat(fileno(f), &sb) == -1) {
-		send_errno(imsg->hdr.peerid, 40, "fstat", errno);
-		return;
-	}
-
-	if (S_ISDIR(sb.st_mode)) {
-		fclose(f);
-		send_dir(imsg->hdr.peerid, data);
-		return;
-	}
-
-	if ((meta = file_type(data)) == NULL) {
-		fclose(f);
-		send_hdr(imsg->hdr.peerid, 51,
-		    "don't know how to visualize this file");
-		return;
-	}
-
-	send_hdr(imsg->hdr.peerid, 20, meta);
-	send_file(imsg->hdr.peerid, f);
-}
-
-static void
-handle_misc(struct imsg *imsg, size_t datalen)
-{
-	switch (imsg->hdr.type) {
-	case IMSG_INIT:
-		load_certs();
-		load_hist();
-		load_last_session();
-		break;
-
-	case IMSG_QUIT:
-		if (!safe_mode)
-			unlink(crashed_file);
-		event_loopbreak();
-		break;
-
-	default:
-		die();
-	}
-}
-
-static void
-handle_bookmark_page(struct imsg *imsg, size_t datalen)
-{
-	char	*data;
-	int	 res;
-	FILE	*f;
-
-	data = imsg->data;
-	if (data[datalen-1] != '\0')
-		die();
-
-	if ((f = fopen(bookmark_file, "a")) == NULL) {
-		res = errno;
-		goto end;
-	}
-	fprintf(f, "=> %s\n", data);
+	if ((f = fopen(bookmark_file, "a")) == NULL)
+		return -1;
+	fprintf(f, "=> %s\n", url);
 	fclose(f);
-
-	res = 0;
-end:
-	fs_send_ui(IMSG_BOOKMARK_OK, 0, -1, &res, sizeof(res));
+	return 0;
 }
 
-static void
-handle_save_cert(struct imsg *imsg, size_t datalen)
+int
+save_cert(const struct tofu_entry *e)
 {
-	struct tofu_entry	 e;
-	FILE			*f;
-	int			 res;
+	FILE *f;
 
-	/* TODO: traverse the file to avoid duplications? */
-
-	if (datalen != sizeof(e))
-		die();
-	memcpy(&e, imsg->data, datalen);
-
-	if ((f = fopen(known_hosts_file, "a")) == NULL) {
-		res = errno;
-		goto end;
-	}
-	fprintf(f, "%s %s %d\n", e.domain, e.hash, e.verified);
+	if ((f = fopen(known_hosts_file, "a")) == NULL)
+		return -1;
+	fprintf(f, "%s %s %d\n", e->domain, e->hash, e->verified);
 	fclose(f);
-
-	res = 0;
-end:
-	fs_send_ui(IMSG_SAVE_CERT_OK, imsg->hdr.peerid, -1,
-	    &res, sizeof(res));
+	return 0;
 }
 
-static void
-handle_update_cert(struct imsg *imsg, size_t datalen)
+int
+update_cert(const struct tofu_entry *e)
 {
 	FILE	*tmp, *f;
-	struct	 tofu_entry entry;
 	char	 sfn[PATH_MAX], *line = NULL, *t;
 	size_t	 l, linesize = 0;
 	ssize_t	 linelen;
-	int	 fd, e, res = 0;
-
-	if (datalen != sizeof(entry))
-		die();
-	memcpy(&entry, imsg->data, datalen);
+	int	 fd, err;
 
 	strlcpy(sfn, known_hosts_tmp, sizeof(sfn));
 	if ((fd = mkstemp(sfn)) == -1 ||
@@ -427,188 +298,39 @@ handle_update_cert(struct imsg *imsg, size_t datalen)
 			unlink(sfn);
 			close(fd);
 		}
-		res = 0;
-		goto end;
+		return -1;
 	}
 
 	if ((f = fopen(known_hosts_file, "r")) == NULL) {
 		unlink(sfn);
 		fclose(tmp);
-                res = 0;
-		goto end;
+		return -1;
 	}
 
-	l = strlen(entry.domain);
+	l = strlen(e->domain);
 	while ((linelen = getline(&line, &linesize, f)) != -1) {
-		if ((t = strstr(line, entry.domain)) != NULL &&
+		if ((t = strstr(line, e->domain)) != NULL &&
 		    (line[l] == ' ' || line[l] == '\t'))
 			continue;
 		/* line has a trailing \n */
 		fprintf(tmp, "%s", line);
 	}
-	fprintf(tmp, "%s %s %d\n", entry.domain, entry.hash, entry.verified);
+	fprintf(tmp, "%s %s %d\n", e->domain, e->hash, e->verified);
 
 	free(line);
-	e = ferror(tmp);
+	err = ferror(tmp);
 
 	fclose(tmp);
 	fclose(f);
 
-	if (e) {
+	if (err) {
 		unlink(sfn);
-		res = 0;
-		goto end;
+		return -1;
 	}
 
-	res = rename(sfn, known_hosts_file) != -1;
-
-end:
-	fs_send_ui(IMSG_UPDATE_CERT_OK, imsg->hdr.peerid, -1,
-	    &res, sizeof(res));
-}
-
-static void
-handle_file_open(struct imsg *imsg, size_t datalen)
-{
-	char	*path, *e;
-	int	 fd;
-
-	path = imsg->data;
-	if (path[datalen-1] != '\0')
-		die();
-
-	if ((fd = open(path, O_WRONLY | O_TRUNC | O_CREAT, 0644)) == -1) {
-		e = strerror(errno);
-		fs_send_ui(IMSG_FILE_OPENED, imsg->hdr.peerid, -1,
-		    e, strlen(e)+1);
-	} else
-		fs_send_ui(IMSG_FILE_OPENED, imsg->hdr.peerid, fd,
-		    NULL, 0);
-}
-
-static void
-handle_session_start(struct imsg *imsg, size_t datalen)
-{
-	if (datalen != 0)
-		die();
-
-	if ((session = fopen(session_file, "w")) == NULL)
-		die();
-}
-
-static void
-handle_session_tab(struct imsg *imsg, size_t datalen)
-{
-	struct session_tab	tab;
-
-	if (session == NULL)
-		die();
-
-	if (datalen != sizeof(tab))
-		die();
-
-	memcpy(&tab, imsg->data, sizeof(tab));
-	if (tab.uri[sizeof(tab.uri)-1] != '\0' ||
-	    tab.title[sizeof(tab.title)-1] != '\0')
-		die();
-
-	fprintf(session, "%s ", tab.uri);
-
-	if (tab.flags & TAB_CURRENT)
-		fprintf(session, "current,");
-	if (tab.flags & TAB_KILLED)
-		fprintf(session, "killed,");
-
-	fprintf(session, "top=%zu,cur=%zu %s\n", tab.top_line,
-	    tab.current_line, tab.title);
-}
-
-static void
-handle_session_tab_hist(struct imsg *imsg, size_t datalen)
-{
-	struct session_tab_hist th;
-
-	if (session == NULL)
-		die();
-
-	if (datalen != sizeof(th))
-		die();
-
-	memcpy(&th, imsg->data, sizeof(th));
-	if (th.uri[sizeof(th.uri)-1] != '\0')
-		die();
-
-	fprintf(session, "%s %s\n", th.future ? ">" : "<", th.uri);
-}
-
-static void
-handle_session_end(struct imsg *imsg, size_t datalen)
-{
-	if (session == NULL)
-		die();
-	fclose(session);
-	session = NULL;
-}
-
-static void
-handle_hist(struct imsg *imsg, size_t datalen)
-{
-	static FILE *hist;
-	struct histitem hi;
-
-	switch (imsg->hdr.type) {
-	case IMSG_HIST_ITEM:
-		if (hist == NULL) {
-			if ((hist = fopen(history_file, "a")) == NULL)
-				return;
-		}
-		if (datalen != sizeof(hi))
-			abort();
-		memcpy(&hi, imsg->data, sizeof(hi));
-		fprintf(hist, "%lld %s\n", (long long)hi.ts, hi.uri);
-		break;
-
-	case IMSG_HIST_END:
-		if (hist == NULL)
-			return;
-		fclose(hist);
-		hist = NULL;
-		break;
-
-	default:
-		abort();
-	}
-}
-
-static void
-handle_dispatch_imsg(int fd, short ev, void *d)
-{
-	struct imsgev	*iev = d;
-	int		 e;
-
-	if (dispatch_imsg(iev, ev, handlers, sizeof(handlers)) == -1) {
-		/*
-		 * This should leave a ~/.cache/telescope/crashed file to
-		 * trigger about:crash on next run.  Unfortunately, if
-		 * the main process dies the fs sticks around and
-		 * doesn't notice that the fd was closed.  Why EV_READ
-		 * is not triggered when a fd is closed on the other end?
-		 */
-		e = errno;
-		if ((fd = open(crashed_file, O_CREAT|O_TRUNC|O_WRONLY, 0600))
-		    == -1)
-			err(1, "open");
-		close(fd);
-		errx(1, "connection closed: %s", strerror(e));
-	}
-}
-
-static int
-fs_send_ui(int type, uint32_t peerid, int fd, const void *data,
-    uint16_t datalen)
-{
-	return imsg_compose_event(iev_ui, type, peerid, 0, fd,
-	    data, datalen);
+	if (rename(sfn, known_hosts_file))
+		return -1;
+	return 0;
 }
 
 static size_t
@@ -733,80 +455,89 @@ fs_init(void)
 }
 
 /*
- * Parse a line of the session file.  The format is:
+ * Parse a line of the session file and restores it.  The format is:
  *
  *	URL [flags,...] [title]\n
  */
-static void
-parse_session_line(char *line)
+static inline struct tab *
+parse_session_line(char *line, struct tab **ct)
 {
-	struct session_tab tab;
+	struct tab *tab;
 	char *s, *t, *ap;
+	const char *uri, *title = "";
+	int current = 0, killed = 0;
+	size_t top_line = 0, current_line = 0;
 
-	memset(&tab, 0, sizeof(tab));
-
+	uri = line;
 	if ((s = strchr(line, ' ')) == NULL)
-		return;
+		return NULL;
 
 	*s++ = '\0';
 
-	if (strlcpy(tab.uri, line, sizeof(tab.uri)) >= sizeof(tab.uri))
-		return;
-
 	if ((t = strchr(s, ' ')) != NULL) {
 		*t++ = '\0';
-
-		/* don't worry about cached title truncation */
-		strlcpy(tab.title, t, sizeof(tab.title));
+		title = t;
 	}
 
 	while ((ap = strsep(&s, ",")) != NULL) {
 		if (!strcmp(ap, "current"))
-			tab.flags |= TAB_CURRENT;
+			current = 1;
 		else if (!strcmp(ap, "killed"))
-			tab.flags |= TAB_KILLED;
+			killed = 1;
 		else if (has_prefix(ap, "top="))
-			tab.top_line = strtonum(ap+4, 0, UINT32_MAX, NULL);
+			top_line = strtonum(ap+4, 0, UINT32_MAX, NULL);
 		else if (has_prefix(ap, "cur="))
-			tab.current_line = strtonum(ap+4, 0, UINT32_MAX, NULL);
+			current_line = strtonum(ap+4, 0, UINT32_MAX, NULL);
 	}
 
-	if (tab.top_line > tab.current_line) {
-		tab.top_line = 0;
-		tab.current_line = 0;
+	if (top_line > current_line) {
+		top_line = 0;
+		current_line = 0;
 	}
 
-	fs_send_ui(IMSG_SESSION_TAB, 0, -1, &tab, sizeof(tab));
+	if ((tab = new_tab(uri, NULL, NULL)) == NULL)
+		die();
+	tab->hist_cur->line_off = top_line;
+	tab->hist_cur->current_off = current_line;
+	strlcpy(tab->buffer.page.title, title, sizeof(tab->buffer.page.title));
+
+	if (current)
+		*ct = tab;
+	else if (killed)
+		kill_tab(tab, 1);
+
+	return tab;
 }
 
 static inline void
-sendhist(const char *uri, int future)
+sendhist(struct tab *tab, const char *uri, int future)
 {
-	struct session_tab_hist sth;
+	struct hist *h;
 
-	memset(&sth, 0, sizeof(sth));
-	sth.future = future;
+	if ((h = calloc(1, sizeof(*h))) == NULL)
+		die();
+	strlcpy(h->h, uri, sizeof(h->h));
 
-	if (strlcpy(sth.uri, uri, sizeof(sth.uri)) >= sizeof(sth.uri))
-		return;
-
-	fs_send_ui(IMSG_SESSION_TAB_HIST, 0, -1, &sth, sizeof(sth));
+	if (future)
+		hist_push(&tab->hist, h);
+	else
+		hist_add_before(&tab->hist, tab->hist_cur, h);
 }
 
 static void
 load_last_session(void)
 {
+	struct tab	*tab = NULL, *ct = NULL;
 	FILE		*session;
 	size_t		 linesize = 0;
 	ssize_t		 linelen;
-	int		 first_time = 0;
 	int		 future;
 	char		*nl, *s, *line = NULL;
 
 	if ((session = fopen(session_file, "r")) == NULL) {
-		/* first time? */
-		first_time = 1;
-		goto end;
+		new_tab("about:new", NULL, NULL);
+		switch_to_tab(new_tab("about:help", NULL, NULL));
+		return;
 	}
 
 	while ((linelen = getline(&line, &linesize, session)) != -1) {
@@ -816,27 +547,22 @@ load_last_session(void)
 		if (*line == '<' || *line == '>') {
 			future = *line == '>';
 			s = line+1;
-			if (*s != ' ')
+			if (*s != ' ' || tab == NULL)
 				continue;
-			sendhist(++s, future);
+			sendhist(tab, ++s, future);
 		} else {
-			parse_session_line(line);
+			tab = parse_session_line(line, &ct);
 		}
 	}
 
 	fclose(session);
 	free(line);
 
-	if (last_time_crashed()) {
-		struct session_tab tab;
-		memset(&tab, 0, sizeof(tab));
-		tab.flags = TAB_CURRENT;
-		strlcpy(tab.uri, "about:crash", sizeof(tab.uri));
-		fs_send_ui(IMSG_SESSION_TAB, 0, -1, &tab, sizeof(tab));
-	}
+	if (ct != NULL)
+		switch_to_tab(ct);
 
-end:
-	fs_send_ui(IMSG_SESSION_END, 0, -1, &first_time, sizeof(first_time));
+	if (last_time_crashed())
+		switch_to_tab(new_tab("about:crash", NULL, NULL));
 }
 
 static void
@@ -850,7 +576,7 @@ load_hist(void)
 	struct histitem	 hi;
 
 	if ((hist = fopen(history_file, "r")) == NULL)
-		goto end;
+		return;
 
 	while ((linelen = getline(&line, &linesize, hist)) != -1) {
 		if ((nl = strchr(line, '\n')) != NULL)
@@ -867,37 +593,21 @@ load_hist(void)
 		if (strlcpy(hi.uri, spc, sizeof(hi.uri)) >= sizeof(hi.uri))
 			continue;
 
-		fs_send_ui(IMSG_HIST_ITEM, 0, -1, &hi, sizeof(hi));
+		history_push(&hi);
 	}
 
 	fclose(hist);
 	free(line);
-end:
-	fs_send_ui(IMSG_HIST_END, 0, -1, NULL, 0);
+
+	history_sort();
 }
 
 int
-fs_main(void)
+fs_load_state(struct ohash *certs)
 {
-	setproctitle("fs");
-
-	fs_init();
-
-	event_init();
-
-	/* Setup pipe and event handler to the main process */
-	if ((iev_ui = malloc(sizeof(*iev_ui))) == NULL)
-		die();
-	imsg_init(&iev_ui->ibuf, 3);
-	iev_ui->handler = handle_dispatch_imsg;
-	iev_ui->events = EV_READ;
-	event_set(&iev_ui->ev, iev_ui->ibuf.fd, iev_ui->events,
-	    iev_ui->handler, iev_ui);
-	event_add(&iev_ui->ev, NULL);
-
-	sandbox_fs_process();
-
-	event_dispatch();
+	load_certs(certs);
+	load_hist();
+	load_last_session();
 	return 0;
 }
 
@@ -962,33 +672,37 @@ parse_khost_line(char *line, char *tmp[3])
 }
 
 static void
-load_certs(void)
+load_certs(struct ohash *certs)
 {
 	char		*tmp[3], *line = NULL;
 	const char	*errstr;
 	size_t		 lineno = 0, linesize = 0;
 	ssize_t		 linelen;
 	FILE		*f;
-	struct tofu_entry e;
+	struct tofu_entry *e;
 
 	if ((f = fopen(known_hosts_file, "r")) == NULL)
 		return;
 
+	if ((e = calloc(1, sizeof(*e))) == NULL) {
+		fclose(f);
+		return;
+	}
+
 	while ((linelen = getline(&line, &linesize, f)) != -1) {
 		lineno++;
 
-		memset(&e, 0, sizeof(e));
 		if (parse_khost_line(line, tmp)) {
-			strlcpy(e.domain, tmp[0], sizeof(e.domain));
-			strlcpy(e.hash, tmp[1], sizeof(e.hash));
+			strlcpy(e->domain, tmp[0], sizeof(e->domain));
+			strlcpy(e->hash, tmp[1], sizeof(e->hash));
 
-			e.verified = strtonum(tmp[2], 0, 1, &errstr);
+			e->verified = strtonum(tmp[2], 0, 1, &errstr);
 			if (errstr != NULL)
 				errx(1, "%s:%zu verification for %s is %s: %s",
 				    known_hosts_file, lineno,
-				    e.domain, errstr, tmp[2]);
+				    e->domain, errstr, tmp[2]);
 
-			fs_send_ui(IMSG_TOFU, 0, -1, &e, sizeof(e));
+			tofu_add(certs, e);
 		} else {
 			warnx("%s:%zu invalid entry",
 			    known_hosts_file, lineno);
@@ -999,4 +713,3 @@ load_certs(void)
 	fclose(f);
 	return;
 }
-

@@ -79,7 +79,7 @@ end:
 	wrap_page(&downloadwin, download_cols);
 }
 
-void
+struct download *
 enqueue_download(uint32_t id, const char *path, int buffer)
 {
 	struct download *d;
@@ -93,6 +93,8 @@ enqueue_download(uint32_t id, const char *path, int buffer)
 	d->buffer = buffer;
 
 	STAILQ_INSERT_HEAD(&downloads, d, entries);
+
+	return d;
 }
 
 void

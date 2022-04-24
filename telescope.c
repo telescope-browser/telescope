@@ -21,7 +21,9 @@
 #include <sys/wait.h>
 
 #include <errno.h>
+#include <fcntl.h>
 #include <getopt.h>
+#include <limits.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -64,7 +66,7 @@ int			 operating;
  */
 int			safe_mode;
 
-static struct imsgev	*iev_fs, *iev_net;
+static struct imsgev	*iev_net;
 
 struct tabshead		 tabshead = TAILQ_HEAD_INITIALIZER(tabshead);
 struct tabshead		 ktabshead = TAILQ_HEAD_INITIALIZER(ktabshead);
@@ -72,7 +74,6 @@ struct proxylist	 proxies = TAILQ_HEAD_INITIALIZER(proxies);
 
 enum telescope_process {
 	PROC_UI,
-	PROC_FS,
 	PROC_NET,
 };
 
@@ -117,15 +118,8 @@ static void		 handle_imsg_got_code(struct imsg *, size_t);
 static void		 handle_imsg_got_meta(struct imsg *, size_t);
 static void		 handle_maybe_save_page(int, struct tab *);
 static void		 handle_save_page_path(const char *, struct tab *);
-static void		 handle_imsg_file_opened(struct imsg *, size_t);
 static void		 handle_imsg_buf(struct imsg *, size_t);
 static void		 handle_imsg_eof(struct imsg *, size_t);
-static void		 handle_imsg_tofu(struct imsg *, size_t);
-static void		 handle_imsg_bookmark_ok(struct imsg *, size_t);
-static void		 handle_imsg_save_cert_ok(struct imsg *, size_t);
-static void		 handle_imsg_update_cert_ok(struct imsg *, size_t);
-static void		 handle_imsg_session(struct imsg *, size_t);
-static void		 handle_imsg_history(struct imsg *, size_t);
 static void		 handle_dispatch_imsg(int, short, void *);
 static int		 load_about_url(struct tab *, const char *);
 static int		 load_file_url(struct tab *, const char *);
@@ -136,7 +130,6 @@ static int		 load_via_proxy(struct tab *, const char *,
 			     struct proxy *);
 static int		 make_request(struct tab *, struct get_req *, int,
 			     const char *);
-static int		 make_fs_request(struct tab *, int, const char *);
 static int		 do_load_url(struct tab *, const char *, const char *, int);
 static pid_t		 start_child(enum telescope_process, const char *, int);
 static void		 send_url(const char *);
@@ -161,16 +154,6 @@ static imsg_handlerfn *handlers[] = {
 	[IMSG_GOT_META] = handle_imsg_got_meta,
 	[IMSG_BUF] = handle_imsg_buf,
 	[IMSG_EOF] = handle_imsg_eof,
-	[IMSG_TOFU] = handle_imsg_tofu,
-	[IMSG_BOOKMARK_OK] = handle_imsg_bookmark_ok,
-	[IMSG_SAVE_CERT_OK] = handle_imsg_save_cert_ok,
-	[IMSG_UPDATE_CERT_OK] = handle_imsg_update_cert_ok,
-	[IMSG_FILE_OPENED] = handle_imsg_file_opened,
-	[IMSG_SESSION_TAB] = handle_imsg_session,
-	[IMSG_SESSION_TAB_HIST] = handle_imsg_session,
-	[IMSG_SESSION_END] = handle_imsg_session,
-	[IMSG_HIST_ITEM] = handle_imsg_history,
-	[IMSG_HIST_END] = handle_imsg_history,
 };
 
 static struct ohash	certs;
@@ -253,7 +236,7 @@ handle_imsg_check_cert(struct imsg *imsg, size_t datalen)
 		}
 		strlcpy(e->hash, hash, sizeof(e->hash));
 		tofu_add(&certs, e);
-		ui_send_fs(IMSG_SAVE_CERT, tab->id, e, sizeof(*e));
+		save_cert(e);
 	} else
 		tofu_res = !strcmp(hash, e->hash);
 
@@ -332,8 +315,8 @@ handle_maybe_save_new_cert(int accept, struct tab *tab)
 		strlcat(e->domain, port, sizeof(e->domain));
 	}
 	strlcpy(e->hash, tab->cert, sizeof(e->hash));
-	ui_send_fs(IMSG_UPDATE_CERT, 0, e, sizeof(*e));
 
+	update_cert(e);
 	tofu_update(&certs, e);
 
 	tab->trust = TS_TRUSTED;
@@ -471,6 +454,9 @@ handle_maybe_save_page(int dosave, struct tab *tab)
 static void
 handle_save_page_path(const char *path, struct tab *tab)
 {
+	struct download *d;
+	int fd;
+
 	if (path == NULL) {
 		stop_tab(tab);
 		return;
@@ -478,39 +464,21 @@ handle_save_page_path(const char *path, struct tab *tab)
 
 	ui_show_downloads_pane();
 
-	enqueue_download(tab->id, path, 0);
-	ui_send_fs(IMSG_FILE_OPEN, tab->id, path, strlen(path)+1);
+	d = enqueue_download(tab->id, path, 0);
 
 	/*
 	 * Change this tab id, the old one is associated with the
 	 * download now.
 	 */
 	tab->id = tab_new_id();
-}
 
-static void
-handle_imsg_file_opened(struct imsg *imsg, size_t datalen)
-{
-	struct download	*d;
-	const char	*e;
-
-	/*
-	 * There are no reason we shouldn't be able to find the
-	 * required download.
-	 */
-	if ((d = download_by_id(imsg->hdr.peerid)) == NULL)
-		die();
-
-	if (imsg->fd == -1) {
-		e = imsg->data;
-		if (e[datalen-1] != '\0')
-			die();
-		message("Can't open file %s: %s", d->path, e);
-	} else if (d->buffer) {
+	if ((fd = open(path, O_WRONLY|O_TRUNC|O_CREAT, 0644)) == -1)
+		message("Can't open file %s: %s", d->path, strerror(errno));
+	else if (d->buffer) {
 		FILE *fp;
 		int r;
 
-		if ((fp = fdopen(imsg->fd, "w")) != NULL) {
+		if ((fp = fdopen(fd, "w")) != NULL) {
 			r = parser_serialize(current_tab, fp);
 			if (!r)
 				message("Failed to save the page.");
@@ -519,114 +487,8 @@ handle_imsg_file_opened(struct imsg *imsg, size_t datalen)
 
 		dequeue_first_download();
 	} else {
-		d->fd = imsg->fd;
+		d->fd = fd;
 		ui_send_net(IMSG_PROCEED, d->id, NULL, 0);
-	}
-}
-
-static void
-handle_imsg_session(struct imsg *imsg, size_t datalen)
-{
-	static struct tab	*curr;
-	static struct tab	*tab;
-	struct session_tab	 st;
-	struct session_tab_hist	 sth;
-	struct hist		*h;
-	int			 first_time;
-
-	/*
-	 * The fs process tried to send tabs after it has announced
-	 * that he's done.  Something fishy is going on, better die.
-	 */
-	if (operating)
-		die();
-
-	switch (imsg->hdr.type) {
-	case IMSG_SESSION_TAB:
-		if (datalen != sizeof(st))
-			die();
-
-		memcpy(&st, imsg->data, sizeof(st));
-		if ((tab = new_tab(st.uri, NULL, NULL)) == NULL)
-			die();
-		tab->hist_cur->line_off = st.top_line;
-		tab->hist_cur->current_off = st.current_line;
-		strlcpy(tab->buffer.page.title, st.title,
-		    sizeof(tab->buffer.page.title));
-		if (st.flags & TAB_CURRENT)
-			curr = tab;
-		if (st.flags & TAB_KILLED)
-			kill_tab(tab, 1);
-		break;
-
-	case IMSG_SESSION_TAB_HIST:
-		if (tab == NULL || datalen != sizeof(sth))
-			die();
-
-		memcpy(&sth, imsg->data, sizeof(sth));
-		if (sth.uri[sizeof(sth.uri)-1] != '\0')
-			die();
-
-		if ((h = calloc(1, sizeof(*h))) == NULL)
-			die();
-		strlcpy(h->h, sth.uri, sizeof(h->h));
-
-		if (sth.future)
-			hist_push(&tab->hist, h);
-		else
-			hist_add_before(&tab->hist, tab->hist_cur, h);
-		break;
-
-	case IMSG_SESSION_END:
-		if (datalen != sizeof(first_time))
-			die();
-		memcpy(&first_time, imsg->data, sizeof(first_time));
-		if (first_time) {
-			new_tab("about:new", NULL, NULL);
-			curr = new_tab("about:help", NULL, NULL);
-		}
-
-		operating = 1;
-		if (curr != NULL)
-			switch_to_tab(curr);
-		if (has_url || TAILQ_EMPTY(&tabshead))
-			new_tab(url, NULL, NULL);
-		ui_main_loop();
-		break;
-
-	default:
-		die();
-	}
-}
-
-static void
-handle_imsg_history(struct imsg *imsg, size_t datalen)
-{
-	struct histitem hi;
-
-	/*
-	 * The fs process tried to send history item after it
-	 * has announced that it's done.  Something fishy is
-	 * going on, better die
-	 */
-	if (operating)
-		die();
-
-	switch (imsg->hdr.type) {
-	case IMSG_HIST_ITEM:
-		if (datalen != sizeof(hi))
-			die();
-
-		memcpy(&hi, imsg->data, sizeof(hi));
-		history_push(&hi);
-		break;
-
-	case IMSG_HIST_END:
-		history_sort();
-		break;
-
-	default:
-		die();
 	}
 }
 
@@ -677,67 +539,6 @@ handle_imsg_eof(struct imsg *imsg, size_t datalen)
 }
 
 static void
-handle_imsg_tofu(struct imsg *imsg, size_t datalen)
-{
-	struct tofu_entry *e;
-
-	if (operating)
-		die();
-
-	if ((e = calloc(1, sizeof(*e))) == NULL)
-		die();
-
-	if (datalen != sizeof(*e))
-		die();
-	memcpy(e, imsg->data, sizeof(*e));
-	if (e->domain[sizeof(e->domain)-1] != '\0' ||
-	    e->hash[sizeof(e->hash)-1] != '\0')
-		die();
-	tofu_add(&certs, e);
-}
-
-static void
-handle_imsg_bookmark_ok(struct imsg *imsg, size_t datalen)
-{
-	int res;
-
-	if (datalen != sizeof(res))
-		die();
-
-	memcpy(&res, imsg->data, sizeof(res));
-	if (res == 0)
-		message("Added to bookmarks!");
-	else
-		message("Failed to add to bookmarks: %s",
-		    strerror(res));
-}
-
-static void
-handle_imsg_save_cert_ok(struct imsg *imsg, size_t datalen)
-{
-	int res;
-
-	if (datalen != sizeof(res))
-		die();
-	memcpy(&res, imsg->data, datalen);
-	if (res != 0)
-		message("Failed to save the cert for: %s",
-		    strerror(res));
-}
-
-static void
-handle_imsg_update_cert_ok(struct imsg *imsg, size_t datalen)
-{
-	int res;
-
-	if (datalen != sizeof(res))
-		die();
-	memcpy(&res, imsg->data, datalen);
-	if (!res)
-		message("Failed to update the certificate");
-}
-
-static void
 handle_dispatch_imsg(int fd, short ev, void *d)
 {
 	struct imsgev	*iev = d;
@@ -749,16 +550,21 @@ handle_dispatch_imsg(int fd, short ev, void *d)
 static int
 load_about_url(struct tab *tab, const char *url)
 {
-	tab->trust = TS_UNKNOWN;
-	parser_init(tab, gemtext_initparser);
-	return make_fs_request(tab, IMSG_GET, url);
+	tab->trust = TS_TRUSTED;
+	fs_load_url(tab, url);
+	ui_on_tab_refresh(tab);
+	ui_on_tab_loaded(tab);
+	return 0;
 }
 
 static int
 load_file_url(struct tab *tab, const char *url)
 {
-	tab->trust = TS_UNKNOWN;
-	return make_fs_request(tab, IMSG_GET_FILE, tab->uri.path);
+	tab->trust = TS_TRUSTED;
+	fs_load_url(tab, url);
+	ui_on_tab_refresh(tab);
+	ui_on_tab_loaded(tab);
+	return 0;
 }
 
 static int
@@ -909,21 +715,6 @@ make_request(struct tab *tab, struct get_req *req, int proto, const char *r)
 
 	/*
 	 * So the various load_*_url can `return make_request` and
-	 * do_load_url is happy.
-	 */
-	return 1;
-}
-
-static int
-make_fs_request(struct tab *tab, int type, const char *r)
-{
-	stop_tab(tab);
-	tab->id = tab_new_id();
-
-	ui_send_fs(type, tab->id, r, strlen(r)+1);
-
-	/*
-	 * So load_{about,file}_url can `return make_fs_request` and
 	 * do_load_url is happy.
 	 */
 	return 1;
@@ -1106,20 +897,18 @@ load_next_page(struct tab *tab)
 }
 
 void
-add_to_bookmarks(const char *str)
-{
-	ui_send_fs(IMSG_BOOKMARK_PAGE, 0,
-	    str, strlen(str)+1);
-}
-
-void
 write_buffer(const char *path, struct tab *tab)
 {
+	FILE *fp;
+
 	if (path == NULL)
 		return;
 
-	enqueue_download(tab->id, path, 1);
-	ui_send_fs(IMSG_FILE_OPEN, tab->id, path, strlen(path)+1);
+	if ((fp = fopen(path, "w")) == NULL)
+		return;
+	if (!parser_serialize(tab, fp))
+		message("Failed to save the page.");
+	fclose(fp);
 }
 
 /*
@@ -1186,9 +975,6 @@ start_child(enum telescope_process p, const char *argv0, int fd)
 	switch (p) {
 	case PROC_UI:
 		errx(1, "Can't start ui process");
-	case PROC_FS:
-		argv[argc++] = "-Tf";
-		break;
 	case PROC_NET:
 		argv[argc++] = "-Tn";
 		break;
@@ -1234,13 +1020,6 @@ ui_send_net(int type, uint32_t peerid, const void *data,
 	    datalen);
 }
 
-int
-ui_send_fs(int type, uint32_t peerid, const void *data, uint16_t datalen)
-{
-	return imsg_compose_event(iev_fs, type, peerid, 0, -1, data,
-	    datalen);
-}
-
 static void __attribute__((noreturn))
 usage(int r)
 {
@@ -1253,10 +1032,10 @@ usage(int r)
 int
 main(int argc, char * const *argv)
 {
-	struct imsgev	 net_ibuf, fs_ibuf;
+	struct imsgev	 net_ibuf;
 	pid_t		 pid;
 	int		 control_fd;
-	int		 pipe2net[2], pipe2fs[2];
+	int		 pipe2net[2];
 	int		 ch, configtest = 0, fail = 0;
 	int		 proc = -1;
 	int		 sessionfd = -1;
@@ -1270,8 +1049,6 @@ main(int argc, char * const *argv)
 
 	if (getenv("NO_COLOR") != NULL)
 		enable_colors = 0;
-
-	fs_init();
 
 	while ((ch = getopt_long(argc, argv, opts, longopts, NULL)) != -1) {
 		switch (ch) {
@@ -1291,9 +1068,6 @@ main(int argc, char * const *argv)
 			break;
 		case 'T':
 			switch (*optarg) {
-			case 'f':
-				proc = PROC_FS;
-				break;
 			case 'n':
 				proc = PROC_NET;
 				break;
@@ -1317,8 +1091,6 @@ main(int argc, char * const *argv)
 	if (proc != -1) {
 		if (argc > 0)
 			usage(1);
-		else if (proc == PROC_FS)
-			return fs_main();
 		else if (proc == PROC_NET)
 			return net_main();
 		else
@@ -1329,6 +1101,8 @@ main(int argc, char * const *argv)
 		has_url = 1;
 		humanify_url(argv[0], url, sizeof(url));
 	}
+
+	fs_init();
 
 	/* setup keys before reading the config */
 	TAILQ_INIT(&global_map.m);
@@ -1357,13 +1131,6 @@ main(int argc, char * const *argv)
 	}
 
 	/* Start children. */
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe2fs) == -1)
-		err(1, "socketpair");
-	start_child(PROC_FS, argv0, pipe2fs[1]);
-	imsg_init(&fs_ibuf.ibuf, pipe2fs[0]);
-	iev_fs = &fs_ibuf;
-	iev_fs->handler = handle_dispatch_imsg;
-
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe2net) == -1)
 		err(1, "socketpair");
 	start_child(PROC_NET, argv0, pipe2net[1]);
@@ -1390,12 +1157,7 @@ main(int argc, char * const *argv)
 	/* Setup event handler for the autosave */
 	autosave_init();
 
-	/* Setup event handlers for pipes to fs/net */
-	iev_fs->events = EV_READ;
-	event_set(&iev_fs->ev, iev_fs->ibuf.fd, iev_fs->events,
-	    iev_fs->handler, iev_fs);
-	event_add(&iev_fs->ev, NULL);
-
+	/* Setup event handlers for pipes to net */
 	iev_net->events = EV_READ;
 	event_set(&iev_net->ev, iev_net->ibuf.fd, iev_net->events,
 	    iev_net->handler, iev_net);
@@ -1403,14 +1165,14 @@ main(int argc, char * const *argv)
 
 	if (ui_init()) {
 		sandbox_ui_process();
-		ui_send_fs(IMSG_INIT, 0, NULL, 0);
-		event_dispatch();
+		fs_load_state(&certs);
+		operating = 1;
+		switch_to_tab(current_tab);
+		ui_main_loop();
 		ui_end();
 	}
 
-	ui_send_fs(IMSG_QUIT, 0, NULL, 0);
 	ui_send_net(IMSG_QUIT, 0, NULL, 0);
-	imsg_flush(&iev_fs->ibuf);
 	imsg_flush(&iev_net->ibuf);
 
 	/* wait for children to terminate */
@@ -1422,6 +1184,9 @@ main(int argc, char * const *argv)
 		} else if (WIFSIGNALED(status))
 			warnx("child terminated; signal %d", WTERMSIG(status));
 	} while (pid != -1 || (pid == -1 && errno == EINTR));
+
+	if (!safe_mode)
+		unlink(crashed_file);
 
 	if (!safe_mode && close(sessionfd) == -1)
 		err(1, "close(sessionfd = %d)", sessionfd);

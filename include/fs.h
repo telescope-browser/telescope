@@ -17,9 +17,8 @@
 #ifndef FS_H
 #define FS_H
 
-#include "compat.h"
-
-#include <limits.h>
+struct tab;
+struct tofu_entry;
 
 extern char	config_path_base[PATH_MAX];
 extern char	data_path_base[PATH_MAX];
@@ -32,9 +31,14 @@ extern char	bookmark_file[PATH_MAX];
 extern char	known_hosts_file[PATH_MAX], known_hosts_tmp[PATH_MAX];
 extern char	crashed_file[PATH_MAX];
 extern char	session_file[PATH_MAX];
+extern char	history_file[PATH_MAX];
 
 int		 fs_init(void);
-int		 fs_main(void);
 int		 lock_session(void);
+void		 fs_load_url(struct tab *, const char *);
+int		 bookmark_page(const char *);
+int		 save_cert(const struct tofu_entry *e);
+int		 update_cert(const struct tofu_entry *e);
+int		 fs_load_state(struct ohash *);
 
 #endif

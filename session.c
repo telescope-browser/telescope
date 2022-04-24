@@ -17,6 +17,7 @@
 #include "compat.h"
 
 #include <errno.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -161,25 +162,22 @@ stop_tab(struct tab *tab)
 }
 
 static inline void
-sendtab(struct tab *tab, int killed)
+savetab(FILE *fp, struct tab *tab, int killed)
 {
-	struct session_tab	 st;
-	struct session_tab_hist	 sth;
-	struct hist		*h;
-	int			 future;
+	struct hist	*h;
+	size_t		 top_line, current_line;
+	int		 future;
 
-	memset(&st, 0, sizeof(st));
+	get_scroll_position(tab, &top_line, &current_line);
 
+	fprintf(fp, "%s ", tab->hist_cur->h);
 	if (tab == current_tab)
-		st.flags |= TAB_CURRENT;
+		fprintf(fp, "current,");
 	if (killed)
-		st.flags |= TAB_KILLED;
+		fprintf(fp, "killed,");
 
-	get_scroll_position(tab, &st.top_line, &st.current_line);
-
-	strlcpy(st.uri, tab->hist_cur->h, sizeof(st.uri));
-	strlcpy(st.title, tab->buffer.page.title, sizeof(st.title));
-	ui_send_fs(IMSG_SESSION_TAB, 0, &st, sizeof(st));
+	fprintf(fp, "top=%zu,cur=%zu %s\n", top_line, current_line,
+	    tab->buffer.page.title);
 
 	future = 0;
 	TAILQ_FOREACH(h, &tab->hist.head, entries) {
@@ -188,32 +186,32 @@ sendtab(struct tab *tab, int killed)
 			continue;
 		}
 
-		memset(&sth, 0, sizeof(sth));
-		strlcpy(sth.uri, h->h, sizeof(sth.uri));
-		sth.future = future;
-		ui_send_fs(IMSG_SESSION_TAB_HIST, 0, &sth, sizeof(sth));
+		fprintf(fp, "%s %s\n", future ? ">" : "<", h->h);
 	}
-
 }
 
 void
 save_session(void)
 {
+	FILE			*session, *hist;
 	struct tab		*tab;
-	struct histitem		 hi;
 	size_t			 i;
 
 	if (safe_mode)
 		return;
 
-	ui_send_fs(IMSG_SESSION_START, 0, NULL, 0);
+	if ((session = fopen(session_file, "w")) == NULL)
+		return;
 
 	TAILQ_FOREACH(tab, &tabshead, tabs)
-		sendtab(tab, 0);
+		savetab(session, tab, 0);
 	TAILQ_FOREACH(tab, &ktabshead, tabs)
-		sendtab(tab, 1);
+		savetab(session, tab, 1);
 
-	ui_send_fs(IMSG_SESSION_END, 0, NULL, 0);
+	fclose(session);
+
+	if ((hist = fopen(history_file, "a")) == NULL)
+		return;
 
 	if (history.dirty) {
 		for (i = 0; i < history.len && history.dirty > 0; ++i) {
@@ -222,14 +220,14 @@ save_session(void)
 			history.dirty--;
 			history.items[i].dirty = 0;
 
-			memset(&hi, 0, sizeof(hi));
-			hi.ts = history.items[i].ts;
-			strlcpy(hi.uri, history.items[i].uri, sizeof(hi.uri));
-			ui_send_fs(IMSG_HIST_ITEM, 0, &hi, sizeof(hi));
+			fprintf(hist, "%lld %s\n",
+			    (long long)history.items[i].ts,
+			    history.items[i].uri);
 		}
-		ui_send_fs(IMSG_HIST_END, 0, NULL, 0);
 		history.dirty = 0;
 	}
+
+	fclose(hist);
 }
 
 void

@@ -145,6 +145,8 @@ struct parser;
 
 typedef int	(*printfn)(void *, const char *, ...);
 
+typedef void	(*parserinit)(struct parser *);
+
 typedef int	(*parsechunkfn)(struct parser *, const char *, size_t);
 typedef int	(*parserfreefn)(struct parser *);
 typedef int	(*parserserial)(struct parser *, FILE *);
@@ -162,7 +164,7 @@ struct parser {
 #define PARSER_IN_PRE	2
 #define PARSER_IN_PATCH_HDR 4
 	int		 flags;
-	void		(*init)(struct parser *);
+	parserinit	 init;
 	parsechunkfn	 parse;
 	parserfreefn	 free;
 	parserserial	 serialize;
@@ -308,7 +310,7 @@ struct download {
 };
 
 void		 recompute_downloads(void);
-void		 enqueue_download(uint32_t, const char *, int);
+struct download	*enqueue_download(uint32_t, const char *, int);
 void		 dequeue_first_download(void);
 struct download	*download_by_id(uint32_t);
 
@@ -334,7 +336,6 @@ void		 parseconfig(const char *, int);
 /* sandbox.c */
 void		 sandbox_net_process(void);
 void		 sandbox_ui_process(void);
-void		 sandbox_fs_process(void);
 
 /* telescope.c */
 extern int operating;
@@ -350,11 +351,9 @@ void		 load_url(struct tab *, const char *, const char *, int);
 void		 load_url_in_tab(struct tab *, const char *, const char *, int);
 int		 load_previous_page(struct tab*);
 int		 load_next_page(struct tab*);
-void		 add_to_bookmarks(const char*);
 void		 write_buffer(const char *, struct tab *);
 void		 humanify_url(const char *, char *, size_t);
 int		 ui_send_net(int, uint32_t, const void *, uint16_t);
-int		 ui_send_fs(int, uint32_t, const void *, uint16_t);
 
 /* tofu.c */
 void			 tofu_init(struct ohash*, unsigned int, ptrdiff_t);

@@ -16,10 +16,13 @@
 
 #include "compat.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "fs.h"
 #include "minibuffer.h"
 #include "session.h"
 #include "ui.h"
@@ -331,9 +334,11 @@ void
 bp_select(void)
 {
 	exit_minibuffer();
-	if (*ministate.buf != '\0')
-		add_to_bookmarks(ministate.buf);
-	else
+	if (*ministate.buf != '\0') {
+		if (!bookmark_page(ministate.buf))
+			message("failed to bookmark page: %s",
+			    strerror(errno));
+	} else
 		message("Abort.");
 }
 

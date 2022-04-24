@@ -16,13 +16,14 @@
 
 #include "compat.h"
 
+#include <limits.h>
+
 #include "fs.h"
 #include "telescope.h"
 
 #ifdef __OpenBSD__
 
 # include <errno.h>
-# include <limits.h>
 # include <stdlib.h>
 # include <string.h>
 # include <unistd.h>
@@ -36,13 +37,6 @@ sandbox_net_process(void)
 
 void
 sandbox_ui_process(void)
-{
-	if (pledge("stdio tty unix recvfd", NULL) == -1)
-		err(1, "pledge");
-}
-
-void
-sandbox_fs_process(void)
 {
 	char path[PATH_MAX];
 
@@ -63,7 +57,7 @@ sandbox_fs_process(void)
 	if (unveil(cache_path_base, "rwc") == -1)
 		err(1, "unveil(%s)", cache_path_base);
 
-	if (pledge("stdio rpath wpath cpath sendfd", NULL) == -1)
+	if (pledge("stdio rpath wpath cpath unix tty", NULL) == -1)
 		err(1, "pledge");
 }
 
@@ -212,45 +206,11 @@ sandbox_net_process(void)
 void
 sandbox_ui_process(void)
 {
-	if (landlock_no_fs() == -1)
-		err(1, "landlock");
-}
-
-void
-sandbox_fs_process(void)
-{
-	int fd, rwc;
-	char path[PATH_MAX];
-
 	/*
-	 * XXX: at build-time we found landlock.h but we've just
-	 * realized it's not available on this kernel, so do nothing.
+	 * Needs to be able to read files *and* execute programs,
+	 * can't be sandboxed.
 	 */
-	if ((fd = open_landlock()) == -1)
-		return;
-
-	rwc =	LANDLOCK_ACCESS_FS_READ_FILE	|
-		LANDLOCK_ACCESS_FS_READ_DIR	|
-		LANDLOCK_ACCESS_FS_WRITE_FILE	|
-		LANDLOCK_ACCESS_FS_MAKE_DIR	|
-		LANDLOCK_ACCESS_FS_MAKE_REG;
-
-	if (landlock_unveil(fd, "/tmp", rwc) == -1)
-		err(1, "landlock_unveil(/tmp)");
-
-	strlcpy(path, getenv("HOME"), sizeof(path));
-	strlcat(path, "/Downloads", sizeof(path));
-	if (landlock_unveil(fd, path, rwc) == -1 && errno != ENOENT)
-		err(1, "landlock_unveil(%s)", path);
-
-	if (landlock_unveil(fd, config_path_base, rwc) == -1)
-		err(1, "landlock_unveil(%s)", config_path_base);
-
-	if (landlock_unveil(fd, data_path_base, rwc) == -1)
-		err(1, "landlock_unveil(%s)", data_path_base);
-
-	if (landlock_unveil(fd, cache_path_base, rwc) == -1)
-		err(1, "landlock_unveil(%s)", cache_path_base);
+	return;
 }
 
 #else
@@ -265,12 +225,6 @@ sandbox_net_process(void)
 
 void
 sandbox_ui_process(void)
-{
-	return;
-}
-
-void
-sandbox_fs_process(void)
 {
 	return;
 }

@@ -1200,6 +1200,8 @@ ui_main_loop(void)
 
 	switch_to_tab(current_tab);
 	rearrange_windows();
+
+	event_dispatch();
 }
 
 void
