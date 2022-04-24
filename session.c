@@ -193,25 +193,50 @@ savetab(FILE *fp, struct tab *tab, int killed)
 void
 save_session(void)
 {
-	FILE			*session, *hist;
-	struct tab		*tab;
-	size_t			 i;
+	FILE		*tmp;
+	struct tab	*tab;
+	size_t		 i;
+	int		 fd, err=  0;
+	char		 sfn[PATH_MAX];
 
 	if (safe_mode)
 		return;
 
-	if ((session = fopen(session_file, "w")) == NULL)
+	strlcpy(sfn, session_file_tmp, sizeof(sfn));
+	if ((fd = mkstemp(sfn)) == -1 ||
+	    (tmp = fdopen(fd, "w")) == NULL) {
+		if (fd != -1) {
+			unlink(sfn);
+			close(fd);
+		}
 		return;
+	}
 
 	TAILQ_FOREACH(tab, &tabshead, tabs)
-		savetab(session, tab, 0);
+		savetab(tmp, tab, 0);
 	TAILQ_FOREACH(tab, &ktabshead, tabs)
-		savetab(session, tab, 1);
+		savetab(tmp, tab, 1);
 
-	fclose(session);
+	err = ferror(tmp);
+	fclose(tmp);
 
-	if ((hist = fopen(history_file, "a")) == NULL)
+	if (err) {
+		unlink(sfn);
 		return;
+	}
+
+	if (rename(sfn, session_file))
+		return;
+
+	strlcpy(sfn, history_file_tmp, sizeof(sfn));
+	if ((fd = mkstemp(sfn)) == -1 ||
+	    (tmp = fdopen(fd, "w")) == NULL) {
+		if (fd != -1) {
+			unlink(sfn);
+			close(fd);
+		}
+		return;
+	}
 
 	if (history.dirty) {
 		for (i = 0; i < history.len && history.dirty > 0; ++i) {
@@ -220,14 +245,22 @@ save_session(void)
 			history.dirty--;
 			history.items[i].dirty = 0;
 
-			fprintf(hist, "%lld %s\n",
+			fprintf(tmp, "%lld %s\n",
 			    (long long)history.items[i].ts,
 			    history.items[i].uri);
 		}
 		history.dirty = 0;
 	}
 
-	fclose(hist);
+	err = ferror(tmp);
+	fclose(tmp);
+
+	if (err) {
+		unlink(sfn);
+		return;
+	}
+
+	rename(sfn, history_file);
 }
 
 void

@@ -71,8 +71,8 @@ char		lockfile_path[PATH_MAX];
 char		bookmark_file[PATH_MAX];
 char		known_hosts_file[PATH_MAX], known_hosts_tmp[PATH_MAX];
 char		crashed_file[PATH_MAX];
-char		session_file[PATH_MAX];
-char		history_file[PATH_MAX];
+char		session_file[PATH_MAX], session_file_tmp[PATH_MAX];
+char		history_file[PATH_MAX], history_file_tmp[PATH_MAX];
 
 static void __attribute__((__noreturn__))
 die(void)
@@ -446,7 +446,11 @@ fs_init(void)
 	    "/known_hosts.tmp.XXXXXXXXXX", sizeof(known_hosts_tmp));
 	join_path(session_file, cache_path_base, "/session",
 	    sizeof(session_file));
+	join_path(session_file_tmp, cache_path_base, "/session.XXXXXXXXXX",
+	    sizeof(session_file));
 	join_path(history_file, cache_path_base, "/history",
+	    sizeof(history_file));
+	join_path(history_file_tmp, cache_path_base, "/history.XXXXXXXXXX",
 	    sizeof(history_file));
 	join_path(crashed_file, cache_path_base, "/crashed",
 	    sizeof(crashed_file));
