@@ -194,7 +194,7 @@ savetab(FILE *fp, struct tab *tab, int killed)
 void
 save_session(void)
 {
-	FILE		*tmp;
+	FILE		*tmp, *hist;
 	struct tab	*tab;
 	size_t		 i;
 	int		 fd, err=  0;
@@ -229,15 +229,8 @@ save_session(void)
 	if (rename(sfn, session_file))
 		return;
 
-	strlcpy(sfn, history_file_tmp, sizeof(sfn));
-	if ((fd = mkstemp(sfn)) == -1 ||
-	    (tmp = fdopen(fd, "w")) == NULL) {
-		if (fd != -1) {
-			unlink(sfn);
-			close(fd);
-		}
+	if ((hist = fopen(history_file, "a")) == NULL)
 		return;
-	}
 
 	if (history.dirty) {
 		for (i = 0; i < history.len && history.dirty > 0; ++i) {
@@ -246,22 +239,15 @@ save_session(void)
 			history.dirty--;
 			history.items[i].dirty = 0;
 
-			fprintf(tmp, "%lld %s\n",
+			fprintf(hist, "%lld %s\n",
 			    (long long)history.items[i].ts,
 			    history.items[i].uri);
 		}
 		history.dirty = 0;
 	}
 
-	err = ferror(tmp);
-	fclose(tmp);
-
-	if (err) {
-		unlink(sfn);
-		return;
-	}
-
-	rename(sfn, history_file);
+	err = ferror(hist);
+	fclose(hist);
 }
 
 void
