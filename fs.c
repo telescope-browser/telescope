@@ -259,18 +259,6 @@ done:
 }
 
 int
-bookmark_page(const char *url)
-{
-	FILE *f;
-
-	if ((f = fopen(bookmark_file, "a")) == NULL)
-		return -1;
-	fprintf(f, "=> %s\n", url);
-	fclose(f);
-	return 0;
-}
-
-int
 save_cert(const struct tofu_entry *e)
 {
 	FILE *f;

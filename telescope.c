@@ -951,6 +951,18 @@ humanify_url(const char *raw, char *ret, size_t len)
 	strlcat(ret, raw, len);
 }
 
+int
+bookmark_page(const char *url)
+{
+	FILE *fp;
+
+	if ((fp = fopen(bookmark_file, "a")) == NULL)
+		return -1;
+	fprintf(fp, "=> %s\n", url);
+	fclose(fp);
+	return 0;
+}
+
 static pid_t
 start_child(enum telescope_process p, const char *argv0, int fd)
 {
