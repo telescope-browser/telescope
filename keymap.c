@@ -19,6 +19,7 @@
 #include <ctype.h>
 #include <curses.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "keymap.h"
 #include "telescope.h"
