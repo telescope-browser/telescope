@@ -151,7 +151,7 @@ is_dir(FILE *fp)
 static parserinit
 file_type(const char *path)
 {
-	struct mapping {
+	const struct mapping {
 		const char	*ext;
 		parserinit	 fn;
 	} ms[] = {
@@ -163,7 +163,7 @@ file_type(const char *path)
 		{"patch",	gemtext_initparser},
 		{NULL, NULL},
 	}, *m;
-	char *dot;
+	const char *dot;
 
 	if ((dot = strrchr(path, '.')) == NULL)
 		return textplain_initparser;
