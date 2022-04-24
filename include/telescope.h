@@ -362,6 +362,7 @@ struct tofu_entry	*tofu_lookup(struct ohash*, const char*, const char*);
 void			 tofu_add(struct ohash*, struct tofu_entry*);
 int			 tofu_save(struct ohash *, struct tofu_entry *);
 void			 tofu_update(struct ohash*, struct tofu_entry*);
+int			 tofu_update_persist(struct ohash *, struct tofu_entry *);
 void			 tofu_temp_trust(struct ohash *, const char *, const char *, const char *);
 
 /* wrap.c */

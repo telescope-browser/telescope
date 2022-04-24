@@ -19,6 +19,7 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "fs.h"
 #include "telescope.h"
@@ -88,6 +89,58 @@ tofu_update(struct ohash *h, struct tofu_entry *e)
 		t->verified = e->verified;
 		free(e);
 	}
+}
+
+int
+tofu_update_persist(struct ohash *h, struct tofu_entry *e)
+{
+	FILE	*tmp, *fp;
+	char	 sfn[PATH_MAX], *line = NULL;
+	size_t	 l, linesize = 0;
+	ssize_t	 linelen;
+	int	 fd, err;
+
+	tofu_update(h, e);
+
+	strlcpy(sfn, known_hosts_tmp, sizeof(sfn));
+	if ((fd = mkstemp(sfn)) == -1 ||
+	    (tmp = fdopen(fd, "w")) == NULL) {
+		if (fd != -1) {
+			unlink(sfn);
+			close(fd);
+		}
+		return -1;
+	}
+
+	if ((fp = fopen(known_hosts_file, "r")) == NULL) {
+		unlink(sfn);
+		fclose(tmp);
+		return -1;
+	}
+
+	l = strlen(e->domain);
+	while ((linelen = getline(&line, &linesize, fp)) != -1) {
+		if (!strncmp(line, e->domain, l))
+			continue;
+		if (linesize > 0 && line[linesize-1] == '\n')
+			line[linesize-1] = '\0';
+		fprintf(tmp, "%s\n", line);
+	}
+	fprintf(tmp, "%s %s %d\n", e->domain, e->hash, e->verified);
+
+	free(line);
+	err = ferror(tmp);
+	fclose(tmp);
+	fclose(fp);
+
+	if (err) {
+		unlink(sfn);
+		return -1;
+	}
+
+	if (rename(sfn, known_hosts_file))
+		return -1;
+	return 0;
 }
 
 void

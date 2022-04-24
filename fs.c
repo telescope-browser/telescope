@@ -258,57 +258,6 @@ done:
 		load_page_from_str(tab, fallback);
 }
 
-int
-update_cert(const struct tofu_entry *e)
-{
-	FILE	*tmp, *f;
-	char	 sfn[PATH_MAX], *line = NULL, *t;
-	size_t	 l, linesize = 0;
-	ssize_t	 linelen;
-	int	 fd, err;
-
-	strlcpy(sfn, known_hosts_tmp, sizeof(sfn));
-	if ((fd = mkstemp(sfn)) == -1 ||
-	    (tmp = fdopen(fd, "w")) == NULL) {
-		if (fd != -1) {
-			unlink(sfn);
-			close(fd);
-		}
-		return -1;
-	}
-
-	if ((f = fopen(known_hosts_file, "r")) == NULL) {
-		unlink(sfn);
-		fclose(tmp);
-		return -1;
-	}
-
-	l = strlen(e->domain);
-	while ((linelen = getline(&line, &linesize, f)) != -1) {
-		if ((t = strstr(line, e->domain)) != NULL &&
-		    (line[l] == ' ' || line[l] == '\t'))
-			continue;
-		/* line has a trailing \n */
-		fprintf(tmp, "%s", line);
-	}
-	fprintf(tmp, "%s %s %d\n", e->domain, e->hash, e->verified);
-
-	free(line);
-	err = ferror(tmp);
-
-	fclose(tmp);
-	fclose(f);
-
-	if (err) {
-		unlink(sfn);
-		return -1;
-	}
-
-	if (rename(sfn, known_hosts_file))
-		return -1;
-	return 0;
-}
-
 static size_t
 join_path(char *buf, const char *lhs, const char *rhs, size_t buflen)
 {

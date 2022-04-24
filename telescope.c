@@ -315,8 +315,7 @@ handle_maybe_save_new_cert(int accept, struct tab *tab)
 	}
 	strlcpy(e->hash, tab->cert, sizeof(e->hash));
 
-	update_cert(e);
-	tofu_update(&certs, e);
+	tofu_update_persist(&certs, e);
 
 	tab->trust = TS_TRUSTED;
 
