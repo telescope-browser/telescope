@@ -17,7 +17,7 @@
 #ifndef SESSION_H
 #define SESSION_H
 
-#include "telescope.h"
+struct ohash;
 
 struct session_tab {
 	uint32_t	flags;
@@ -68,5 +68,8 @@ void		 history_add(const char *);
 void		 autosave_init(void);
 void		 autosave_timer(int, short, void *);
 void		 autosave_hook(void);
+
+int		 load_session(struct ohash *);
+int		 lock_session(void);
 
 #endif

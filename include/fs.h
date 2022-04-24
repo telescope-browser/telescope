@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Omar Polo <op@omarpolo.com>
+ * Copyright (c) 2021, 2022 Omar Polo <op@omarpolo.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -34,8 +34,6 @@ extern char	session_file[PATH_MAX], session_file_tmp[PATH_MAX];
 extern char	history_file[PATH_MAX], history_file_tmp[PATH_MAX];
 
 int		 fs_init(void);
-int		 lock_session(void);
 void		 fs_load_url(struct tab *, const char *);
-int		 fs_load_state(struct ohash *);
 
 #endif

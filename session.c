@@ -17,6 +17,7 @@
 #include "compat.h"
 
 #include <errno.h>
+#include <fcntl.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -394,4 +395,262 @@ autosave_hook(void)
 
 		evtimer_add(&autosaveev, &tv);
 	}
+}
+
+static inline int
+parse_khost_line(char *line, char *tmp[3])
+{
+	char **ap;
+
+	for (ap = tmp; ap < &tmp[3] &&
+	    (*ap = strsep(&line, " \t\n")) != NULL;) {
+		if (**ap != '\0')
+			ap++;
+	}
+
+	return ap == &tmp[3] && *line == '\0';
+}
+
+static void
+load_certs(struct ohash *certs)
+{
+	char		*tmp[3], *line = NULL;
+	const char	*errstr;
+	size_t		 lineno = 0, linesize = 0;
+	ssize_t		 linelen;
+	FILE		*f;
+	struct tofu_entry *e;
+
+	if ((f = fopen(known_hosts_file, "r")) == NULL)
+		return;
+
+	if ((e = calloc(1, sizeof(*e))) == NULL) {
+		fclose(f);
+		return;
+	}
+
+	while ((linelen = getline(&line, &linesize, f)) != -1) {
+		lineno++;
+
+		if (parse_khost_line(line, tmp)) {
+			strlcpy(e->domain, tmp[0], sizeof(e->domain));
+			strlcpy(e->hash, tmp[1], sizeof(e->hash));
+
+			e->verified = strtonum(tmp[2], 0, 1, &errstr);
+			if (errstr != NULL)
+				errx(1, "%s:%zu verification for %s is %s: %s",
+				    known_hosts_file, lineno,
+				    e->domain, errstr, tmp[2]);
+
+			tofu_add(certs, e);
+		} else
+			warnx("%s:%zu invalid entry",
+			    known_hosts_file, lineno);
+	}
+
+	free(line);
+	fclose(f);
+	return;
+}
+
+
+static void
+load_hist(void)
+{
+	FILE		*hist;
+	size_t		 linesize = 0;
+	ssize_t		 linelen;
+	char		*nl, *spc, *line = NULL;
+	const char	*errstr;
+	struct histitem	 hi;
+
+	if ((hist = fopen(history_file, "r")) == NULL)
+		return;
+
+	while ((linelen = getline(&line, &linesize, hist)) != -1) {
+		if ((nl = strchr(line, '\n')) != NULL)
+			*nl = '\0';
+		if ((spc = strchr(line, ' ')) == NULL)
+			continue;
+		*spc = '\0';
+		spc++;
+
+		memset(&hi, 0, sizeof(hi));
+		hi.ts = strtonum(line, INT64_MIN, INT64_MAX, &errstr);
+		if (errstr != NULL)
+			continue;
+		if (strlcpy(hi.uri, spc, sizeof(hi.uri)) >= sizeof(hi.uri))
+			continue;
+
+		history_push(&hi);
+	}
+
+	fclose(hist);
+	free(line);
+
+	history_sort();
+}
+
+/*
+ * Check if the last time telescope crashed.  The check is done by
+ * looking at `crashed_file': if it exists then last time we crashed.
+ * Then, while here, touch the file too, it's removed during the
+ * teardown.
+ */
+static int
+last_time_crashed(void)
+{
+	int fd, crashed = 1;
+
+	if (safe_mode)
+		return 0;
+
+	if (unlink(crashed_file) == -1 && errno == ENOENT)
+		crashed = 0;
+
+	if ((fd = open(crashed_file, O_CREAT|O_WRONLY, 0600)) == -1)
+		return crashed;
+	close(fd);
+
+	return crashed;
+}
+
+/*
+ * Parse and restore a tab from the session file.  The format is:
+ *
+ *	URL [flags,...] [title]\n
+ */
+static inline struct tab *
+parse_tab_line(char *line, struct tab **ct)
+{
+	struct tab *tab;
+	char *s, *t, *ap;
+	const char *uri, *title = "";
+	int current = 0, killed = 0;
+	size_t tline = 0, cline = 0;
+
+	uri = line;
+	if ((s = strchr(line, ' ')) == NULL)
+		return NULL;
+	*s++ = '\0';
+
+	if ((t = strchr(s, ' ')) != NULL) {
+		*t++ = '\0';
+		title = t;
+	}
+
+	while ((ap = strsep(&s, ",")) != NULL) {
+		if (!strcmp(ap, "current"))
+			current = 1;
+		else if (!strcmp(ap, "killed"))
+			killed = 1;
+		else if (!strncmp(ap, "top=", 4))
+			tline = strtonum(ap+4, 0, UINT32_MAX, NULL);
+		else if (!strncmp(ap, "cur=", 4))
+			cline = strtonum(ap + 4, 0, UINT32_MAX, NULL);
+	}
+
+	if (tline > cline) {
+		tline = 0;
+		cline = 0;
+	}
+
+	if ((tab = new_tab(uri, NULL, NULL)) == NULL)
+		err(1, "new_tab");
+	tab->hist_cur->line_off = tline;
+	tab->hist_cur->current_off = cline;
+	strlcpy(tab->buffer.page.title, title, sizeof(tab->buffer.page.title));
+
+	if (current)
+		*ct = tab;
+	else if (killed)
+		kill_tab(tab, 1);
+
+	return tab;
+}
+
+static void
+load_tabs(void)
+{
+	struct tab	*tab = NULL, *ct = NULL;
+	struct hist	*h;
+	FILE		*session;
+	size_t		 lineno = 0, linesize = 0;
+	ssize_t		 linelen;
+	char		*uri, *line = NULL;
+
+	if ((session = fopen(session_file, "r")) == NULL) {
+		new_tab("about:new", NULL, NULL);
+		new_tab("about:help", NULL, NULL);
+		return;
+	}
+
+	while ((linelen = getline(&line, &linesize, session)) != -1) {
+		lineno++;
+
+		if (linelen > 0 && line[linelen-1] == '\n')
+			line[linelen-1] = '\0';
+
+		if (*line == '<' || *line == '>') {
+			uri = line + 1;
+			if (*uri != ' ' || tab == NULL) {
+				fprintf(stderr, "%s:%zu invalid line\n",
+				    session_file, lineno);
+				continue;
+			}
+			uri++;
+
+			if ((h = calloc(1, sizeof(*h))) == NULL)
+				err(1, "calloc");
+			strlcpy(h->h, uri, sizeof(h->h));
+
+			if (*line == '>') /* future hist */
+				hist_push(&tab->hist, h);
+			else
+				hist_add_before(&tab->hist, tab->hist_cur, h);
+		} else
+			tab = parse_tab_line(line, &ct);
+	}
+
+	fclose(session);
+	free(line);
+
+	if (ct == NULL || TAILQ_EMPTY(&tabshead))
+		ct = new_tab("about:new", NULL, NULL);
+
+	switch_to_tab(ct);
+
+	if (last_time_crashed())
+		new_tab("about:crash", NULL, NULL);
+}
+
+int
+load_session(struct ohash *certs)
+{
+	load_certs(certs);
+	load_hist();
+	load_tabs();
+	return 0;
+}
+
+int
+lock_session(void)
+{
+	struct flock	lock;
+	int		fd;
+
+	if ((fd = open(lockfile_path, O_WRONLY|O_CREAT, 0600)) == -1)
+		return -1;
+
+	lock.l_start = 0;
+	lock.l_len = 0;
+	lock.l_type = F_WRLCK;
+	lock.l_whence = SEEK_SET;
+
+	if (fcntl(fd, F_SETLK, &lock) == -1) {
+		close(fd);
+		return -1;
+	}
+
+	return fd;
 }

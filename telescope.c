@@ -1175,7 +1175,7 @@ main(int argc, char * const *argv)
 
 	if (ui_init()) {
 		sandbox_ui_process();
-		fs_load_state(&certs);
+		load_session(&certs);
 		operating = 1;
 		switch_to_tab(current_tab);
 		ui_main_loop();
