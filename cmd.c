@@ -1026,7 +1026,7 @@ cmd_reply_last_input(struct buffer *buffer)
 		return;
 	}
 
-	if (has_prefix(current_tab->last_input_url, "gopher")) {
+	if (!strncmp(current_tab->last_input_url, "gopher", 6)) {
 		load_url_in_tab(current_tab, current_tab->last_input_url,
 		    NULL, LU_MODE_NOCACHE);
 		return;

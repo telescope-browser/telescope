@@ -19,7 +19,6 @@
 
 int		 mark_nonblock(int);
 
-int		 has_prefix(const char*, const char*);
 int		 has_suffix(const char *, const char *);
 int		 unicode_isspace(uint32_t);
 int		 unicode_isgraph(uint32_t);

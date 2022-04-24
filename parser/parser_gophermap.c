@@ -96,7 +96,7 @@ emit_line(struct parser *p, enum line_type type, struct gm_selector *s)
 
 	switch (l->type = type) {
 	case LINE_LINK:
-		if (s->type == 'h' && has_prefix(s->selector, "URL:")) {
+		if (s->type == 'h' && !strncmp(s->selector, "URL:", 4)) {
 			strlcpy(buf, s->selector+4, sizeof(buf));
 		} else {
 			strlcpy(buf, "gopher://", sizeof(buf));
@@ -231,7 +231,7 @@ serialize_link(struct line *line, const char *text, FILE *fp)
 	if ((uri = line->alt) == NULL)
 		return -1;
 
-	if (!has_prefix(uri, "gopher://"))
+	if (strncmp(uri, "gopher://", 9) != 0)
 		return fprintf(fp, "h%s\tURL:%s\terror.host\t1\n",
 		    text, line->alt);
 

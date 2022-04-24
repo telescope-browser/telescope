@@ -524,8 +524,8 @@ handle_imsg_eof(struct imsg *imsg, size_t datalen)
 	if (tab != NULL) {
 		if (!parser_free(tab))
 			die();
-		if (has_prefix(tab->hist_cur->h, "gemini://") ||
-		    has_prefix(tab->hist_cur->h, "gopher://"))
+		if (!strncmp(tab->hist_cur->h, "gemini://", 9) ||
+		    !strncmp(tab->hist_cur->h, "gopher://", 9))
 			mcache_tab(tab);
 		ui_on_tab_refresh(tab);
 		ui_on_tab_loaded(tab);
@@ -930,7 +930,7 @@ humanify_url(const char *raw, char *ret, size_t len)
 		return;
 	}
 
-	if (has_prefix(raw, "./")) {
+	if (!strncmp(raw, "./", 2)) {
 		strlcpy(ret, "file://", len);
 		getcwd(buf, sizeof(buf));
 		strlcat(ret, buf, len);

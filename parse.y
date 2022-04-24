@@ -362,11 +362,11 @@ colorname(const char *name)
 	const char *errstr;
 	int n;
 
-	if (has_prefix(name, "colo")) {
+	if (!strncmp(name, "colo", 4)) {
 		/* people are strange */
-		if (has_prefix(name, "color"))
+		if (!strncmp(name, "color", 5))
 			name += 5;
-		else if (has_prefix(name, "colour"))
+		else if (!strncmp(name, "colour", 6))
 			name += 6;
 		else
 			goto err;

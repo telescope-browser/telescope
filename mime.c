@@ -46,7 +46,7 @@ check_for_utf8(char *b)
 			b++;
 		if (*b == '\0')
 			break;
-		if (!has_prefix(b, "charset=")) {
+		if (strncmp(b, "charset=", 8) != 0) {
 			while (*b != '\0' && *b != ';')
 				b++;
 			if (*b == '\0')
@@ -58,8 +58,8 @@ check_for_utf8(char *b)
 		/* is charset= */
 		b += strlen("charset=");
 		/* TODO: improve the matching */
-		return has_prefix(b, "ASCII") || has_prefix(b, "ascii") ||
-			has_prefix(b, "UTF-8") || has_prefix(b, "utf-8");
+		return !strncmp(b, "ASCII", 5) || !strncmp(b, "ascii", 5) ||
+			!strncmp(b, "UTF-8", 5) || !strncmp(b, "utf-8", 5);
 	}
 
 	return 1;

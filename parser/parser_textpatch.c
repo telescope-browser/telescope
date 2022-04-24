@@ -96,7 +96,7 @@ tpatch_emit_line(struct parser *p, const char *line, size_t linelen)
 				break;
 			}
 
-		if (has_prefix(l->line, "+++"))
+		if (!strncmp(l->line, "+++", 3))
 			p->flags &= ~PARSER_IN_PATCH_HDR;
 	}
 

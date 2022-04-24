@@ -519,7 +519,7 @@ config_setprfx(const char *name, const char *prfx, const char *cont)
 	struct lineprefix *p;
 	struct mapping *m;
 
-	if (!has_prefix(name, "line."))
+	if (strncmp(name, "line.", 5) != 0)
 		return 0;
 	name += 5;
 
@@ -582,7 +582,7 @@ config_setvars(const char *var, char *val)
 	if (!strcmp(var, "download-path")) {
 		const char *prfx = "", *v = val, *sufx = "";
 
-		if (has_prefix(val, "~/") &&
+		if (!strncmp(val, "~/", 2) &&
 		    v++ &&
 		    (prfx = getenv("HOME")) == NULL)
 			return 0;
@@ -617,7 +617,7 @@ config_setcolor(int bg, const char *name, int prfx, int line, int trail)
 			tab_face.bg_bg = prfx;
 		else
 			tab_face.bg_fg = prfx;
-	} else if (has_prefix(name, "tabline.")) {
+	} else if (!strncmp(name, "tabline.", 8)) {
 		name += 8;
 
 		if (!strcmp(name, "tab")) {
@@ -632,7 +632,7 @@ config_setcolor(int bg, const char *name, int prfx, int line, int trail)
 				tab_face.c_fg = prfx;
 		} else
 			return 0;
-	} else if (has_prefix(name, "line.")) {
+	} else if (!strncmp(name, "line.", 5)) {
 		name += 5;
 
 		if ((m = mapping_by_name(name)) == NULL)
@@ -689,7 +689,7 @@ config_setattr(const char *name, int prfx, int line, int trail)
 
 	if (!strcmp(name, "tabline")) {
 		tab_face.bg_attr = prfx;
-	} else if (has_prefix(name, "tabline.")) {
+	} else if (!strncmp(name, "tabline.", 8)) {
 		name += 8;
 
 		if (!strcmp(name, "tab"))
@@ -698,7 +698,7 @@ config_setattr(const char *name, int prfx, int line, int trail)
 			tab_face.c_attr = prfx;
 		else
 			return 0;
-	} else if (has_prefix(name, "line.")) {
+	} else if (!strncmp(name, "line.", 5)) {
 		name += 5;
 
 		if ((m = mapping_by_name(name)) == NULL)

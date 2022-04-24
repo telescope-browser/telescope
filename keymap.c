@@ -123,7 +123,7 @@ kbd(const char *key)
 	struct keytable *t;
 
 	for (t = keytable; t->p != NULL; ++t) {
-		if (has_prefix(key, t->p))
+		if (!strncmp(key, t->p, strlen(t->p)))
 			return t->k;
 	}
 
@@ -150,9 +150,9 @@ kmap_define_key(struct kmap *map, const char *key, void (*fn)(struct buffer*))
 	struct keymap	*entry;
 
 again:
-	if ((ctrl = has_prefix(key, "C-")))
+	if ((ctrl = !strncmp(key, "C-", 2)))
 		key += 2;
-	if ((meta = has_prefix(key, "M-")))
+	if ((meta = !strncmp(key, "M-", 2)))
 		key += 2;
 	if (*key == '\0')
                 return 0;
