@@ -37,6 +37,25 @@ parser_parse(struct tab *tab, const char *chunk, size_t len)
 }
 
 int
+parser_parsef(struct tab *tab, const char *fmt, ...)
+{
+	char *s;
+	va_list ap;
+	int r;
+
+	va_start(ap, fmt);
+	r = vasprintf(&s, fmt, ap);
+	va_end(ap);
+
+	if (r == -1)
+		return 0;
+
+	r = parser_parse(tab, s, strlen(s));
+	free(s);
+	return r;
+}
+
+int
 parser_free(struct tab *tab)
 {
 	int	 r;
