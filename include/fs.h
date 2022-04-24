@@ -36,7 +36,6 @@ extern char	history_file[PATH_MAX], history_file_tmp[PATH_MAX];
 int		 fs_init(void);
 int		 lock_session(void);
 void		 fs_load_url(struct tab *, const char *);
-int		 save_cert(const struct tofu_entry *e);
 int		 update_cert(const struct tofu_entry *e);
 int		 fs_load_state(struct ohash *);
 

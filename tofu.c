@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Omar Polo <op@omarpolo.com>
+ * Copyright (c) 2021, 2022 Omar Polo <op@omarpolo.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,9 +16,11 @@
 
 #include "compat.h"
 
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "fs.h"
 #include "telescope.h"
 #include "utils.h"
 
@@ -58,6 +60,20 @@ tofu_add(struct ohash *h, struct tofu_entry *e)
 
 	slot = ohash_qlookup(h, e->domain);
 	ohash_insert(h, slot, e);
+}
+
+int
+tofu_save(struct ohash *h, struct tofu_entry *e)
+{
+	FILE *fp;
+
+	tofu_add(h, e);
+
+	if ((fp = fopen(known_hosts_file, "a")) == NULL)
+		return -1;
+	fprintf(fp, "%s %s %d\n", e->domain, e->hash, e->verified);
+	fclose(fp);
+	return 0;
 }
 
 void

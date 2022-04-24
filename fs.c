@@ -259,18 +259,6 @@ done:
 }
 
 int
-save_cert(const struct tofu_entry *e)
-{
-	FILE *f;
-
-	if ((f = fopen(known_hosts_file, "a")) == NULL)
-		return -1;
-	fprintf(f, "%s %s %d\n", e->domain, e->hash, e->verified);
-	fclose(f);
-	return 0;
-}
-
-int
 update_cert(const struct tofu_entry *e)
 {
 	FILE	*tmp, *f;

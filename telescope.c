@@ -235,8 +235,7 @@ handle_imsg_check_cert(struct imsg *imsg, size_t datalen)
 			strlcat(e->domain, port, sizeof(e->domain));
 		}
 		strlcpy(e->hash, hash, sizeof(e->hash));
-		tofu_add(&certs, e);
-		save_cert(e);
+		tofu_save(&certs, e);
 	} else
 		tofu_res = !strcmp(hash, e->hash);
 
