@@ -508,14 +508,14 @@ enter_minibuffer(void (*self_insert_fn)(void), void (*donefn)(void),
     void (*abortfn)(void), struct histhead *hist,
     complfn *complfn, void *compldata, int must_select)
 {
+	ministate.compl.must_select = must_select;
+	ministate.compl.fn = complfn;
+	ministate.compl.data = compldata;
+
 	in_minibuffer = complfn == NULL ? MB_READ : MB_COMPREAD;
 	if (in_minibuffer == MB_COMPREAD) {
-		ui_schedule_redraw();
-
-		ministate.compl.fn = complfn;
-		ministate.compl.data = compldata;
-		ministate.compl.must_select = must_select;
 		populate_compl_buffer(complfn, compldata);
+		ui_schedule_redraw();
 	}
 
 	base_map = &minibuffer_map;
