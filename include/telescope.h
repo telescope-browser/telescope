@@ -305,12 +305,11 @@ struct download {
 	int			 fd;
 	size_t			 bytes;
 	char			*path;
-	int			 buffer;
 	STAILQ_ENTRY(download)	 entries;
 };
 
 void		 recompute_downloads(void);
-struct download	*enqueue_download(uint32_t, const char *, int);
+struct download	*enqueue_download(uint32_t, const char *);
 void		 dequeue_first_download(void);
 struct download	*download_by_id(uint32_t);
 

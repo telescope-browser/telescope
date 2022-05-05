@@ -80,7 +80,7 @@ end:
 }
 
 struct download *
-enqueue_download(uint32_t id, const char *path, int buffer)
+enqueue_download(uint32_t id, const char *path)
 {
 	struct download *d;
 
@@ -90,7 +90,6 @@ enqueue_download(uint32_t id, const char *path, int buffer)
 	d->id = id;
 	d->fd = -1;
 	d->path = strdup(path);
-	d->buffer = buffer;
 
 	STAILQ_INSERT_HEAD(&downloads, d, entries);
 

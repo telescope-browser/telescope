@@ -473,7 +473,7 @@ handle_save_page_path(const char *path, struct tab *tab)
 	}
 
 	ui_show_downloads_pane();
-	d = enqueue_download(tab->id, path, 0);
+	d = enqueue_download(tab->id, path);
 	d->fd = fd;
 	ui_send_net(IMSG_PROCEED, d->id, NULL, 0);
 }
