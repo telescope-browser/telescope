@@ -310,7 +310,6 @@ struct download {
 
 void		 recompute_downloads(void);
 struct download	*enqueue_download(uint32_t, const char *);
-void		 dequeue_first_download(void);
 struct download	*download_by_id(uint32_t);
 
 /* help.c */

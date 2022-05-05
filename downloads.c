@@ -96,12 +96,6 @@ enqueue_download(uint32_t id, const char *path)
 	return d;
 }
 
-void
-dequeue_first_download(void)
-{
-	STAILQ_REMOVE_HEAD(&downloads, entries);
-}
-
 struct download *
 download_by_id(uint32_t id)
 {
