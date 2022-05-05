@@ -460,34 +460,22 @@ handle_save_page_path(const char *path, struct tab *tab)
 		return;
 	}
 
-	ui_show_downloads_pane();
-
-	d = enqueue_download(tab->id, path, 0);
-
 	/*
 	 * Change this tab id, the old one is associated with the
 	 * download now.
 	 */
 	tab->id = tab_new_id();
 
-	if ((fd = open(path, O_WRONLY|O_TRUNC|O_CREAT, 0644)) == -1)
-		message("Can't open file %s: %s", d->path, strerror(errno));
-	else if (d->buffer) {
-		FILE *fp;
-		int r;
-
-		if ((fp = fdopen(fd, "w")) != NULL) {
-			r = parser_serialize(current_tab, fp);
-			if (!r)
-				message("Failed to save the page.");
-			fclose(fp);
-		}
-
-		dequeue_first_download();
-	} else {
-		d->fd = fd;
-		ui_send_net(IMSG_PROCEED, d->id, NULL, 0);
+	if ((fd = open(path, O_WRONLY|O_TRUNC|O_CREAT, 0644)) == -1) {
+		message("Can't open file %s: %s", path, strerror(errno));
+		stop_tab(tab);
+		return;
 	}
+
+	ui_show_downloads_pane();
+	d = enqueue_download(tab->id, path, 0);
+	d->fd = fd;
+	ui_send_net(IMSG_PROCEED, d->id, NULL, 0);
 }
 
 static void
