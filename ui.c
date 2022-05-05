@@ -58,6 +58,7 @@ static int		 readkey(void);
 static void		 dispatch_stdio(int, short, void*);
 static void		 handle_resize(int, short, void*);
 static void		 handle_resize_nodelay(int, short, void*);
+static void		 handle_download_refresh(int, short, void *);
 static void		 rearrange_windows(void);
 static void		 line_prefix_and_text(struct vline *, char *, size_t, const char **, const char **);
 static void		 print_vline(int, int, WINDOW*, struct vline*);
@@ -86,6 +87,9 @@ struct tab	*current_tab;
 
 static struct event	resizeev;
 static struct timeval	resize_timer = { 0, 250000 };
+
+static struct event	download_refreshev;
+static struct timeval	download_refresh_timer = { 0, 250000 };
 
 static WINDOW	*tabline, *body, *modeline, *echoarea, *minibuffer;
 
@@ -352,6 +356,15 @@ handle_resize_nodelay(int s, short ev, void *d)
 	clear();
 
 	rearrange_windows();
+}
+
+static void
+handle_download_refresh(int s, short v, void *d)
+{
+	if (side_window & SIDE_WINDOW_BOTTOM) {
+		recompute_downloads();
+		redraw_tab(current_tab);
+	}
 }
 
 static inline int
@@ -1191,6 +1204,7 @@ void
 ui_main_loop(void)
 {
 	evtimer_set(&resizeev, handle_resize, NULL);
+	evtimer_set(&download_refreshev, handle_download_refresh, NULL);
 
 	event_set(&stdioev, 0, EV_READ | EV_PERSIST, dispatch_stdio, NULL);
 	event_add(&stdioev, NULL);
@@ -1238,10 +1252,11 @@ ui_on_tab_refresh(struct tab *tab)
 void
 ui_on_download_refresh(void)
 {
-	if (side_window & SIDE_WINDOW_BOTTOM) {
-		recompute_downloads();
-		redraw_tab(current_tab);
-	}
+	if (event_pending(&download_refreshev, EV_TIMEOUT, NULL))
+		return;
+
+	evtimer_set(&download_refreshev, handle_download_refresh, NULL);
+	evtimer_add(&download_refreshev, &download_refresh_timer);
 }
 
 void
