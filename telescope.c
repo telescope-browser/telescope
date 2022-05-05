@@ -460,12 +460,6 @@ handle_save_page_path(const char *path, struct tab *tab)
 		return;
 	}
 
-	/*
-	 * Change this tab id, the old one is associated with the
-	 * download now.
-	 */
-	tab->id = tab_new_id();
-
 	if ((fd = open(path, O_WRONLY|O_TRUNC|O_CREAT, 0644)) == -1) {
 		message("Can't open file %s: %s", path, strerror(errno));
 		stop_tab(tab);
@@ -476,6 +470,12 @@ handle_save_page_path(const char *path, struct tab *tab)
 	d = enqueue_download(tab->id, path);
 	d->fd = fd;
 	ui_send_net(IMSG_PROCEED, d->id, NULL, 0);
+
+	/*
+	 * Change this tab id, the old one is associated with the
+	 * download now.
+	 */
+	tab->id = tab_new_id();
 }
 
 static void
