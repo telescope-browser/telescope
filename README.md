@@ -81,12 +81,12 @@ from a git checkout, yacc (or bison) is also needed.
 
 To build from a release tarball just execute:
 
-	./configure
-	make
-	sudo make install
+	$ ./configure
+	$ make
+	$ sudo make install
 
 The configure script has optional support for building with libraries
-provided by your distribution instead of internal compatibility funcs:
+provided by your distribution instead of using the bundled versions:
 
  - `--with-libbsd`: link with [libbsd](https://libbsd.freedesktop.org)
  - `--with-libimsg`: link with the
@@ -95,10 +95,10 @@ provided by your distribution instead of internal compatibility funcs:
 If you want to build from the git checkout, something that's
 discouraged for users that don't intend to hack on telescope
 
-	./autogen.sh
-	./configure
-	make
-	sudo make install	# eventually
+	$ ./autogen.sh
+	$ ./configure
+	$ make
+	$ sudo make install	# eventually
 
 Please keep in mind that the main branch, from time to time, may be
 accidentally broken on some platforms.  Telescope is developed
