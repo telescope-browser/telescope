@@ -48,6 +48,7 @@ struct history {
 	struct history_item	items[HISTORY_CAP];
 	size_t			len;
 	size_t			dirty;
+	size_t			extra;
 };
 extern struct history history;
 

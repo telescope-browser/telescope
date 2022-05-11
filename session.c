@@ -191,21 +191,17 @@ savetab(FILE *fp, struct tab *tab, int killed)
 	}
 }
 
-void
-save_session(void)
+static void
+save_tabs(void)
 {
-	FILE		*tmp, *hist;
+	FILE		*fp;
 	struct tab	*tab;
-	size_t		 i;
-	int		 fd, err=  0;
+	int		 fd, err;
 	char		 sfn[PATH_MAX];
-
-	if (safe_mode)
-		return;
 
 	strlcpy(sfn, session_file_tmp, sizeof(sfn));
 	if ((fd = mkstemp(sfn)) == -1 ||
-	    (tmp = fdopen(fd, "w")) == NULL) {
+	    (fp = fdopen(fd, "w")) == NULL) {
 		if (fd != -1) {
 			unlink(sfn);
 			close(fd);
@@ -214,40 +210,87 @@ save_session(void)
 	}
 
 	TAILQ_FOREACH(tab, &tabshead, tabs)
-		savetab(tmp, tab, 0);
+		savetab(fp, tab, 0);
 	TAILQ_FOREACH(tab, &ktabshead, tabs)
-		savetab(tmp, tab, 1);
+		savetab(fp, tab, 1);
 
-	err = ferror(tmp);
-	fclose(tmp);
+	err = fflush(fp) == EOF;
+	fclose(fp);
 
-	if (err) {
+	if (err || rename(sfn, session_file) == -1)
+		unlink(sfn);
+}
+
+static void
+save_all_history(void)
+{
+	FILE	*fp;
+	size_t	 i;
+	int	 fd, err;
+	char	 sfn[PATH_MAX];
+
+	strlcpy(sfn, history_file_tmp, sizeof(sfn));
+	if ((fd = mkstemp(sfn)) == -1 ||
+	    (fp = fdopen(fd, "w")) == NULL) {
+		if (fd != -1) {
+			unlink(sfn);
+			close(fd);
+		}
+		return;
+	}
+
+	for (i = 0; i < history.len; ++i) {
+		history.items[i].dirty = 0;
+		fprintf(fp, "%lld %s\n", (long long)history.items[i].ts,
+		    history.items[i].uri);
+	}
+
+	err = fflush(fp) == EOF;
+	fclose(fp);
+
+	if (err || rename(sfn, history_file) == -1) {
 		unlink(sfn);
 		return;
 	}
 
-	if (rename(sfn, session_file))
+	history.dirty = 0;
+	history.extra = 0;
+}
+
+static void
+save_dirty_history(void)
+{
+	FILE	*fp;
+	size_t	 i;
+
+	if ((fp = fopen(history_file, "a")) == NULL)
 		return;
 
-	if ((hist = fopen(history_file, "a")) == NULL)
-		return;
-
-	if (history.dirty) {
-		for (i = 0; i < history.len && history.dirty > 0; ++i) {
-			if (!history.items[i].dirty)
-				continue;
-			history.dirty--;
-			history.items[i].dirty = 0;
-
-			fprintf(hist, "%lld %s\n",
-			    (long long)history.items[i].ts,
-			    history.items[i].uri);
-		}
-		history.dirty = 0;
+	for (i = 0; i < history.len && history.dirty > 0; ++i) {
+		if (!history.items[i].dirty)
+			continue;
+		history.dirty--;
+		history.items[i].dirty = 0;
+		fprintf(fp, "%lld %s\n", (long long)history.items[i].ts,
+		    history.items[i].uri);
 	}
+	history.dirty = 0;
 
-	err = ferror(hist);
-	fclose(hist);
+	fclose(fp);
+}
+
+void
+save_session(void)
+{
+	if (safe_mode)
+		return;
+
+	save_tabs();
+
+	if (history.extra > HISTORY_CAP/2)
+		save_all_history();
+	else if (history.dirty)
+		save_dirty_history();
 }
 
 void
@@ -273,6 +316,9 @@ history_push(struct histitem *hi)
 		history.items[oldest].ts = hi->ts;
 		free(history.items[oldest].uri);
 		history.items[oldest].uri = uri;
+
+		/* Growed past the max value, signal to regen the file. */
+		history.extra++;
 		return;
 	}
 
