@@ -1164,6 +1164,8 @@ main(int argc, char * const *argv)
 	if (ui_init()) {
 		sandbox_ui_process();
 		load_session(&certs);
+		if (has_url)
+			new_tab(url, NULL, NULL);
 		operating = 1;
 		switch_to_tab(current_tab);
 		ui_main_loop();
