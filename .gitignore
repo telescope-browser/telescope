@@ -1,6 +1,5 @@
 TAGS
-pages/about_crash.gmi
-pages/about_new.gmi
+pages/*.gmi
 
 **/etc
 **/.deps
