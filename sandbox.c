@@ -64,7 +64,6 @@ sandbox_ui_process(void)
 #elif HAVE_LINUX_LANDLOCK_H
 
 #include <linux/landlock.h>
-#include <linux/prctl.h>
 
 #include <sys/prctl.h>
 #include <sys/stat.h>
