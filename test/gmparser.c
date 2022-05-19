@@ -32,11 +32,12 @@ erase_buffer(struct buffer *buffer)
 int
 main(void)
 {
+	FILE		*fp;
 	struct tab	 tab;
 	struct hist	 hist;
-	struct evbuffer	*evb;
 	ssize_t		 r;
-	char		 buf[BUFSIZ];
+	size_t		 blen;
+	char		 buf[BUFSIZ], *b;
 
 	memset(&tab, 0, sizeof(tab));
 	memset(&hist, 0, sizeof(hist));
@@ -55,15 +56,14 @@ main(void)
 	if (!parser_free(&tab))
 		err(1, "parser_free");
 
-	if ((evb = evbuffer_new()) == NULL)
-		err(1, "evbuffer_new");
+	if ((fp = open_memstream(&b, &blen)) == NULL)
+		err(1, "open_memstream");
 
-	if (parser_serialize(&tab, evb) == -1)
+	if (parser_serialize(&tab, fp) == -1)
 		err(1, "parser_serialize");
 
-	evbuffer_write(evb, 1);
-
-	evbuffer_free(evb);
+	fclose(fp);
+	write(1, b, blen);
 
 	return 0;
 }
