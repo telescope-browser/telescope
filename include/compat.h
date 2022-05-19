@@ -57,6 +57,7 @@
 #else
 # include "compat/ohash.h"
 # define FMT_SCALED_STRSIZE      7       /* minus sign, 4 digits, suffix, null byte */
+int		 scan_scaled(char *, long long *);
 int		 fmt_scaled(long long, char *);
 #endif
 
