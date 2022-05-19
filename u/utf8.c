@@ -228,7 +228,7 @@ utf8_prev_cp(const char *start, const char *base)
 /*
  * XXX: This is not correct.  There are codepoints classified as
  * "emoji", but these can be joined toghether to form more complex
- * emoji.  There is an ufficial list of what these valid combinations
+ * emoji.  There is an official list of what these valid combinations
  * are, but it would require a costly lookup (a trie can be used to
  * reduce the times, but...).  The following approach is conceptually
  * simpler: if there is a sequence of "emoji codepoints" (or ZWS) and
