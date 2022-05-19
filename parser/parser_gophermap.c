@@ -245,7 +245,7 @@ serialize_link(struct line *line, const char *text, FILE *fp)
 
 	if ((endhost = colon) == NULL &&
 	    (endhost = path) == NULL)
-		endhost = strchr(path, '\0');
+		endhost = strchr(uri, '\0');
 
 	if (colon != NULL) {
 		for (port = colon+1; *port && *port != '/'; ++port)
