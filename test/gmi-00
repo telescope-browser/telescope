@@ -1,0 +1,17 @@
+* an item
+*not an item
+
+# a title
+
+some text
+
+``` verbatim with alt
+\o/
+```
+
+``` 
+verbatim without alt description
+(the extra space after the marker is there on purpose)
+```
+
+> a quote

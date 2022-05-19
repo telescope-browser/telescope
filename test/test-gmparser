@@ -7,3 +7,9 @@ for f in "$srcdir"/gm-*; do
 	./gmparser < "$f" > "$name"
 	diff -u "$f" "$name"
 done
+
+for f in "$srcdir"/gmi-*; do
+	name=serialized."$(basename "$f")"
+	./gmiparser < "$f" > "$name"
+	diff -u "$f" "$name"
+done
