@@ -297,6 +297,7 @@ DEFAULT KEY BINDINGS
 	   M-<		 beginning-of-buffer
 	   M->		 end-of-buffer
 	   C-x C-c	 kill-telescope
+	   C-x C-w	 write-buffer
 	   C-g		 clear-minibuf
 	   M-x		 execute-extended-command
 	   C-c {	 dec-fill-column
@@ -399,6 +400,7 @@ DEFAULT KEY BINDINGS
 	   <end>	 move-end-of-line
 	   <home>	 move-beginning-of-line
 	   C-k		 mini-kill-line
+	   C-u		 mini-kill-whole-line
 	   M-p		 mini-previous-history-element
 	   M-n		 mini-next-history-element
 	   C-p		 previous-completion
@@ -488,6 +490,7 @@ INTERACTIVE COMMANDS
      toggle-help	       Toggle side window with help about available
 			       keys and their associated interactive command.
      toggle-pre-wrap	       Toggle the wrapping of preformatted blocks.
+     write-buffer	       Save the current buffer to the disk.
 
    Minibuffer commands
      mini-abort		       Abort the current minibuffer action.
@@ -498,6 +501,7 @@ INTERACTIVE COMMANDS
      mini-goto-beginning       Select the first completion, if any.
      mini-goto-end	       Select the last completion, if any.
      mini-kill-line	       Delete from point until the end of the line.
+     mini-kill-whole-line      Delete the whole line.
      mini-next-history-element
 			       Load the previous history element.
      mini-previous-history-element
@@ -510,6 +514,7 @@ INTERACTIVE COMMANDS
      tabnew	       tab-new
      tabp	       tab-previous
      q and wq	       kill-telescope
+     w		       write-buffer
 
 ENVIRONMENT
      When telescope is started, it inspects the following environment
