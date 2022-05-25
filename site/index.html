@@ -124,7 +124,7 @@
 |_     _|.-----.|  |.-----.-----.----.-----.-----.-----.
   |   |  |  -__||  ||  -__|__ --|  __|  _  |  _  |  -__|
   |___|  |_____||__||_____|_____|____|_____|   __|_____|
-                                           |__| v0.8</pre>
+                                           |__| v0.8.1</pre>
     <blockquote>
       <p>Telescope is a w3m-like browser for Gemini</p>
     </blockquote>
@@ -153,8 +153,8 @@
     <p>Source code and precompiled binaries for linux are available:</p>
     <ul>
       <li>
-        <a href="https://github.com/omar-polo/telescope/releases/download/0.8/telescope-0.8.tar.gz">
-          telescope-0.8.tar.gz
+        <a href="https://github.com/omar-polo/telescope/releases/download/0.8.1/telescope-0.8.1.tar.gz">
+          telescope-0.8.1.tar.gz
         </a>
       </li>
       <li>
@@ -177,9 +177,9 @@
       <li>yacc (or GNU bison)</li>
     </ul>
     <p>Once all the dependencies are installed, building is as easy as:</p>
-    <pre>$ curl -LO https://github.com/omar-polo/telescope/releases/download/0.8/telescope-0.8.tar.gz
-$ tar xzvf telescope-0.8.tar.gz
-$ cd telescope-0.8
+    <pre>$ curl -LO https://github.com/omar-polo/telescope/releases/download/0.8.1/telescope-0.8.1.tar.gz
+$ tar xzvf telescope-0.8.1.tar.gz
+$ cd telescope-0.8.1
 $ ./configure
 $ make
 $ sudo make install # eventually
@@ -193,36 +193,39 @@ $ sudo make install # eventually
     </p>
     <ul>
       <li>
-        <a href="https://github.com/omar-polo/telescope/releases/download/0.8/SHA256">
+        <a href="https://github.com/omar-polo/telescope/releases/download/0.8.1/SHA256">
           SHA256
         </a>
       </li>
       <li>
-        <a href="https://github.com/omar-polo/telescope/releases/download/0.8/SHA256.sig">
+        <a href="https://github.com/omar-polo/telescope/releases/download/0.8.1/SHA256.sig">
           SHA256.sig
         </a>
       </li>
       <li>
-        <a href="https://github.com/omar-polo/telescope/releases/download/0.8/telescope-0.7.pub">
-          telescope-0.7.pub
+        <a href="https://github.com/omar-polo/telescope/releases/download/0.8.1/telescope-0.8.pub">
+          telescope-0.8.pub
         </a>
       </li>
       <li>
-        <a href="https://github.com/omar-polo/telescope/releases/download/0.8/telescope-0.8.pub">
-          telescope-0.8.pub
+        <a href="https://github.com/omar-polo/telescope/releases/download/0.8.1/telescope-0.9.pub">
+          telescope-0.9.pub
         </a>
       </li>
     </ul>
     <p>How to verify the signature with signify:</p>
-    <pre>$ signify -C -p telescope-0.8.pub -x SHA256.sig
+    <pre>$ signify -C -p telescope-0.8.1.pub -x SHA256.sig
 Signature Verified
-telescope-0.8-binaries.tar.gz: OK
-telescope-0.8.tar.gz: OK
+telescope-0.8.1.tar.gz: OK
 telescope-0.8.pub: OK
 telescope-0.9.pub: OK
 telescope.amd64: OK
     </pre>
     <h2>Changelog</h2>
+    <p>0.8.1 “Le Scarpe Volanti” buildfix release — Released May 25, 2022</p>
+    <ul>
+      <li>Fix the build on macos.  Reported by sikmir, thanks!</li>
+    </ul>
     <p>0.8 “Le Scarpe Volanti” — Released May 25, 2022</p>
     <h3>New features</h3>
     <ul>

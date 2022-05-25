@@ -5,12 +5,12 @@
 
 > Telescope is a w3m-like browser for Gemini.
 
-``` Ascii art of the word “Telescope” and “v0.8”
+``` Ascii art of the word “Telescope” and “v0.8.1”
  _______         __
 |_     _|.-----.|  |.-----.-----.----.-----.-----.-----.
   |   |  |  -__||  ||  -__|__ --|  __|  _  |  _  |  -__|
   |___|  |_____||__||_____|_____|____|_____|   __|_____|
-                                           |__| v0.8
+                                           |__| v0.8.1
 ```
 
 Telescope is written entirely for fun, as a hobbystic project in my free time.  As such, it lacks a ton of features you’ll find in more mature Gemini browsers, but it also has some unique ones.
@@ -25,7 +25,7 @@ The UI is strongly inspired from Emacs and W3M, so you’ll find some familiar c
 
 Source code and precompiled binaries for linux are available:
 
-=> https://github.com/omar-polo/telescope/releases/download/0.8/telescope-0.8.tar.gz telescope-0.8.tar.gz
+=> https://github.com/omar-polo/telescope/releases/download/0.8.1/telescope-0.8.1.tar.gz telescope-0.8.1.tar.gz
 
 => https://git.omarpolo.com/telescope/		git repository
 => https://codeberg.org/op/telescope/		Codeberg mirror
@@ -42,9 +42,9 @@ The dependencies are:
 Once all the dependencies are installed, building is as easy as:
 
 ```Example of how to compile from source
-$ curl -LO https://github.com/omar-polo/telescope/releases/download/0.8/telescope-0.8.tar.gz
-$ tar xzvf telescope-0.8.tar.gz
-$ cd telescope-0.8
+$ curl -LO https://github.com/omar-polo/telescope/releases/download/0.8.1/telescope-0.8.1.tar.gz
+$ tar xzvf telescope-0.8.1.tar.gz
+$ cd telescope-0.8.1
 $ ./configure
 $ make
 $ sudo make install # eventually
@@ -52,16 +52,16 @@ $ sudo make install # eventually
 
 A SHA256 file containing the checksums is available.  However, that only checks for accidental corruption: you can use signify (SHA256.sig and the public key telescope-0.8.pub).  The hash of the current and next signify public key is also included in the SHA256.
 
-=> https://github.com/omar-polo/telescope/releases/download/0.8/SHA256		SHA256
-=> https://github.com/omar-polo/telescope/releases/download/0.8/SHA256.sig		SHA256.sig
-=> https://github.com/omar-polo/telescope/releases/download/0.8/telescope-0.7.pub	telescope-0.7.pub
-=> https://github.com/omar-polo/telescope/releases/download/0.8/telescope-0.8.pub	telescope-0.8.pub
+=> https://github.com/omar-polo/telescope/releases/download/0.8.1/SHA256		SHA256
+=> https://github.com/omar-polo/telescope/releases/download/0.8.1/SHA256.sig		SHA256.sig
+=> https://github.com/omar-polo/telescope/releases/download/0.8.1/telescope-0.8.pub	telescope-0.8.pub
+=> https://github.com/omar-polo/telescope/releases/download/0.8.1/telescope-0.9.pub	telescope-0.9.pub
 
 ```Example of how to verify the signature with signify
 $ signify -C -p telescope-0.8.pub -x SHA256.sig
 Signature Verified
 telescope-0.8-binaries.tar.gz: OK
-telescope-0.8.tar.gz: OK
+telescope-0.8.1.tar.gz: OK
 telescope-0.8.pub: OK
 telescope-0.9.pub: OK
 telescope.amd64: OK
@@ -69,6 +69,11 @@ telescope.amd64: OK
 
 
 ## Changelog
+
+0.8.1  “Le Scarpe Volanti” buildfix release — Released May 25, 2022
+
+* Fix the build on macos.  Reported by sikmir, thanks!
+
 
 0.8 “Le Scarpe Volanti” — Released May 25, 2022
 
