@@ -1,4 +1,4 @@
-AC_INIT([telescope], [0.8], [telescope@omarpolo.com], [telescope], [gemini://telescope.omarpolo.com])
+AC_INIT([telescope], [0.8.1], [telescope@omarpolo.com], [telescope], [gemini://telescope.omarpolo.com])
 AC_CONFIG_AUX_DIR(etc)
 AC_CONFIG_LIBOBJ_DIR(compat)
 AC_CANONICAL_HOST
