@@ -51,7 +51,7 @@ $ make
 $ sudo make install # eventually
 ```
 
-A SHA256 file containing the checksums is available.  However, that only checks for accidental corruption: you can use signify (SHA256.sig and the public key telescope-0.7.pub).  The hash of the signify public key is also included in the SHA256 file and signed with the current signify key.  The signify public key for the next release ‘telescope-0.9.pub’ is also included.
+A SHA256 file containing the checksums is available.  However, that only checks for accidental corruption: you can use signify (SHA256.sig and the public key telescope-0.8.pub).  The hash of the current and next signify public key is also included in the SHA256.
 
 => https://github.com/omar-polo/telescope/releases/download/0.8/SHA256		SHA256
 => https://github.com/omar-polo/telescope/releases/download/0.8/SHA256.sig		SHA256.sig
