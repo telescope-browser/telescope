@@ -31,7 +31,6 @@ Source code and precompiled binaries for linux are available:
 => https://codeberg.org/op/telescope/		Codeberg mirror
 => https://github.com/omar-polo/telescope	GitHub mirror
 
-=> https://github.com/omar-polo/telescope/releases/download/0.8/telescope.aarch64	telescope.aarch64
 => https://github.com/omar-polo/telescope/releases/download/0.8/telescope.amd64	telescope.amd64
 
 The dependencies are:
@@ -65,7 +64,6 @@ telescope-0.8-binaries.tar.gz: OK
 telescope-0.8.tar.gz: OK
 telescope-0.8.pub: OK
 telescope-0.9.pub: OK
-telescope.aarch64: OK
 telescope.amd64: OK
 ```
 
