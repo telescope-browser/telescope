@@ -28,7 +28,7 @@ Source code and precompiled binaries for linux are available:
 => https://github.com/omar-polo/telescope/releases/download/0.8/telescope-0.8.tar.gz telescope-0.8.tar.gz
 
 => https://git.omarpolo.com/telescope/		git repository
-=> gemini://git.omarpolo.com/telescope.git/	git repository via Gemini
+=> https://codeberg.org/op/telescope/		Codeberg mirror
 => https://github.com/omar-polo/telescope	GitHub mirror
 
 => https://github.com/omar-polo/telescope/releases/download/0.8/telescope.aarch64	telescope.aarch64
