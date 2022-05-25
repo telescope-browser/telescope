@@ -1,3 +1,10 @@
+2022-05-25  Omar Polo  <op@omarpolo.com>
+
+	* configure.ac: tag 0.8 "Le Scarpe Volanti"
+
+	* configure.ac: disable landlock check.  it's currently unused
+	after the fs/ui merge, but it may come back in the future.
+
 2022-05-05  Omar Polo  <op@omarpolo.com>
 
 	* ui.c (ui_on_download_refresh): rate-limit the update of the
