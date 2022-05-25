@@ -61,9 +61,13 @@ control_init(char *path)
 	int			 fd;
 	mode_t			 old_umask;
 
-	if ((fd = socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK,
-	    0)) == -1) {
+	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
 		warn("%s: socket", __func__);
+		return (-1);
+	}
+
+	if (!mark_nonblock_cloexec(fd)) {
+		close(fd);
 		return (-1);
 	}
 
@@ -127,8 +131,7 @@ control_accept(int listenfd, short event, void *bula)
 		return;
 
 	len = sizeof(sun);
-	if ((connfd = accept4(listenfd, (struct sockaddr *)&sun, &len,
-	    SOCK_CLOEXEC | SOCK_NONBLOCK)) == -1) {
+	if ((connfd = accept(listenfd, (struct sockaddr *)&sun, &len)) == -1) {
 		/*
 		 * Pause accept if we are out of file descriptors, or
 		 * libevent will haunt us here too.
@@ -141,6 +144,13 @@ control_accept(int listenfd, short event, void *bula)
 		} else if (errno != EWOULDBLOCK && errno != EINTR &&
 		    errno != ECONNABORTED)
 			message("%s: accept4: %s", __func__, strerror(errno));
+		return;
+	}
+
+	if (!mark_nonblock_cloexec(connfd)) {
+		message("%s: mark_nonblock_cloexec: %s", __func__,
+		    strerror(errno));
+		close(connfd);
 		return;
 	}
 

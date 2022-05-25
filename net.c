@@ -173,7 +173,7 @@ again:
 		req->p = req->p->ai_next;
 		goto again;
 	} else {
-		mark_nonblock(req->fd);
+		mark_nonblock_cloexec(req->fd);
 		if (connect(req->fd, req->p->ai_addr, req->p->ai_addrlen) == 0)
 			goto done;
 		yield_w(req, try_to_connect, NULL);

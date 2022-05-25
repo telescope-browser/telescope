@@ -27,13 +27,15 @@
 #include "utils.h"
 
 int
-mark_nonblock(int fd)
+mark_nonblock_cloexec(int fd)
 {
 	int flags;
 
 	if ((flags = fcntl(fd, F_GETFL)) == -1)
 		return 0;
 	if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1)
+		return 0;
+	if (fcntl(fd, F_SETFD, FD_CLOEXEC) == -1)
 		return 0;
 	return 1;
 }

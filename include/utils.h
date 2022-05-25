@@ -17,7 +17,7 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-int		 mark_nonblock(int);
+int		 mark_nonblock_cloexec(int);
 
 int		 has_suffix(const char *, const char *);
 int		 unicode_isspace(uint32_t);
