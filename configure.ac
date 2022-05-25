@@ -119,7 +119,8 @@ AC_CHECK_LIB(util, ohash_init, [], [
 
 AC_CHECK_FUNCS([asr_run])
 
-AC_CHECK_HEADERS([linux/landlock.h])
+# don't check for landlock: it currently unusable.
+dnl AC_CHECK_HEADERS([linux/landlock.h])
 
 # check compiler flags
 AC_DEFUN([CC_ADD_CHECK_FLAGS], [
