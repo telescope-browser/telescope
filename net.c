@@ -172,13 +172,13 @@ again:
 	if (req->fd == -1) {
 		req->p = req->p->ai_next;
 		goto again;
-	} else {
-		if (!mark_nonblock_cloexec(req->fd))
-			goto err;
-		if (connect(req->fd, req->p->ai_addr, req->p->ai_addrlen) == 0)
-			goto done;
-		yield_w(req, try_to_connect, NULL);
 	}
+
+	if (!mark_nonblock_cloexec(req->fd))
+		goto err;
+	if (connect(req->fd, req->p->ai_addr, req->p->ai_addrlen) == 0)
+		goto done;
+	yield_w(req, try_to_connect, NULL);
 	return;
 
 err:
