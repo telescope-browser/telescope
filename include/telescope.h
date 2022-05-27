@@ -44,7 +44,7 @@ struct imsgev {
 #define IMSG_DATA_SIZE(imsg)	((imsg).hdr.len - IMSG_HEADER_SIZE)
 
 enum imsg_type {
-	/* ui <-> client/fs */
+	/* ui <-> net */
 	IMSG_GET,		/* struct get_req, peerid is the tab id */
 	IMSG_ERR,
 	IMSG_CHECK_CERT,
@@ -57,27 +57,7 @@ enum imsg_type {
 	IMSG_EOF,
 	IMSG_QUIT,
 
-	/* ui <-> fs */
-	IMSG_INIT,
-	IMSG_TOFU,
-	IMSG_BOOKMARK_PAGE,
-	IMSG_BOOKMARK_OK,
-	IMSG_SAVE_CERT,
-	IMSG_SAVE_CERT_OK,
-	IMSG_UPDATE_CERT,
-	IMSG_UPDATE_CERT_OK,
-
-	IMSG_FILE_OPEN,
-	IMSG_FILE_OPENED,
-
-	IMSG_SESSION_START,
-	IMSG_SESSION_TAB,
-	IMSG_SESSION_TAB_HIST,
-	IMSG_SESSION_END,
-
-	IMSG_HIST_ITEM,		/* struct histitem */
-	IMSG_HIST_END,		/* empty */
-
+	/* ui <-> ctl */
 	IMSG_CTL_OPEN_URL,
 };
 
