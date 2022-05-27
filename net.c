@@ -667,7 +667,7 @@ handle_dispatch_imsg(int fd, short event, void *d)
 			break;
 		datalen = IMSG_DATA_SIZE(imsg);
 		switch (imsg.hdr.type) {
-		case IMSG_GET_RAW:
+		case IMSG_GET:
 			r = imsg.data;
 			if (datalen != sizeof(*r) ||
 			    r->host[sizeof(r->host) - 1] != '\0' ||

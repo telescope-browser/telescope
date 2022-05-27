@@ -45,9 +45,7 @@ struct imsgev {
 
 enum imsg_type {
 	/* ui <-> client/fs */
-	IMSG_GET,		/* data is URL, peerid the tab id */
-	IMSG_GET_FILE,		/* data is path, without \r\n or such */
-	IMSG_GET_RAW,		/* get but with an explicit req str */
+	IMSG_GET,		/* struct get_req, peerid is the tab id */
 	IMSG_ERR,
 	IMSG_CHECK_CERT,
 	IMSG_CERT_STATUS,

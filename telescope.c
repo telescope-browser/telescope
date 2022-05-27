@@ -697,7 +697,7 @@ make_request(struct tab *tab, struct get_req *req, int proto, const char *r)
 	}
 
 	start_loading_anim(tab);
-	ui_send_net(IMSG_GET_RAW, tab->id, req, sizeof(*req));
+	ui_send_net(IMSG_GET, tab->id, req, sizeof(*req));
 
 	/*
 	 * So the various load_*_url can `return make_request` and
