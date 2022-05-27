@@ -70,10 +70,8 @@ static void	 try_to_connect(int, short, void*);
 
 #if HAVE_ASR_RUN
 static void	 query_done(struct asr_result*, void*);
-static void	 async_conn_towards(struct req*);
-#else
-static void	 blocking_conn_towards(struct req*);
 #endif
+static void	 conn_towards(struct req*);
 
 static void	 close_with_err(struct req*, const char*);
 static void	 close_with_errf(struct req*, const char*, ...)
@@ -256,7 +254,7 @@ query_done(struct asr_result *res, void *d)
 }
 
 static void
-async_conn_towards(struct req *req)
+conn_towards(struct req *req)
 {
 	struct asr_query	*q;
 	const char		*proto = "1965";
@@ -271,7 +269,7 @@ async_conn_towards(struct req *req)
 }
 #else
 static void
-blocking_conn_towards(struct req *req)
+conn_towards(struct req *req)
 {
 	struct addrinfo	 hints;
 	struct phos_uri	*url = &req->url;
@@ -675,11 +673,7 @@ handle_get_raw(struct imsg *imsg, size_t datalen)
 
 	req->proto = r->proto;
 
-#if HAVE_ASR_RUN
-	async_conn_towards(req);
-#else
-	blocking_conn_towards(req);
-#endif
+	conn_towards(req);
 }
 
 static void
