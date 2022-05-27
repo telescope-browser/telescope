@@ -48,7 +48,7 @@ struct req {
 	int			 proto;
 	int			 fd;
 	struct tls		*ctx;
-	char			 req[1024];
+	char			 req[1027];
 	size_t			 len;
 	int			 done_header;
 	struct bufferevent	*bev;
