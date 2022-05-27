@@ -88,25 +88,12 @@ static void	 net_read(struct bufferevent *, void *);
 static void	 net_write(struct bufferevent *, void *);
 static void	 net_error(struct bufferevent *, short, void *);
 
-static void	 handle_get_raw(struct imsg *, size_t);
-static void	 handle_cert_status(struct imsg*, size_t);
-static void	 handle_proceed(struct imsg*, size_t);
-static void	 handle_stop(struct imsg*, size_t);
-static void	 handle_quit(struct imsg*, size_t);
 static void	 handle_dispatch_imsg(int, short, void*);
 
 static int	 net_send_ui(int, uint32_t, const void *, uint16_t);
 
 /* TODO: making this customizable */
 struct timeval timeout_for_handshake = { 5, 0 };
-
-static imsg_handlerfn *handlers[] = {
-	[IMSG_GET_RAW]		= handle_get_raw,
-	[IMSG_CERT_STATUS]	= handle_cert_status,
-	[IMSG_PROCEED]		= handle_proceed,
-	[IMSG_STOP]		= handle_stop,
-	[IMSG_QUIT]		= handle_quit,
-};
 
 typedef void (*statefn)(int, short, void*);
 
@@ -649,85 +636,100 @@ net_error(struct bufferevent *bev, short error, void *d)
 }
 
 static void
-handle_get_raw(struct imsg *imsg, size_t datalen)
-{
-	struct req	*req;
-	struct get_req	*r;
-
-	r = imsg->data;
-
-	if (datalen != sizeof(*r))
-		die();
-
-	if ((req = calloc(1, sizeof(*req))) == NULL)
-		die();
-
-	req->id = imsg->hdr.peerid;
-	TAILQ_INSERT_HEAD(&reqhead, req, reqs);
-
-	strlcpy(req->url.host, r->host, sizeof(req->url.host));
-	strlcpy(req->url.port, r->port, sizeof(req->url.port));
-
-	strlcpy(req->req, r->req, sizeof(req->req));
-	req->len = strlen(r->req);
-
-	req->proto = r->proto;
-
-	conn_towards(req);
-}
-
-static void
-handle_cert_status(struct imsg *imsg, size_t datalen)
-{
-	struct req	*req;
-	int		 is_ok;
-
-	req = req_by_id(imsg->hdr.peerid);
-
-	if (datalen < sizeof(is_ok))
-		die();
-	memcpy(&is_ok, imsg->data, sizeof(is_ok));
-
-	if (is_ok)
-		net_ready(req);
-	else
-		close_conn(0, 0, req);
-}
-
-static void
-handle_proceed(struct imsg *imsg, size_t datalen)
-{
-	struct req *req;
-
-	if ((req = req_by_id(imsg->hdr.peerid)) == NULL)
-		return;
-
-	bufferevent_enable(req->bev, EV_READ);
-}
-
-static void
-handle_stop(struct imsg *imsg, size_t datalen)
-{
-	struct req	*req;
-
-	if ((req = req_by_id(imsg->hdr.peerid)) == NULL)
-		return;
-	close_conn(0, 0, req);
-}
-
-static void
-handle_quit(struct imsg *imsg, size_t datalen)
-{
-	event_loopbreak();
-}
-
-static void
-handle_dispatch_imsg(int fd, short ev, void *d)
+handle_dispatch_imsg(int fd, short event, void *d)
 {
 	struct imsgev	*iev = d;
+	struct imsgbuf	*ibuf = &iev->ibuf;
+	struct imsg	 imsg;
+	struct req	*req;
+	struct get_req	*r;
+	size_t		 datalen;
+	ssize_t		 n;
+	int		 certok;
 
-	if (dispatch_imsg(iev, ev, handlers, sizeof(handlers)) == -1)
-		err(1, "connection closed");
+	if (event & EV_READ) {
+		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
+			err(1, "imsg_read");
+		if (n == 0)
+			err(1, "connection closed");
+	}
+	if (event & EV_WRITE) {
+		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
+			err(1, "msgbuf_write");
+		if (n == 0)
+			err(1, "connection closed");
+	}
+
+	for (;;) {
+		if ((n = imsg_get(ibuf, &imsg)) == -1)
+			err(1, "imsg_get");
+		if (n == 0)
+			break;
+		datalen = IMSG_DATA_SIZE(imsg);
+		switch (imsg.hdr.type) {
+		case IMSG_GET_RAW:
+			r = imsg.data;
+			if (datalen != sizeof(*r) ||
+			    r->host[sizeof(r->host) - 1] != '\0' ||
+			    r->port[sizeof(r->port) - 1] != '\0' ||
+			    r->req[sizeof(r->req) - 1] != '\0')
+				die();
+			if (r->proto != PROTO_FINGER &&
+			    r->proto != PROTO_GEMINI &&
+			    r->proto != PROTO_GOPHER)
+				die();
+
+			if ((req = calloc(1, sizeof(*req))) == NULL)
+				die();
+
+			req->id = imsg.hdr.peerid;
+			TAILQ_INSERT_HEAD(&reqhead, req, reqs);
+
+			strlcpy(req->url.host, r->host, sizeof(req->url.host));
+			strlcpy(req->url.port, r->port, sizeof(req->url.port));
+			req->len = strlcpy(req->req, r->req, sizeof(req->req));
+			req->proto = r->proto;
+			conn_towards(req);
+			break;
+
+		case IMSG_CERT_STATUS:
+			if ((req = req_by_id(imsg.hdr.peerid)) == NULL)
+				break;
+
+			if (datalen != sizeof(certok))
+				die();
+			memcpy(&certok, imsg.data, sizeof(certok));
+			if (certok)
+				net_ready(req);
+			else
+				close_conn(0, 0, req);
+			break;
+
+		case IMSG_PROCEED:
+			if ((req = req_by_id(imsg.hdr.peerid)) == NULL)
+				break;
+			bufferevent_enable(req->bev, EV_READ);
+			break;
+
+		case IMSG_STOP:
+			if ((req = req_by_id(imsg.hdr.peerid)) == NULL)
+				break;
+			close_conn(0, 0, req);
+			break;
+
+		case IMSG_QUIT:
+			event_loopbreak();
+			imsg_free(&imsg);
+			return;
+
+		default:
+			errx(1, "got unknown imsg %d", imsg.hdr.type);
+		}
+
+		imsg_free(&imsg);
+	}
+
+	imsg_event_add(iev);
 }
 
 static int
