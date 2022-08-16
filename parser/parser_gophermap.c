@@ -164,8 +164,6 @@ gm_foreach_line(struct parser *p, const char *line, size_t linelen)
 			return 0;
 		break;
 
-		break;
-
 	case 'i':	/* non-canonical: message */
 		if (!emit_line(p, LINE_TEXT, &s))
 			return 0;
