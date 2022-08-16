@@ -289,6 +289,43 @@ cmd_kill_telescope(struct buffer *buffer)
 	yornp("really quit?", kill_telescope_cb, NULL);
 }
 
+#include <curses.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <errno.h>
+static void
+do_exec_command(const char *cmd, struct tab *t)
+{
+	int s;
+	pid_t p;
+
+	if (cmd == NULL)
+		return;
+
+	endwin();
+
+	switch (p = fork()) {
+	case -1:
+		message("failed to fork: %s", strerror(errno));
+		return;
+	case 0:
+		execl("/bin/sh", "sh", "-c", cmd, NULL);
+		warn("exec \"%s\" failed", cmd);
+		_exit(1);
+	}
+
+again:
+	if (waitpid(p, &s, 0) == -1) {
+		if (errno == EINTR)
+			goto again;
+	}
+
+	refresh();
+	clear();
+	ui_schedule_redraw();
+	/* rearrange_windows(); */
+}
+
 void
 cmd_push_button(struct buffer *buffer)
 {
@@ -316,6 +353,13 @@ cmd_push_button(struct buffer *buffer)
 			else
 				buffer->line_max++;
 		}
+		break;
+	case LINE_DOWNLOAD:
+	case LINE_DOWNLOAD_DONE:
+		minibuffer_read("Execute: ", do_exec_command,
+		    NULL);
+		snprintf(ministate.buf, sizeof(ministate.buf),
+		    "xdg-open %s", vl->parent->alt);
 		break;
 	default:
 		break;

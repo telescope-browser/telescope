@@ -58,7 +58,11 @@ sandbox_ui_process(void)
 	if (unveil(cache_path_base, "rwc") == -1)
 		err(1, "unveil(%s)", cache_path_base);
 
-	if (pledge("stdio rpath wpath cpath unix sendfd tty", NULL) == -1)
+	if (unveil("/bin/sh", "rx") == -1)
+		err(1, "unveil(xdg-open)");
+
+	if (pledge("stdio rpath wpath cpath unix tty proc exec",
+	    NULL) == -1)
 		err(1, "pledge");
 }
 
