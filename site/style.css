@@ -1,0 +1,182 @@
+body {
+  font-family: monospace;
+  font-size: 14px;
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.banner {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}
+
+.banner pre {
+    background-color: transparent;
+}
+
+h1::before {
+  content: "# ";
+}
+
+h2 {
+  margin-top: 40px;
+}
+
+h2::before {
+  content: "## ";
+}
+
+h3::before {
+  content: "### ";
+}
+
+.gallery {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-around;
+}
+
+.gallery figure {
+    width: 40%;
+    margin: 1rem;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+.repology {
+    text-align: center;
+}
+
+@media only screen and (min-width: 768px) {
+    .repology {
+        text-align: unset;
+        float: right;
+    }
+}
+
+blockquote {
+  margin: 0;
+  padding: 0;
+}
+
+blockquote::before {
+  content: "> ";
+}
+
+blockquote p {
+  font-style: italic;
+  display: inline;
+}
+
+p.link::before {
+  content: "→ ";
+}
+
+strong::before { content: "*" }
+strong::after  { content: "*" }
+
+hr {
+  border: 0;
+  height: 1px;
+  background-color: #222;
+  width: 100%;
+  display: block;
+  margin: 2em auto;
+}
+
+img {
+  margin: 10px;
+  display: inline-block;
+}
+
+section.with-image {
+  margin-top: 1rem;
+}
+
+@media only screen and (min-width: 768px) {
+  section.with-image {
+    display: flex;
+    flex-direction: row;
+  }
+}
+
+section.with-image img {
+  object-fit: contain;
+}
+
+section.with-image div {
+  overflow: auto;
+}
+
+pre {
+  overflow: auto;
+  padding: 1rem;
+  background-color: #f0f0f0;
+  border-radius: 3px;
+}
+
+pre.banner {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+}
+
+code, kbd {
+  color: #9d109d;
+}
+
+ul.link-list {
+  list-style: disclosure-closed;
+}
+
+footer {
+  margin-top: 4rem;
+  font-size: 0.8rem;
+  border-top: 1px solid;
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: #222;
+    color: white;
+  }
+
+  a {
+    color: aqua;
+  }
+
+  hr {
+    background-color: #ddd;
+  }
+
+  pre {
+    background-color: #353535;
+  }
+
+  code, kbd {
+    color: #ff4cff;
+  }
+
+  img {
+    opacity: 0.8;
+    transition: opacity .2s ease-in-out;
+  }
+
+  img:hover {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 400px) {
+  pre.banner { font-size: 9px; }
+}
+
+@media (max-width: 500px) {
+  pre.banner { font-size: 10px; }
+}

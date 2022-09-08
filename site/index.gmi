@@ -1,27 +1,34 @@
-=> /gallery/		Gallery
-=> /telescope.1.txt	Docs
-
-# Telescope
-
-> Telescope is a w3m-like browser for Gemini.
-
-``` Ascii art of the word “Telescope” and “v0.8.1”
+<div class="banner">
+``` Ascii art of the word “Telescope” and “vCURRV”
  _______         __
 |_     _|.-----.|  |.-----.-----.----.-----.-----.-----.
   |   |  |  -__||  ||  -__|__ --|  __|  _  |  _  |  -__|
   |___|  |_____||__||_____|_____|____|_____|   __|_____|
-                                           |__| v0.8.1
+                                           |__| vCURRV
 ```
+</div>
+
+> Telescope is a w3m-like browser for Gemini.
+
+<section class="with-image">
+<img src="logo.small.png" alt="the teleoscope logo: a telescope on a tripode with a city and the earth seen from space in the background, with some stars behind" title='Telescope logo -- by freezr'>
+<div>
 
 Telescope is written entirely for fun, as a hobbystic project in my free time.  As such, it lacks a ton of features you’ll find in more mature Gemini browsers, but it also has some unique ones.
 
-The UI is strongly inspired from Emacs and W3M, so you’ll find some familiar concepts, such as the minibuffer or the tabline, and the default keybindigs also reflect this, but care has been taken to add keys familiar for vi and CUA users too.
+=> telescope.1.MANEXT	documentation
 
+The UI is strongly inspired from Emacs and W3M, so you’ll find some familiar concepts, such as the minibuffer or the tabline, and the default keybindigs also reflect this, but care has been taken to add keys familiar for vi and CUA users too.
+</div>
+</section>
+
+<p><a href="https://asciinema.org/a/426862" target="_blank"><img src="https://asciinema.org/a/426862.svg" /></a></p>
 => https://asciinema.org/a/426862	Asciinema record
 
 ## Install
 
-=> https://repology.org/project/telescope/versions Some distros provide a package — thanks to the maintainers!
+<p class='repology'><a href='REPOLOGY_URL'><img src='REPOLOGY_BANNER' alt='distro that provide a telescope package' /></a></p>
+=> REPOLOGY_URL Some distros provide a package — thanks to the maintainers!
 
 Source code and precompiled binaries for linux are available:
 

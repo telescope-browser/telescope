@@ -1,0 +1,15 @@
+<main class="gallery">
+=> gallery/xterm-default-look.png		default look on bright terminal
+=> gallery/kitty-default-look.png		default look on dark terminal
+
+=> gallery/xterm-contrib-light.png		the contrib/light theme
+=> gallery/kitty-contrib-dark.png		the contrib/dark theme
+
+=> gallery/xterm-contrib-light-swiper.png	swiper with the contrib/light theme
+=> gallery/kitty-contrib-dark-swiper.png	swiper with the contrib/dark theme
+
+=> gallery/xterm-contrib-light-about-help.png	about:help with the contrib/light theme
+=> gallery/kitty-contrib-dark-about-help.png	about:help with the contrib/dark theme
+
+=> gallery/contrib-brutalist.png		Brutalist theme
+</main>
