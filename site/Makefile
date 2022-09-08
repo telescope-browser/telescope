@@ -60,8 +60,8 @@ serve-gemini:
 	ge -p 1966 gemini
 
 upload:
-	${RSYNC} --del -a . antartica:/var/www/telescope.omarpolo.com
-	${RSYNC} --del -a . antartica:/var/gemini/telescope.omarpolo.com
+	${RSYNC} --del -a gemini/ antartica:/var/gemini/telescope.omarpolo.com
+	${RSYNC} --del -a www/ antartica:/var/www/telescope.omarpolo.com
 
 clean:
 	rm -rf gemini www
