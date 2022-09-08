@@ -19,6 +19,8 @@ Telescope is written entirely for fun, as a hobbystic project in my free time.  
 => telescope.1.MANEXT	documentation
 
 The UI is strongly inspired from Emacs and W3M, so you’ll find some familiar concepts, such as the minibuffer or the tabline, and the default keybindigs also reflect this, but care has been taken to add keys familiar for vi and CUA users too.
+
+=> gemini://warp.geminispace.club/~freezr/gemlog/2022-09-02-telescope-logo.gmi The awesome logo was made by freezr!
 </div>
 </section>
 
