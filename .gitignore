@@ -27,3 +27,6 @@ telescope
 pagebundler
 telescope-*.tar.gz
 u/emoji-matcher.c
+
+site/gemini
+site/www
