@@ -104,38 +104,12 @@ push_line(struct buffer *buffer, struct line *l, const char *buf, size_t len, in
 }
 
 /*
- * Similar to wrap_text, but emit only o vline.
- */
-int
-wrap_one(struct buffer *buffer, const char *prfx, struct line *l, size_t width)
-{
-	struct vline *vl, *t;
-
-	/*
-	 * be lazy: call wrap_text and then discard the continuations.
-	 */
-
-	if (!wrap_text(buffer, prfx, l, width))
-		return 0;
-
-	TAILQ_FOREACH_SAFE(vl, &buffer->head, vlines, t) {
-		if (vl->flags & L_CONTINUATION) {
-			TAILQ_REMOVE(&buffer->head, vl, vlines);
-			free(vl->line);
-			free(vl);
-			buffer->line_max--;
-		}
-	}
-
-	return 1;
-}
-
-/*
  * Build a list of visual line by wrapping the given line, assuming
  * that when printed will have a leading prefix prfx.
  */
 int
-wrap_text(struct buffer *buffer, const char *prfx, struct line *l, size_t width)
+wrap_text(struct buffer *buffer, const char *prfx, struct line *l,
+    size_t width, int oneline)
 {
 	const char	*line, *space;
 	size_t		 ret, off, start, cur, prfxwidth;
@@ -168,6 +142,9 @@ wrap_text(struct buffer *buffer, const char *prfx, struct line *l, size_t width)
 		}
 
 		if (!push_line(buffer, l, &line[start], off - start, flags))
+			return 0;
+
+		if (oneline)
 			return 0;
 
 		flags = L_CONTINUATION;
@@ -218,7 +195,8 @@ wrap_page(struct buffer *buffer, int width)
 		case LINE_PATCH_HUNK_HDR:
 		case LINE_PATCH_ADD:
 		case LINE_PATCH_DEL:
-			wrap_text(buffer, prfx, l, MIN(fill_column, width));
+			wrap_text(buffer, prfx, l, MIN(fill_column, width),
+			    0);
 			break;
 		case LINE_COMPL:
 		case LINE_COMPL_CURRENT:
@@ -226,7 +204,7 @@ wrap_page(struct buffer *buffer, int width)
 		case LINE_DOWNLOAD:
 		case LINE_DOWNLOAD_DONE:
 		case LINE_DOWNLOAD_INFO:
-			wrap_one(buffer, prfx, l, width);
+			wrap_text(buffer, prfx, l, width, 1);
 			break;
 		case LINE_FRINGE:
 			/* never, ever wrapped */
