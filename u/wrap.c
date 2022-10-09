@@ -17,28 +17,15 @@
 #include "compat.h"
 
 #include <ctype.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include <grapheme.h>
 
 #include "defaults.h"
 #include "telescope.h"
 #include "utf8.h"
-
-/*
- * Text wrapping
- * =============
- *
- * There's a simple text wrapping algorithm.
- *
- * 1. if it's a line in a pre-formatted block:
- *    a. hard wrap.
- *    b. repeat
- * 2. otherwise advance the line char by char.
- * 3. when ending the space, split the line at the last occurrence of
- *    a "word separator" (i.e. " \t-") or at point if none.
- * 4. repeat
- *
- */
 
 void
 erase_buffer(struct buffer *buffer)
@@ -150,20 +137,16 @@ wrap_one(struct buffer *buffer, const char *prfx, struct line *l, size_t width)
 int
 wrap_text(struct buffer *buffer, const char *prfx, struct line *l, size_t width)
 {
-	const char	*separators = " \t-";
-	const char	*start, *end, *line, *lastsep, *lastchar, *space;
-	uint32_t	 cp = 0, state = 0;
-	size_t		 cur, prfxwidth, w;
+	const char	*line, *space;
+	size_t		 ret, off, start, cur, prfxwidth;
 	int		 flags;
 
-	if ((line = l->line) == NULL)
+	if ((line = l->line) == NULL || *line == '\0')
 		return push_line(buffer, l, NULL, 0, 0);
 
 	prfxwidth = utf8_swidth(prfx);
 	cur = prfxwidth;
-	start = line;
-	lastsep = NULL;
-	lastchar = line;
+	start = 0;
 	flags = 0;
 
 	if (l->type == LINE_LINK && emojify_link &&
@@ -173,64 +156,28 @@ wrap_text(struct buffer *buffer, const char *prfx, struct line *l, size_t width)
 		line = space + 1;
 	}
 
-	for (; *line; line++) {
-		if (utf8_decode(&state, &cp, *line))
+	for (off = 0; line[off] != '\0'; off += ret) {
+		size_t t;
+
+		ret = grapheme_next_line_break_utf8(&line[off], SIZE_MAX);
+		t = utf8_swidth_between(&line[off], &line[off + ret]);
+
+		if (cur + t <= width) {
+			cur += t;
 			continue;
-		w = utf8_chwidth(cp);
-		if (cur + w > width) {
-			end = lastsep == NULL
-				? utf8_next_cp((char*)lastchar)
-				: utf8_next_cp((char*)lastsep);
-			if (!push_line(buffer, l, start, end - start, flags))
-				return 0;
-			flags = L_CONTINUATION;
-			start = end;
-			cur = prfxwidth + utf8_swidth_between(start, lastchar);
-		} else if (strchr(separators, *line) != NULL) {
-			lastsep = line;
 		}
 
-		lastchar = utf8_prev_cp(line, l->line);
-		cur += w;
+		if (!push_line(buffer, l, &line[start], off - start, flags))
+			return 0;
+
+		flags = L_CONTINUATION;
+		start = off;
+		cur = t;
 	}
 
-	return push_line(buffer, l, start, line - start, flags);
-}
-
-int
-hardwrap_text(struct buffer *buffer, struct line *l, size_t width)
-{
-	const char	*line, *start, *lastchar;
-	int		 cont;
-	uint32_t	 state = 0, cp = 0;
-	size_t		 cur, w;
-
-	if ((line = l->line) == NULL)
-		return push_line(buffer, l, NULL, 0, 0);
-
-	start = line;
-	lastchar = line;
-	cont = 0;
-	cur = 0;
-	for (; *line; line++) {
-		if (utf8_decode(&state, &cp, *line))
-			continue;
-		w = utf8_chwidth(cp);
-		if (cur + w > width) {
-			if (!push_line(buffer, l, start, lastchar-start, cont))
-				return 0;
-			cont = L_CONTINUATION;
-			if (dont_wrap_pre)
-				return 1;
-			cur = 0;
-			start = lastchar;
-		}
-
-		lastchar = utf8_prev_cp(line, l->line);
-		cur += w;
-	}
-
-	return push_line(buffer, l, start, line - start, cont);
+	if (off != start)
+		return push_line(buffer, l, &line[start], off - start, flags);
+	return 0;
 }
 
 int
@@ -265,15 +212,13 @@ wrap_page(struct buffer *buffer, int width)
 		case LINE_QUOTE:
 		case LINE_PRE_START:
 		case LINE_PRE_END:
-			wrap_text(buffer, prfx, l, MIN(fill_column, width));
-			break;
 		case LINE_PRE_CONTENT:
 		case LINE_PATCH:
 		case LINE_PATCH_HDR:
 		case LINE_PATCH_HUNK_HDR:
 		case LINE_PATCH_ADD:
 		case LINE_PATCH_DEL:
-			hardwrap_text(buffer, l, MIN(fill_column, width));
+			wrap_text(buffer, prfx, l, MIN(fill_column, width));
 			break;
 		case LINE_COMPL:
 		case LINE_COMPL_CURRENT:

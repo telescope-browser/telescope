@@ -347,7 +347,6 @@ void		 empty_linelist(struct buffer*);
 void		 empty_vlist(struct buffer*);
 int		 wrap_one(struct buffer *, const char *, struct line *, size_t);
 int		 wrap_text(struct buffer*, const char*, struct line*, size_t);
-int		 hardwrap_text(struct buffer*, struct line*, size_t);
 int		 wrap_page(struct buffer *, int width);
 
 #endif /* TELESCOPE_H */
