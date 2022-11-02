@@ -149,7 +149,7 @@ wrap_text(struct buffer *buffer, const char *prfx, struct line *l,
 
 		flags = L_CONTINUATION;
 		start = off;
-		cur = t;
+		cur = t + prfxwidth;
 	}
 
 	if (off != start)
