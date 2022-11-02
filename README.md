@@ -76,8 +76,10 @@ At the moment there is no UI for oob-verification though.
 ## Building
 
 Telescope depends on ncursesw, libtls (from either LibreSSL or
-libretls), libevent (either v1 or v2) and pkg-config.  When building
-from a git checkout, yacc (or bison) is also needed.
+libretls), libevent (either v1 or v2) and pkg-config.
+[libgrapheme][libgrapheme] is an optional dependency: there's a
+bundled copy but it's reccomended to install it if available. When
+building from a git checkout, yacc (or bison) is also needed.
 
 To build from a release tarball just execute:
 
@@ -88,9 +90,8 @@ To build from a release tarball just execute:
 The configure script has optional support for building with libraries
 provided by your distribution instead of using the bundled versions:
 
- - `--with-libbsd`: link with [libbsd](https://libbsd.freedesktop.org)
- - `--with-libimsg`: link with the
-   [imsg-compat](https://github.com/bsd-ac/imsg-compat) library
+ - `--with-libbsd`: link with [libbsd][libbsd]
+ - `--with-libimsg`: link with the [imsg-compat][imsg-compat] library
 
 If you want to build from the git checkout, something that's
 discouraged for users that don't intend to hack on telescope
@@ -106,6 +107,10 @@ primarily on OpenBSD/amd64 and commits on the main branch don't get
 always tested in other OSes.  Before tagging a release however, a
 comprehensive testing on various platforms is done to ensure
 everything is working as intended.
+
+[libbsd]:	https://libbsd.freedesktop.org
+[imsg-compat]:	https://github.com/bsd-ac/imsg-compat
+[libgrapheme]:	https://libs.suckless.org/libgrapheme/
 
 
 ## Contributing
