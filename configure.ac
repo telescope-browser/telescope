@@ -82,9 +82,10 @@ AC_CHECK_LIB(tls, tls_init, [], [
 	AC_MSG_ERROR([requires libtls])
 ])
 
-AC_CHECK_LIB([grapheme], [grapheme_next_line_break_utf8], [
+PKG_CHECK_MODULES([libgrapheme], [libgrapheme], [
 	AC_SUBST([LIBGRAPHEME], [])
-	LIBS="-lgrapheme $LIBS"
+	CFLAGS="$libgrapheme_CFLAGS $CFLAGS"
+	LIBS="$libgrapheme_LIBS $LIBS"
 ], [
 	# build the bundled version.
 	AC_SUBST([LIBGRAPHEME], "$srcdir/libgrapheme/libgrapheme.a")
