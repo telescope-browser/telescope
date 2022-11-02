@@ -1,0 +1,39 @@
+#!/bin/sh
+# See LICENSE file for copyright and license details.
+
+replace_line()
+{
+	VAR=$1
+	ALIGNMENT=$2
+	VALUE=$3
+	awk "/^${VAR}[ ]*=/ { print \"${VAR}${ALIGNMENT} = ${VALUE}\"; next }; { print; }" config.mk > config.mk.tmp
+	mv config.mk.tmp config.mk
+}
+
+case $(uname) in
+	DragonFly|FreeBSD|Linux|MidnightBSD|NetBSD)
+		# the default
+		replace_line 'SOFLAGS'   '  '  '-shared -nostdlib -Wl,--soname=libgrapheme.so.$(VERSION_MAJOR).$(VERSION_MINOR)'
+		replace_line 'SONAME'    '   ' 'libgrapheme.so.$(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_PATCH)'
+		replace_line 'SOSYMLINK' ''    'true'
+		replace_line 'LDCONFIG'  ''    'ldconfig'
+		;;
+	OpenBSD)
+		replace_line 'SOFLAGS'   '  '  '-shared -nostdlib'
+		replace_line 'SONAME'    '   ' 'libgrapheme.so.$(VERSION_MAJOR).$(VERSION_MINOR)'
+		replace_line 'SOSYMLINK' ''    'false'
+		replace_line 'LDCONFIG'  ''    ''
+		;;
+	Darwin)
+		replace_line 'SOFLAGS'   '  '  '-dynamiclib -install_name libgrapheme.$(VERSION_MAJOR).dylib -current_version $(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_PATCH) -compatibility_version $(VERSION_MAJOR).$(VERSION_MINOR).0'
+		replace_line 'SONAME'    '   ' 'libgrapheme.$(VERSION_MAJOR).dylib'
+		replace_line 'SOSYMLINK' ''    'false'
+		replace_line 'LDCONFIG'  ''    ''
+		;;
+	*)
+		echo "Your system does not have a preset. Edit config.mk and send a patch please! :)"
+		exit 1
+		;;
+esac
+
+exit 0

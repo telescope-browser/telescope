@@ -63,13 +63,21 @@ pagebundler_SOURCES =	pagebundler.c
 pagebundler$(EXEEXT): pagebundler.c
 	$(HOSTCC) $(HOSTCFLAGS) -o $@ $(srcdir)/pagebundler.c
 
+# ugly; builds bundled libgrapheme if needed
+$(srcdir)/libgrapheme/libgrapheme.a:
+	${MAKE} -C $(srcdir)/libgrapheme libgrapheme.a
+
+clean-local:
+	test -n "$(LIBGRAPHEME)" && ${MAKE} -C libgrapheme clean || true
+
 BUILT_SOURCES =		cmd.gen.c u/emoji-matcher.c pages.c
 
 CLEANFILES =		cmd.gen.c u/emoji-matcher.c pages.c \
 			parse.c
 
 AM_CPPFLAGS =		-I$(top_srcdir)/phos -I$(top_srcdir)/include
-LDADD =			$(LIBOBJS)
+LDADD =			$(LIBOBJS) $(LIBGRAPHEME)
+EXTRA_telescope_DEPENDENCIES = $(LIBGRAPHEME)
 
 EXTRA_DIST =		ChangeLog LICENSE README.md data/emoji.txt pages/*.gmi
 
