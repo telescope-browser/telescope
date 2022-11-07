@@ -97,17 +97,13 @@ enum line_type {
 	LINE_FRINGE,
 };
 
-/* for lines: mark as hidden */
-#define L_HIDDEN	1
-
-/* for vlines: mark as continuation */
-#define L_CONTINUATION	2
-
 struct line {
 	enum line_type		 type;
 	char			*line;
 	char			*alt;
 	void			*data;
+
+#define L_HIDDEN	0x1
 	int			 flags;
 	TAILQ_ENTRY(line)	 lines;
 };
@@ -117,6 +113,8 @@ struct vline {
 	size_t			 from;
 	size_t			 len;
 	size_t			 cplen;
+
+#define L_CONTINUATION	0x2
 	int			 flags;
 	TAILQ_ENTRY(vline)	 vlines;
 };
