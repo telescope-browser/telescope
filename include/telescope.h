@@ -114,7 +114,9 @@ struct line {
 
 struct vline {
 	struct line		*parent;
-	char			*line;
+	size_t			 from;
+	size_t			 len;
+	size_t			 cplen;
 	int			 flags;
 	TAILQ_ENTRY(vline)	 vlines;
 };

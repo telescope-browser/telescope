@@ -110,15 +110,10 @@ cmd_backward_char(struct buffer *buffer)
 void
 cmd_forward_char(struct buffer *buffer)
 {
-	size_t len = 0;
-
 	if (buffer->current_line == NULL)
 		return;
-
-	if (buffer->current_line->line != NULL)
-		len = utf8_cplen(buffer->current_line->line);
-	if (++buffer->cpoff > len)
-		buffer->cpoff = len;
+	if (buffer->current_line->cplen > buffer->cpoff)
+		buffer->cpoff++;
 }
 
 void
@@ -129,7 +124,7 @@ cmd_backward_paragraph(struct buffer *buffer)
 			message("No previous paragraph");
 			return;
 		}
-	} while (buffer->current_line->line != NULL ||
+	} while (buffer->current_line->len != 0 ||
 	    buffer->current_line->parent->type != LINE_TEXT);
 }
 
@@ -141,7 +136,7 @@ cmd_forward_paragraph(struct buffer *buffer)
 			message("No next paragraph");
 			return;
 		}
-	} while (buffer->current_line->line != NULL ||
+	} while (buffer->current_line->len != 0 ||
 	    buffer->current_line->parent->type != LINE_TEXT);
 }
 
@@ -157,9 +152,9 @@ cmd_move_end_of_line(struct buffer *buffer)
 	struct vline	*vl;
 
 	vl = buffer->current_line;
-	if (vl == NULL || vl->line == NULL)
+	if (vl == NULL)
 		return;
-	buffer->cpoff = utf8_cplen(vl->line);
+	buffer->cpoff = vl->cplen;
 }
 
 void
@@ -707,13 +702,14 @@ cmd_olivetti_mode(struct buffer *buffer)
 void
 cmd_mini_delete_char(struct buffer *buffer)
 {
-	char *c, *n;
+	char *line, *c, *n;
 
 	GUARD_READ_ONLY();
 
 	minibuffer_taint_hist();
 
-	c = utf8_nth(buffer->current_line->line, buffer->cpoff);
+	line = buffer->current_line->parent->line + buffer->current_line->from;
+	c = utf8_nth(line, buffer->cpoff);
 	if (*c == '\0')
 		return;
 	n = utf8_next_cp(c);
@@ -726,17 +722,17 @@ cmd_mini_delete_char(struct buffer *buffer)
 void
 cmd_mini_delete_backward_char(struct buffer *buffer)
 {
-	char *c, *p, *start;
+	char *line, *c, *p;
 
 	GUARD_READ_ONLY();
 
 	minibuffer_taint_hist();
 
-	c = utf8_nth(buffer->current_line->line, buffer->cpoff);
-	start = buffer->current_line->line;
-	if (c == start)
+	line = buffer->current_line->parent->line + buffer->current_line->from;
+	c = utf8_nth(line, buffer->cpoff);
+	if (c == line)
 		return;
-	p = utf8_prev_cp(c-1, start);
+	p = utf8_prev_cp(c-1, line);
 
 	memmove(p, c, strlen(c)+1);
 	buffer->cpoff--;
@@ -747,12 +743,14 @@ cmd_mini_delete_backward_char(struct buffer *buffer)
 void
 cmd_mini_kill_line(struct buffer *buffer)
 {
-	char *c;
+	char *line, *c;
 
 	GUARD_READ_ONLY();
 
 	minibuffer_taint_hist();
-	c = utf8_nth(buffer->current_line->line, buffer->cpoff);
+
+	line = buffer->current_line->parent->line + buffer->current_line->from;
+	c = utf8_nth(line, buffer->cpoff);
 	*c = '\0';
 
 	recompute_completions(0);
@@ -764,7 +762,7 @@ cmd_mini_kill_whole_line(struct buffer *buffer)
 	GUARD_READ_ONLY();
 
 	minibuffer_taint_hist();
-	*buffer->current_line->line = '\0';
+	*buffer->current_line->parent->line = '\0';
 	buffer->cpoff = 0;
 }
 
@@ -817,7 +815,7 @@ cmd_mini_previous_history_element(struct buffer *buffer)
 	}
 
 	if (ministate.hist_cur != NULL) {
-		buffer->current_line->line = ministate.hist_cur->h;
+		buffer->current_line->parent->line = ministate.hist_cur->h;
 		recompute_completions(0);
 	}
 }
@@ -841,7 +839,7 @@ cmd_mini_next_history_element(struct buffer *buffer)
 	}
 
 	if (ministate.hist_cur != NULL) {
-		buffer->current_line->line = ministate.hist_cur->h;
+		buffer->current_line->parent->line = ministate.hist_cur->h;
 		recompute_completions(0);
 	}
 }

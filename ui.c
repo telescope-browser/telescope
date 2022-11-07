@@ -60,7 +60,7 @@ static void		 handle_resize(int, short, void*);
 static void		 handle_resize_nodelay(int, short, void*);
 static void		 handle_download_refresh(int, short, void *);
 static void		 rearrange_windows(void);
-static void		 line_prefix_and_text(struct vline *, char *, size_t, const char **, const char **);
+static void		 line_prefix_and_text(struct vline *, char *, size_t, const char **, const char **, int *);
 static void		 print_vline(int, int, WINDOW*, struct vline*);
 static void		 redraw_tabline(void);
 static void		 redraw_window(WINDOW *, int, int, int, int, struct buffer *);
@@ -214,13 +214,15 @@ restore_curs_x(struct buffer *buffer)
 	const char	*prfx, *text;
 
 	vl = buffer->current_line;
-	if (vl == NULL || vl->line == NULL)
+	if (vl == NULL || vl->len == 0)
 		buffer->curs_x = buffer->cpoff = 0;
 	else if (vl->parent->data != NULL) {
 		text = vl->parent->data;
 		buffer->curs_x = utf8_snwidth(text + 1, buffer->cpoff) + 1;
-	} else
-		buffer->curs_x = utf8_snwidth(vl->line, buffer->cpoff);
+	} else {
+		text = vl->parent->line + vl->from;
+		buffer->curs_x = utf8_snwidth(text, buffer->cpoff);
+	}
 
 	/* small hack: don't olivetti-mode the download pane */
 	if (buffer != &downloadwin)
@@ -456,13 +458,15 @@ rearrange_windows(void)
 
 static void
 line_prefix_and_text(struct vline *vl, char *buf, size_t len,
-    const char **prfx_ret, const char **text_ret)
+    const char **prfx_ret, const char **text_ret, int *text_len)
 {
 	int type, i, cont, width;
 	char *space, *t;
 
-	if ((*text_ret = vl->line) == NULL)
+	if (vl->len == 0) {
 		*text_ret = "";
+		*text_len = 0;
+	}
 
 	cont = vl->flags & L_CONTINUATION;
 	type = vl->parent->type;
@@ -472,8 +476,11 @@ line_prefix_and_text(struct vline *vl, char *buf, size_t len,
 		*prfx_ret = line_prefixes[type].prfx2;
 
 	space = vl->parent->data;
-	if (!emojify_link || type != LINE_LINK || space == NULL)
+	if (!emojify_link || type != LINE_LINK || space == NULL) {
+		*text_ret = vl->parent->line + vl->from;
+		*text_len = MIN(INT_MAX, vl->len);
 		return;
+	}
 
 	if (cont) {
 		memset(buf, 0, len);
@@ -491,6 +498,7 @@ line_prefix_and_text(struct vline *vl, char *buf, size_t len,
 	}
 
 	*prfx_ret = buf;
+	*text_len = INT_MAX;
 }
 
 static inline void
@@ -546,7 +554,7 @@ print_vline(int off, int width, WINDOW *window, struct vline *vl)
 	char emojibuf[41] = {0};
 	const char *text, *prfx;
 	struct line_face *f;
-	int i, left, x, y;
+	int i, left, x, y, textlen;
 
 	f = &line_faces[vl->parent->type];
 
@@ -556,7 +564,8 @@ print_vline(int off, int width, WINDOW *window, struct vline *vl)
 	if (vl->parent->type == LINE_FRINGE && fringe_ignore_offset)
 		off = 0;
 
-	line_prefix_and_text(vl, emojibuf, sizeof(emojibuf), &prfx, &text);
+	line_prefix_and_text(vl, emojibuf, sizeof(emojibuf), &prfx,
+	    &text, &textlen);
 
 	wattr_on(window, body_face.left, NULL);
 	for (i = 0; i < off; i++)
@@ -568,7 +577,7 @@ print_vline(int off, int width, WINDOW *window, struct vline *vl)
 	wattr_off(window, f->prefix, NULL);
 
 	wattr_on(window, f->text, NULL);
-	wprintw(window, "%s", text);
+	wprintw(window, "%.*s", textlen, text);
 	print_vline_descr(width, window, vl);
 	wattr_off(window, f->text, NULL);
 
@@ -913,6 +922,7 @@ do_redraw_minibuffer(void)
 	struct buffer	*cmplbuf, *buffer;
 	size_t		 off_y, off_x = 0;
 	const char	*start, *c;
+	char		*line;
 
 	cmplbuf = &ministate.compl.buffer;
 	buffer = &ministate.buffer;
@@ -935,7 +945,8 @@ do_redraw_minibuffer(void)
 	start = ministate.hist_cur != NULL
 		? ministate.hist_cur->h
 		: ministate.buf;
-	c = utf8_nth(buffer->current_line->line, buffer->cpoff);
+	line = buffer->current_line->parent->line + buffer->current_line->from;
+	c = utf8_nth(line, buffer->cpoff);
 	while (utf8_swidth_between(start, c) > (size_t)COLS/2) {
 		start = utf8_next_cp(start);
 	}

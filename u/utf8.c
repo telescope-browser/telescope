@@ -134,6 +134,18 @@ utf8_cplen(char *s)
 	return len;
 }
 
+size_t
+utf8_ncplen(const char *s, size_t slen)
+{
+	uint32_t cp = 0, state = 0;
+	size_t len = 0;
+
+	for (; slen > 0 && *s; ++s, --slen)
+		if (!decode(&state, &cp, *s))
+			len++;
+	return len;
+}
+
 /* returns only 0, 1, 2 or 8.  assumes sizeof(wchar_t) is 4 */
 size_t
 utf8_chwidth(uint32_t cp)

@@ -217,7 +217,7 @@ minibuffer_taint_hist(void)
 
 	strlcpy(ministate.buf, ministate.hist_cur->h, sizeof(ministate.buf));
 	ministate.hist_cur = NULL;
-	ministate.buffer.current_line->line = ministate.buf;
+	ministate.buffer.current_line->parent->line = ministate.buf;
 }
 
 void
@@ -232,7 +232,8 @@ minibuffer_self_insert(void)
 		return;
 
 	len = utf8_encode(thiskey.cp, tmp);
-	c = utf8_nth(ministate.buffer.current_line->line, ministate.buffer.cpoff);
+	c = utf8_nth(ministate.buffer.current_line->parent->line,
+	    ministate.buffer.cpoff);
 	if (c + len > ministate.buf + sizeof(ministate.buf) - 1)
 		return;
 
@@ -527,7 +528,7 @@ enter_minibuffer(void (*self_insert_fn)(void), void (*donefn)(void),
 	ministate.abortfn = abortfn;
 	memset(ministate.buf, 0, sizeof(ministate.buf));
 	ministate.buffer.current_line = &ministate.vline;
-	ministate.buffer.current_line->line = ministate.buf;
+	ministate.buffer.current_line->parent->line = ministate.buf;
 	ministate.buffer.cpoff = 0;
 	strlcpy(ministate.buf, "", sizeof(ministate.prompt));
 

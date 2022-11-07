@@ -64,7 +64,6 @@ empty_vlist(struct buffer *buffer)
 
 	TAILQ_FOREACH_SAFE(vl, &buffer->head, vlines, t) {
 		TAILQ_REMOVE(&buffer->head, vl, vlines);
-		free(vl->line);
 		free(vl);
 	}
 }
@@ -89,14 +88,12 @@ push_line(struct buffer *buffer, struct line *l, const char *buf, size_t len, in
 	if ((vl = calloc(1, sizeof(*vl))) == NULL)
 		return 0;
 
-	if (len != 0 && (vl->line = calloc(1, len+1)) == NULL) {
-		free(vl);
-		return 0;
-	}
-
 	vl->parent = l;
-	if (len != 0)
-		memcpy(vl->line, buf, len);
+	if (len != 0) {
+		vl->from = buf - l->line;
+		vl->len = len;
+		vl->cplen = utf8_ncplen(buf, vl->len);
+	}
 	vl->flags = flags;
 
 	TAILQ_INSERT_TAIL(&buffer->head, vl, vlines);
@@ -125,7 +122,7 @@ wrap_text(struct buffer *buffer, const char *prfx, struct line *l,
 
 	if (l->type == LINE_LINK && emojify_link &&
 	    emojied_line(l->line, &space)) {
-		prfxwidth = utf8_swidth_between(l->line, space);
+	    	prfxwidth = utf8_swidth_between(l->line, space);
 		cur = prfxwidth;
 		line = space + 1;
 	}

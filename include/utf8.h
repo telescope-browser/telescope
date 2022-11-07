@@ -25,6 +25,7 @@ uint32_t	 utf8_decode(uint32_t*restrict, uint32_t*restrict, uint8_t);
 size_t		 utf8_encode(uint32_t, char*);
 char		*utf8_nth(char*, size_t);
 size_t		 utf8_cplen(char*);
+size_t		 utf8_ncplen(const char *, size_t);
 size_t		 utf8_chwidth(uint32_t);
 size_t		 utf8_snwidth(const char*, size_t);
 size_t		 utf8_swidth(const char*);
