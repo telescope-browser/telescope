@@ -68,6 +68,7 @@ static int		 phos_resolve_uri_from(const struct phos_uri*, const struct phos_uri
 
 /* common defs */
 
+#if unused
 static inline int
 gen_delims(int c)
 {
@@ -79,6 +80,7 @@ gen_delims(int c)
 		|| c == ']'
 		|| c == '@';
 }
+#endif
 
 static inline int
 sub_delims(int c)
@@ -96,11 +98,13 @@ sub_delims(int c)
 		|| c == '=';
 }
 
+#if unused
 static inline int
 reserved(int c)
 {
 	return gen_delims(c) || sub_delims(c);
 }
+#endif
 
 static inline int
 unreserved(int c)
