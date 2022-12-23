@@ -33,6 +33,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "iri.h"
+
 typedef struct {
 	union {
 		char	*str;
@@ -467,21 +469,21 @@ setattr(char *prfx, char *line, char *trail)
 static void
 add_proxy(char *proto, char *proxy)
 {
+	static struct iri iri;
 	struct proxy *p;
-	struct phos_uri uri;
 
-	if (!phos_parse_absolute_uri(proxy, &uri)) {
+	if (iri_parse(NULL, proxy, &iri) == -1) {
 		yyerror("can't parse URL: %s", proxy);
 		return;
 	}
 
-	if (*uri.path != '\0' || *uri.query != '\0' || *uri.fragment != '\0') {
+	if (iri.iri_flags & (IH_PATH|IH_QUERY)) {
 		yyerror("proxy url can't have path, query or fragments");
 		return;
 	}
 
-	if (strcmp(uri.scheme, "gemini")) {
-		yyerror("disallowed proxy protocol %s", uri.scheme);
+	if (strcmp(iri.iri_scheme, "gemini")) {
+		yyerror("disallowed proxy protocol %s", iri.iri_scheme);
 		return;
 	}
 
@@ -491,10 +493,10 @@ add_proxy(char *proto, char *proxy)
 	p->match_proto = proto;
 	p->proto = PROTO_GEMINI;
 
-	if ((p->host = strdup(uri.host)) == NULL)
+	if ((p->host = strdup(iri.iri_host)) == NULL)
 		err(1, "strdup");
 
-	if ((p->port = strdup(uri.port)) == NULL)
+	if ((p->port = strdup(iri.iri_portstr)) == NULL)
 		err(1, "strdup");
 
 	TAILQ_INSERT_HEAD(&proxies, p, proxies);
