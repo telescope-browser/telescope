@@ -30,6 +30,8 @@ telescope_SOURCES =	cmd.c			\
 			include/ui.h		\
 			include/utf8.h		\
 			include/utils.h		\
+			iri.c			\
+			iri.h			\
 			keymap.c		\
 			mcache.c		\
 			mime.c			\
