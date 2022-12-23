@@ -23,6 +23,7 @@
 #include <string.h>
 
 #include "fs.h"
+#include "iri.h"
 #include "minibuffer.h"
 #include "session.h"
 #include "ui.h"
@@ -278,19 +279,25 @@ eecmd_select(void)
 void
 ir_select_gemini(void)
 {
-	char		 buf[1025] = {0};
-	struct phos_uri	 uri;
+	static struct iri	iri;
+	char		 buf[1025];
 	struct tab	*tab = current_tab;
 
 	minibuffer_hist_save_entry();
 
-	/* a bit ugly but... */
-	memcpy(&uri, &tab->uri, sizeof(tab->uri));
-	phos_uri_set_query(&uri, minibuffer_compl_text());
-	phos_serialize_uri(&uri, buf, sizeof(buf));
+	if (iri_parse(NULL, tab->hist_cur->h, &iri) == -1)
+		goto err;
+	if (iri_setquery(&iri, minibuffer_compl_text()) == -1)
+		goto err;
+	if (iri_unparse(&iri, buf, sizeof(buf)) == -1)
+		goto err;
 
 	exit_minibuffer();
 	load_url_in_tab(tab, buf, NULL, LU_MODE_NOCACHE);
+	return;
+
+ err:
+	message("Failed to select URL.");
 }
 
 void
