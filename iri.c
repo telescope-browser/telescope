@@ -572,13 +572,16 @@ iri_parse(const char *base, const char *str, struct iri *iri)
 
 	if (base == NULL) {
 		ibase.iri_flags = 0;
-		if (parse_uri(str, &iparsed) == -1)
+		if (parse_uri(str, &iparsed) == -1) {
+			errno = EINVAL;
 			return (-1);
+		}
 	} else {
-		if (parse_uri(base, &ibase) == -1)
+		if (parse_uri(base, &ibase) == -1 ||
+		    parse(str, &iparsed) == -1) {
+			errno = EINVAL;
 			return (-1);
-		if (parse(str, &iparsed) == -1)
-			return (-1);
+		}
 	}
 
 	if (iparsed.iri_flags & IH_SCHEME) {
@@ -616,10 +619,11 @@ iri_parse(const char *base, const char *str, struct iri *iri)
 			ibase.iri_path[0] = '\0';
 		if (!(iparsed.iri_flags & IH_PATH))
 			iparsed.iri_path[0] = '\0';
-		mergepath(iri->iri_path, sizeof(iri->iri_path),
-		    ibase.iri_path, iparsed.iri_path);
+		if (mergepath(iri, &ibase, &iparsed) == -1)
+			return (-1);
 	}
-	remove_dot_segments(iri);
+	if (remove_dot_segments(iri) == -1)
+		return (-1);
 	cpfields(iri, &ibase, IH_QUERY);
 	return (0);
 }
