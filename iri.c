@@ -616,7 +616,7 @@ iri_parse(const char *base, const char *str, struct iri *iri)
 	}
 
 	cpfields(iri, &iparsed, IH_QUERY);
-	if ((iparsed.iri_flags & IH_PATH) && !strcmp(iparsed.iri_path, "/"))
+	if ((iparsed.iri_flags & IH_PATH) && *iparsed.iri_path == '/')
 		cpfields(iri, &iparsed, IH_PATH);
 	else {
 		if (!(ibase.iri_flags & IH_PATH))
