@@ -472,7 +472,7 @@ cpfields(struct iri *dest, const struct iri *src, int flags)
 static inline int
 remove_dot_segments(struct iri *iri)
 {
-	char		*p, *q, *buf;
+	char		*p, *q, *buf, *s;
 	ptrdiff_t	 bufsize;
 
 	buf = p = q = iri->iri_path;
@@ -516,7 +516,8 @@ remove_dot_segments(struct iri *iri)
 			break;
 		}
 		/* E */
-		while (*p && *p != '/' && (q - buf < bufsize))
+		s = strchr(p + 1, '/');
+		while (*p && p != s && (q - buf < bufsize))
 			*q++ = *p++;
 	}
 
