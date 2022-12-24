@@ -628,7 +628,6 @@ iri_parse(const char *base, const char *str, struct iri *iri)
 	}
 	if (remove_dot_segments(iri) == -1)
 		return (-1);
-	cpfields(iri, &ibase, IH_QUERY);
 	return (0);
 }
 
