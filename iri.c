@@ -438,10 +438,11 @@ cpfields(struct iri *dest, const struct iri *src, int flags)
 		lowerify(dest->iri_scheme);
 	}
 	if (flags & IH_UINFO) {
-		dest->iri_flags |= IH_UINFO;
-		if (src->iri_flags & IH_UINFO)
+		if (src->iri_flags & IH_UINFO) {
 			memcpy(dest->iri_uinfo, src->iri_uinfo,
 			    sizeof(dest->iri_uinfo));
+			dest->iri_flags |= IH_UINFO;
+		}
 	}
 	if (flags & IH_HOST) {
 		dest->iri_flags |= IH_HOST;
@@ -451,9 +452,10 @@ cpfields(struct iri *dest, const struct iri *src, int flags)
 		lowerify(dest->iri_host);
 	}
 	if (flags & IH_PORT) {
-		dest->iri_flags |= IH_PORT;
-		if (src->iri_flags & IH_PORT)
+		if (src->iri_flags & IH_PORT) {
 			dest->iri_port = src->iri_port;
+			dest->iri_flags |= IH_PORT;
+		}
 	}
 	if (flags & IH_PATH) {
 		dest->iri_flags |= IH_PATH;
@@ -462,10 +464,11 @@ cpfields(struct iri *dest, const struct iri *src, int flags)
 			    sizeof(dest->iri_path));
 	}
 	if (flags & IH_QUERY) {
-		dest->iri_flags |= IH_QUERY;
-		if (src->iri_flags & IH_QUERY)
+		if (src->iri_flags & IH_QUERY) {
+			dest->iri_flags |= IH_QUERY;
 			memcpy(dest->iri_query, src->iri_query,
 			    sizeof(dest->iri_query));
+		}
 	}
 }
 
