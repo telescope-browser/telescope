@@ -668,7 +668,7 @@ iri_unparse(const struct iri *i, char *buf, size_t buflen)
 	}
 
 	if (i->iri_flags & IH_PATH) {
-		if (!(i->iri_flags & IH_AUTHORITY) &&
+		if (i->iri_flags & IH_AUTHORITY &&
 		    i->iri_path[0] != '/' &&
 		    strlcat(buf, "/", buflen) >= buflen)
 			goto err;
