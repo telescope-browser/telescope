@@ -487,7 +487,7 @@ remove_dot_segments(struct iri *iri)
 			p += 3;
 			continue;
 		}
-		if (!strncmp(p, "./", 3)) {
+		if (!strncmp(p, "./", 2)) {
 			p += 2;
 			continue;
 		}
