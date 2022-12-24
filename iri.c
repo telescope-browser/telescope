@@ -630,9 +630,60 @@ iri_parse(const char *base, const char *str, struct iri *iri)
 }
 
 int
-iri_unparse(const struct iri *iri, char *buf, size_t buflen)
+iri_unparse(const struct iri *i, char *buf, size_t buflen)
 {
-	memset(buf, 0, buflen);
+	if (buflen == 0)
+		goto err;
+
+	/* TODO: should %enc octets if needed */
+
+	buf[0] = '\0';
+
+	if (i->iri_flags & IH_SCHEME) {
+		if (strlcat(buf, i->iri_scheme, buflen) >= buflen ||
+		    strlcat(buf, ":", buflen) >= buflen)
+			goto err;
+	}
+
+	if (i->iri_flags & IH_AUTHORITY) {
+		if (strlcat(buf, "//", buflen) >= buflen)
+			goto err;
+	}
+
+	if (i->iri_flags & IH_UINFO) {
+		if (strlcat(buf, i->iri_uinfo, buflen) >= buflen ||
+		    strlcat(buf, "@", buflen) >= buflen)
+			goto err;
+	}
+	if (i->iri_flags & IH_HOST) {
+		if (strlcat(buf, i->iri_host, buflen) >= buflen)
+			goto err;
+	}
+	if (i->iri_flags & IH_PORT) {
+		if (strlcat(buf, ":", buflen) >= buflen ||
+		    strlcat(buf, i->iri_portstr, buflen) >= buflen)
+			goto err;
+	}
+
+	if (i->iri_flags & IH_PATH) {
+		if (!(i->iri_flags & IH_AUTHORITY) &&
+		    i->iri_path[0] != '/' &&
+		    strlcat(buf, "/", buflen) >= buflen)
+			goto err;
+		if (strlcat(buf, i->iri_path, buflen) >= buflen)
+			goto err;
+	}
+
+	if (i->iri_flags & IH_QUERY) {
+		if (strlcat(buf, "?", buflen) >= buflen ||
+		    strlcat(buf, i->iri_query, buflen) >= buflen)
+			goto err;
+	}
+
+	return (0);
+
+ err:
+	errno = ENOBUFS;
 	return (-1);
 }
 
