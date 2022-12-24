@@ -15,6 +15,8 @@
  */
 
 #include <ctype.h>
+#include <errno.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -467,19 +469,98 @@ cpfields(struct iri *dest, const struct iri *src, int flags)
 	}
 }
 
-static inline void
+static inline int
 remove_dot_segments(struct iri *iri)
 {
-	/* TODO: fixup iri->iri_path */
-	return;
+	char		*p, *q, *buf;
+	ptrdiff_t	 bufsize;
+
+	buf = p = q = iri->iri_path;
+	bufsize = sizeof(iri->iri_path);
+
+	while (*p && (q - buf < bufsize)) {
+		/* A */
+		if (!strncmp(p, "../", 3)) {
+			p += 3;
+			continue;
+		}
+		if (!strncmp(p, "./", 3)) {
+			p += 2;
+			continue;
+		}
+		/* B */
+		if (!strncmp(p, "/./", 3)) {
+			*q++ = '/';
+			p += 3;
+			continue;
+		}
+		if (!strcmp(p, "/.")) {
+			p += 2;
+			break;
+		}
+		/* C */
+		if (p[0] == '/' && p[1] == '.' && p[2] == '.' &&
+		    (p[3] == '/' || p[3] == '\0')) {
+			p += 3;
+			while (q != buf && *--q != '/')
+				continue;
+			continue;
+		}
+		/* D */
+		if (!strcmp(p, ".")) {
+			p++;
+			break;
+		}
+		if (!strcmp(p, "..")) {
+			p += 2;
+			break;
+		}
+		/* E */
+		while (*p && *p != '/' && (q - buf < bufsize))
+			*q++ = *p++;
+	}
+
+	if (*p == '\0' && (q - buf < bufsize)) {
+		*q = '\0';
+		return (0);
+	}
+
+	errno = ENAMETOOLONG;
+	return (-1);
 }
 
-static inline void
-mergepath(char *out, size_t len, const char *a, const char *b)
+static inline int
+mergepath(struct iri *i, struct iri *base, struct iri *r)
 {
-	/* TODO: compute into out path `b' resolved from `a' */
-	memset(out, 0, len);
-	return;
+	const char	*bpath, *rpath, *s;
+
+	bpath = (base->iri_flags & IH_PATH) ? base->iri_path : "/";
+	rpath = (r->iri_flags & IH_PATH) ? r->iri_path : "/";
+
+	i->iri_flags |= IH_PATH;
+	i->iri_path[0] = '\0';
+
+	if ((base->iri_flags & IH_AUTHORITY) &&
+	    (*bpath == '\0' || !strcmp(bpath, "/"))) {
+		if (*rpath == '/')
+			rpath++;
+		strlcpy(i->iri_path, "/", sizeof(i->iri_path));
+		strlcat(i->iri_path, rpath, sizeof(i->iri_path));
+		return (0);
+	}
+
+	if ((s = strrchr(bpath, '/')) != NULL) {
+		cpstr(bpath, s + 1, i->iri_path, sizeof(i->iri_path));
+		if (*rpath == '/')
+			rpath++;
+	}
+	if (strlcat(i->iri_path, rpath, sizeof(i->iri_path)) >=
+	    sizeof(i->iri_path)) {
+		errno = ENAMETOOLONG;
+		return (-1);
+	}
+
+	return (0);
 }
 
 int
