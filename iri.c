@@ -519,7 +519,8 @@ remove_dot_segments(struct iri *iri)
 			break;
 		}
 		/* E */
-		s = strchr(p + 1, '/');
+		if ((s = strchr(p + 1, '/')) != NULL)
+			s++;
 		while (*p && p != s && (q - buf < bufsize))
 			*q++ = *p++;
 	}
