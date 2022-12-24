@@ -498,6 +498,7 @@ remove_dot_segments(struct iri *iri)
 			continue;
 		}
 		if (!strcmp(p, "/.")) {
+			*q++ = '/';
 			p += 2;
 			break;
 		}
@@ -507,6 +508,7 @@ remove_dot_segments(struct iri *iri)
 			p += 3;
 			while (q != buf && *--q != '/')
 				continue;
+			*q++ = '/';
 			continue;
 		}
 		/* D */
@@ -519,8 +521,7 @@ remove_dot_segments(struct iri *iri)
 			break;
 		}
 		/* E */
-		if ((s = strchr(p + 1, '/')) != NULL)
-			s++;
+		s = strchr(p + 1, '/');
 		while (*p && p != s && (q - buf < bufsize))
 			*q++ = *p++;
 	}
