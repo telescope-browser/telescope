@@ -418,6 +418,13 @@ parse(const char *s, struct iri *iri)
 	return (0);
 }
 
+static inline void
+lowerify(char *s)
+{
+	for (; *s; ++s)
+		*s = tolower((unsigned char)*s);
+}
+
 static void
 cpfields(struct iri *dest, const struct iri *src, int flags)
 {
@@ -426,6 +433,7 @@ cpfields(struct iri *dest, const struct iri *src, int flags)
 		if (src->iri_flags & IH_SCHEME)
 			memcpy(dest->iri_scheme, src->iri_scheme,
 			    sizeof(dest->iri_scheme));
+		lowerify(dest->iri_scheme);
 	}
 	if (flags & IH_UINFO) {
 		dest->iri_flags |= IH_UINFO;
@@ -438,6 +446,7 @@ cpfields(struct iri *dest, const struct iri *src, int flags)
 		if (src->iri_flags & IH_HOST)
 			memcpy(dest->iri_host, src->iri_host,
 			    sizeof(dest->iri_host));
+		lowerify(dest->iri_host);
 	}
 	if (flags & IH_PORT) {
 		dest->iri_flags |= IH_PORT;
