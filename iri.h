@@ -25,6 +25,7 @@ struct iri {
 	uint16_t	iri_port;
 	char		iri_path[1024];
 	char		iri_query[1024];
+	char		iri_fragment[1024];
 
 #define IH_SCHEME	0x01
 #define IH_UINFO	0x02
@@ -33,6 +34,7 @@ struct iri {
 #define IH_AUTHORITY	(IH_UINFO|IH_HOST|IH_PORT)
 #define IH_PATH		0x10
 #define IH_QUERY	0x20
+#define IH_FRAGMENT	0x40
 	int		iri_flags;
 };
 

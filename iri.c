@@ -365,6 +365,26 @@ parse_query(const char *s, struct iri *iri)
 	return (t);
 }
 
+static const char *
+parse_fragment(const char *s, struct iri *iri)
+{
+	const char	*n, *t = s;
+
+	for (;;) {
+		if ((n = advance_pchar(t)) != NULL)
+			t = n;
+		else if (*t == '/' || *t == '?')
+			t++;
+		else
+			break;
+	}
+
+	if (cpstr(s, t, iri->iri_fragment, sizeof(iri->iri_fragment)) == -1)
+		return (NULL);
+	iri->iri_flags |= IH_FRAGMENT;
+	return (t);
+}
+
 static int
 parse_uri(const char *s, struct iri *iri)
 {
@@ -380,8 +400,10 @@ parse_uri(const char *s, struct iri *iri)
 	if (*s == '?' && (s = parse_query(s + 1, iri)) == NULL)
 		return (-1);
 
-	/* skip fragments */
-	if (*s == '#' || *s == '\0')
+	if (*s == '#' && (s = parse_fragment(s + 1, iri)) == NULL)
+		return (-1);
+
+	if (*s == '\0')
 		return (0);
 
 	return (-1);
@@ -396,8 +418,10 @@ parse_relative_ref(const char *s, struct iri *iri)
 	if (*s == '?' && (s = parse_query(s + 1, iri)) == NULL)
 		return (-1);
 
-	/* skip fragments */
-	if (*s == '#' || *s == '\0')
+	if (*s == '#' && (s = parse_fragment(s + 1, iri)) == NULL)
+		return (-1);
+
+	if (*s == '\0')
 		return (0);
 
 	return (-1);
@@ -468,6 +492,13 @@ cpfields(struct iri *dest, const struct iri *src, int flags)
 			dest->iri_flags |= IH_QUERY;
 			memcpy(dest->iri_query, src->iri_query,
 			    sizeof(dest->iri_query));
+		}
+	}
+	if (flags & IH_FRAGMENT) {
+		if (src->iri_flags & IH_FRAGMENT) {
+			dest->iri_flags |= IH_FRAGMENT;
+			memcpy(dest->iri_fragment, src->iri_fragment,
+			    sizeof(dest->iri_fragment));
 		}
 	}
 }
@@ -560,13 +591,13 @@ iri_parse(const char *base, const char *str, struct iri *iri)
 		}
 	}
 
+	cpfields(iri, &iparsed, IH_FRAGMENT);
+
 	if (iparsed.iri_flags & IH_SCHEME) {
 		cpfields(iri, &iparsed, iparsed.iri_flags);
 		remove_dot_segments(iri);
 		return (0);
 	}
-
-	/* if fragments are supported, copy iparsed fragment to iri */
 
 	cpfields(iri, &ibase, IH_SCHEME);
 
@@ -651,6 +682,12 @@ iri_unparse(const struct iri *i, char *buf, size_t buflen)
 	if (i->iri_flags & IH_QUERY) {
 		if (strlcat(buf, "?", buflen) >= buflen ||
 		    strlcat(buf, i->iri_query, buflen) >= buflen)
+			goto err;
+	}
+
+	if (i->iri_flags & IH_FRAGMENT) {
+		if (strlcat(buf, "#", buflen) >= buflen ||
+		    strlcat(buf, i->iri_fragment, buflen) >= buflen)
 			goto err;
 	}
 

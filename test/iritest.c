@@ -70,12 +70,12 @@ main(void)
 
 	ret |= check(base, "?y", "http://a/b/c/d;p?y");
 	ret |= check(base, "g?y", "http://a/b/c/g?y");
-//	ret |= check(base, "#s", "http://a/b/c/d;p?q#s");
-//	ret |= check(base, "g#s", "http://a/b/c/g#s");
-//	ret |= check(base, "g?y#s", "http://a/b/c/g?y#s");
+	ret |= check(base, "#s", "http://a/b/c/d;p?q#s");
+	ret |= check(base, "g#s", "http://a/b/c/g#s");
+	ret |= check(base, "g?y#s", "http://a/b/c/g?y#s");
 	ret |= check(base, ";x", "http://a/b/c/;x");
 	ret |= check(base, "g;x", "http://a/b/c/g;x");
-//	ret |= check(base, "g;x?y#s", "http://a/b/c/g;x?y#s");
+	ret |= check(base, "g;x?y#s", "http://a/b/c/g;x?y#s");
 	ret |= check(base, "", "http://a/b/c/d;p?q");
 	ret |= check(base, ".", "http://a/b/c/");
 	ret |= check(base, "./", "http://a/b/c/");
@@ -104,8 +104,8 @@ main(void)
 
 	ret |= check(base, "g?y/./x", "http://a/b/c/g?y/./x");
 	ret |= check(base, "g?y/../x", "http://a/b/c/g?y/../x");
-//	ret |= check(base, "g#s/./x", "http://a/b/c/g#s/./x");
-//	ret |= check(base, "g#s/../x", "http://a/b/c/g#s/../x");
+	ret |= check(base, "g#s/./x", "http://a/b/c/g#s/./x");
+	ret |= check(base, "g#s/../x", "http://a/b/c/g#s/../x");
 
 	ret |= check(base, "http:g", "http:g");
 
