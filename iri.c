@@ -473,60 +473,30 @@ cpfields(struct iri *dest, const struct iri *src, int flags)
 }
 
 static inline int
-remove_dot_segments(struct iri *iri)
+remove_dot_segments(struct iri *i)
 {
-	char		*p, *q, *buf, *s;
+	char		*p, *q, *buf;
 	ptrdiff_t	 bufsize;
 
-	buf = p = q = iri->iri_path;
-	bufsize = sizeof(iri->iri_path);
-
+	buf = p = q = i->iri_path;
+	bufsize = sizeof(i->iri_path);
 	while (*p && (q - buf < bufsize)) {
-		/* A */
-		if (!strncmp(p, "../", 3)) {
-			p += 3;
-			continue;
-		}
-		if (!strncmp(p, "./", 2)) {
+		if (p[0] == '/' && p[1] == '.' &&
+		    (p[2] == '/' || p[2] == '\0')) {
 			p += 2;
-			continue;
-		}
-		/* B */
-		if (!strncmp(p, "/./", 3)) {
-			*q++ = '/';
-			p += 3;
-			continue;
-		}
-		if (!strcmp(p, "/.")) {
-			*q++ = '/';
-			p += 2;
-			break;
-		}
-		/* C */
-		if (p[0] == '/' && p[1] == '.' && p[2] == '.' &&
+			if (*p != '/')
+				*q++ = '/';
+		} else if (p[0] == '/' && p[1] == '.' && p[2] == '.' &&
 		    (p[3] == '/' || p[3] == '\0')) {
 			p += 3;
-			while (q != buf && *--q != '/')
+			while (q > buf && *--q != '/')
 				continue;
-			*q++ = '/';
-			continue;
-		}
-		/* D */
-		if (!strcmp(p, ".")) {
-			p++;
-			break;
-		}
-		if (!strcmp(p, "..")) {
-			p += 2;
-			break;
-		}
-		/* E */
-		s = strchr(p + 1, '/');
-		while (*p && p != s && (q - buf < bufsize))
+			if (*p != '/' && (q > buf && q[-1] != '/'))
+				*q++ = '/';
+		} else
 			*q++ = *p++;
 	}
-
-	if (*p == '\0' && (q - buf < bufsize)) {
+	if ((*p == '\0') && (q - buf < bufsize)) {
 		*q = '\0';
 		return (0);
 	}
