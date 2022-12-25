@@ -477,7 +477,8 @@ add_proxy(char *proto, char *proxy)
 		return;
 	}
 
-	if (iri.iri_flags & (IH_PATH|IH_QUERY)) {
+	if ((iri.iri_flags & (IH_QUERY|IH_FRAGMENT)) ||
+	    iri.iri_path[0] != '\0') {
 		yyerror("proxy url can't have path, query or fragments");
 		return;
 	}
