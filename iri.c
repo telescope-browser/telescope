@@ -224,7 +224,7 @@ parse_authority(const char *s, struct iri *iri)
 		return (NULL);
 
 	if (*t == ':')
-		return (parse_port(t, iri));
+		return (parse_port(t + 1, iri));
 
 	return (t);
 }
