@@ -389,6 +389,8 @@ parse_fragment(const char *s, struct iri *iri)
 static int
 parse_uri(const char *s, struct iri *iri)
 {
+	iri->iri_flags = 0;
+
 	if ((s = parse_scheme(s, iri)) == NULL)
 		return (-1);
 
