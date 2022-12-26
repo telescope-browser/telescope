@@ -28,25 +28,26 @@ resolve(const char *base, const char *ref, const char *expected)
 	char			buf[512];
 
 	if (iri_parse(base, ref, &i) == -1) {
-		fprintf(stderr, "FAIL (\"%s\", \"%s\") %s\n", base, ref,
+		fprintf(stderr, "FAIL resolve(\"%s\", \"%s\") %s\n", base, ref,
 		    strerror(errno));
 		return (1);
 	}
 
 	if (iri_unparse(&i, buf, sizeof(buf)) == -1) {
-		fprintf(stderr, "FAIL (\"%s\", \"%s\") %s\n", base, ref,
+		fprintf(stderr, "FAIL resolve(\"%s\", \"%s\") %s\n", base, ref,
 		    strerror(errno));
 		return (1);
 	}
 
 	if (strcmp(buf, expected) != 0) {
-		fprintf(stderr, "FAIL (\"%s\", \"%s\")\n", base, ref);
+		fprintf(stderr, "FAIL resolve(\"%s\", \"%s\")\n", base, ref);
 		fprintf(stderr, "got:\t%s\n", buf);
 		fprintf(stderr, "want:\t%s\n", expected);
 		return (1);
 	}
 
-	fprintf(stderr, "OK (\"%s\", \"%s\") -> %s\n", base, ref, expected);
+	fprintf(stderr, "OK resolve(\"%s\", \"%s\") -> %s\n", base, ref,
+	    expected);
 	return (0);
 }
 
