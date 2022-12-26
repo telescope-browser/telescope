@@ -347,7 +347,7 @@ parse_relative(const char *s, struct iri *iri)
 }
 
 static const char *
-parse_query(const char *s, struct iri *iri)
+parse_qf(const char *s, int flag, struct iri *iri, char *buf, size_t bufsize)
 {
 	const char	*n, *t = s;
 
@@ -360,29 +360,9 @@ parse_query(const char *s, struct iri *iri)
 			break;
 	}
 
-	if (cpstr(s, t, iri->iri_query, sizeof(iri->iri_query)) == -1)
+	if (cpstr(s, t, buf, bufsize) == -1)
 		return (NULL);
-	iri->iri_flags |= IH_QUERY;
-	return (t);
-}
-
-static const char *
-parse_fragment(const char *s, struct iri *iri)
-{
-	const char	*n, *t = s;
-
-	for (;;) {
-		if ((n = advance_pchar(t)) != NULL)
-			t = n;
-		else if (*t == '/' || *t == '?')
-			t++;
-		else
-			break;
-	}
-
-	if (cpstr(s, t, iri->iri_fragment, sizeof(iri->iri_fragment)) == -1)
-		return (NULL);
-	iri->iri_flags |= IH_FRAGMENT;
+	iri->iri_flags |= flag;
 	return (t);
 }
 
@@ -400,11 +380,19 @@ parse_uri(const char *s, struct iri *iri)
 	if ((s = parse_hier(s + 1, iri)) == NULL)
 		return (-1);
 
-	if (*s == '?' && (s = parse_query(s + 1, iri)) == NULL)
-		return (-1);
+	if (*s == '?') {
+		s = parse_qf(s + 1, IH_QUERY, iri, iri->iri_query,
+		    sizeof(iri->iri_query));
+		if (s == NULL)
+			return (-1);
+	}
 
-	if (*s == '#' && (s = parse_fragment(s + 1, iri)) == NULL)
-		return (-1);
+	if (*s == '#') {
+		s = parse_qf(s + 1, IH_FRAGMENT, iri, iri->iri_fragment,
+		    sizeof(iri->iri_fragment));
+		if (s == NULL)
+			return (-1);
+	}
 
 	if (*s == '\0')
 		return (0);
@@ -418,11 +406,19 @@ parse_relative_ref(const char *s, struct iri *iri)
 	if ((s = parse_relative(s, iri)) == NULL)
 		return (-1);
 
-	if (*s == '?' && (s = parse_query(s + 1, iri)) == NULL)
-		return (-1);
+	if (*s == '?') {
+		s = parse_qf(s + 1, IH_QUERY, iri, iri->iri_query,
+		    sizeof(iri->iri_query));
+		if (s == NULL)
+			return (-1);
+	}
 
-	if (*s == '#' && (s = parse_fragment(s + 1, iri)) == NULL)
-		return (-1);
+	if (*s == '#') {
+		s = parse_qf(s + 1, IH_FRAGMENT, iri, iri->iri_fragment,
+		    sizeof(iri->iri_fragment));
+		if (s == NULL)
+			return (-1);
+	}
 
 	if (*s == '\0')
 		return (0);
