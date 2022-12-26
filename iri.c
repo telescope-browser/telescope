@@ -711,7 +711,7 @@ iri_setquery(struct iri *iri, const char *p)
 {
 	ptrdiff_t	 bufsize;
 	int		 r;
-	char		*buf, *q;
+	char		*buf, *q, tmp[4];
 
 	buf = q = iri->iri_query;
 	bufsize = sizeof(iri->iri_query);
@@ -720,12 +720,15 @@ iri_setquery(struct iri *iri, const char *p)
 		    *p == '/' || *p == '?')
 			*q++ = *p++;
 		else {
-			if (q - buf >= bufsize - 4)
+			if (q - buf >= bufsize - 3)
 				goto err;
-			r = snprintf(q, 4, "%%%02X", (int)*p);
-			if (r < 0 || r > 4)
+			r = snprintf(tmp, sizeof(tmp), "%%%02X", (int)*p);
+			if (r < 0 || (size_t)r > sizeof(tmp))
 				return (-1);
-			p++, q += 3;
+			*q++ = tmp[0];
+			*q++ = tmp[1];
+			*q++ = tmp[2];
+			p++;
 		}
 	}
 	if ((*p == '\0') && (q - buf < bufsize)) {
