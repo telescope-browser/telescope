@@ -481,6 +481,8 @@ cpfields(struct iri *dest, const struct iri *src, int flags)
 	if (flags & IH_PORT) {
 		if (src->iri_flags & IH_PORT) {
 			dest->iri_port = src->iri_port;
+			memcpy(dest->iri_portstr, src->iri_portstr,
+			    sizeof(dest->iri_portstr));
 			dest->iri_flags |= IH_PORT;
 		}
 	}
