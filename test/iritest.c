@@ -51,11 +51,51 @@ resolve(const char *base, const char *ref, const char *expected)
 	return (0);
 }
 
+static int
+setquery(const char *iri, const char *query, const char *expected)
+{
+	static struct iri	i;
+	char			buf[512];
+
+	if (iri_parse(NULL, iri, &i) == -1) {
+		fprintf(stderr, "FAIL can't parse <%s>: %s\n", iri,
+		    strerror(errno));
+		return (1);
+	}
+
+	if (iri_setquery(&i, query) == -1) {
+		fprintf(stderr, "FAIL setting query \"%s\": %s\n", query,
+		    strerror(errno));
+		return (1);
+	}
+
+	if (iri_unparse(&i, buf, sizeof(buf)) == -1) {
+		fprintf(stderr, "FAIL unparsing <%s> with query %s\n",
+		    iri, query);
+		return (1);
+	}
+
+	if (strcmp(buf, expected) != 0) {
+		fprintf(stderr, "FAIL setquery(\"%s\", \"%s\")\n", iri, query);
+		fprintf(stderr, "got:\t%s\n", buf);
+		fprintf(stderr, "want:\t%s\n", expected);
+		return (1);
+	}
+
+	fprintf(stderr, "OK setquery(\"%s\", \"%s\") -> %s\n", iri, query,
+	    expected);
+	return (0);
+}
+
 int
 main(void)
 {
-	const char	*base = "http://a/b/c/d;p?q";
+	const char	*base;
 	int		 ret = 0;
+
+	/* RFC 3986 tests */
+
+	base = "http://a/b/c/d;p?q";
 
 	ret |= resolve(base, "g:h", "g:h");
 	ret |= resolve(base, "g", "http://a/b/c/g");
@@ -109,6 +149,15 @@ main(void)
 	ret |= resolve(base, "g#s/../x", "http://a/b/c/g#s/../x");
 
 	ret |= resolve(base, "http:g", "http:g");
+
+	/* extra tests */
+
+	base = "gemini://a/b/c";
+
+	ret |= setquery(base, "hw", "gemini://a/b/c?hw");
+	ret |= setquery(base, "h w", "gemini://a/b/c?h%20w");
+	ret |= setquery(base, "100%", "gemini://a/b/c?100%25");
+	ret |= setquery(base, "%20", "gemini://a/b/c?%2520");
 
 	return (ret);
 }
