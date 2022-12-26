@@ -507,13 +507,11 @@ cpfields(struct iri *dest, const struct iri *src, int flags)
 }
 
 static inline int
-remove_dot_segments(struct iri *i)
+remove_dot_segments(char *buf, ptrdiff_t bufsize)
 {
-	char		*p, *q, *buf;
-	ptrdiff_t	 bufsize;
+	char		*p, *q;
 
-	buf = p = q = i->iri_path;
-	bufsize = sizeof(i->iri_path);
+	p = q = buf;
 	while (*p && (q - buf < bufsize)) {
 		if (p[0] == '/' && p[1] == '.' &&
 		    (p[2] == '/' || p[2] == '\0')) {
@@ -598,7 +596,7 @@ iri_parse(const char *base, const char *str, struct iri *iri)
 
 	if (iparsed.iri_flags & IH_SCHEME) {
 		cpfields(iri, &iparsed, iparsed.iri_flags);
-		remove_dot_segments(iri);
+		remove_dot_segments(iri->iri_path, sizeof(iri->iri_path));
 		return (0);
 	}
 
@@ -606,7 +604,7 @@ iri_parse(const char *base, const char *str, struct iri *iri)
 
 	if (iparsed.iri_flags & IH_HOST) {
 		cpfields(iri, &iparsed, IH_AUTHORITY|IH_PATH|IH_QUERY);
-		remove_dot_segments(iri);
+		remove_dot_segments(iri->iri_path, sizeof(iri->iri_path));
 		return (0);
 	}
 
@@ -632,7 +630,7 @@ iri_parse(const char *base, const char *str, struct iri *iri)
 		if (mergepath(iri, &ibase, &iparsed) == -1)
 			return (-1);
 	}
-	if (remove_dot_segments(iri) == -1)
+	if (remove_dot_segments(iri->iri_path, sizeof(iri->iri_path)) == -1)
 		return (-1);
 	return (0);
 }
