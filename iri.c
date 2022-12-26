@@ -538,32 +538,33 @@ remove_dot_segments(char *buf, ptrdiff_t bufsize)
 }
 
 static inline int
-mergepath(struct iri *i, struct iri *base, struct iri *r)
+mergepath(char *buf, size_t bufsize, int abs, const char *base, const char *r)
 {
-	const char	*bpath, *rpath, *s;
+	const char	*s;
 
-	bpath = (base->iri_flags & IH_PATH) ? base->iri_path : "/";
-	rpath = (r->iri_flags & IH_PATH) ? r->iri_path : "/";
+	if (base == NULL || *base == '\0')
+		base = "/";
+	if (r == NULL || *r == '\0')
+		r = "/";
 
-	i->iri_flags |= IH_PATH;
-	i->iri_path[0] = '\0';
+	if (bufsize == 0)
+		return (-1);
+	buf[0] = '\0';
 
-	if ((base->iri_flags & IH_AUTHORITY) &&
-	    (*bpath == '\0' || !strcmp(bpath, "/"))) {
-		if (*rpath == '/')
-			rpath++;
-		strlcpy(i->iri_path, "/", sizeof(i->iri_path));
-		strlcat(i->iri_path, rpath, sizeof(i->iri_path));
+	if (abs && (*base == '\0' || !strcmp(base, "/"))) {
+		if (*r == '/')
+			r++;
+		strlcpy(buf, "/", bufsize);
+		strlcat(buf, r, bufsize);
 		return (0);
 	}
 
-	if ((s = strrchr(bpath, '/')) != NULL) {
-		cpstr(bpath, s + 1, i->iri_path, sizeof(i->iri_path));
-		if (*rpath == '/')
-			rpath++;
+	if ((s = strrchr(base, '/')) != NULL) {
+		cpstr(base, s + 1, buf, bufsize);
+		if (*r == '/')
+			r++;
 	}
-	if (strlcat(i->iri_path, rpath, sizeof(i->iri_path)) >=
-	    sizeof(i->iri_path)) {
+	if (strlcat(buf, r, bufsize) >= bufsize) {
 		errno = ENAMETOOLONG;
 		return (-1);
 	}
@@ -627,8 +628,11 @@ iri_parse(const char *base, const char *str, struct iri *iri)
 			ibase.iri_path[0] = '\0';
 		if (!(iparsed.iri_flags & IH_PATH))
 			iparsed.iri_path[0] = '\0';
-		if (mergepath(iri, &ibase, &iparsed) == -1)
+		if (mergepath(iri->iri_path, sizeof(iri->iri_path),
+		    ibase.iri_flags & IH_AUTHORITY, ibase.iri_path,
+		    iparsed.iri_path) == -1)
 			return (-1);
+		iri->iri_flags |= IH_PATH;
 	}
 	if (remove_dot_segments(iri->iri_path, sizeof(iri->iri_path)) == -1)
 		return (-1);
