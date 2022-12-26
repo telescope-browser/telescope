@@ -152,12 +152,18 @@ main(void)
 
 	/* extra tests */
 
-	base = "gemini://a/b/c";
+	ret |= resolve(base, "gopher://b:70", "gopher://b:70/");
 
+	base = "gemini://a/b/c";
 	ret |= setquery(base, "hw", "gemini://a/b/c?hw");
 	ret |= setquery(base, "h w", "gemini://a/b/c?h%20w");
 	ret |= setquery(base, "100%", "gemini://a/b/c?100%25");
 	ret |= setquery(base, "%20", "gemini://a/b/c?%2520");
+
+	base = "gemini://a/?foo+bar";
+	ret |= setquery(base, "foo", "gemini://a/?foo");
+	ret |= setquery(base, "%20", "gemini://a/?%2520");
+	ret |= setquery(base, "%20%20%20", "gemini://a/?%2520%2520%2520");
 
 	return (ret);
 }
