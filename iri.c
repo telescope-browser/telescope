@@ -18,6 +18,7 @@
 #include <errno.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -706,7 +707,34 @@ iri_human(const struct iri *iri, char *buf, size_t buflen)
 }
 
 int
-iri_setquery(struct iri *iri, const char *text)
+iri_setquery(struct iri *iri, const char *p)
 {
+	ptrdiff_t	 bufsize;
+	int		 r;
+	char		*buf, *q;
+
+	buf = q = iri->iri_query;
+	bufsize = sizeof(iri->iri_query);
+	while (*p && (q - buf < bufsize)) {
+		if (unreserved(*p) || sub_delims(*p) || *p == ':' || *p == '@' ||
+		    *p == '/' || *p == '?')
+			*q++ = *p++;
+		else {
+			if (q - buf >= bufsize - 4)
+				goto err;
+			r = snprintf(q, 4, "%%%02X", (int)*p);
+			if (r < 0 || r > 4)
+				return (-1);
+			p++, q += 3;
+		}
+	}
+	if ((*p == '\0') && (q - buf < bufsize)) {
+		iri->iri_flags |= IH_QUERY;
+		*q = '\0';
+		return (0);
+	}
+
+ err:
+	errno = ENOBUFS;
 	return (-1);
 }
