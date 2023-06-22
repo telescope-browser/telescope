@@ -14,6 +14,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "compat.h"
+
 #include <ctype.h>
 #include <errno.h>
 #include <stddef.h>
