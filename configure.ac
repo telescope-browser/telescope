@@ -67,6 +67,16 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
 	AC_DEFINE([HAVE_QUEUE_H], 1, [QUEUE_H])
 ], AC_MSG_RESULT(no))
 
+AC_CHECK_HEADER([endian.h], [AC_DEFINE(HAVE_ENDIAN_H, 1, [have endian.h])], [
+	AC_CHECK_HEADER([sys/endian.h],
+		[AC_DEFINE(HAVE_SYS_ENDIAN_H, 1, [have sys/endian.h])], [
+		AC_CHECK_HEADERS([libkern/OSByteOrder.h],
+			[AC_DEFINE(HAVE_LIBKERN_OSBYTEORDER_H, 1, [have OSByteOrder.h])],
+			[AC_MSG_ERROR([can't find compatible endian.h header])],
+			[#include <machine/endian.h>])
+	])
+])
+
 AC_CHECK_DECL(PR_SET_NAME, AC_DEFINE([HAVE_PR_SET_NAME], 1, [pr_set_name]), [],
 	[[#include <sys/prctl.h>]])
 
