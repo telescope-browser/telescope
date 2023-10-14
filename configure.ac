@@ -88,7 +88,7 @@ AC_SEARCH_LIBS([keyname], [ncursesw ncurses tinfow tinfo], [], [
 	AC_MSG_ERROR([requires either ncursesw or ncurses library with terminfo support])
 ])
 
-AC_CHECK_LIB(tls, tls_init, [], [
+AC_SEARCH_LIBS([tls_init], [tls], [], [
 	AC_MSG_ERROR([requires libtls])
 ])
 
@@ -104,7 +104,7 @@ PKG_CHECK_MODULES([libgrapheme], [libgrapheme], [
 
 case "$host_os" in
 	*openbsd*)
-		AC_CHECK_LIB([event], [event_init], [],
+		AC_SEARCH_LIBS([event_init], [event], [],
 			[AC_MSG_ERROR([requires libevent])])
 		;;
 	*)
@@ -132,7 +132,7 @@ AC_SEARCH_LIBS([imsg_init], [util], [
 	]
 )
 
-AC_CHECK_LIB(util, ohash_init, [], [
+AC_SEARCH_LIBS([ohash_init], [util], [], [
 	AC_LIBOBJ(ohash)
 	AC_LIBOBJ(fmt_scaled)
 ])
