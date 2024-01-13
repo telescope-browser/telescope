@@ -62,6 +62,7 @@ telescope_SOURCES +=	phos/phos.h	\
 noinst_PROGRAMS =	pagebundler
 pagebundler_SOURCES =	pagebundler.c
 
+# Override implicit rule since we have to use HOSTCC and not CC.
 pagebundler$(EXEEXT): pagebundler.c
 	$(HOSTCC) $(HOSTCFLAGS) -o $@ $(srcdir)/pagebundler.c
 
