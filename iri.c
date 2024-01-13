@@ -720,20 +720,21 @@ iri_setquery(struct iri *iri, const char *p)
 	buf = q = iri->iri_query;
 	bufsize = sizeof(iri->iri_query);
 	while (*p && (q - buf < bufsize)) {
-		if (unreserved(*p) || sub_delims(*p) || *p == ':' || *p == '@' ||
-		    *p == '/' || *p == '?')
+		if (unreserved(*p) || sub_delims(*p) || *p == ':' ||
+		    *p == '@' || *p == '/' || *p == '?') {
 			*q++ = *p++;
-		else {
-			if (q - buf >= bufsize - 3)
-				goto err;
-			r = snprintf(tmp, sizeof(tmp), "%%%02X", (int)*p);
-			if (r < 0 || (size_t)r > sizeof(tmp))
-				return (-1);
-			*q++ = tmp[0];
-			*q++ = tmp[1];
-			*q++ = tmp[2];
-			p++;
+			continue;
 		}
+
+		if (q - buf >= bufsize - 3)
+			goto err;
+		r = snprintf(tmp, sizeof(tmp), "%%%02X", (int)*p);
+		if (r < 0 || (size_t)r > sizeof(tmp))
+			return (-1);
+		*q++ = tmp[0];
+		*q++ = tmp[1];
+		*q++ = tmp[2];
+		p++;
 	}
 	if ((*p == '\0') && (q - buf < bufsize)) {
 		iri->iri_flags |= IH_QUERY;
