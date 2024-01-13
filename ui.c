@@ -460,7 +460,8 @@ static void
 line_prefix_and_text(struct vline *vl, char *buf, size_t len,
     const char **prfx_ret, const char **text_ret, int *text_len)
 {
-	int type, i, cont, width;
+	int type, cont;
+	size_t i, width;
 	char *space, *t;
 
 	if (vl->len == 0) {
@@ -485,8 +486,8 @@ line_prefix_and_text(struct vline *vl, char *buf, size_t len,
 	if (cont) {
 		memset(buf, 0, len);
 		width = utf8_swidth_between(vl->parent->line, space);
-		for (i = 0; i < width + 1; ++i)
-			strlcat(buf, " ", len);
+		for (i = 0; i < width + 1 && i < len - 1; ++i)
+			buf[i] = ' ';
 	} else {
 		strlcpy(buf, vl->parent->line, len);
 		if ((t = strchr(buf, ' ')) != NULL)
