@@ -15,6 +15,10 @@ AC_ARG_VAR(HOSTCFLAGS, [CFLAGS for the host compiler])
 test -z "${HOSTCC}"     && HOSTCC='$(CC)'
 test -z "${HOSTCFLAGS}" && HOSTCFLAGS='$(CFLAGS)'
 
+AC_ARG_WITH([Werror],
+	AS_HELP_STRING([--with-Werror],
+		[Add the compiler flag -Werror]))
+
 AC_ARG_WITH([libimsg],
 	AS_HELP_STRING([--with-libimsg],
 		[Build with imsg-compat library (default: disabled)]))
@@ -141,6 +145,11 @@ AC_CHECK_FUNCS([asr_run])
 
 # don't check for landlock: it currently unusable.
 dnl AC_CHECK_HEADERS([linux/landlock.h])
+
+dnl after all the function checks, add optional support for -Werror
+AS_IF([test "x$with_Werror" = "xyes"], [
+	CFLAGS="$CFLAGS -Werror"
+])
 
 # check compiler flags
 AC_DEFUN([CC_ADD_CHECK_FLAGS], [
