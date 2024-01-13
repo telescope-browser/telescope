@@ -1139,7 +1139,7 @@ ui_print_colors(void)
 }
 
 int
-ui_init()
+ui_init(void)
 {
 	setlocale(LC_ALL, "");
 
