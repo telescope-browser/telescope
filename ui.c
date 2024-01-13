@@ -476,9 +476,9 @@ line_prefix_and_text(struct vline *vl, char *buf, size_t len,
 		*prfx_ret = line_prefixes[type].prfx2;
 
 	space = vl->parent->data;
+	*text_ret = vl->parent->line + vl->from;
+	*text_len = MIN(INT_MAX, vl->len);
 	if (!emojify_link || type != LINE_LINK || space == NULL) {
-		*text_ret = vl->parent->line + vl->from;
-		*text_len = MIN(INT_MAX, vl->len);
 		return;
 	}
 
@@ -488,17 +488,13 @@ line_prefix_and_text(struct vline *vl, char *buf, size_t len,
 		for (i = 0; i < width + 1; ++i)
 			strlcat(buf, " ", len);
 	} else {
-		strlcpy(buf, *text_ret, len);
+		strlcpy(buf, vl->parent->line, len);
 		if ((t = strchr(buf, ' ')) != NULL)
 			*t = '\0';
 		strlcat(buf, " ", len);
-
-		/* skip the emoji */
-		*text_ret += (space - vl->parent->line) + 1;
 	}
 
 	*prfx_ret = buf;
-	*text_len = INT_MAX;
 }
 
 static inline void
