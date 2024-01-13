@@ -121,23 +121,23 @@ static void		 handle_save_page_path(const char *, struct tab *);
 static void		 handle_imsg_buf(struct imsg *, size_t);
 static void		 handle_imsg_eof(struct imsg *, size_t);
 static void		 handle_dispatch_imsg(int, short, void *);
-static int		 load_about_url(struct tab *, const char *);
-static int		 load_file_url(struct tab *, const char *);
-static int		 load_finger_url(struct tab *, const char *);
-static int		 load_gemini_url(struct tab *, const char *);
-static int		 load_gopher_url(struct tab *, const char *);
-static int		 load_via_proxy(struct tab *, const char *,
+static void		 load_about_url(struct tab *, const char *);
+static void		 load_file_url(struct tab *, const char *);
+static void		 load_finger_url(struct tab *, const char *);
+static void		 load_gemini_url(struct tab *, const char *);
+static void		 load_gopher_url(struct tab *, const char *);
+static void		 load_via_proxy(struct tab *, const char *,
 			     struct proxy *);
-static int		 make_request(struct tab *, struct get_req *, int,
+static void		 make_request(struct tab *, struct get_req *, int,
 			     const char *);
-static int		 do_load_url(struct tab *, const char *, const char *, int);
+static void		 do_load_url(struct tab *, const char *, const char *, int);
 static pid_t		 start_child(enum telescope_process, const char *, int);
 static void		 send_url(const char *);
 
 static const struct proto {
 	const char	*schema;
 	const char	*port;
-	int		 (*loadfn)(struct tab *, const char *);
+	void		 (*loadfn)(struct tab *, const char *);
 } protos[] = {
 	{"about",	NULL,	load_about_url},
 	{"file",	NULL,	load_file_url},
@@ -533,27 +533,25 @@ handle_dispatch_imsg(int fd, short ev, void *d)
 		err(1, "connection closed");
 }
 
-static int
+static void
 load_about_url(struct tab *tab, const char *url)
 {
 	tab->trust = TS_TRUSTED;
 	fs_load_url(tab, url);
 	ui_on_tab_refresh(tab);
 	ui_on_tab_loaded(tab);
-	return 0;
 }
 
-static int
+static void
 load_file_url(struct tab *tab, const char *url)
 {
 	tab->trust = TS_TRUSTED;
 	fs_load_url(tab, url);
 	ui_on_tab_refresh(tab);
 	ui_on_tab_loaded(tab);
-	return 0;
 }
 
-static int
+static void
 load_finger_url(struct tab *tab, const char *url)
 {
 	struct get_req	 req;
@@ -586,10 +584,10 @@ load_finger_url(struct tab *tab, const char *url)
 	strlcat(req.req, "\r\n", sizeof(req.req));
 
 	parser_init(tab, textplain_initparser);
-	return make_request(tab, &req, PROTO_FINGER, NULL);
+	make_request(tab, &req, PROTO_FINGER, NULL);
 }
 
-static int
+static void
 load_gemini_url(struct tab *tab, const char *url)
 {
 	struct get_req	 req;
@@ -598,7 +596,7 @@ load_gemini_url(struct tab *tab, const char *url)
 	strlcpy(req.host, tab->uri.host, sizeof(req.host));
 	strlcpy(req.port, tab->uri.port, sizeof(req.port));
 
-	return make_request(tab, &req, PROTO_GEMINI, tab->hist_cur->h);
+	make_request(tab, &req, PROTO_GEMINI, tab->hist_cur->h);
 }
 
 static inline const char *
@@ -630,7 +628,7 @@ gopher_skip_selector(const char *path, int *ret_type)
 	return ++path;
 }
 
-static int
+static void
 load_gopher_url(struct tab *tab, const char *url)
 {
 	struct get_req	 req;
@@ -655,9 +653,11 @@ load_gopher_url(struct tab *tab, const char *url)
 		if (tab->last_input_url == NULL)
 			die();
 		ui_require_input(tab, 0, ir_select_gopher);
-		return load_page_from_str(tab, err_pages[10]);
+		load_page_from_str(tab, err_pages[10]);
+		return;
 	default:
-		return load_page_from_str(tab, "Unknown gopher selector");
+		load_page_from_str(tab, "Unknown gopher selector");
+		return;
 	}
 
 	strlcpy(req.req, path, sizeof(req.req));
@@ -667,10 +667,10 @@ load_gopher_url(struct tab *tab, const char *url)
 	}
 	strlcat(req.req, "\r\n", sizeof(req.req));
 
-	return make_request(tab, &req, PROTO_GOPHER, NULL);
+	make_request(tab, &req, PROTO_GOPHER, NULL);
 }
 
-static int
+static void
 load_via_proxy(struct tab *tab, const char *url, struct proxy *p)
 {
 	struct get_req req;
@@ -681,10 +681,10 @@ load_via_proxy(struct tab *tab, const char *url, struct proxy *p)
 
 	tab->proxy = p;
 
-	return make_request(tab, &req, p->proto, tab->hist_cur->h);
+	make_request(tab, &req, p->proto, tab->hist_cur->h);
 }
 
-static int
+static void
 make_request(struct tab *tab, struct get_req *req, int proto, const char *r)
 {
 	stop_tab(tab);
@@ -698,12 +698,6 @@ make_request(struct tab *tab, struct get_req *req, int proto, const char *r)
 
 	start_loading_anim(tab);
 	ui_send_net(IMSG_GET, tab->id, req, sizeof(*req));
-
-	/*
-	 * So the various load_*_url can `return make_request` and
-	 * do_load_url is happy.
-	 */
-	return 1;
 }
 
 void
@@ -732,7 +726,7 @@ gopher_send_search_req(struct tab *tab, const char *text)
 	make_request(tab, &req, PROTO_GOPHER, NULL);
 }
 
-int
+void
 load_page_from_str(struct tab *tab, const char *page)
 {
 	parser_init(tab, gemtext_initparser);
@@ -742,16 +736,12 @@ load_page_from_str(struct tab *tab, const char *page)
 		abort();
 	ui_on_tab_refresh(tab);
 	ui_on_tab_loaded(tab);
-	return 0;
 }
 
 /*
- * Effectively load the given url in the given tab.  Return 1 when
- * loading the page asynchronously, and thus when an erase_buffer can
- * be done right after this function return, or 0 when loading the
- * page synchronously.
+ * Effectively load the given url in the given tab.
  */
-static int
+static void
 do_load_url(struct tab *tab, const char *url, const char *base, int mode)
 {
 	const struct proto	*p;
@@ -775,7 +765,7 @@ do_load_url(struct tab *tab, const char *url, const char *base, int mode)
 		strlcpy(tab->hist_cur->h, url, sizeof(tab->hist_cur->h));
 		load_page_from_str(tab, t);
 		free(t);
-		return 0;
+		return;
 	}
 
 	phos_serialize_uri(&tab->uri, tab->hist_cur->h,
@@ -784,7 +774,7 @@ do_load_url(struct tab *tab, const char *url, const char *base, int mode)
 	if (!nocache && mcache_lookup(tab->hist_cur->h, tab)) {
 		ui_on_tab_refresh(tab);
 		ui_on_tab_loaded(tab);
-		return 0;
+		return;
 	}
 
 	for (p = protos; p->schema != NULL; ++p) {
@@ -794,16 +784,19 @@ do_load_url(struct tab *tab, const char *url, const char *base, int mode)
 				strlcpy(tab->uri.port, p->port,
 				    sizeof(tab->uri.port));
 
-			return p->loadfn(tab, tab->hist_cur->h);
+			p->loadfn(tab, tab->hist_cur->h);
+			return;
 		}
 	}
 
 	TAILQ_FOREACH(proxy, &proxies, proxies) {
-		if (!strcmp(tab->uri.scheme, proxy->match_proto))
-			return load_via_proxy(tab, url, proxy);
+		if (!strcmp(tab->uri.scheme, proxy->match_proto)) {
+			load_via_proxy(tab, url, proxy);
+			return;
+		}
 	}
 
-	return load_page_from_str(tab, err_pages[UNKNOWN_PROTOCOL]);
+	load_page_from_str(tab, err_pages[UNKNOWN_PROTOCOL]);
 }
 
 /*
