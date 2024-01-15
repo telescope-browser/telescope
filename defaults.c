@@ -53,7 +53,7 @@ struct vline fringe = {
 
 struct lineprefix line_prefixes[] = {
 	[LINE_TEXT] =		{ "",		"" },
-	[LINE_LINK] =		{ "→ ",	"  " },
+	[LINE_LINK] =		{ "→ ",		"  " },
 	[LINE_TITLE_1] =	{ "# ",		"  " },
 	[LINE_TITLE_2] =	{ "## ",	"   " },
 	[LINE_TITLE_3] =	{ "### ",	"    " },
