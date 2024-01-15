@@ -1,4 +1,4 @@
-.\" Copyright (c) 2021, 2022 Omar Polo <op@omarpolo.com>
+.\" Copyright (c) 2021, 2022, 2024 Omar Polo <op@omarpolo.com>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -11,7 +11,7 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: January 05 2022$
+.Dd $Mdocdate: January 15 2024$
 .Dt TELESCOPE 1
 .Os
 .Sh NAME
@@ -165,7 +165,7 @@ All text is assumed to be encoded in UTF-8 (or ASCII).
 User-entered URLs, given as argument on the command line or entered
 with
 .Ic load-url ,
-are intepreted with a simple heuristic:
+by default are intepreted with a simple heuristic:
 .Bl -bullet -compact
 .It
 if it's a proper absolute URL then use it as-is,
@@ -301,6 +301,11 @@ Defaults to zero.
 URL for the new tab page.
 Defaults to
 .Dq about:new .
+.It Ic load-url-use-heuristic
+If zero, don't use euristics for the url given to
+.Ic load-url
+and use the current URL as base.
+Defaults to 1.
 .It Ic max-killed-tabs
 .Pq integer
 The maximum number of closed tabs to keep track of, defaults to 10.
@@ -829,6 +834,11 @@ Select and visit a link using the minibuffer.
 Edit the current URL.
 .It Ic load-url
 Prompt for an URL.
+Use the same heuristic as the URLs given as a command-line argument,
+unless the
+.Ic load-url-use-heuristic
+option is unsed, in which case the URL is resolved using the current
+one as base.
 .It Ic next-page
 Go forward in the page history.
 .It Ic olivetti-mode

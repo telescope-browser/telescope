@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Omar Polo <op@omarpolo.com>
+ * Copyright (c) 2021, 2024 Omar Polo <op@omarpolo.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -39,6 +39,7 @@ int fringe_ignore_offset = 1;
 int hide_pre_blocks = 0;
 int hide_pre_closing_line = 0;
 int hide_pre_context = 0;
+int load_url_use_heuristic = 1;
 int max_killed_tabs = 10;
 int olivetti_mode = 1;
 int set_title = 1;
@@ -569,6 +570,8 @@ config_setvari(const char *var, int val)
 			max_killed_tabs = MIN(val, 128);
 	} else if (!strcmp(var, "fringe-ignore-offset")) {
 		fringe_ignore_offset = !!val;
+	} else if (!strcmp(var, "load-url-use-heuristic")) {
+		load_url_use_heuristic = !!val;
 	} else {
 		return 0;
 	}

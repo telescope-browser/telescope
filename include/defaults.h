@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Omar Polo <op@omarpolo.com>
+ * Copyright (c) 2021, 2024 Omar Polo <op@omarpolo.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -29,6 +29,7 @@ extern int	 fringe_ignore_offset;
 extern int	 hide_pre_blocks;
 extern int	 hide_pre_closing_line;
 extern int	 hide_pre_context;
+extern int	 load_url_use_heuristic;
 extern int	 max_killed_tabs;
 extern int	 olivetti_mode;
 extern int	 set_title;

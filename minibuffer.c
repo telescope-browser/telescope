@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Omar Polo <op@omarpolo.com>
+ * Copyright (c) 2021, 2024 Omar Polo <op@omarpolo.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "defaults.h"
 #include "fs.h"
 #include "iri.h"
 #include "minibuffer.h"
@@ -331,11 +332,19 @@ void
 lu_select(void)
 {
 	char url[GEMINI_URL_LEN+1];
+	char *base = NULL;
 
 	minibuffer_hist_save_entry();
-	humanify_url(minibuffer_compl_text(), url, sizeof(url));
+
+	if (load_url_use_heuristic)
+		humanify_url(minibuffer_compl_text(), url, sizeof(url));
+	else {
+		strlcpy(url, minibuffer_compl_text(), sizeof(url));
+		base = current_tab->hist_cur->h;
+	}
+
 	exit_minibuffer();
-	load_url_in_tab(current_tab, url, NULL, LU_MODE_NOCACHE);
+	load_url_in_tab(current_tab, url, base, LU_MODE_NOCACHE);
 }
 
 void
