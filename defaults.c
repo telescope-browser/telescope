@@ -392,6 +392,9 @@ load_default_keys(void)
 	global_set_key("g g",		cmd_beginning_of_buffer);
 	global_set_key("G",		cmd_end_of_buffer);
 
+	global_set_key("g u",		cmd_up);
+	global_set_key("g r",		cmd_root);
+	global_set_key("g h",		cmd_home);
 	global_set_key("g D",		cmd_tab_close);
 	global_set_key("g N",		cmd_tab_new);
 	global_set_key("g t",		cmd_tab_next);

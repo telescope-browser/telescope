@@ -594,6 +594,12 @@ scroll-line-down
 beginning-of-buffer
 .It G
 end-of-buffer
+.It g u
+up
+.It g r
+root
+.It g h
+home
 .It g D
 tab-close
 .It g N
@@ -823,6 +829,12 @@ Clear the echo area.
 Decrement fill-column by two.
 .It Ic execute-extended-command
 Execute an internal command.
+.It Ic home
+Go to the home directory.
+The home directory is assumed to be the first path component in the
+.Sy ~username
+form.
+If not found, loads the root directory.
 .It Ic kill-telescope
 Quit
 .Nm .
@@ -860,6 +872,8 @@ display.
 Reload the current page.
 .It Ic reply-last-input
 Reply the last input request.
+.It Ic root
+Go to the root directory.
 .It Ic scroll-down
 Scroll down by one visual page.
 .It Ic scroll-line-down
@@ -881,6 +895,8 @@ Toggle side window with help about available keys and their associated
 interactive command.
 .It Ic toggle-pre-wrap
 Toggle the wrapping of preformatted blocks.
+.It Ic up
+Go up one level in the path hierarchy.
 .It Ic write-buffer
 Save the current buffer to the disk.
 .El

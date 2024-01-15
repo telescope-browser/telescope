@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Omar Polo <op@omarpolo.com>
+ * Copyright (c) 2021, 2024 Omar Polo <op@omarpolo.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -1063,4 +1063,24 @@ cmd_write_buffer(struct buffer *buffer)
 	strlcat(path, f, sizeof(path));
 
 	ui_read("Write file", write_buffer, current_tab, path);
+}
+
+void
+cmd_home(struct buffer *buffer)
+{
+	message("Not implemented yet!");
+}
+
+void
+cmd_root(struct buffer *buffer)
+{
+	load_url_in_tab(current_tab, "/", current_tab->hist_cur->h,
+	    LU_MODE_NOCACHE);
+}
+
+void
+cmd_up(struct buffer *buffer)
+{
+	load_url_in_tab(current_tab, "..", current_tab->hist_cur->h,
+	    LU_MODE_NOCACHE);
 }
