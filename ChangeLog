@@ -1,3 +1,18 @@
+2024-01-15  Omar Polo  <op@omarpolo.com>
+
+	* defaults.c: add `load-url-use-heuristic' knob
+	* cmd.c: add the `up', `root' and `home' commands bound to "g u",
+	"g r" and "g h" respectively.
+
+2024-01-13  Omar Polo  <op@omarpolo.com>
+
+	* data/emoji.txt: update to unicode 15.0
+	* ui.c (line_prefix_and_text): fix wrapping of link lines
+
+2022-12-23  Omar Polo  <op@omarpolo.com>
+
+	* iri.c: introduce the new URI/IRI parser.
+
 2022-05-25  Omar Polo  <op@omarpolo.com>
 
 	* configure.ac: tag 0.8.1 "Le Scarpe Volanti"
