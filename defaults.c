@@ -584,12 +584,15 @@ config_setvars(const char *var, char *val)
 
 		free(val);
 		return 1;
-	} else if (!strcmp(var, "new-tab-url")) {
+	}
+
+	if (!strcmp(var, "new-tab-url")) {
 		free(new_tab_url);
 		new_tab_url = val;
-	} else
-		return 0;
-	return 1;
+		return 1;
+	}
+
+	return 0;
 }
 
 int
