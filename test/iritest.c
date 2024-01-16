@@ -155,6 +155,10 @@ main(void)
 	ret |= resolve(base, "gopher://b:70", "gopher://b:70/");
 	ret |= resolve(base, "gopher://b:70/1/foo", "gopher://b:70/1/foo");
 
+	base = "gopher://b:70/1/bar/foo/quux";
+	ret |= resolve(base, "/",  "gopher://b:70/");
+	ret |= resolve(base, "..", "gopher://b:70/1/bar/");
+
 	base = "gemini://a/b/c";
 	ret |= setquery(base, "hw", "gemini://a/b/c?hw");
 	ret |= setquery(base, "h w", "gemini://a/b/c?h%20w");
