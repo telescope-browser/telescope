@@ -23,7 +23,7 @@
 #include <stdio.h>		/* XXX: for parsers.h */
 
 #include "cmd.h"
-#include "phos.h"
+#include "iri.h"
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -218,7 +218,7 @@ struct tab {
 	char			*cert;
 	enum trust_state	 trust;
 	struct proxy		*proxy;
-	struct phos_uri		 uri;
+	struct iri		 iri;
 	struct histhead		 hist;
 	struct hist		*hist_cur;
 	size_t			 hist_off;

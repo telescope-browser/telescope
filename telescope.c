@@ -216,8 +216,8 @@ handle_imsg_check_cert(struct imsg *imsg, size_t datalen)
 		host = tab->proxy->host;
 		port = tab->proxy->port;
 	} else {
-		host = tab->uri.host;
-		port = tab->uri.port;
+		host = tab->iri.iri_host;
+		port = tab->iri.iri_portstr;
 	}
 
 	if ((e = tofu_lookup(&certs, host, port)) == NULL) {
@@ -267,6 +267,11 @@ handle_check_cert_user_choice(int accept, struct tab *tab)
 	    sizeof(accept));
 
 	if (accept) {
+		const char *host, *port;
+
+		host = tab->iri.iri_host;
+		port = tab->iri.iri_portstr;
+
 		/*
 		 * trust the certificate for this session only.  If
 		 * the page results in a redirect while we're asking
@@ -275,8 +280,7 @@ handle_check_cert_user_choice(int accept, struct tab *tab)
 		 * sense to save it for the current session if the
 		 * user accepted it.
 		 */
-		tofu_temp_trust(&certs, tab->uri.host, tab->uri.port,
-		    tab->cert);
+		tofu_temp_trust(&certs, host, port, tab->cert);
 
 		if (!safe_mode)
 			ui_yornp("Save the new certificate?",
@@ -299,8 +303,8 @@ handle_maybe_save_new_cert(int accept, struct tab *tab)
 		host = tab->proxy->host;
 		port = tab->proxy->port;
 	} else {
-		host = tab->uri.host;
-		port = tab->uri.port;
+		host = tab->iri.iri_host;
+		port = tab->iri.iri_portstr;
 	}
 
 	if (!accept)
@@ -439,7 +443,7 @@ handle_maybe_save_page(int dosave, struct tab *tab)
 		return;
 	}
 
-	if ((f = strrchr(tab->uri.path, '/')) == NULL)
+	if ((f = strrchr(tab->iri.iri_path, '/')) == NULL)
 		f = "";
 	else
 		f++;
@@ -556,31 +560,24 @@ static void
 load_finger_url(struct tab *tab, const char *url)
 {
 	struct get_req	 req;
-	size_t		 len;
-	char		*at;
+	const char	*path;
 
 	memset(&req, 0, sizeof(req));
-	strlcpy(req.port, tab->uri.port, sizeof(req.port));
+	strlcpy(req.host, tab->iri.iri_host, sizeof(req.host));
+	strlcpy(req.port, tab->iri.iri_portstr, sizeof(req.port));
 
 	/*
 	 * Sometimes the finger url have the user as path component
 	 * (e.g. finger://thelambdalab.xyz/plugd), sometimes as
 	 * userinfo (e.g. finger://cobradile@finger.farm).
 	 */
-	if ((at = strchr(tab->uri.host, '@')) != NULL) {
-		len = at - tab->uri.host;
-		memcpy(req.req, tab->uri.host, len);
-
-		if (len >= sizeof(req.req))
-			die();
-		req.req[len] = '\0';
-
-		strlcpy(req.host, at+1, sizeof(req.host));
+	if (tab->iri.iri_flags & IH_UINFO) {
+		strlcpy(req.req, tab->iri.iri_uinfo, sizeof(req.req));
 	} else {
-		strlcpy(req.host, tab->uri.host, sizeof(req.host));
-
-		/* +1 to skip the initial `/' */
-		strlcpy(req.req, tab->uri.path+1, sizeof(req.req));
+		path = tab->iri.iri_path;
+		while (*path == '/')
+			++path;
+		strlcpy(req.req, path, sizeof(req.req));
 	}
 	strlcat(req.req, "\r\n", sizeof(req.req));
 
@@ -594,8 +591,8 @@ load_gemini_url(struct tab *tab, const char *url)
 	struct get_req	 req;
 
 	memset(&req, 0, sizeof(req));
-	strlcpy(req.host, tab->uri.host, sizeof(req.host));
-	strlcpy(req.port, tab->uri.port, sizeof(req.port));
+	strlcpy(req.host, tab->iri.iri_host, sizeof(req.host));
+	strlcpy(req.port, tab->iri.iri_portstr, sizeof(req.port));
 
 	make_request(tab, &req, PROTO_GEMINI, tab->hist_cur->h);
 }
@@ -637,10 +634,10 @@ load_gopher_url(struct tab *tab, const char *url)
 	const char	*path;
 
 	memset(&req, 0, sizeof(req));
-	strlcpy(req.host, tab->uri.host, sizeof(req.host));
-	strlcpy(req.port, tab->uri.port, sizeof(req.port));
+	strlcpy(req.host, tab->iri.iri_host, sizeof(req.host));
+	strlcpy(req.port, tab->iri.iri_portstr, sizeof(req.port));
 
-	path = gopher_skip_selector(tab->uri.path, &type);
+	path = gopher_skip_selector(tab->iri.iri_path, &type);
 	switch (type) {
 	case '0':
 		parser_init(tab, textplain_initparser);
@@ -662,9 +659,9 @@ load_gopher_url(struct tab *tab, const char *url)
 	}
 
 	strlcpy(req.req, path, sizeof(req.req));
-	if (*tab->uri.query != '\0') {
+	if (tab->iri.iri_flags & IH_QUERY) {
 		strlcat(req.req, "?", sizeof(req.req));
-		strlcat(req.req, tab->uri.query, sizeof(req.req));
+		strlcat(req.req, tab->iri.iri_query, sizeof(req.req));
 	}
 	strlcat(req.req, "\r\n", sizeof(req.req));
 
@@ -707,14 +704,14 @@ gopher_send_search_req(struct tab *tab, const char *text)
 	struct get_req	req;
 
 	memset(&req, 0, sizeof(req));
-	strlcpy(req.host, tab->uri.host, sizeof(req.host));
-	strlcpy(req.port, tab->uri.port, sizeof(req.port));
+	strlcpy(req.host, tab->iri.iri_host, sizeof(req.host));
+	strlcpy(req.port, tab->iri.iri_portstr, sizeof(req.port));
 
 	/* +2 to skip /7 */
-	strlcpy(req.req, tab->uri.path+2, sizeof(req.req));
-	if (*tab->uri.query != '\0') {
+	strlcpy(req.req, tab->iri.iri_path+2, sizeof(req.req));
+	if (tab->iri.iri_flags & IH_QUERY) {
 		strlcat(req.req, "?", sizeof(req.req));
-		strlcat(req.req, tab->uri.query, sizeof(req.req));
+		strlcat(req.req, tab->iri.iri_query, sizeof(req.req));
 	}
 
 	strlcat(req.req, "\t", sizeof(req.req));
@@ -746,7 +743,6 @@ static void
 do_load_url(struct tab *tab, const char *url, const char *base, int mode)
 {
 	const struct proto	*p;
-	struct phos_uri	 uri;
 	struct proxy	*proxy;
 	int		 nocache = mode & LU_MODE_NOCACHE;
 	char		*t;
@@ -754,14 +750,9 @@ do_load_url(struct tab *tab, const char *url, const char *base, int mode)
 	tab->proxy = NULL;
 	tab->trust = TS_UNKNOWN;
 
-	if (base == NULL)
-		memcpy(&uri, &tab->uri, sizeof(tab->uri));
-	else
-		phos_parse_absolute_uri(base, &uri);
-
-	if (!phos_resolve_uri_from_str(&uri, url, &tab->uri)) {
-		if (asprintf(&t, "#error loading %s\n>%s\n",
-		    url, "Can't parse the URI") == -1)
+	if (iri_parse(base, url, &tab->iri) == -1) {
+		if (asprintf(&t, "# error loading %s\n>%s\n",
+		    url, "Can't parse the IRI") == -1)
 			die();
 		strlcpy(tab->hist_cur->h, url, sizeof(tab->hist_cur->h));
 		load_page_from_str(tab, t);
@@ -769,8 +760,7 @@ do_load_url(struct tab *tab, const char *url, const char *base, int mode)
 		return;
 	}
 
-	phos_serialize_uri(&tab->uri, tab->hist_cur->h,
-	    sizeof(tab->hist_cur->h));
+	iri_unparse(&tab->iri, tab->hist_cur->h, sizeof(tab->hist_cur->h));
 
 	if (!nocache && mcache_lookup(tab->hist_cur->h, tab)) {
 		ui_on_tab_refresh(tab);
@@ -779,11 +769,12 @@ do_load_url(struct tab *tab, const char *url, const char *base, int mode)
 	}
 
 	for (p = protos; p->schema != NULL; ++p) {
-		if (!strcmp(tab->uri.scheme, p->schema)) {
-			/* patch the port */
-			if (*tab->uri.port == '\0' && p->port != NULL)
-				strlcpy(tab->uri.port, p->port,
-				    sizeof(tab->uri.port));
+		if (!strcmp(tab->iri.iri_scheme, p->schema)) {
+			/* patch the port -- XXX should update `port' too */
+			if (*tab->iri.iri_portstr == '\0' &&
+			    p->port != NULL)
+				strlcpy(tab->iri.iri_portstr, p->port,
+				    sizeof(tab->iri.iri_portstr));
 
 			p->loadfn(tab, tab->hist_cur->h);
 			return;
@@ -791,7 +782,7 @@ do_load_url(struct tab *tab, const char *url, const char *base, int mode)
 	}
 
 	TAILQ_FOREACH(proxy, &proxies, proxies) {
-		if (!strcmp(tab->uri.scheme, proxy->match_proto)) {
+		if (!strcmp(tab->iri.iri_scheme, proxy->match_proto)) {
 			load_via_proxy(tab, url, proxy);
 			return;
 		}

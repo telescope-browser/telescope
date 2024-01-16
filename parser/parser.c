@@ -77,7 +77,7 @@ parser_free(struct tab *tab)
 		if ((slash = strchr(tab->buffer.page.title, '/')) != NULL)
 			*slash = '\0';
 	} else
-		strlcpy(tab->buffer.page.title, tab->uri.host,
+		strlcpy(tab->buffer.page.title, tab->iri.iri_host,
 		    sizeof(tab->buffer.page.title));
 
 	return r;
