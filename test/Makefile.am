@@ -20,7 +20,7 @@ iritest_SOURCES =	iritest.c				\
 
 gmparser_CFLAGS =	-I$(top_srcdir)/phos -I$(top_srcdir)/include
 gmiparser_CFLAGS =	-I$(top_srcdir)/phos -I$(top_srcdir)/include
-iritest_CFLAGS =	-I$(top_srcdir)
+iritest_CFLAGS =	-I$(top_srcdir) -I$(top_srcdir)/include
 
 EXTRA_DIST =		test-gmparser	\
 			gm-00		\
@@ -29,4 +29,4 @@ EXTRA_DIST =		test-gmparser	\
 
 CLEANFILES =		serialized.*
 
-TESTS =	test-gmparser
+TESTS =	test-gmparser iritest
