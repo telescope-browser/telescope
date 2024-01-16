@@ -887,7 +887,7 @@ write_buffer(const char *path, struct tab *tab)
  *
  * - if it's a proper url use it
  * - if it starts with a `./' or a `/' assume its a file:// url
- * - assume it's a gemini:// url
+ * - assume it's a default-protocol:// url
  *
  * `ret' (of which len is the size) will be filled with the resulting
  * url.
@@ -919,7 +919,8 @@ humanify_url(const char *raw, const char *base, char *ret, size_t len)
 		return;
 	}
 
-	strlcpy(ret, "gemini://", len);
+	strlcpy(ret, default_protocol, len);
+	strlcat(ret, "://", len);
 	strlcat(ret, raw, len);
 }
 
@@ -1094,6 +1095,10 @@ main(int argc, char * const *argv)
 		puts("config OK");
 		exit(0);
 	}
+
+	if (default_protocol == NULL &&
+	    (default_protocol = strdup("gemini")) == NULL)
+		err(1, "strdup");
 
 	if (download_path == NULL &&
 	    (download_path = strdup("/tmp/")) == NULL)

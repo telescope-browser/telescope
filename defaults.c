@@ -27,6 +27,7 @@
 #include "ui.h"
 #include "utils.h"
 
+char	*default_protocol = NULL;
 char	*download_path = NULL;
 char	*new_tab_url = NULL;
 
@@ -565,6 +566,17 @@ config_setvari(const char *var, int val)
 int
 config_setvars(const char *var, char *val)
 {
+	if (!strcmp(var, "default-protocol")) {
+		if (strcmp(val, "finger") &&
+		    strcmp(val, "gopher") &&
+		    strcmp(val, "gemini"))
+			return 0;
+
+		free(default_protocol);
+		default_protocol = val;
+		return 1;
+	}
+
 	if (!strcmp(var, "download-path")) {
 		const char *prfx = "", *v = val, *sufx = "";
 

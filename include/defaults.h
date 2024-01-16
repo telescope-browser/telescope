@@ -17,6 +17,7 @@
 #ifndef DEFAULTS_H
 #define DEFAULTS_H
 
+extern char	*default_protocol;
 extern char	*download_path;
 extern char	*new_tab_url;
 

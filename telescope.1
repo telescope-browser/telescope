@@ -176,7 +176,9 @@ or
 .Dq /
 assume it's a file:// URL,
 .It
-otherwise assume it's a Gemini URL.
+otherwise treat it like a hostname with protocol
+.Ic default-protocol
+.Pq gemini by default .
 .El
 .Pp
 The setting
@@ -254,6 +256,13 @@ If greater than zero, save the session after the specified amount of
 seconds after some events happens
 .Pq new or closed tabs, visited a link ...
 Defaults to 20.
+.It Ic default-protocol
+.Pq string
+The default protocol assumed for the
+.Ic load-url
+heuristic.
+Defaults to
+.Dq gemini .
 .It Ic dont-wrap-pre
 .Pq boolean
 If true, don't wrap preformatted blocks.
