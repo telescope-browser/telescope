@@ -138,9 +138,8 @@ Only one instance of Telescope can be running at time per user.
 Telescope is distributed under a BSD-style licence.  The main code is
 under the ISC but for files under `compat/` it varies.
 
-`data/emoji.txt` is copyright © 1991-2021 Unicode, Inc. and
-distributed under the [UNICODE, Inc license
-agreement][unicode-license].
+`data/emoji.txt` is copyright © 2022 Unicode, Inc. and distributed
+under the [UNICODE, Inc license agreement][unicode-license].
 
 
 [unicode-license]: https://www.unicode.org/license.html
