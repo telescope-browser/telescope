@@ -89,4 +89,12 @@ struct minibuffer_face {
 };
 extern struct minibuffer_face minibuffer_face;
 
+void		 config_init(void);
+int		 config_setprfx(const char *, const char *, const char *);
+int		 config_setvari(const char *, int);
+int		 config_setvars(const char *, char *);
+int		 config_setcolor(int, const char *, int, int, int);
+int		 config_setattr(const char *, int, int, int);
+void		 config_apply_style(void);
+
 #endif

@@ -33,6 +33,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "defaults.h"
 #include "iri.h"
 
 typedef struct {
