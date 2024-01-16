@@ -304,17 +304,16 @@ ir_select_gemini(void)
 void
 ir_select_reply(void)
 {
+	static struct iri iri;
 	char		 buf[1025] = {0};
-	struct phos_uri	 uri;
 	struct tab	*tab = current_tab;
 
 	minibuffer_hist_save_entry();
 
 	/* a bit ugly but... */
-	strlcpy(buf, tab->last_input_url, sizeof(buf));
-	phos_parse_absolute_uri(buf, &uri);
-	phos_uri_set_query(&uri, minibuffer_compl_text());
-	phos_serialize_uri(&uri, buf, sizeof(buf));
+	iri_parse(NULL, tab->last_input_url, &iri);
+	iri_setquery(&iri, minibuffer_compl_text());
+	iri_unparse(&iri, buf, sizeof(buf));
 
 	exit_minibuffer();
 	load_url_in_tab(tab, buf, NULL, LU_MODE_NOCACHE);
