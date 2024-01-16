@@ -540,27 +540,32 @@ config_setprfx(const char *name, const char *prfx, const char *cont)
 int
 config_setvari(const char *var, int val)
 {
-	if (!strcmp(var, "fill-column")) {
-		if ((fill_column = val) <= 0)
-			fill_column = INT_MAX;
-	} else if (!strcmp(var, "olivetti-mode")) {
-		olivetti_mode = !!val;
-	} else if (!strcmp(var, "enable-colors")) {
-		enable_colors = !!val;
-	} else if (!strcmp(var, "hide-pre-context")) {
-		hide_pre_context = !!val;
-	} else if (!strcmp(var, "hide-pre-blocks")) {
-		hide_pre_blocks = !!val;
-	} else if (!strcmp(var, "hide-pre-closing-line")) {
-		hide_pre_closing_line = !!val;
+	if (!strcmp(var, "autosave")) {
+		autosave = val;
 	} else if (!strcmp(var, "dont-wrap-pre")) {
 		dont_wrap_pre = !!val;
 	} else if (!strcmp(var, "emojify-link")) {
 		emojify_link = !!val;
-	} else if (!strcmp(var, "update-title") || !strcmp(var, "set-title")) {
-		set_title = !!val;
-	} else if (!strcmp(var, "autosave")) {
-		autosave = val;
+	} else if (!strcmp(var, "enable-colors")) {
+		enable_colors = !!val;
+	} else if (!strcmp(var, "fill-column")) {
+		if ((fill_column = val) <= 0)
+			fill_column = INT_MAX;
+	} else if (!strcmp(var, "fringe-ignore-offset")) {
+		fringe_ignore_offset = !!val;
+	} else if (!strcmp(var, "hide-pre-blocks")) {
+		hide_pre_blocks = !!val;
+	} else if (!strcmp(var, "hide-pre-closing-line")) {
+		hide_pre_closing_line = !!val;
+	} else if (!strcmp(var, "hide-pre-context")) {
+		hide_pre_context = !!val;
+	} else if (!strcmp(var, "load-url-use-heuristic")) {
+		load_url_use_heuristic = !!val;
+	} else if (!strcmp(var, "max-killed-tabs")) {
+		if (val >= 0)
+			max_killed_tabs = MIN(val, 128);
+	} else if (!strcmp(var, "olivetti-mode")) {
+		olivetti_mode = !!val;
 	} else if (!strcmp(var, "tab-bar-show")) {
 		if (val < 0)
 			tab_bar_show = -1;
@@ -568,13 +573,9 @@ config_setvari(const char *var, int val)
 			tab_bar_show = 0;
 		else
 			tab_bar_show = 1;
-	} else if (!strcmp(var, "max-killed-tabs")) {
-		if (val >= 0)
-			max_killed_tabs = MIN(val, 128);
-	} else if (!strcmp(var, "fringe-ignore-offset")) {
-		fringe_ignore_offset = !!val;
-	} else if (!strcmp(var, "load-url-use-heuristic")) {
-		load_url_use_heuristic = !!val;
+	} else if (!strcmp(var, "update-title") ||
+	    !strcmp(var, "set-title")) {
+		set_title = !!val;
 	} else {
 		return 0;
 	}
