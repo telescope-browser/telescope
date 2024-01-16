@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Omar Polo <op@omarpolo.com>
+ * Copyright (c) 2021, 2024 Omar Polo <op@omarpolo.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -33,6 +33,7 @@
 #include "control.h"
 #include "defaults.h"
 #include "fs.h"
+#include "iri.h"
 #include "mcache.h"
 #include "minibuffer.h"
 #include "parser.h"
@@ -903,11 +904,11 @@ write_buffer(const char *path, struct tab *tab)
 void
 humanify_url(const char *raw, char *ret, size_t len)
 {
-	struct phos_uri	uri;
-	char		buf[PATH_MAX];
+	static struct iri	iri;
+	char			buf[PATH_MAX];
 
-	if (phos_parse_absolute_uri(raw, &uri)) {
-		strlcpy(ret, raw, len);
+	if (iri_parse(NULL, raw, &iri) == 0) {
+		iri_unparse(&iri, ret, len);
 		return;
 	}
 
