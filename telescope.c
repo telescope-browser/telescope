@@ -770,11 +770,10 @@ do_load_url(struct tab *tab, const char *url, const char *base, int mode)
 
 	for (p = protos; p->schema != NULL; ++p) {
 		if (!strcmp(tab->iri.iri_scheme, p->schema)) {
-			/* patch the port -- XXX should update `port' too */
+			/* patch the port */
 			if (*tab->iri.iri_portstr == '\0' &&
 			    p->port != NULL)
-				strlcpy(tab->iri.iri_portstr, p->port,
-				    sizeof(tab->iri.iri_portstr));
+				iri_setport(&tab->iri, p->port);
 
 			p->loadfn(tab, tab->hist_cur->h);
 			return;
