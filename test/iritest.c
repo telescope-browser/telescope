@@ -153,6 +153,7 @@ main(void)
 	/* extra tests */
 
 	ret |= resolve(base, "gopher://b:70", "gopher://b:70/");
+	ret |= resolve(base, "gopher://b:70/1/foo", "gopher://b:70/1/foo");
 
 	base = "gemini://a/b/c";
 	ret |= setquery(base, "hw", "gemini://a/b/c?hw");
