@@ -178,6 +178,10 @@ assume it's a file:// URL,
 .It
 otherwise assume it's a Gemini URL.
 .El
+.Pp
+The setting
+.Ic load-url-use-heuristic
+can be used to disable the use of heuristics.
 .Sh CONFIGURATION FILE
 During the startup,
 .Nm
@@ -302,9 +306,11 @@ URL for the new tab page.
 Defaults to
 .Dq about:new .
 .It Ic load-url-use-heuristic
-If zero, don't use euristics for the url given to
+If zero, don't use euristics to resolve the URLs.
+Non-absolute URLs given as command line argument will be resolved as
+file system paths,
 .Ic load-url
-and use the current URL as base.
+will resolve as relative to the current URL.
 Defaults to 1.
 .It Ic max-killed-tabs
 .Pq integer

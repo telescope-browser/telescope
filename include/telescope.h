@@ -328,7 +328,7 @@ void		 load_url_in_tab(struct tab *, const char *, const char *, int);
 int		 load_previous_page(struct tab*);
 int		 load_next_page(struct tab*);
 void		 write_buffer(const char *, struct tab *);
-void		 humanify_url(const char *, char *, size_t);
+void		 humanify_url(const char *, const char *, char *, size_t);
 int		 bookmark_page(const char *);
 int		 ui_send_net(int, uint32_t, const void *, uint16_t);
 

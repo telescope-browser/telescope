@@ -55,6 +55,7 @@ static const char *opts = "Cc:hnST:v";
 
 static int	has_url;
 static char	url[GEMINI_URL_LEN];
+static char	cwd[PATH_MAX];
 
 /*
  * Used to know when we're finished loading.
@@ -892,7 +893,8 @@ write_buffer(const char *path, struct tab *tab)
 }
 
 /*
- * Given a user-entered URL, apply some heuristics to use it:
+ * Given a user-entered URL, apply some heuristics to use it if
+ * load-url-use-heuristic allows it.
  *
  * - if it's a proper url use it
  * - if it starts with a `./' or a `/' assume its a file:// url
@@ -902,20 +904,21 @@ write_buffer(const char *path, struct tab *tab)
  * url.
  */
 void
-humanify_url(const char *raw, char *ret, size_t len)
+humanify_url(const char *raw, const char *base, char *ret, size_t len)
 {
 	static struct iri	iri;
-	char			buf[PATH_MAX];
 
-	if (iri_parse(NULL, raw, &iri) == 0) {
+	if (load_url_use_heuristic)
+		base = NULL;
+
+	if (iri_parse(base, raw, &iri) == 0) {
 		iri_unparse(&iri, ret, len);
 		return;
 	}
 
 	if (!strncmp(raw, "./", 2)) {
 		strlcpy(ret, "file://", len);
-		getcwd(buf, sizeof(buf));
-		strlcat(ret, buf, len);
+		strlcat(ret, cwd, len);
 		strlcat(ret, "/", len);
 		strlcat(ret, raw+2, len);
 		return;
@@ -1042,6 +1045,9 @@ main(int argc, char * const *argv)
 	if (getenv("NO_COLOR") != NULL)
 		enable_colors = 0;
 
+	if (getcwd(cwd, sizeof(cwd)) == NULL)
+		err(1, "getcwd failed");
+
 	while ((ch = getopt_long(argc, argv, opts, longopts, NULL)) != -1) {
 		switch (ch) {
 		case 'C':
@@ -1089,11 +1095,6 @@ main(int argc, char * const *argv)
 			usage(1);
 	}
 
-	if (argc != 0) {
-		has_url = 1;
-		humanify_url(argv[0], url, sizeof(url));
-	}
-
 	fs_init();
 
 	/* setup keys before reading the config */
@@ -1111,6 +1112,18 @@ main(int argc, char * const *argv)
 	if (download_path == NULL &&
 	    (download_path = strdup("/tmp/")) == NULL)
 		errx(1, "strdup");
+
+	if (argc != 0) {
+		char *base;
+
+		if (asprintf(&base, "file://%s/", cwd) == -1)
+			err(1, "asprintf");
+
+		has_url = 1;
+		humanify_url(argv[0], base, url, sizeof(url));
+
+		free(base);
+	}
 
 	if (!safe_mode && (sessionfd = lock_session()) == -1) {
 		if (has_url) {

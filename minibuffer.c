@@ -22,7 +22,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "defaults.h"
 #include "fs.h"
 #include "iri.h"
 #include "minibuffer.h"
@@ -331,19 +330,13 @@ void
 lu_select(void)
 {
 	char url[GEMINI_URL_LEN+1];
-	char *base = NULL;
 
 	minibuffer_hist_save_entry();
-
-	if (load_url_use_heuristic)
-		humanify_url(minibuffer_compl_text(), url, sizeof(url));
-	else {
-		strlcpy(url, minibuffer_compl_text(), sizeof(url));
-		base = current_tab->hist_cur->h;
-	}
+	humanify_url(minibuffer_compl_text(), current_tab->hist_cur->h,
+	    url, sizeof(url));
 
 	exit_minibuffer();
-	load_url_in_tab(current_tab, url, base, LU_MODE_NOCACHE);
+	load_url_in_tab(current_tab, url, NULL, LU_MODE_NOCACHE);
 }
 
 void
