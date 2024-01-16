@@ -423,7 +423,8 @@ handle_imsg_got_meta(struct imsg *imsg, size_t datalen)
 			load_page_from_str(tab,
 			    err_pages[TOO_MUCH_REDIRECTS]);
 		} else
-			do_load_url(tab, tab->meta, NULL, LU_MODE_NOCACHE);
+			do_load_url(tab, tab->meta, tab->hist_cur->h,
+			    LU_MODE_NOCACHE);
 	} else { /* 4x, 5x & 6x */
 		load_page_from_str(tab, err_pages[tab->code]);
 	}
