@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Omar Polo <op@omarpolo.com>
+ * Copyright (c) 2021, 2024 Omar Polo <op@omarpolo.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -43,12 +43,13 @@ static struct imsgev		*iev_ui;
 
 /* a pending request */
 struct req {
-	struct phos_uri		 url;
 	uint32_t		 id;
 	int			 proto;
 	int			 fd;
 	struct tls		*ctx;
-	char			 req[1027];
+	char			*host;
+	char			*port;
+	char			*req;
 	size_t			 len;
 	int			 done_header;
 	struct bufferevent	*bev;
@@ -168,8 +169,7 @@ again:
 
 err:
 	freeaddrinfo(req->servinfo);
-	close_with_errf(req, "failed to connect to %s",
-	    req->url.host);
+	close_with_errf(req, "failed to connect to %s", req->host);
 	return;
 
 done:
@@ -206,7 +206,7 @@ done:
 		}
 		tls_config_free(conf);
 
-		if (tls_connect_socket(req->ctx, req->fd, req->url.host)
+		if (tls_connect_socket(req->ctx, req->fd, req->host)
 		    == -1) {
 			close_with_errf(req, "tls_connect_socket: %s",
 			    tls_error(req->ctx));
@@ -230,7 +230,7 @@ query_done(struct asr_result *res, void *d)
 	req->asrev = NULL;
 	if (res->ar_gai_errno != 0) {
 		close_with_errf(req, "failed to resolve %s: %s",
-		    req->url.host, gai_strerror(res->ar_gai_errno));
+		    req->host, gai_strerror(res->ar_gai_errno));
 		return;
 	}
 
@@ -244,14 +244,11 @@ static void
 conn_towards(struct req *req)
 {
 	struct asr_query	*q;
-	const char		*proto = "1965";
-
-	if (*req->url.port != '\0')
-		proto = req->url.port;
 
 	req->hints.ai_family = AF_UNSPEC;
 	req->hints.ai_socktype = SOCK_STREAM;
-	q = getaddrinfo_async(req->url.host, proto, &req->hints, NULL);
+	q = getaddrinfo_async(req->host, req->port, &req->hints,
+	    NULL);
 	req->asrev = event_asr_run(q, query_done, req);
 }
 #else
@@ -259,20 +256,16 @@ static void
 conn_towards(struct req *req)
 {
 	struct addrinfo	 hints;
-	struct phos_uri	*url = &req->url;
 	int		 status;
-	const char	*proto = "1965";
-
-	if (*url->port != '\0')
-		proto = url->port;
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 
-	if ((status = getaddrinfo(url->host, proto, &hints, &req->servinfo))) {
+	if ((status = getaddrinfo(req->host, req->port, &hints,
+	    &req->servinfo))) {
 		close_with_errf(req, "failed to resolve %s: %s",
-		    url->host, gai_strerror(status));
+		    req->host, gai_strerror(status));
 		return;
 	}
 
@@ -310,6 +303,10 @@ close_conn(int fd, short ev, void *d)
 		tls_free(req->ctx);
 		req->ctx = NULL;
 	}
+
+	free(req->host);
+	free(req->port);
+	free(req->req);
 
 	TAILQ_REMOVE(&reqhead, req, reqs);
 	if (req->fd != -1)
@@ -685,9 +682,15 @@ handle_dispatch_imsg(int fd, short event, void *d)
 			req->id = imsg.hdr.peerid;
 			TAILQ_INSERT_HEAD(&reqhead, req, reqs);
 
-			strlcpy(req->url.host, r->host, sizeof(req->url.host));
-			strlcpy(req->url.port, r->port, sizeof(req->url.port));
-			req->len = strlcpy(req->req, r->req, sizeof(req->req));
+			if ((req->host = strdup(r->host)) == NULL)
+				die();
+			if ((req->port = strdup(r->port)) == NULL)
+				die();
+			if ((req->req = strdup(r->req)) == NULL)
+				die();
+
+			req->len = strlen(req->req);
+
 			req->proto = r->proto;
 			conn_towards(req);
 			break;
