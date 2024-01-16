@@ -55,10 +55,6 @@ telescope_SOURCES =	cmd.c			\
 			ui.c			\
 			utils.c
 
-# phos bundled files
-telescope_SOURCES +=	phos/phos.h	\
-			phos/phos_uri.c
-
 noinst_PROGRAMS =	pagebundler
 pagebundler_SOURCES =	pagebundler.c
 

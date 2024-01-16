@@ -18,8 +18,8 @@ iritest_SOURCES =	iritest.c				\
 			$(top_srcdir)/iri.c			\
 			$(top_srcdir)/iri.h
 
-gmparser_CFLAGS =	-I$(top_srcdir)/phos -I$(top_srcdir)/include
-gmiparser_CFLAGS =	-I$(top_srcdir)/phos -I$(top_srcdir)/include
+gmparser_CFLAGS =	-I$(top_srcdir)/include
+gmiparser_CFLAGS =	-I$(top_srcdir)/include
 iritest_CFLAGS =	-I$(top_srcdir) -I$(top_srcdir)/include
 
 EXTRA_DIST =		test-gmparser	\
