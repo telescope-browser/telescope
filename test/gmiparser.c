@@ -22,6 +22,7 @@
 
 #include "parser.h"
 #include "telescope.h"
+#include "utf8.h"
 
 /* XXX: needed just to please the linker */
 int hide_pre_context;
