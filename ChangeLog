@@ -1,3 +1,9 @@
+2024-01-16  Omar Polo  <op@omarpolo.com>
+
+	* defaults.c (config_setvarb): change variables to be boolean
+	where it made sense.
+	(config_setvars): add `default-protocol' configuration option.
+
 2024-01-15  Omar Polo  <op@omarpolo.com>
 
 	* defaults.c: add `load-url-use-heuristic' knob
