@@ -68,6 +68,8 @@ char		crashed_file[PATH_MAX];
 char		session_file[PATH_MAX], session_file_tmp[PATH_MAX];
 char		history_file[PATH_MAX], history_file_tmp[PATH_MAX];
 
+char		cwd[PATH_MAX];
+
 static int
 select_non_dot(const struct dirent *d)
 {
@@ -299,6 +301,9 @@ init_paths(void)
 	char		 old_path[PATH_MAX];
 	char		*home;
 	struct stat	 info;
+
+	if (getcwd(cwd, sizeof(cwd)) == NULL)
+		err(1, "getcwd failed");
 
 	/* old path */
 	if ((home = getenv("HOME")) == NULL)

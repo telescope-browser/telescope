@@ -55,7 +55,6 @@ static const char *opts = "Cc:hnST:v";
 
 static int	has_url;
 static char	url[GEMINI_URL_LEN];
-static char	cwd[PATH_MAX];
 
 /*
  * Used to know when we're finished loading.
@@ -1044,9 +1043,6 @@ main(int argc, char * const *argv)
 
 	if (getenv("NO_COLOR") != NULL)
 		enable_colors = 0;
-
-	if (getcwd(cwd, sizeof(cwd)) == NULL)
-		err(1, "getcwd failed");
 
 	while ((ch = getopt_long(argc, argv, opts, longopts, NULL)) != -1) {
 		switch (ch) {

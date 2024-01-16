@@ -33,6 +33,8 @@ extern char	crashed_file[PATH_MAX];
 extern char	session_file[PATH_MAX], session_file_tmp[PATH_MAX];
 extern char	history_file[PATH_MAX], history_file_tmp[PATH_MAX];
 
+extern char	cwd[PATH_MAX];
+
 int		 fs_init(void);
 void		 fs_load_url(struct tab *, const char *);
 
