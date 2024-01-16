@@ -41,6 +41,7 @@ struct iri {
 int	iri_parse(const char *, const char *, struct iri *);
 int	iri_unparse(const struct iri *, char *, size_t);
 int	iri_human(const struct iri *, char *, size_t);
+int	iri_setport(struct iri *, const char *);
 int	iri_setquery(struct iri *, const char *);
 
 #endif /* IRI_H */

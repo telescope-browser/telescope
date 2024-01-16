@@ -711,6 +711,21 @@ iri_human(const struct iri *iri, char *buf, size_t buflen)
 }
 
 int
+iri_setport(struct iri *iri, const char *portstr)
+{
+	const char	*errstr;
+	int		 port;
+
+	port = strtonum(portstr, 1, UINT16_MAX, &errstr);
+	if (errstr)
+		return (-1);
+
+	snprintf(iri->iri_portstr, sizeof(iri->iri_portstr), "%d", port);
+	iri->iri_port = port;
+	return (0);
+}
+
+int
 iri_setquery(struct iri *iri, const char *p)
 {
 	ptrdiff_t	 bufsize;
