@@ -1068,7 +1068,19 @@ cmd_write_buffer(struct buffer *buffer)
 void
 cmd_home(struct buffer *buffer)
 {
-	message("Not implemented yet!");
+	char path[GEMINI_URL_LEN];
+	char *tilde, *t;
+
+	strlcpy(path, current_tab->iri.iri_path, sizeof(path));
+
+	if ((tilde = strchr(path, '~')) != NULL &&
+	    tilde[1] != '\0' && tilde[1] != '/') {
+		if ((t = strchr(tilde, '/')) != NULL)
+			*++t = '\0';
+		load_url_in_tab(current_tab, path, current_tab->hist_cur->h,
+		    LU_MODE_NOCACHE);
+	} else
+		cmd_root(buffer);
 }
 
 void
