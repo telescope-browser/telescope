@@ -60,6 +60,7 @@ static int yylex(void);
 static void setprfx(const char *, const char *);
 static void setvari(char *, int);
 static void setvars(char *, char *);
+static void setvarb(char *, int);
 static int colorname(const char *);
 static void setcolor(const char *, const char *, const char *);
 static int attrname(const char *);
@@ -79,8 +80,12 @@ static void do_parseconfig(const char *, int);
 %token	UNBIND
 %token	VIA
 
+/* Sigh... they conflict with ncurses TRUE and FALSE */
+%token	TOK_TRUE TOK_FALSE
+
 %token <str> STRING
 %token <num> NUMBER
+%type  <num> bool
 
 %%
 
@@ -88,6 +93,10 @@ grammar		: /* empty */
 		| grammar '\n'
 		| grammar rule '\n'
 		| error '\n'
+		;
+
+bool		: TOK_TRUE  { $$ = 1; }
+		| TOK_FALSE { $$ = 0; }
 		;
 
 rule		: set
@@ -102,6 +111,7 @@ rule		: set
 
 set		: SET STRING '=' STRING	{ setvars($2, $4); }
 		| SET STRING '=' NUMBER	{ setvari($2, $4); }
+		| SET STRING '=' bool   { setvarb($2, $4); }
 		;
 
 style		: STYLE STRING { current_style = $2; } stylespec ;
@@ -164,11 +174,13 @@ static struct keyword {
 	{ "bg", BG },
 	{ "bind", BIND },
 	{ "cont", CONT },
+	{ "false", TOK_FALSE },
 	{ "fg", FG },
 	{ "prefix", PRFX },
 	{ "proxy", PROXY },
 	{ "set", SET },
 	{ "style", STYLE },
+	{ "true", TOK_TRUE },
 	{ "unbind", UNBIND },
 	{ "via", VIA },
 };
@@ -327,7 +339,12 @@ setprfx(const char *prfx, const char *cont)
 static void
 setvari(char *var, int val)
 {
-	if (!config_setvari(var, val))
+	/*
+	 * For some time, fall back to a boolean as compat
+	 * with telescope 0.8 and previous.
+	 */
+	if (!config_setvari(var, val) &&
+	    !config_setvarb(var, val))
 		yyerror("invalid variable or value: %s = %d",
 		    var, val);
 
@@ -340,6 +357,16 @@ setvars(char *var, char *val)
 	if (!config_setvars(var, val))
 		yyerror("invalid variable or value: %s = \"%s\"",
 		    var, val);
+
+	free(var);
+}
+
+static void
+setvarb(char *var, int val)
+{
+	if (!config_setvarb(var, val))
+		yyerror("invalid variable or value: %s = %s",
+		    var, val ? "true" : "false");
 
 	free(var);
 }

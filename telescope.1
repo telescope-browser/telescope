@@ -255,72 +255,73 @@ seconds after some events happens
 .Pq new or closed tabs, visited a link ...
 Defaults to 20.
 .It Ic dont-wrap-pre
-.Pq integer
-If nonzero, don't wrap preformatted blocks.
-Defaults to 0.
+.Pq boolean
+If true, don't wrap preformatted blocks.
+Defaults to false.
 .It Ic download-path
 .Pq string
 The default download path.
 Defaults to
 .Pa /tmp .
 .It Ic emojify-link
-.Pq integer
-If nonzero, when the text of a link starts with an emoji followed by a
+.Pq boolean
+If true, when the text of a link starts with an emoji followed by a
 space, use that emoji as line prefix.
-Defaults to 1.
+Defaults to true.
 .It Ic enable-colors
-.Pq integer
-If nonzero, enable colours.
-Defaults to 0 if
+.Pq boolean
+If true, enable colours.
+Defaults to false if
 .Ev NO_COLORS
-is set, 1 otherwise.
+is set, true otherwise.
 .It Ic fill-column
 .Pq integer
 If greater than zero, lines of text will be formatted in a way that
 don't exceed the given number of columns.
 Defaults to 80.
 .It Ic fringe-ignore-offset
-.Pq integer
-If nonzero, the fringe doesn't obey to
+.Pq boolean
+If true, the fringe doesn't obey to
 .Ic olivetti-mode .
-Defaults to 1.
+Defaults to false.
 .It Ic hide-pre-blocks
-.Pq integer
-If nonzero, hide by default the body of the preformatted blocks.
-Defaults to zero.
+.Pq boolean
+If true, hide by default the body of the preformatted blocks.
+Defaults to false.
 .Ic push-button
 can be used to toggle the visibility per-block.
 .It Ic hide-pre-closing-line
-.Pq integer
-If nonzero, hide the closing line of preformatted blocks.
-Defaults to 0.
+.Pq boolean
+If true, hide the closing line of preformatted blocks.
+Defaults to false.
 .It Ic hide-pre-context
-.Pq integer
-If nonzero, hide the start and end line of the preformatted blocks.
+.Pq boolean
+If true, hide the start and end line of the preformatted blocks.
 If both hide-pre-context and hide-pre-blocks are nonzero, preformatted
 blocks are irremediably hidden.
-Defaults to zero.
+Defaults to false.
 .It Ic new-tab-url
 .Pq string
 URL for the new tab page.
 Defaults to
 .Dq about:new .
 .It Ic load-url-use-heuristic
-If zero, don't use euristics to resolve the URLs.
+.Pq boolean
+If false, don't use euristics to resolve the URLs.
 Non-absolute URLs given as command line argument will be resolved as
 file system paths,
 .Ic load-url
 will resolve as relative to the current URL.
-Defaults to 1.
+Defaults to true.
 .It Ic max-killed-tabs
 .Pq integer
 The maximum number of closed tabs to keep track of, defaults to 10.
 Must be a positive number; if zero, don't save closed tabs at all.
 .It Ic olivetti-mode
-.Pq integer
-If nonzero, enable
+.Pq boolean
+If true, enable
 .Ic olivetti-mode
-Defaults to 1.
+Defaults to true.
 .It Ic tab-bar-show
 .Pq integer
 If tab-bar-show is -1 hide the tab bar permanently, if 0 show it
@@ -328,9 +329,9 @@ unconditionally.
 If it's 1, show the bar only when there is more than one tab.
 Defaults to 1.
 .It Ic update-title
-.Pq integer
-If nonzero, set the terminal title to the page title.
-Defaults to 1.
+.Pq boolean
+If true, set the terminal title to the page title.
+Defaults to true.
 .El
 .It Ic style Ar name Ar option
 Change the styling of the element identified by

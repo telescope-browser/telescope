@@ -542,30 +542,12 @@ config_setvari(const char *var, int val)
 {
 	if (!strcmp(var, "autosave")) {
 		autosave = val;
-	} else if (!strcmp(var, "dont-wrap-pre")) {
-		dont_wrap_pre = !!val;
-	} else if (!strcmp(var, "emojify-link")) {
-		emojify_link = !!val;
-	} else if (!strcmp(var, "enable-colors")) {
-		enable_colors = !!val;
 	} else if (!strcmp(var, "fill-column")) {
 		if ((fill_column = val) <= 0)
 			fill_column = INT_MAX;
-	} else if (!strcmp(var, "fringe-ignore-offset")) {
-		fringe_ignore_offset = !!val;
-	} else if (!strcmp(var, "hide-pre-blocks")) {
-		hide_pre_blocks = !!val;
-	} else if (!strcmp(var, "hide-pre-closing-line")) {
-		hide_pre_closing_line = !!val;
-	} else if (!strcmp(var, "hide-pre-context")) {
-		hide_pre_context = !!val;
-	} else if (!strcmp(var, "load-url-use-heuristic")) {
-		load_url_use_heuristic = !!val;
 	} else if (!strcmp(var, "max-killed-tabs")) {
 		if (val >= 0)
 			max_killed_tabs = MIN(val, 128);
-	} else if (!strcmp(var, "olivetti-mode")) {
-		olivetti_mode = !!val;
 	} else if (!strcmp(var, "tab-bar-show")) {
 		if (val < 0)
 			tab_bar_show = -1;
@@ -573,9 +555,6 @@ config_setvari(const char *var, int val)
 			tab_bar_show = 0;
 		else
 			tab_bar_show = 1;
-	} else if (!strcmp(var, "update-title") ||
-	    !strcmp(var, "set-title")) {
-		set_title = !!val;
 	} else {
 		return 0;
 	}
@@ -611,6 +590,64 @@ config_setvars(const char *var, char *val)
 	} else
 		return 0;
 	return 1;
+}
+
+int
+config_setvarb(const char *var, int val) {
+	val = !!val;
+
+	if (!strcmp(var, "dont-wrap-pre")) {
+		dont_wrap_pre = val;
+		return 1;
+	}
+
+	if (!strcmp(var, "emojify-link")) {
+		emojify_link = val;
+		return 1;
+	}
+
+	if (!strcmp(var, "enable-colors")) {
+		enable_colors = val;
+		return 1;
+	}
+
+	if (!strcmp(var, "fringe-ignore-offset")) {
+		fringe_ignore_offset = val;
+		return 1;
+	}
+
+	if (!strcmp(var, "hide-pre-blocks")) {
+		hide_pre_blocks = val;
+		return 1;
+	}
+
+	if (!strcmp(var, "hide-pre-closing-line")) {
+		hide_pre_closing_line = val;
+		return 1;
+	}
+
+	if (!strcmp(var, "hide-pre-context")) {
+		hide_pre_context = val;
+		return 1;
+	}
+
+	if (!strcmp(var, "load-url-use-heuristic")) {
+		load_url_use_heuristic = val;
+		return 1;
+	}
+
+	if (!strcmp(var, "olivetti-mode")) {
+		olivetti_mode = val;
+		return 1;
+	}
+
+	if (!strcmp(var, "update-title") ||
+	    !strcmp(var, "set-title")) {
+		set_title = val;
+		return 1;
+	}
+
+	return 0;
 }
 
 int
