@@ -699,9 +699,9 @@ handle_dispatch_imsg(int fd, short event, void *d)
 			if ((req = req_by_id(imsg.hdr.peerid)) == NULL)
 				break;
 
-			if (datalen != sizeof(certok))
+			if (imsg_get_data(&imsg, &certok, sizeof(certok)) ==
+			    -1)
 				die();
-			memcpy(&certok, imsg.data, sizeof(certok));
 			if (certok)
 				net_ready(req);
 			else

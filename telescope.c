@@ -366,10 +366,9 @@ handle_imsg_got_code(struct imsg *imsg, size_t datalen)
 	if ((tab = tab_by_id(imsg->hdr.peerid)) == NULL)
 		return;
 
-	if (sizeof(tab->code) != datalen)
+	if (imsg_get_data(imsg, &tab->code, sizeof(tab->code)) == -1)
 		die();
 
-	memcpy(&tab->code, imsg->data, sizeof(tab->code));
 	tab->code = normalize_code(tab->code);
 	if (tab->code != 30 && tab->code != 31)
 		tab->redirect_count = 0;
