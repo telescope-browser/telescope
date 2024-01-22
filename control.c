@@ -279,15 +279,3 @@ control_dispatch_imsg(int fd, short event, void *bula)
 
 	imsg_event_add(&c->iev);
 }
-
-int
-control_imsg_relay(struct imsg *imsg)
-{
-	struct ctl_conn	*c;
-
-	if ((c = control_connbypid(imsg->hdr.pid)) == NULL)
-		return (0);
-
-	return (imsg_compose_event(&c->iev, imsg->hdr.type, 0, imsg->hdr.pid,
-	    -1, imsg->data, IMSG_DATA_SIZE(*imsg)));
-}
