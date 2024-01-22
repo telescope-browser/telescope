@@ -255,10 +255,11 @@ parse_path_absolute(const char *s, struct iri *iri)
 		return (NULL);
 
 	if ((t = advance_segment_nz(s + 1)) == NULL)
-		return (s + 1);
-
-	while (*t == '/')
-		t = advance_segment(t + 1);
+		t = s + 1;
+	else {
+		while (*t == '/')
+			t = advance_segment(t + 1);
+	}
 
 	if (cpstr(s, t, iri->iri_path, sizeof(iri->iri_path)) == -1)
 		return (NULL);
