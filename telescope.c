@@ -839,6 +839,9 @@ load_url_in_tab(struct tab *tab, const char *url, const char *base, int mode)
 		message("Loading %s...", url);
 	}
 
+	if (base == NULL)
+		base = tab->hist_cur->h;
+
 	load_url(tab, url, base, mode);
 }
 
