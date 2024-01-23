@@ -2,6 +2,8 @@ check_PROGRAMS =	gmparser gmiparser iritest
 
 gmparser_SOURCES =	gmparser.c				\
 			$(top_srcdir)/compat.h			\
+			$(top_srcdir)/hist.c			\
+			$(top_srcdir)/hist.h			\
 			$(top_srcdir)/parser.c			\
 			$(top_srcdir)/parser.h			\
 			$(top_srcdir)/parser_gophermap.c	\
@@ -9,6 +11,8 @@ gmparser_SOURCES =	gmparser.c				\
 
 gmiparser_SOURCES =	gmiparser.c				\
 			$(top_srcdir)/compat.h			\
+			$(top_srcdir)/hist.c			\
+			$(top_srcdir)/hist.h			\
 			$(top_srcdir)/parser.c			\
 			$(top_srcdir)/parser.h			\
 			$(top_srcdir)/parser_gemtext.c		\

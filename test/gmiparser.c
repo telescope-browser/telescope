@@ -20,6 +20,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "hist.h"
 #include "parser.h"
 #include "telescope.h"
 #include "utf8.h"
@@ -47,14 +48,15 @@ main(void)
 {
 	FILE		*fp;
 	struct tab	 tab;
-	struct hist	 hist;
 	ssize_t		 r;
 	size_t		 blen;
 	char		 buf[BUFSIZ], *b;
 
 	memset(&tab, 0, sizeof(tab));
-	memset(&hist, 0, sizeof(hist));
-	tab.hist_cur = &hist;
+	if ((tab.hist = hist_new(HIST_LINEAR)) == NULL)
+		err(1, "hist_new");
+	if (hist_push(tab.hist, "dummy://address") == -1)
+		err(1, "hist_push");
 
 	parser_init(&tab, gemtext_initparser);
 	for (;;) {
