@@ -73,7 +73,6 @@ BUILT_SOURCES =		cmd.gen.c emoji-matcher.c pages.c
 
 CLEANFILES =		cmd.gen.c emoji-matcher.c pages.c parse.c
 
-AM_CPPFLAGS =		-I$(top_srcdir)/phos
 LDADD =			$(LIBOBJS) $(LIBGRAPHEME)
 EXTRA_telescope_DEPENDENCIES = $(LIBGRAPHEME)
 
