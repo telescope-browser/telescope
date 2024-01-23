@@ -1,3 +1,15 @@
+2024-01-23  Omar Polo  <op@omarpolo.com>
+
+	* telescope.c (handle_imsg_eof): cache finger pages as well
+	(handle_imsg_eof): save finger:// and gopher:// URLs to the
+	persistent history as well.
+
+	* minibuffer.c (bp_select): fix bookmark-page
+
+	* telescope.c (main): removed -C/--colours flag
+
+	* hist.c (hist_new): rework the history management
+
 2024-01-16  Omar Polo  <op@omarpolo.com>
 
 	* defaults.c (config_setvarb): change variables to be boolean
