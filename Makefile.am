@@ -15,9 +15,11 @@ telescope_SOURCES =	cmd.c			\
 			defaults.c		\
 			defaults.h		\
 			downloads.c		\
+			emoji-matcher.c		\
 			fs.c			\
 			fs.h			\
 			gencmd.awk		\
+			genemoji.sh		\
 			help.c			\
 			hist.c			\
 			iri.c			\
@@ -33,27 +35,25 @@ telescope_SOURCES =	cmd.c			\
 			pages.c			\
 			pages.h			\
 			parse.y			\
+			parser.c		\
 			parser.h		\
-			parser/parser.c			\
-			parser/parser_gemtext.c		\
-			parser/parser_gophermap.c	\
-			parser/parser_textpatch.c	\
-			parser/parser_textplain.c	\
+			parser_gemtext.c	\
+			parser_gophermap.c	\
+			parser_textpatch.c	\
+			parser_textplain.c	\
 			sandbox.c		\
 			session.c		\
 			session.h		\
 			telescope.c		\
 			telescope.h		\
 			tofu.c			\
-			u/emoji-matcher.c	\
-			u/genemoji.sh		\
-			u/utf8.c		\
-			u/wrap.c		\
 			ui.c			\
 			ui.h			\
+			utf8.c			\
 			utf8.h			\
 			utils.c			\
-			utils.h
+			utils.h			\
+			wrap.c
 
 noinst_PROGRAMS =	pagebundler
 pagebundler_SOURCES =	pagebundler.c
@@ -69,10 +69,9 @@ $(srcdir)/libgrapheme/libgrapheme.a:
 clean-local:
 	test -n "$(LIBGRAPHEME)" && ${MAKE} -C libgrapheme clean || true
 
-BUILT_SOURCES =		cmd.gen.c u/emoji-matcher.c pages.c
+BUILT_SOURCES =		cmd.gen.c emoji-matcher.c pages.c
 
-CLEANFILES =		cmd.gen.c u/emoji-matcher.c pages.c \
-			parse.c
+CLEANFILES =		cmd.gen.c emoji-matcher.c pages.c parse.c
 
 AM_CPPFLAGS =		-I$(top_srcdir)/phos
 LDADD =			$(LIBOBJS) $(LIBGRAPHEME)
@@ -85,8 +84,8 @@ dist_man1_MANS =	telescope.1
 cmd.gen.c: $(srcdir)/cmd.h $(srcdir)/gencmd.awk
 	${AWK} -f $(srcdir)/gencmd.awk < $(srcdir)/cmd.h > $@
 
-u/emoji-matcher.c: $(srcdir)/data/emoji.txt $(srcdir)/u/genemoji.sh
-	$(srcdir)/u/genemoji.sh $(srcdir)/data/emoji.txt > $@
+emoji-matcher.c: $(srcdir)/data/emoji.txt $(srcdir)/genemoji.sh
+	$(srcdir)/genemoji.sh $(srcdir)/data/emoji.txt > $@
 
 PAGES =	$(builddir)/pages/about_about.gmi	\
 	$(builddir)/pages/about_blank.gmi	\
