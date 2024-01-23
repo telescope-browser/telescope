@@ -516,7 +516,8 @@ handle_imsg_eof(struct imsg *imsg, size_t datalen)
 			die();
 		h = hist_cur(tab->hist);
 		if (!strncmp(h, "gemini://", 9) ||
-		    !strncmp(h, "gopher://", 9))
+		    !strncmp(h, "gopher://", 9) ||
+		    !strncmp(h, "finger://", 9))
 			mcache_tab(tab);
 		ui_on_tab_refresh(tab);
 		ui_on_tab_loaded(tab);
