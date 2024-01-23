@@ -44,15 +44,13 @@
 #include "utils.h"
 
 static const struct option longopts[] = {
-	{"colors",      no_argument,    NULL,   'C'},
-	{"colours",	no_argument,    NULL,   'C'},
 	{"help",	no_argument,	NULL,	'h'},
 	{"safe",	no_argument,	NULL,	'S'},
 	{"version",	no_argument,	NULL,	'v'},
 	{NULL,		0,		NULL,	0},
 };
 
-static const char *opts = "Cc:hnST:v";
+static const char *opts = "c:hnST:v";
 
 static int	has_url;
 static char	url[GEMINI_URL_LEN];
@@ -1032,8 +1030,6 @@ main(int argc, char * const *argv)
 
 	while ((ch = getopt_long(argc, argv, opts, longopts, NULL)) != -1) {
 		switch (ch) {
-		case 'C':
-			exit(ui_print_colors());
 		case 'c':
 			fail = 1;
 			strlcpy(config_path, optarg, sizeof(config_path));

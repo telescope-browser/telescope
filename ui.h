@@ -143,7 +143,6 @@ struct buffer	*current_buffer(void);
 struct vline	*adjust_line(struct vline *, struct buffer *);
 void		 start_loading_anim(struct tab *);
 
-int		 ui_print_colors(void);
 int		 ui_init(void);
 void		 ui_main_loop(void);
 void		 ui_on_tab_loaded(struct tab *);

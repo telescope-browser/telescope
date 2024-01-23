@@ -1095,48 +1095,6 @@ stop_loading_anim(struct tab *tab)
 }
 
 int
-ui_print_colors(void)
-{
-	int colors = 0, pairs = 0, can_change = 0;
-	int columns = 16, lines, color, i, j;
-
-	initscr();
-	if (has_colors()) {
-		start_color();
-		use_default_colors();
-
-		colors = COLORS;
-		pairs = COLOR_PAIRS;
-		can_change = can_change_color();
-	}
-	endwin();
-
-	printf("Term info:\n");
-	printf("TERM=%s COLORS=%d COLOR_PAIRS=%d can_change_colors=%d\n",
-	    getenv("TERM"), colors, pairs, can_change);
-	printf("\n");
-
-	if (colors == 0) {
-		printf("No color support\n");
-		return 0;
-	}
-
-	printf("Available colors:\n\n");
-	lines = (colors - 1) / columns + 1;
-	color = 0;
-	for (i = 0; i < lines; ++i) {
-		for (j = 0; j < columns; ++j, ++color) {
-			printf("\033[0;38;5;%dm %03d", color, color);
-		}
-		printf("\n");
-	}
-
-	printf("\033[0m");
-	fflush(stdout);
-	return 0;
-}
-
-int
 ui_init(void)
 {
 	setlocale(LC_ALL, "");
