@@ -1,12 +1,14 @@
 TAGS
 pages/*.gmi
 
-**/etc
+**/*.o
 **/.deps
 **/.dirstamp
 **/Makefile
 **/Makefile.in
-**/*.o
+**/build
+**/etc
+**/obj
 
 aclocal.m4
 autom4te.cache
