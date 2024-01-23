@@ -42,6 +42,7 @@
 #include <unistd.h>
 
 #include "defaults.h"
+#include "hist.h"
 #include "minibuffer.h"
 #include "session.h"
 #include "telescope.h"
@@ -649,7 +650,7 @@ redraw_tabline(void)
 		current = tab == current_tab;
 
 		if (*(title = tab->buffer.page.title) == '\0')
-			title = tab->hist_cur->h;
+			title = hist_cur(tab->hist);
 
 		if (tab->flags & TAB_URGENT)
 			strlcpy(buf, "!", sizeof(buf));
@@ -865,7 +866,7 @@ redraw_modeline(struct tab *tab)
 	wprintw(modeline, "%zu/%zu %s ",
 	    buffer->line_off + buffer->curs_y,
 	    buffer->line_max,
-	    tab->hist_cur->h);
+	    hist_cur(tab->hist));
 
 	getyx(modeline, y, x);
 	getmaxyx(modeline, max_y, max_x);
@@ -932,16 +933,16 @@ do_redraw_minibuffer(void)
 		    cmplbuf->line_max);
 
 	wprintw(echoarea, "%s", ministate.prompt);
-	if (ministate.hist_cur != NULL)
+	if (!ministate.editing)
 		wprintw(echoarea, "(%zu/%zu) ",
-		    ministate.hist_off + 1,
-		    ministate.history->len);
+		    hist_off(ministate.hist) + 1,
+		    hist_size(ministate.hist));
 
 	getyx(echoarea, off_y, off_x);
 
-	start = ministate.hist_cur != NULL
-		? ministate.hist_cur->h
-		: ministate.buf;
+	start = ministate.buf;
+	if (!ministate.editing)
+		start = hist_cur(ministate.hist);
 	line = buffer->current_line->parent->line + buffer->current_line->from;
 	c = utf8_nth(line, buffer->cpoff);
 	while (utf8_swidth_between(start, c) > (size_t)COLS/2) {
@@ -1229,13 +1230,15 @@ ui_main_loop(void)
 void
 ui_on_tab_loaded(struct tab *tab)
 {
-	stop_loading_anim(tab);
-	message("Loaded %s", tab->hist_cur->h);
+	size_t line_off, curr_off;
 
-	if (tab->hist_cur->current_off != 0 &&
+	stop_loading_anim(tab);
+	message("Loaded %s", hist_cur(tab->hist));
+
+	hist_cur_offs(tab->hist, &line_off, &curr_off);
+	if (curr_off != 0 &&
 	    tab->buffer.current_line == TAILQ_FIRST(&tab->buffer.head)) {
-		set_scroll_position(tab, tab->hist_cur->line_off,
-		    tab->hist_cur->current_off);
+		set_scroll_position(tab, line_off, curr_off);
 		redraw_tab(tab);
 		return;
 	}
@@ -1326,7 +1329,7 @@ ui_require_input(struct tab *tab, int hide, void (*fn)(void))
 	switch_to_tab(tab);
 
 	enter_minibuffer(sensible_self_insert, fn, exit_minibuffer,
-	    &ir_history, NULL, NULL, 0);
+	    ir_history, NULL, NULL, 0);
 	strlcpy(ministate.prompt, "Input required: ",
 	    sizeof(ministate.prompt));
 	redraw_tab(tab);

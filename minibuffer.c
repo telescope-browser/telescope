@@ -23,6 +23,7 @@
 #include <string.h>
 
 #include "fs.h"
+#include "hist.h"
 #include "iri.h"
 #include "minibuffer.h"
 #include "session.h"
@@ -51,11 +52,10 @@ static struct tab *yornp_data;
 static void (*read_cb)(const char*, struct tab *);
 static struct tab *read_data;
 
-/* XXX: don't forget to init these in minibuffer_init */
-struct histhead eecmd_history,
-	ir_history,
-	lu_history,
-	read_history;
+struct hist *eecmd_history;
+struct hist *ir_history;
+struct hist *lu_history;
+struct hist *read_history;
 
 struct ministate ministate;
 
@@ -103,8 +103,8 @@ recompute_completions(int add)
 	if (in_minibuffer != MB_COMPREAD)
 		return;
 
-	if (ministate.hist_cur != NULL)
-		text = ministate.hist_cur->h;
+	if (!ministate.editing)
+		text = hist_cur(ministate.hist);
 	else
 		text = ministate.buf;
 
@@ -176,8 +176,8 @@ minibuffer_compl_text(void)
 {
 	struct vline	*vl;
 
-	if (ministate.hist_cur != NULL)
-		return ministate.hist_cur->h;
+	if (!ministate.editing)
+		return hist_cur(ministate.hist);
 
 	vl = ministate.compl.buffer.current_line;
 	if (vl == NULL || vl->parent->flags & L_HIDDEN ||
@@ -189,20 +189,10 @@ minibuffer_compl_text(void)
 static void
 minibuffer_hist_save_entry(void)
 {
-	struct hist	*hist;
-	const char	*t;
-
-	if (ministate.history == NULL)
+	if (ministate.hist == NULL)
 		return;
 
-	if ((hist = calloc(1, sizeof(*hist))) == NULL)
-		abort();
-
-	t = minibuffer_compl_text();
-	strlcpy(hist->h, t, sizeof(hist->h));
-
-	TAILQ_INSERT_TAIL(&ministate.history->head, hist, entries);
-	ministate.history->len++;
+	hist_append(ministate.hist, minibuffer_compl_text());
 }
 
 /*
@@ -213,11 +203,12 @@ minibuffer_hist_save_entry(void)
 void
 minibuffer_taint_hist(void)
 {
-	if (ministate.hist_cur == NULL)
+	if (ministate.editing)
 		return;
 
-	strlcpy(ministate.buf, ministate.hist_cur->h, sizeof(ministate.buf));
-	ministate.hist_cur = NULL;
+	ministate.editing = 1;
+	strlcpy(ministate.buf, hist_cur(ministate.hist),
+	    sizeof(ministate.buf));
 	ministate.buffer.current_line->parent->line = ministate.buf;
 }
 
@@ -285,7 +276,7 @@ ir_select_gemini(void)
 
 	minibuffer_hist_save_entry();
 
-	if (iri_parse(NULL, tab->hist_cur->h, &iri) == -1)
+	if (iri_parse(NULL, hist_cur(tab->hist), &iri) == -1)
 		goto err;
 	if (iri_setquery(&iri, minibuffer_compl_text()) == -1)
 		goto err;
@@ -332,7 +323,7 @@ lu_select(void)
 	char url[GEMINI_URL_LEN+1];
 
 	minibuffer_hist_save_entry();
-	humanify_url(minibuffer_compl_text(), current_tab->hist_cur->h,
+	humanify_url(minibuffer_compl_text(), hist_cur(current_tab->hist),
 	    url, sizeof(url));
 
 	exit_minibuffer();
@@ -514,7 +505,7 @@ populate_compl_buffer(complfn *fn, void *data)
 
 void
 enter_minibuffer(void (*self_insert_fn)(void), void (*donefn)(void),
-    void (*abortfn)(void), struct histhead *hist,
+    void (*abortfn)(void), struct hist *hist,
     complfn *complfn, void *compldata, int must_select)
 {
 	ministate.compl.must_select = must_select;
@@ -540,9 +531,10 @@ enter_minibuffer(void (*self_insert_fn)(void), void (*donefn)(void),
 	ministate.buffer.cpoff = 0;
 	strlcpy(ministate.buf, "", sizeof(ministate.prompt));
 
-	ministate.history = hist;
-	ministate.hist_cur = NULL;
-	ministate.hist_off = 0;
+	ministate.editing = 1;
+	ministate.hist = hist;
+	if (ministate.hist)
+		hist_seek_start(ministate.hist);
 }
 
 void
@@ -591,7 +583,7 @@ minibuffer_read(const char *prompt, void (*fn)(const char *, struct tab *),
 	read_cb = fn;
 	read_data = data;
 	enter_minibuffer(read_self_insert, read_select, read_abort,
-	    &read_history, NULL, NULL, 0);
+	    read_history, NULL, NULL, 0);
 
 	len = sizeof(ministate.prompt);
 	strlcpy(ministate.prompt, prompt, len);
@@ -641,10 +633,11 @@ message(const char *fmt, ...)
 void
 minibuffer_init(void)
 {
-	TAILQ_INIT(&eecmd_history.head);
-	TAILQ_INIT(&ir_history.head);
-	TAILQ_INIT(&lu_history.head);
-	TAILQ_INIT(&read_history.head);
+	if ((eecmd_history = hist_new(HIST_WRAP)) == NULL ||
+	    (ir_history = hist_new(HIST_WRAP)) == NULL ||
+	    (lu_history = hist_new(HIST_WRAP)) == NULL ||
+	    (read_history = hist_new(HIST_WRAP)) == NULL)
+		err(1, "hist_new");
 
 	TAILQ_INIT(&ministate.compl.buffer.head);
 	TAILQ_INIT(&ministate.compl.buffer.page.head);

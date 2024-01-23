@@ -27,6 +27,7 @@
 
 #include "defaults.h"
 #include "fs.h"
+#include "hist.h"
 #include "minibuffer.h"
 #include "session.h"
 #include "ui.h"
@@ -42,7 +43,8 @@ switch_to_tab(struct tab *tab)
 	tab->flags &= ~TAB_URGENT;
 
 	if (operating && tab->flags & TAB_LAZY)
-		load_url_in_tab(tab, tab->hist_cur->h, NULL, LU_MODE_NOHIST);
+		load_url_in_tab(tab, hist_cur(tab->hist), NULL,
+		    LU_MODE_NOHIST);
 }
 
 unsigned int
@@ -66,7 +68,12 @@ new_tab(const char *url, const char *base, struct tab *after)
 		return NULL;
 	}
 
-	TAILQ_INIT(&tab->hist.head);
+	if ((tab->hist = hist_new(HIST_LINEAR)) == NULL) {
+		free(tab);
+		event_loopbreak();
+		return NULL;
+	}
+
 	TAILQ_INIT(&tab->buffer.head);
 	TAILQ_INIT(&tab->buffer.page.head);
 	evtimer_set(&tab->loadingev, NULL, NULL);
@@ -152,7 +159,7 @@ void
 free_tab(struct tab *tab)
 {
 	TAILQ_REMOVE(&ktabshead, tab, tabs);
-	hist_clear(&tab->hist);
+	hist_free(tab->hist);
 	free(tab);
 }
 
@@ -165,13 +172,12 @@ stop_tab(struct tab *tab)
 static inline void
 savetab(FILE *fp, struct tab *tab, int killed)
 {
-	struct hist	*h;
+	size_t		 i, size, cur;
 	size_t		 top_line, current_line;
-	int		 future;
 
 	get_scroll_position(tab, &top_line, &current_line);
 
-	fprintf(fp, "%s ", tab->hist_cur->h);
+	fprintf(fp, "%s ", hist_cur(tab->hist));
 	if (tab == current_tab)
 		fprintf(fp, "current,");
 	if (killed)
@@ -180,14 +186,13 @@ savetab(FILE *fp, struct tab *tab, int killed)
 	fprintf(fp, "top=%zu,cur=%zu %s\n", top_line, current_line,
 	    tab->buffer.page.title);
 
-	future = 0;
-	TAILQ_FOREACH(h, &tab->hist.head, entries) {
-		if (h == tab->hist_cur) {
-			future = 1;
+	cur = hist_off(tab->hist);
+	size = hist_size(tab->hist);
+	for (i = 0; i < size; ++i) {
+		if (i == cur)
 			continue;
-		}
-
-		fprintf(fp, "%s %s\n", future ? ">" : "<", h->h);
+		fprintf(fp, "%s %s\n", i > cur ? ">" : "<",
+		    hist_nth(tab->hist, i));
 	}
 }
 
@@ -589,8 +594,7 @@ parse_tab_line(char *line, struct tab **ct)
 
 	if ((tab = new_tab(uri, NULL, NULL)) == NULL)
 		err(1, "new_tab");
-	tab->hist_cur->line_off = tline;
-	tab->hist_cur->current_off = cline;
+	hist_set_offs(tab->hist, tline, cline);
 	strlcpy(tab->buffer.page.title, title, sizeof(tab->buffer.page.title));
 
 	if (current)
@@ -605,7 +609,6 @@ static void
 load_tabs(void)
 {
 	struct tab	*tab = NULL, *ct = NULL;
-	struct hist	*h;
 	FILE		*session;
 	size_t		 lineno = 0, linesize = 0;
 	ssize_t		 linelen;
@@ -632,14 +635,10 @@ load_tabs(void)
 			}
 			uri++;
 
-			if ((h = calloc(1, sizeof(*h))) == NULL)
-				err(1, "calloc");
-			strlcpy(h->h, uri, sizeof(h->h));
-
 			if (*line == '>') /* future hist */
-				hist_push(&tab->hist, h);
+				hist_append(tab->hist, uri);
 			else
-				hist_add_before(&tab->hist, tab->hist_cur, h);
+				hist_prepend(tab->hist, uri);
 		} else
 			tab = parse_tab_line(line, &ct);
 	}

@@ -19,6 +19,7 @@
 #include <stdlib.h>
 
 #include "compl.h"
+#include "hist.h"
 #include "telescope.h"
 #include "session.h"
 
@@ -76,8 +77,8 @@ compl_ts(void **data, void **ret, const char **descr)
 	*ret = *tab;
 
 	if (*(*tab)->buffer.page.title == '\0')
-		return (*tab)->hist_cur->h;
-	*descr = (*tab)->hist_cur->h;
+		return hist_cur((*tab)->hist);
+	*descr = hist_cur((*tab)->hist);
 	return (*tab)->buffer.page.title;
 }
 

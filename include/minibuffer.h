@@ -36,10 +36,11 @@
  */
 typedef const char *(complfn)(void **, void **, const char **);
 
-extern struct histhead eecmd_history,
-	ir_history,
-	lu_history,
-	read_history;
+struct hist;
+extern struct hist *eecmd_history;
+extern struct hist *ir_history;
+extern struct hist *lu_history;
+extern struct hist *read_history;
 
 struct ministate {
 	char		*curmesg;
@@ -53,9 +54,8 @@ struct ministate {
 	struct vline	 vline;
 	struct buffer	 buffer;
 
-	struct histhead	*history;
-	struct hist	*hist_cur;
-	size_t		 hist_off;
+	struct hist	*hist;
+	int		 editing;
 
 	struct {
 		struct buffer	 buffer;
@@ -86,7 +86,7 @@ void	 swiper_select(void);
 void	 toc_select(void);
 
 void	 enter_minibuffer(void(*)(void), void(*)(void), void(*)(void),
-    struct histhead *, complfn *, void *, int);
+    struct hist *, complfn *, void *, int);
 
 void	 exit_minibuffer(void);
 void	 yornp(const char *, void (*)(int, struct tab *), struct tab *);

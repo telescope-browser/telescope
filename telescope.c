@@ -33,6 +33,7 @@
 #include "control.h"
 #include "defaults.h"
 #include "fs.h"
+#include "hist.h"
 #include "iri.h"
 #include "mcache.h"
 #include "minibuffer.h"
@@ -191,7 +192,7 @@ handle_imsg_err(struct imsg *imsg, size_t datalen)
 	page[datalen-1] = '\0';
 
 	if (asprintf(&page, "# Error loading %s\n\n> %s\n",
-	    tab->hist_cur->h, page) == -1)
+	    hist_cur(tab->hist), page) == -1)
 		die();
 	load_page_from_str(tab, page);
 	free(page);
@@ -392,24 +393,21 @@ handle_imsg_got_meta(struct imsg *imsg, size_t datalen)
 		load_page_from_str(tab, err_pages[tab->code]);
 	} else if (tab->code < 20) {	/* 1x */
 		free(tab->last_input_url);
-		tab->last_input_url = strdup(tab->hist_cur->h);
+		tab->last_input_url = strdup(hist_cur(tab->hist));
 		if (tab->last_input_url == NULL)
 			die();
 
 		load_page_from_str(tab, err_pages[tab->code]);
 		ui_require_input(tab, tab->code == 11, ir_select_gemini);
 	} else if (tab->code == 20) {
-		history_add(tab->hist_cur->h);
+		history_add(hist_cur(tab->hist));
 		if (setup_parser_for(tab)) {
 			ui_send_net(IMSG_PROCEED, tab->id, NULL, 0);
 		} else if (safe_mode) {
 			load_page_from_str(tab,
 			    err_pages[UNKNOWN_TYPE_OR_CSET]);
 		} else {
-			struct hist *h;
-
-			if ((h = hist_pop(&tab->hist)) != NULL)
-				tab->hist_cur = h;
+			hist_prev(tab->hist);
 			snprintf(buf, sizeof(buf),
 			    "Can't display \"%s\", save it?", tab->meta);
 			ui_yornp(buf, handle_maybe_save_page, tab);
@@ -422,7 +420,7 @@ handle_imsg_got_meta(struct imsg *imsg, size_t datalen)
 			load_page_from_str(tab,
 			    err_pages[TOO_MUCH_REDIRECTS]);
 		} else
-			do_load_url(tab, tab->meta, tab->hist_cur->h,
+			do_load_url(tab, tab->meta, hist_cur(tab->hist),
 			    LU_MODE_NOCACHE);
 	} else { /* 4x, 5x & 6x */
 		load_page_from_str(tab, err_pages[tab->code]);
@@ -509,6 +507,7 @@ handle_imsg_eof(struct imsg *imsg, size_t datalen)
 {
 	struct tab	*tab = NULL;
 	struct download	*d = NULL;
+	const char	*h;
 
 	if ((tab = tab_by_id(imsg->hdr.peerid)) == NULL &&
 	    (d = download_by_id(imsg->hdr.peerid)) == NULL)
@@ -517,8 +516,9 @@ handle_imsg_eof(struct imsg *imsg, size_t datalen)
 	if (tab != NULL) {
 		if (!parser_free(tab))
 			die();
-		if (!strncmp(tab->hist_cur->h, "gemini://", 9) ||
-		    !strncmp(tab->hist_cur->h, "gopher://", 9))
+		h = hist_cur(tab->hist);
+		if (!strncmp(h, "gemini://", 9) ||
+		    !strncmp(h, "gopher://", 9))
 			mcache_tab(tab);
 		ui_on_tab_refresh(tab);
 		ui_on_tab_loaded(tab);
@@ -594,7 +594,7 @@ load_gemini_url(struct tab *tab, const char *url)
 	strlcpy(req.host, tab->iri.iri_host, sizeof(req.host));
 	strlcpy(req.port, tab->iri.iri_portstr, sizeof(req.port));
 
-	make_request(tab, &req, PROTO_GEMINI, tab->hist_cur->h);
+	make_request(tab, &req, PROTO_GEMINI, hist_cur(tab->hist));
 }
 
 static inline const char *
@@ -679,7 +679,7 @@ load_via_proxy(struct tab *tab, const char *url, struct proxy *p)
 
 	tab->proxy = p;
 
-	make_request(tab, &req, p->proto, tab->hist_cur->h);
+	make_request(tab, &req, p->proto, hist_cur(tab->hist));
 }
 
 static void
@@ -746,6 +746,7 @@ do_load_url(struct tab *tab, const char *url, const char *base, int mode)
 	struct proxy	*proxy;
 	int		 nocache = mode & LU_MODE_NOCACHE;
 	char		*t;
+	char		 buf[1025];
 
 	tab->proxy = NULL;
 	tab->trust = TS_UNKNOWN;
@@ -754,15 +755,16 @@ do_load_url(struct tab *tab, const char *url, const char *base, int mode)
 		if (asprintf(&t, "# error loading %s\n>%s\n",
 		    url, "Can't parse the IRI") == -1)
 			die();
-		strlcpy(tab->hist_cur->h, url, sizeof(tab->hist_cur->h));
+		hist_set_cur(tab->hist, url);
 		load_page_from_str(tab, t);
 		free(t);
 		return;
 	}
 
-	iri_unparse(&tab->iri, tab->hist_cur->h, sizeof(tab->hist_cur->h));
+	iri_unparse(&tab->iri, buf, sizeof(buf));
+	hist_set_cur(tab->hist, buf);
 
-	if (!nocache && mcache_lookup(tab->hist_cur->h, tab)) {
+	if (!nocache && mcache_lookup(buf, tab)) {
 		ui_on_tab_refresh(tab);
 		ui_on_tab_loaded(tab);
 		return;
@@ -775,7 +777,7 @@ do_load_url(struct tab *tab, const char *url, const char *base, int mode)
 			    p->port != NULL)
 				iri_setport(&tab->iri, p->port);
 
-			p->loadfn(tab, tab->hist_cur->h);
+			p->loadfn(tab, buf);
 			return;
 		}
 	}
@@ -797,34 +799,26 @@ do_load_url(struct tab *tab, const char *url, const char *base, int mode)
 void
 load_url(struct tab *tab, const char *url, const char *base, int mode)
 {
+	size_t line_off, curr_off;
 	int lazy = tab->flags & TAB_LAZY;
-	int nohist = mode & LU_MODE_NOHIST;
+	int dohist = !(mode & LU_MODE_NOHIST);
 
 	if (operating && lazy) {
 		tab->flags ^= TAB_LAZY;
 		lazy = 0;
-	} else if (tab->hist_cur != NULL)
-		get_scroll_position(tab, &tab->hist_cur->line_off,
-		    &tab->hist_cur->current_off);
+	} else if (hist_size(tab->hist) != 0) {
+		get_scroll_position(tab, &line_off, &curr_off);
+		hist_set_offs(tab->hist, line_off, curr_off);
+	}
 
-	if (!nohist && (!lazy || tab->hist_cur == NULL)) {
-		if (tab->hist_cur != NULL)
-			hist_clear_forward(&tab->hist,
-			    TAILQ_NEXT(tab->hist_cur, entries));
-
-		if ((tab->hist_cur = calloc(1, sizeof(*tab->hist_cur)))
-		    == NULL) {
+	if (dohist) {
+		if (hist_push(tab->hist, url) == -1) {
 			event_loopbreak();
 			return;
 		}
 
 		strlcpy(tab->buffer.page.title, url,
 		    sizeof(tab->buffer.page.title));
-		hist_push(&tab->hist, tab->hist_cur);
-
-		if (lazy)
-			strlcpy(tab->hist_cur->h, url,
-			    sizeof(tab->hist_cur->h));
 	}
 
 	if (!lazy)
@@ -840,7 +834,7 @@ load_url_in_tab(struct tab *tab, const char *url, const char *base, int mode)
 	}
 
 	if (base == NULL)
-		base = tab->hist_cur->h;
+		base = hist_cur(tab->hist);
 
 	load_url(tab, url, base, mode);
 }
@@ -848,24 +842,22 @@ load_url_in_tab(struct tab *tab, const char *url, const char *base, int mode)
 int
 load_previous_page(struct tab *tab)
 {
-	struct hist	*h;
+	const char	*h;
 
-	if ((h = TAILQ_PREV(tab->hist_cur, mhisthead, entries)) == NULL)
+	if ((h = hist_prev(tab->hist)) == NULL)
 		return 0;
-	tab->hist_cur = h;
-	do_load_url(tab, h->h, NULL, LU_MODE_NONE);
+	do_load_url(tab, h, NULL, LU_MODE_NONE);
 	return 1;
 }
 
 int
 load_next_page(struct tab *tab)
 {
-	struct hist	*h;
+	const char	*h;
 
-	if ((h = TAILQ_NEXT(tab->hist_cur, entries)) == NULL)
+	if ((h = hist_next(tab->hist)) == NULL)
 		return 0;
-	tab->hist_cur = h;
-	do_load_url(tab, h->h, NULL, LU_MODE_NONE);
+	do_load_url(tab, h, NULL, LU_MODE_NONE);
 	return 1;
 }
 

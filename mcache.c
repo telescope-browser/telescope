@@ -21,6 +21,7 @@
 #include <string.h>
 
 #include "telescope.h"
+#include "hist.h"
 #include "mcache.h"
 #include "parser.h"
 #include "utils.h"
@@ -99,7 +100,7 @@ mcache_tab(struct tab *tab)
 	const char		*url;
 	FILE			*fp;
 
-	url = tab->hist_cur->h;
+	url = hist_cur(tab->hist);
 	l = strlen(url);
 	len = sizeof(*e) + l + 1;
 

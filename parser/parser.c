@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "hist.h"
 #include "parser.h"
 #include "telescope.h"
 
@@ -70,7 +71,7 @@ parser_free(struct tab *tab)
 	 * heuristic: see if there is a "tilde user" and use that as
 	 * page title, using the full domain name as fallback.
 	 */
-	if ((tilde = strstr(tab->hist_cur->h, "/~")) != NULL) {
+	if ((tilde = strstr(hist_cur(tab->hist), "/~")) != NULL) {
 		strlcpy(tab->buffer.page.title, tilde+1,
 		    sizeof(tab->buffer.page.title));
 

@@ -22,6 +22,7 @@
 
 #include "compl.h"
 #include "defaults.h"
+#include "hist.h"
 #include "mcache.h"
 #include "minibuffer.h"
 #include "session.h"
@@ -326,7 +327,7 @@ cmd_push_button_new_tab(struct buffer *buffer)
 	if (vl == NULL || vl->parent->type != LINE_LINK)
 		return;
 
-	new_tab(vl->parent->alt, current_tab->hist_cur->h, current_tab);
+	new_tab(vl->parent->alt, hist_cur(current_tab->hist), current_tab);
 }
 
 void
@@ -429,7 +430,7 @@ cmd_execute_extended_command(struct buffer *buffer)
 	GUARD_RECURSIVE_MINIBUFFER();
 
 	enter_minibuffer(sensible_self_insert, eecmd_select, exit_minibuffer,
-	    &eecmd_history, compl_eecmd, NULL, 1);
+	    eecmd_history, compl_eecmd, NULL, 1);
 
 	len = sizeof(ministate.prompt);
 	strlcpy(ministate.prompt, "", len);
@@ -560,7 +561,7 @@ cmd_load_url(struct buffer *buffer)
 	GUARD_RECURSIVE_MINIBUFFER();
 
 	enter_minibuffer(sensible_self_insert, lu_select, exit_minibuffer,
-	    &lu_history, compl_lu, NULL, 0);
+	    lu_history, compl_lu, NULL, 0);
 	strlcpy(ministate.prompt, "Load URL: ", sizeof(ministate.prompt));
 }
 
@@ -570,16 +571,16 @@ cmd_load_current_url(struct buffer *buffer)
 	GUARD_RECURSIVE_MINIBUFFER();
 
 	enter_minibuffer(sensible_self_insert, lu_select, exit_minibuffer,
-	    &lu_history, compl_lu, NULL, 0);
+	    lu_history, compl_lu, NULL, 0);
 	strlcpy(ministate.prompt, "Load URL: ", sizeof(ministate.prompt));
-	strlcpy(ministate.buf, current_tab->hist_cur->h, sizeof(ministate.buf));
+	strlcpy(ministate.buf, hist_cur(current_tab->hist), sizeof(ministate.buf));
 	ministate.buffer.cpoff = utf8_cplen(ministate.buf);
 }
 
 void
 cmd_reload_page(struct buffer *buffer)
 {
-	load_url_in_tab(current_tab, current_tab->hist_cur->h, NULL,
+	load_url_in_tab(current_tab, hist_cur(current_tab->hist), NULL,
 	    LU_MODE_NOHIST|LU_MODE_NOCACHE);
 }
 
@@ -591,7 +592,8 @@ cmd_bookmark_page(struct buffer *buffer)
 	enter_minibuffer(sensible_self_insert, bp_select, exit_minibuffer, NULL,
 	    NULL, NULL, 0);
 	strlcpy(ministate.prompt, "Bookmark URL: ", sizeof(ministate.prompt));
-	strlcpy(ministate.buf, current_tab->hist_cur->h, sizeof(ministate.buf));
+	strlcpy(ministate.buf, hist_cur(current_tab->hist),
+	    sizeof(ministate.buf));
 	ministate.buffer.cpoff = utf8_cplen(ministate.buf);
 }
 
@@ -783,7 +785,7 @@ cmd_mini_complete_and_exit(struct buffer *buffer)
 	if (!in_minibuffer)
 		return;
 
-	if (ministate.compl.must_select && ministate.hist_cur == NULL) {
+	if (ministate.compl.must_select && ministate.hist == NULL) {
 		vl = ministate.compl.buffer.current_line;
 		if (vl == NULL || vl->parent->flags & L_HIDDEN ||
 		    vl->parent->type == LINE_COMPL) {
@@ -799,49 +801,47 @@ cmd_mini_complete_and_exit(struct buffer *buffer)
 void
 cmd_mini_previous_history_element(struct buffer *buffer)
 {
-	if (ministate.history == NULL) {
+	char *text;
+
+	if (ministate.hist == NULL) {
 		message("No history");
 		return;
 	}
 
-	if (ministate.hist_cur == NULL ||
-	    (ministate.hist_cur = TAILQ_PREV(ministate.hist_cur, mhisthead, entries)) == NULL) {
-		ministate.hist_cur = TAILQ_LAST(&ministate.history->head, mhisthead);
-		ministate.hist_off = ministate.history->len - 1;
-		if (ministate.hist_cur == NULL)
-			message("No prev history item");
-	} else {
-		ministate.hist_off--;
+	if (hist_prev(ministate.hist) == NULL) {
+		message("No prev history item");
+		return;
 	}
 
-	if (ministate.hist_cur != NULL) {
-		buffer->current_line->parent->line = ministate.hist_cur->h;
-		recompute_completions(0);
-	}
+	ministate.editing = 0;
+
+	/* XXX the minibuffer line is never modified so this is fine */
+	text = (char *)hist_cur(ministate.hist);
+	buffer->current_line->parent->line = text;
+	recompute_completions(0);
 }
 
 void
 cmd_mini_next_history_element(struct buffer *buffer)
 {
-	if (ministate.history == NULL) {
+	char *text;
+
+	if (ministate.hist == NULL) {
 		message("No history");
 		return;
 	}
 
-	if (ministate.hist_cur == NULL ||
-	    (ministate.hist_cur = TAILQ_NEXT(ministate.hist_cur, entries)) == NULL) {
-		ministate.hist_cur = TAILQ_FIRST(&ministate.history->head);
-		ministate.hist_off = 0;
-		if (ministate.hist_cur == NULL)
-			message("No next history item");
-	} else {
-		ministate.hist_off++;
+	if (hist_next(ministate.hist) == NULL) {
+		message("No next history item");
+		return;
 	}
 
-	if (ministate.hist_cur != NULL) {
-		buffer->current_line->parent->line = ministate.hist_cur->h;
-		recompute_completions(0);
-	}
+	ministate.editing = 0;
+
+	/* XXX the minibuffer line is never modified so this is fine */
+	text = (char *)hist_cur(ministate.hist);
+	buffer->current_line->parent->line = text;
+	recompute_completions(0);
 }
 
 void
@@ -1047,7 +1047,7 @@ cmd_write_buffer(struct buffer *buffer)
 		return;
 	}
 
-	url = current_tab->hist_cur->h;
+	url = hist_cur(current_tab->hist);
 
 	if ((f = strrchr(url, '/')) != NULL)
 		f++;
@@ -1077,8 +1077,7 @@ cmd_home(struct buffer *buffer)
 	    tilde[1] != '\0' && tilde[1] != '/') {
 		if ((t = strchr(tilde, '/')) != NULL)
 			*++t = '\0';
-		load_url_in_tab(current_tab, path, current_tab->hist_cur->h,
-		    LU_MODE_NOCACHE);
+		load_url_in_tab(current_tab, path, NULL, LU_MODE_NOCACHE);
 	} else
 		cmd_root(buffer);
 }
@@ -1086,13 +1085,11 @@ cmd_home(struct buffer *buffer)
 void
 cmd_root(struct buffer *buffer)
 {
-	load_url_in_tab(current_tab, "/", current_tab->hist_cur->h,
-	    LU_MODE_NOCACHE);
+	load_url_in_tab(current_tab, "/", NULL, LU_MODE_NOCACHE);
 }
 
 void
 cmd_up(struct buffer *buffer)
 {
-	load_url_in_tab(current_tab, "..", current_tab->hist_cur->h,
-	    LU_MODE_NOCACHE);
+	load_url_in_tab(current_tab, "..", NULL, LU_MODE_NOCACHE);
 }

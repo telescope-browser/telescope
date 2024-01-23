@@ -173,17 +173,6 @@ struct tofu_entry {
 	int	verified;
 };
 
-struct histhead {
-	TAILQ_HEAD(mhisthead, hist)	head;
-	size_t				len;
-};
-struct hist {
-	char			h[1025];
-	size_t			line_off;
-	size_t			current_off;
-	TAILQ_ENTRY(hist)	entries;
-};
-
 struct buffer {
 	struct parser		 page;
 
@@ -207,6 +196,8 @@ struct buffer {
 
 #define NEW_TAB_URL	"about:new"
 
+struct hist;
+
 TAILQ_HEAD(tabshead, tab);
 extern struct tabshead tabshead;
 extern struct tabshead ktabshead;
@@ -219,9 +210,7 @@ struct tab {
 	enum trust_state	 trust;
 	struct proxy		*proxy;
 	struct iri		 iri;
-	struct histhead		 hist;
-	struct hist		*hist_cur;
-	size_t			 hist_off;
+	struct hist		*hist;
 	char			*last_input_url;
 
 	int			 code;
@@ -283,13 +272,6 @@ struct download	*download_by_id(uint32_t);
 
 /* help.c */
 void		 recompute_help(void);
-
-/* hist.c */
-void		 hist_clear(struct histhead *);
-void		 hist_clear_forward(struct histhead*, struct hist*);
-void		 hist_push(struct histhead*, struct hist*);
-void		 hist_add_before(struct histhead *, struct hist *, struct hist *);
-struct hist	*hist_pop(struct histhead *);
 
 /* mime.c */
 int		 setup_parser_for(struct tab*);
