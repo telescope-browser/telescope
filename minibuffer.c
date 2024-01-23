@@ -335,7 +335,7 @@ bp_select(void)
 {
 	exit_minibuffer();
 	if (*ministate.buf != '\0') {
-		if (!bookmark_page(ministate.buf))
+		if (bookmark_page(ministate.buf) == -1)
 			message("failed to bookmark page: %s",
 			    strerror(errno));
 	} else
