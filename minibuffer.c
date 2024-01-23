@@ -333,13 +333,18 @@ lu_select(void)
 void
 bp_select(void)
 {
-	exit_minibuffer();
-	if (*ministate.buf != '\0') {
-		if (bookmark_page(ministate.buf) == -1)
+	const char *url;
+
+	url = minibuffer_compl_text();
+	if (*url != '\0') {
+		if (bookmark_page(url) == -1)
 			message("failed to bookmark page: %s",
 			    strerror(errno));
+		else
+			message("Bookmarked");
 	} else
 		message("Abort.");
+	exit_minibuffer();
 }
 
 void
