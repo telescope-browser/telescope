@@ -143,6 +143,14 @@ AC_SEARCH_LIBS([ohash_init], [util], [], [
 
 AC_CHECK_FUNCS([asr_run])
 
+AC_SEARCH_LIBS([RAND_add], [crypto], [:], [
+	AC_MSG_ERROR([can't find libcrypto])
+])
+
+AC_SEARCH_LIBS([SSL_CTX_new], [ssl], [:], [
+	AC_MSG_ERROR([can't find libssl])
+])
+
 # don't check for landlock: it currently unusable.
 dnl AC_CHECK_HEADERS([linux/landlock.h])
 
