@@ -129,8 +129,6 @@ typedef int	(*parsechunkfn)(struct parser *, const char *, size_t);
 typedef int	(*parserfreefn)(struct parser *);
 typedef int	(*parserserial)(struct parser *, FILE *);
 
-typedef void (imsg_handlerfn)(struct imsg*, size_t);
-
 struct parser {
 	const char	*name;
 	char		 title[128+1];

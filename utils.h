@@ -24,8 +24,9 @@ int		 unicode_isspace(uint32_t);
 int		 unicode_isgraph(uint32_t);
 
 void		 imsg_event_add(struct imsgev *);
-int		 dispatch_imsg(struct imsgev *, short, imsg_handlerfn **, size_t);
 int		 imsg_compose_event(struct imsgev *, uint16_t, uint32_t, pid_t, int, const void *, uint16_t);
+
+char		*imsg_borrow_str(struct imsg *);
 
 void		*hash_alloc(size_t, void *);
 void		*hash_calloc(size_t, size_t, void *);

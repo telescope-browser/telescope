@@ -110,16 +110,11 @@ const char *err_pages[70] = {
 
 static void		 die(void) __attribute__((__noreturn__));
 static struct tab	*tab_by_id(uint32_t);
-static void		 handle_imsg_err(struct imsg *, size_t);
-static void		 handle_imsg_check_cert(struct imsg *, size_t);
+static void		 handle_imsg_check_cert(struct imsg *);
 static void		 handle_check_cert_user_choice(int, struct tab *);
 static void		 handle_maybe_save_new_cert(int, struct tab *);
-static void		 handle_imsg_got_code(struct imsg *, size_t);
-static void		 handle_imsg_got_meta(struct imsg *, size_t);
 static void		 handle_maybe_save_page(int, struct tab *);
 static void		 handle_save_page_path(const char *, struct tab *);
-static void		 handle_imsg_buf(struct imsg *, size_t);
-static void		 handle_imsg_eof(struct imsg *, size_t);
 static void		 handle_dispatch_imsg(int, short, void *);
 static void		 load_about_url(struct tab *, const char *);
 static void		 load_file_url(struct tab *, const char *);
@@ -147,15 +142,6 @@ static const struct proto {
 	{NULL, NULL, NULL},
 };
 
-static imsg_handlerfn *handlers[] = {
-	[IMSG_ERR] = handle_imsg_err,
-	[IMSG_CHECK_CERT] = handle_imsg_check_cert,
-	[IMSG_GOT_CODE] = handle_imsg_got_code,
-	[IMSG_GOT_META] = handle_imsg_got_meta,
-	[IMSG_BUF] = handle_imsg_buf,
-	[IMSG_EOF] = handle_imsg_eof,
-};
-
 static struct ohash	certs;
 
 static void __attribute__((__noreturn__))
@@ -178,37 +164,19 @@ tab_by_id(uint32_t id)
 }
 
 static void
-handle_imsg_err(struct imsg *imsg, size_t datalen)
-{
-	struct tab	*tab;
-	char		*page;
-
-	if ((tab = tab_by_id(imsg->hdr.peerid)) == NULL)
-		return;
-
-	page = imsg->data;
-	page[datalen-1] = '\0';
-
-	if (asprintf(&page, "# Error loading %s\n\n> %s\n",
-	    hist_cur(tab->hist), page) == -1)
-		die();
-	load_page_from_str(tab, page);
-	free(page);
-}
-
-static void
-handle_imsg_check_cert(struct imsg *imsg, size_t datalen)
+handle_imsg_check_cert(struct imsg *imsg)
 {
 	const char		*hash, *host, *port;
 	int			 tofu_res;
 	struct tofu_entry	*e;
 	struct tab		*tab;
+	size_t			 datalen;
 
-	hash = imsg->data;
-	if (hash[datalen-1] != '\0')
+	if ((hash = imsg_borrow_str(imsg)) == NULL)
 		abort();
+	datalen = strlen(hash);
 
-	if ((tab = tab_by_id(imsg->hdr.peerid)) == NULL)
+	if ((tab = tab_by_id(imsg_get_id(imsg))) == NULL)
 		return;
 
 	if (tab->proxy != NULL) {
@@ -358,34 +326,9 @@ normalize_code(int n)
 }
 
 static void
-handle_imsg_got_code(struct imsg *imsg, size_t datalen)
+handle_request_response(struct tab *tab)
 {
-	struct tab	*tab;
-
-	if ((tab = tab_by_id(imsg->hdr.peerid)) == NULL)
-		return;
-
-	if (imsg_get_data(imsg, &tab->code, sizeof(tab->code)) == -1)
-		die();
-
-	tab->code = normalize_code(tab->code);
-	if (tab->code != 30 && tab->code != 31)
-		tab->redirect_count = 0;
-}
-
-static void
-handle_imsg_got_meta(struct imsg *imsg, size_t datalen)
-{
-	struct tab	*tab;
 	char		 buf[128];
-
-	if ((tab = tab_by_id(imsg->hdr.peerid)) == NULL)
-		return;
-
-	if (sizeof(tab->meta) <= datalen)
-		die();
-
-	memcpy(tab->meta, imsg->data, datalen);
 
 	if (tab->code < 10) {	/* internal errors */
 		load_page_from_str(tab, err_pages[tab->code]);
@@ -480,69 +423,127 @@ handle_save_page_path(const char *path, struct tab *tab)
 }
 
 static void
-handle_imsg_buf(struct imsg *imsg, size_t datalen)
+handle_dispatch_imsg(int fd, short event, void *data)
 {
-	struct tab	*tab = NULL;
-	struct download	*d = NULL;
+	struct imsgev	*iev = data;
+	struct imsgbuf	*imsgbuf = &iev->ibuf;
+	struct imsg	 imsg;
+	struct tab	*tab;
+	struct download	*d;
+	const char	*str, *h;
+	char		*page;
+	ssize_t		 n;
 
-	if ((tab = tab_by_id(imsg->hdr.peerid)) == NULL &&
-	    (d = download_by_id(imsg->hdr.peerid)) == NULL)
-		return;
-
-	if (tab != NULL) {
-		if (!parser_parse(tab, imsg->data, datalen))
-			die();
-		ui_on_tab_refresh(tab);
-	} else {
-		d->bytes += datalen;
-		write(d->fd, imsg->data, datalen);
-		ui_on_download_refresh();
+	if (event & EV_READ) {
+		if ((n = imsg_read(imsgbuf)) == -1 && errno != EAGAIN)
+			err(1, "imsg_read");
+		if (n == 0)
+			err(1, "connection closed");
 	}
-}
-
-static void
-handle_imsg_eof(struct imsg *imsg, size_t datalen)
-{
-	struct tab	*tab = NULL;
-	struct download	*d = NULL;
-	const char	*h;
-
-	if ((tab = tab_by_id(imsg->hdr.peerid)) == NULL &&
-	    (d = download_by_id(imsg->hdr.peerid)) == NULL)
-		return;
-
-	if (tab != NULL) {
-		if (!parser_free(tab))
-			die();
-		h = hist_cur(tab->hist);
-		if (!strncmp(h, "gemini://", 9) ||
-		    !strncmp(h, "gopher://", 9) ||
-		    !strncmp(h, "finger://", 9))
-			mcache_tab(tab);
-
-		/*
-		 * Gemini is handled as soon as a 2x reply is got.
-		 */
-		if (!strncmp(h, "finger://", 9) ||
-		    !strncmp(h, "gopher://", 9))
-			history_add(h);
-
-		ui_on_tab_refresh(tab);
-		ui_on_tab_loaded(tab);
-	} else {
-		close(d->fd);
-		d->fd = -1;
-		ui_on_download_refresh();
+	if (event & EV_WRITE) {
+		if ((n = msgbuf_write(&imsgbuf->w)) == -1 && errno != EAGAIN)
+			err(1, "msgbuf_write");
+		if (n == 0)
+			err(1, "connection closed");
 	}
-}
 
-static void
-handle_dispatch_imsg(int fd, short ev, void *d)
-{
-	struct imsgev	*iev = d;
+	for (;;) {
+		if ((n = imsg_get(imsgbuf, &imsg)) == -1)
+			err(1, "imsg_get");
+		if (n == 0)
+			break;
 
-	if (dispatch_imsg(iev, ev, handlers, sizeof(handlers)) == -1)
-		err(1, "connection closed");
+		switch (imsg_get_type(&imsg)) {
+		case IMSG_ERR:
+			if ((tab = tab_by_id(imsg_get_id(&imsg))) == NULL)
+				break;
+			if ((str = imsg_borrow_str(&imsg)) == NULL)
+				die();
+			if (asprintf(&page, "# Error loading %s\n\n> %s\n",
+			    hist_cur(tab->hist), str) == -1)
+				die();
+			load_page_from_str(tab, page);
+			free(page);
+			break;
+		case IMSG_CHECK_CERT:
+			handle_imsg_check_cert(&imsg);
+			break;
+		case IMSG_GOT_CODE:
+			if ((tab = tab_by_id(imsg_get_id(&imsg))) == NULL)
+				break;
+			if (imsg_get_data(&imsg, &tab->code, sizeof(tab->code))
+			    == -1)
+				die();
+			tab->code = normalize_code(tab->code);
+			if (tab->code != 30 && tab->code != 31)
+				tab->redirect_count = 0;
+			break;
+		case IMSG_GOT_META:
+			if ((tab = tab_by_id(imsg_get_id(&imsg))) == NULL)
+				break;
+			if ((str = imsg_borrow_str(&imsg)) == NULL)
+				die();
+			if (strlcpy(tab->meta, str, sizeof(tab->meta)) >=
+			    sizeof(tab->meta))
+				die();
+			handle_request_response(tab);
+			break;
+		case IMSG_BUF:
+			if ((tab = tab_by_id(imsg_get_id(&imsg))) == NULL &&
+			    ((d = download_by_id(imsg_get_id(&imsg)))) == NULL)
+				return;
+
+			if (tab) {
+				if (!parser_parse(tab, imsg.data,
+				    imsg_get_len(&imsg)))
+					die();
+				ui_on_tab_refresh(tab);
+			} else {
+				size_t datalen = imsg_get_len(&imsg);
+
+				d->bytes += datalen;
+				write(d->fd, imsg.data, datalen);
+				ui_on_download_refresh();
+			}
+			break;
+		case IMSG_EOF:
+			if ((tab = tab_by_id(imsg_get_id(&imsg))) == NULL &&
+			    ((d = download_by_id(imsg_get_id(&imsg)))) == NULL)
+				return;
+
+			if (tab != NULL) {
+				if (!parser_free(tab))
+					die();
+				h = hist_cur(tab->hist);
+				if (!strncmp(h, "gemini://", 9) ||
+				    !strncmp(h, "gopher://", 9) ||
+				    !strncmp(h, "finger://", 9))
+					mcache_tab(tab);
+
+				/*
+				 * Gemini is handled as soon as a 2x
+				 * reply is got.
+				 */
+				if (!strncmp(h, "finger://", 9) ||
+				    !strncmp(h, "gopher://", 9))
+					history_add(h);
+
+				ui_on_tab_refresh(tab);
+				ui_on_tab_loaded(tab);
+			} else {
+				close(d->fd);
+				d->fd = -1;
+				ui_on_download_refresh();
+			}
+			break;
+		default:
+			errx(1, "got unknown imsg %d", imsg_get_type(&imsg));
+		}
+
+		imsg_free(&imsg);
+	}
+
+	imsg_event_add(iev);
 }
 
 static void

@@ -83,47 +83,6 @@ imsg_event_add(struct imsgev *iev)
 }
 
 int
-dispatch_imsg(struct imsgev *iev, short event, imsg_handlerfn **handlers,
-    size_t size)
-{
-	struct imsgbuf	*ibuf;
-	struct imsg	 imsg;
-	size_t		 datalen, i;
-	ssize_t		 n;
-
-	ibuf = &iev->ibuf;
-
-	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
-			err(1, "imsg_read error");
-		if (n == 0)
-			return -1;
-	}
-	if (event & EV_WRITE) {
-		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
-			err(1, "msgbuf_write");
-		if (n == 0)
-			return -1;
-	}
-
-	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			_exit(1);
-		if (n == 0)
-			break;
-		datalen = IMSG_DATA_SIZE(imsg);
-		i = imsg.hdr.type;
-		if (i > (size / sizeof(imsg_handlerfn*)) || handlers[i] == NULL)
-			abort();
-		handlers[i](&imsg, datalen);
-		imsg_free(&imsg);
-	}
-
-	imsg_event_add(iev);
-	return 0;
-}
-
-int
 imsg_compose_event(struct imsgev *iev, uint16_t type, uint32_t peerid,
     pid_t pid, int fd, const void *data, uint16_t datalen)
 {
@@ -134,6 +93,22 @@ imsg_compose_event(struct imsgev *iev, uint16_t type, uint32_t peerid,
 		imsg_event_add(iev);
 
 	return ret;
+}
+
+char *
+imsg_borrow_str(struct imsg *imsg)
+{
+	struct ibuf	 ibuf;
+	char		*data;
+	size_t		 len;
+
+	if (imsg_get_ibuf(imsg, &ibuf) == -1 ||
+	    (data = ibuf_data(&ibuf)) == NULL ||
+	    (len = ibuf_size(&ibuf)) == 0 ||
+	    data[len - 1] != '\0')
+		return NULL;
+
+	return data;
 }
 
 void *
