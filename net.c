@@ -531,10 +531,10 @@ net_ready(struct req *req)
 static void
 net_read(struct bufferevent *bev, void *d)
 {
+	static char	 buf[4096];
 	struct req	*req = d;
 	struct evbuffer	*src = EVBUFFER_INPUT(bev);
-	uint8_t		*data;
-	size_t		 len, chunk;
+	size_t		 len;
 	int		 r;
 	char		*header;
 
@@ -549,27 +549,21 @@ net_read(struct bufferevent *bev, void *d)
 		req->done_header = 1;
 		if (r == 0)
 			goto err;
-		else if (r < 20 || r >= 30)
+		else if (r < 20 || r >= 30) {
 			close_conn(0, 0, req);
-		return;
+			return;
+		}
 	}
-
-	if ((len = EVBUFFER_LENGTH(src)) == 0)
-		return;
-	data = EVBUFFER_DATA(src);
 
 	/*
 	 * Split data into chunks before sending.  imsg can't handle
 	 * message that are "too big".
 	 */
-	while (len != 0) {
-		chunk = MIN(len, 4096);
-		net_send_ui(IMSG_BUF, req->id, data, chunk);
-		data += chunk;
-		len -= chunk;
+	for (;;) {
+		if ((len = bufferevent_read(bev, buf, sizeof(buf))) == 0)
+			break;
+		net_send_ui(IMSG_BUF, req->id, buf, len);
 	}
-
-	evbuffer_drain(src, EVBUFFER_LENGTH(src));
 	return;
 
 err:
