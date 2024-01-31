@@ -633,8 +633,7 @@ handle_dispatch_imsg(int fd, short event, void *d)
 	struct imsgbuf	*ibuf = &iev->ibuf;
 	struct imsg	 imsg;
 	struct req	*req;
-	struct get_req	*r;
-	size_t		 datalen;
+	struct get_req	 r;
 	ssize_t		 n;
 	int		 certok;
 
@@ -656,41 +655,39 @@ handle_dispatch_imsg(int fd, short event, void *d)
 			err(1, "imsg_get");
 		if (n == 0)
 			break;
-		datalen = IMSG_DATA_SIZE(imsg);
-		switch (imsg.hdr.type) {
+		switch (imsg_get_type(&imsg)) {
 		case IMSG_GET:
-			r = imsg.data;
-			if (datalen != sizeof(*r) ||
-			    r->host[sizeof(r->host) - 1] != '\0' ||
-			    r->port[sizeof(r->port) - 1] != '\0' ||
-			    r->req[sizeof(r->req) - 1] != '\0')
+			if (imsg_get_data(&imsg, &r, sizeof(r)) == -1 ||
+			    r.host[sizeof(r.host) - 1] != '\0' ||
+			    r.port[sizeof(r.port) - 1] != '\0' ||
+			    r.req[sizeof(r.req) - 1] != '\0')
 				die();
-			if (r->proto != PROTO_FINGER &&
-			    r->proto != PROTO_GEMINI &&
-			    r->proto != PROTO_GOPHER)
+			if (r.proto != PROTO_FINGER &&
+			    r.proto != PROTO_GEMINI &&
+			    r.proto != PROTO_GOPHER)
 				die();
 
 			if ((req = calloc(1, sizeof(*req))) == NULL)
 				die();
 
-			req->id = imsg.hdr.peerid;
+			req->id = imsg_get_id(&imsg);
 			TAILQ_INSERT_HEAD(&reqhead, req, reqs);
 
-			if ((req->host = strdup(r->host)) == NULL)
+			if ((req->host = strdup(r.host)) == NULL)
 				die();
-			if ((req->port = strdup(r->port)) == NULL)
+			if ((req->port = strdup(r.port)) == NULL)
 				die();
-			if ((req->req = strdup(r->req)) == NULL)
+			if ((req->req = strdup(r.req)) == NULL)
 				die();
 
 			req->len = strlen(req->req);
 
-			req->proto = r->proto;
+			req->proto = r.proto;
 			conn_towards(req);
 			break;
 
 		case IMSG_CERT_STATUS:
-			if ((req = req_by_id(imsg.hdr.peerid)) == NULL)
+			if ((req = req_by_id(imsg_get_id(&imsg))) == NULL)
 				break;
 
 			if (imsg_get_data(&imsg, &certok, sizeof(certok)) ==
@@ -703,13 +700,13 @@ handle_dispatch_imsg(int fd, short event, void *d)
 			break;
 
 		case IMSG_PROCEED:
-			if ((req = req_by_id(imsg.hdr.peerid)) == NULL)
+			if ((req = req_by_id(imsg_get_id(&imsg))) == NULL)
 				break;
 			bufferevent_enable(req->bev, EV_READ);
 			break;
 
 		case IMSG_STOP:
-			if ((req = req_by_id(imsg.hdr.peerid)) == NULL)
+			if ((req = req_by_id(imsg_get_id(&imsg))) == NULL)
 				break;
 			close_conn(0, 0, req);
 			break;
@@ -720,7 +717,7 @@ handle_dispatch_imsg(int fd, short event, void *d)
 			return;
 
 		default:
-			errx(1, "got unknown imsg %d", imsg.hdr.type);
+			errx(1, "got unknown imsg %d", imsg_get_type(&imsg));
 		}
 
 		imsg_free(&imsg);
