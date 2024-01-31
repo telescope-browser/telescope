@@ -540,16 +540,20 @@ net_read(struct bufferevent *bev, void *d)
 
 	if (!req->done_header) {
 		header = evbuffer_readln(src, &len, EVBUFFER_EOL_CRLF_STRICT);
-		if (header == NULL && EVBUFFER_LENGTH(src) >= 1024)
-			goto err;
+		if (header == NULL && EVBUFFER_LENGTH(src) >= 1024) {
+			(*bev->errorcb)(bev, EVBUFFER_READ, bev->cbarg);
+			return;
+		}
 		if (header == NULL)
 			return;
 		r = gemini_parse_reply(req, header, len);
 		free(header);
 		req->done_header = 1;
-		if (r == 0)
-			goto err;
-		else if (r < 20 || r >= 30) {
+		if (r == 0) {
+			(*bev->errorcb)(bev, EVBUFFER_READ, bev->cbarg);
+			return;
+		}
+		if (r < 20 || r >= 30) {
 			close_conn(0, 0, req);
 			return;
 		}
@@ -564,10 +568,6 @@ net_read(struct bufferevent *bev, void *d)
 			break;
 		net_send_ui(IMSG_BUF, req->id, buf, len);
 	}
-	return;
-
-err:
-	(*bev->errorcb)(bev, EVBUFFER_READ, bev->cbarg);
 }
 
 /* called after a write has been done */
