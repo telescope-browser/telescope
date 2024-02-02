@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Omar Polo <op@omarpolo.com>
+ * Copyright (c) 2022, 2024 Omar Polo <op@omarpolo.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -26,7 +26,6 @@ int		 unicode_isgraph(uint32_t);
 void		 imsg_event_add(struct imsgev *);
 int		 imsg_compose_event(struct imsgev *, uint16_t, uint32_t, pid_t, int, const void *, uint16_t);
 
-char		*imsg_borrow_str(struct imsg *);
 int		 ibuf_borrow_str(struct ibuf *, char **);
 
 void		*hash_alloc(size_t, void *);

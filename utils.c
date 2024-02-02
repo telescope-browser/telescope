@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Omar Polo <op@omarpolo.com>
+ * Copyright (c) 2021, 2024 Omar Polo <op@omarpolo.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -93,18 +93,6 @@ imsg_compose_event(struct imsgev *iev, uint16_t type, uint32_t peerid,
 		imsg_event_add(iev);
 
 	return ret;
-}
-
-char *
-imsg_borrow_str(struct imsg *imsg)
-{
-	struct ibuf	 ibuf;
-	char		*data;
-
-	if (imsg_get_ibuf(imsg, &ibuf) == -1 ||
-	    ibuf_borrow_str(&ibuf, &data) == -1)
-		return NULL;
-	return data;
 }
 
 int

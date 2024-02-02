@@ -166,13 +166,16 @@ tab_by_id(uint32_t id)
 static void
 handle_imsg_check_cert(struct imsg *imsg)
 {
-	const char		*hash, *host, *port;
+	char			*hash;
+	const char		*host, *port;
 	int			 tofu_res;
+	struct ibuf		 ibuf;
 	struct tofu_entry	*e;
 	struct tab		*tab;
 	size_t			 datalen;
 
-	if ((hash = imsg_borrow_str(imsg)) == NULL)
+	if (imsg_get_ibuf(imsg, &ibuf) == -1 ||
+	    ibuf_borrow_str(&ibuf, &hash) == -1)
 		abort();
 	datalen = strlen(hash);
 
@@ -462,7 +465,8 @@ handle_dispatch_imsg(int fd, short event, void *data)
 		case IMSG_ERR:
 			if ((tab = tab_by_id(imsg_get_id(&imsg))) == NULL)
 				break;
-			if ((str = imsg_borrow_str(&imsg)) == NULL)
+			if (imsg_get_ibuf(&imsg, &ibuf) == -1 ||
+			    ibuf_borrow_str(&ibuf, &str) == -1)
 				die();
 			if (asprintf(&page, "# Error loading %s\n\n> %s\n",
 			    hist_cur(tab->hist), str) == -1)
