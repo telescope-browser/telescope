@@ -330,6 +330,9 @@ handle_request_response(struct tab *tab)
 {
 	char		 buf[128];
 
+	if (tab->code != 30 && tab->code != 31)
+		tab->redirect_count = 0;
+
 	if (tab->code < 10) {	/* internal errors */
 		load_page_from_str(tab, err_pages[tab->code]);
 	} else if (tab->code < 20) {	/* 1x */
@@ -428,11 +431,13 @@ handle_dispatch_imsg(int fd, short event, void *data)
 	struct imsgev	*iev = data;
 	struct imsgbuf	*imsgbuf = &iev->ibuf;
 	struct imsg	 imsg;
+	struct ibuf	 ibuf;
 	struct tab	*tab;
 	struct download	*d;
-	const char	*str, *h;
-	char		*page;
+	const char	*h;
+	char		*str, *page;
 	ssize_t		 n;
+	int		 code;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(imsgbuf)) == -1 && errno != EAGAIN)
@@ -468,24 +473,17 @@ handle_dispatch_imsg(int fd, short event, void *data)
 		case IMSG_CHECK_CERT:
 			handle_imsg_check_cert(&imsg);
 			break;
-		case IMSG_GOT_CODE:
+		case IMSG_REPLY:
 			if ((tab = tab_by_id(imsg_get_id(&imsg))) == NULL)
 				break;
-			if (imsg_get_data(&imsg, &tab->code, sizeof(tab->code))
-			    == -1)
-				die();
-			tab->code = normalize_code(tab->code);
-			if (tab->code != 30 && tab->code != 31)
-				tab->redirect_count = 0;
-			break;
-		case IMSG_GOT_META:
-			if ((tab = tab_by_id(imsg_get_id(&imsg))) == NULL)
-				break;
-			if ((str = imsg_borrow_str(&imsg)) == NULL)
+			if (imsg_get_ibuf(&imsg, &ibuf) == -1 ||
+			    ibuf_get(&ibuf, &code, sizeof(code)) == -1 ||
+			    ibuf_borrow_str(&ibuf, &str) == -1)
 				die();
 			if (strlcpy(tab->meta, str, sizeof(tab->meta)) >=
 			    sizeof(tab->meta))
 				die();
+			tab->code = normalize_code(code);
 			handle_request_response(tab);
 			break;
 		case IMSG_BUF:

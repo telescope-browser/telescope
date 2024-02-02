@@ -473,6 +473,7 @@ err:
 static int
 gemini_parse_reply(struct req *req, const char *header, size_t len)
 {
+	struct ibuf	*ibuf;
 	int		 code;
 	const char	*t;
 
@@ -487,9 +488,16 @@ gemini_parse_reply(struct req *req, const char *header, size_t len)
 		return 0;
 
 	t = header + 3;
+	len = strlen(t) + 1;
 
-	net_send_ui(IMSG_GOT_CODE, req->id, &code, sizeof(code));
-	net_send_ui(IMSG_GOT_META, req->id, t, strlen(t)+1);
+	if ((ibuf = imsg_create(&iev_ui->ibuf, IMSG_REPLY, req->id, 0,
+	    sizeof(code) + len)) == NULL)
+		die();
+	if (imsg_add(ibuf, &code, sizeof(code)) == -1 ||
+	    imsg_add(ibuf, t, len) == -1)
+		die();
+	imsg_close(&iev_ui->ibuf, ibuf);
+	imsg_event_add(iev_ui);
 
 	bufferevent_disable(req->bev, EV_READ|EV_WRITE);
 

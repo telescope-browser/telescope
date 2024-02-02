@@ -100,15 +100,23 @@ imsg_borrow_str(struct imsg *imsg)
 {
 	struct ibuf	 ibuf;
 	char		*data;
-	size_t		 len;
 
 	if (imsg_get_ibuf(imsg, &ibuf) == -1 ||
-	    (data = ibuf_data(&ibuf)) == NULL ||
-	    (len = ibuf_size(&ibuf)) == 0 ||
-	    data[len - 1] != '\0')
+	    ibuf_borrow_str(&ibuf, &data) == -1)
 		return NULL;
-
 	return data;
+}
+
+int
+ibuf_borrow_str(struct ibuf *ibuf, char **data)
+{
+	size_t		 len;
+
+	if ((*data = ibuf_data(ibuf)) == NULL ||
+	    (len = ibuf_size(ibuf)) == 0 ||
+	    (*data)[len - 1] != '\0')
+		return -1;
+	return 0;
 }
 
 void *

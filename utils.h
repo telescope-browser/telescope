@@ -27,6 +27,7 @@ void		 imsg_event_add(struct imsgev *);
 int		 imsg_compose_event(struct imsgev *, uint16_t, uint32_t, pid_t, int, const void *, uint16_t);
 
 char		*imsg_borrow_str(struct imsg *);
+int		 ibuf_borrow_str(struct ibuf *, char **);
 
 void		*hash_alloc(size_t, void *);
 void		*hash_calloc(size_t, size_t, void *);
