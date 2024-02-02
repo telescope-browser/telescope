@@ -57,7 +57,7 @@ CMD(cmd_previous_heading,	"Move point to the previous heading.");
 CMD(cmd_previous_line,		"Move point to the previous visual line.");
 CMD(cmd_previous_page,		"Go backward in the page history.");
 CMD(cmd_push_button,		"Follow link at point or toggle pre-visibility.");
-CMD(cmd_push_button_new_tab,	"Follow link at point in a new tab.n");
+CMD(cmd_push_button_new_tab,	"Follow link at point in a new tab.");
 CMD(cmd_redraw,			"Redraw the screen.");
 CMD(cmd_reload_page,		"Reload the current page.");
 CMD(cmd_reply_last_input,	"Reply last input request.");
