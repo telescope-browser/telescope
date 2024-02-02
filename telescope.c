@@ -78,7 +78,7 @@ enum telescope_process {
 };
 
 #define CANNOT_FETCH		0
-#define TOO_MUCH_REDIRECTS	1
+#define TOO_MANY_REDIRECTS	1
 #define MALFORMED_RESPONSE	2
 #define UNKNOWN_TYPE_OR_CSET	3
 #define UNKNOWN_PROTOCOL	4
@@ -86,7 +86,7 @@ enum telescope_process {
 /* XXX: keep in sync with normalize_code */
 const char *err_pages[70] = {
 	[CANNOT_FETCH]		= "# Couldn't load the page\n",
-	[TOO_MUCH_REDIRECTS]	= "# Too much redirects\n",
+	[TOO_MANY_REDIRECTS]	= "# Too many redirects\n",
 	[MALFORMED_RESPONSE]	= "# Got a malformed response\n",
 	[UNKNOWN_TYPE_OR_CSET]	= "# Unsupported type or charset\n",
 	[UNKNOWN_PROTOCOL]	= "# Unknown protocol\n",
@@ -365,7 +365,7 @@ handle_request_response(struct tab *tab)
 		/* TODO: make customizable? */
 		if (tab->redirect_count > 5) {
 			load_page_from_str(tab,
-			    err_pages[TOO_MUCH_REDIRECTS]);
+			    err_pages[TOO_MANY_REDIRECTS]);
 		} else
 			do_load_url(tab, tab->meta, hist_cur(tab->hist),
 			    LU_MODE_NOCACHE);
