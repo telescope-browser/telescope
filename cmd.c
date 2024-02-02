@@ -1073,9 +1073,9 @@ cmd_home(struct buffer *buffer)
 
 	strlcpy(path, current_tab->iri.iri_path, sizeof(path));
 
-	if ((tilde = strchr(path, '~')) != NULL &&
-	    tilde[1] != '\0' && tilde[1] != '/') {
-		if ((t = strchr(tilde, '/')) != NULL)
+	if ((tilde = strstr(path, "/~")) != NULL &&
+	    tilde[2] != '\0' && tilde[2] != '/') {
+		if ((t = strchr(tilde + 2, '/')) != NULL)
 			*++t = '\0';
 		load_url_in_tab(current_tab, path, NULL, LU_MODE_NOCACHE);
 	} else
