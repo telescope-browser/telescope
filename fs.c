@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Omar Polo <op@omarpolo.com>
+ * Copyright (c) 2021, 2024 Omar Polo <op@omarpolo.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -365,11 +365,11 @@ fs_init(void)
 	join_path(session_file, cache_path_base, "/session",
 	    sizeof(session_file));
 	join_path(session_file_tmp, cache_path_base, "/session.XXXXXXXXXX",
-	    sizeof(session_file));
+	    sizeof(session_file_tmp));
 	join_path(history_file, cache_path_base, "/history",
 	    sizeof(history_file));
 	join_path(history_file_tmp, cache_path_base, "/history.XXXXXXXXXX",
-	    sizeof(history_file));
+	    sizeof(history_file_tmp));
 	join_path(crashed_file, cache_path_base, "/crashed",
 	    sizeof(crashed_file));
 
