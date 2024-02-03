@@ -1085,13 +1085,12 @@ main(int argc, char * const *argv)
 			usage(1);
 	}
 
-	fs_init();
-
 	/* setup keys before reading the config */
 	TAILQ_INIT(&global_map.m);
 	global_map.unhandled_input = global_key_unbound;
 	TAILQ_INIT(&minibuffer_map.m);
 
+	fs_init();
 	config_init();
 	parseconfig(config_path, fail);
 	if (configtest) {
