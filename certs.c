@@ -247,6 +247,29 @@ ccert(const char *name)
 	return (NULL);
 }
 
+/*
+ * Test whether the test path is under the certificate path.
+ */
+static inline int
+path_under(const char *cpath, const char *tpath)
+{
+	if (*cpath == '\0')
+		return (1);
+
+	while (*cpath != '\0') {
+		if (*tpath == '\0')
+			return (0);
+
+		if (*cpath++ != *tpath++)
+			return (0);
+	}
+
+	if (*tpath == '\0' || *tpath == '/')
+		return (1);
+
+	return (cpath[-1] == '/');
+}
+
 const char *
 cert_for(struct iri *iri)
 {
@@ -258,7 +281,7 @@ cert_for(struct iri *iri)
 
 		if (!strcmp(c->host, iri->iri_host) &&
 		    !strcmp(c->port, iri->iri_portstr) &&
-		    !strncmp(c->path, iri->iri_path, strlen(c->path)))
+		    path_under(c->path, iri->iri_path))
 			return (c->cert);
 	}
 
