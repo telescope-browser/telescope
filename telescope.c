@@ -30,6 +30,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "certs.h"
 #include "control.h"
 #include "defaults.h"
 #include "fs.h"
@@ -124,7 +125,7 @@ static void		 load_gopher_url(struct tab *, const char *);
 static void		 load_via_proxy(struct tab *, const char *,
 			     struct proxy *);
 static void		 make_request(struct tab *, struct get_req *, int,
-			     const char *);
+			     const char *, int);
 static void		 do_load_url(struct tab *, const char *, const char *, int);
 static pid_t		 start_child(enum telescope_process, const char *, int);
 static void		 send_url(const char *);
@@ -218,7 +219,7 @@ handle_imsg_check_cert(struct imsg *imsg)
 		else
 			tab->trust = TS_TRUSTED;
 
-		ui_send_net(IMSG_CERT_STATUS, imsg->hdr.peerid,
+		ui_send_net(IMSG_CERT_STATUS, imsg->hdr.peerid, -1,
 		    &tofu_res, sizeof(tofu_res));
 	} else {
 		tab->trust = TS_UNTRUSTED;
@@ -233,7 +234,7 @@ handle_imsg_check_cert(struct imsg *imsg)
 static void
 handle_check_cert_user_choice(int accept, struct tab *tab)
 {
-	ui_send_net(IMSG_CERT_STATUS, tab->id, &accept,
+	ui_send_net(IMSG_CERT_STATUS, tab->id, -1, &accept,
 	    sizeof(accept));
 
 	if (accept) {
@@ -349,7 +350,7 @@ handle_request_response(struct tab *tab)
 	} else if (tab->code == 20) {
 		history_add(hist_cur(tab->hist));
 		if (setup_parser_for(tab)) {
-			ui_send_net(IMSG_PROCEED, tab->id, NULL, 0);
+			ui_send_net(IMSG_PROCEED, tab->id, -1, NULL, 0);
 		} else if (safe_mode) {
 			load_page_from_str(tab,
 			    err_pages[UNKNOWN_TYPE_OR_CSET]);
@@ -419,7 +420,7 @@ handle_save_page_path(const char *path, struct tab *tab)
 	ui_show_downloads_pane();
 	d = enqueue_download(tab->id, path);
 	d->fd = fd;
-	ui_send_net(IMSG_PROCEED, d->id, NULL, 0);
+	ui_send_net(IMSG_PROCEED, d->id, -1, NULL, 0);
 
 	/*
 	 * Change this tab id, the old one is associated with the
@@ -592,19 +593,23 @@ load_finger_url(struct tab *tab, const char *url)
 	strlcat(req.req, "\r\n", sizeof(req.req));
 
 	parser_init(tab, textplain_initparser);
-	make_request(tab, &req, PROTO_FINGER, NULL);
+	make_request(tab, &req, PROTO_FINGER, NULL, 0);
 }
 
 static void
 load_gemini_url(struct tab *tab, const char *url)
 {
 	struct get_req	 req;
+	int		 use_cert = 0;
+
+	if ((tab->client_cert = cert_for(&tab->iri)) != NULL)
+		use_cert = 1;
 
 	memset(&req, 0, sizeof(req));
 	strlcpy(req.host, tab->iri.iri_host, sizeof(req.host));
 	strlcpy(req.port, tab->iri.iri_portstr, sizeof(req.port));
 
-	make_request(tab, &req, PROTO_GEMINI, hist_cur(tab->hist));
+	make_request(tab, &req, PROTO_GEMINI, hist_cur(tab->hist), use_cert);
 }
 
 static inline const char *
@@ -675,7 +680,7 @@ load_gopher_url(struct tab *tab, const char *url)
 	}
 	strlcat(req.req, "\r\n", sizeof(req.req));
 
-	make_request(tab, &req, PROTO_GOPHER, NULL);
+	make_request(tab, &req, PROTO_GOPHER, NULL, 0);
 }
 
 static void
@@ -689,12 +694,15 @@ load_via_proxy(struct tab *tab, const char *url, struct proxy *p)
 
 	tab->proxy = p;
 
-	make_request(tab, &req, p->proto, hist_cur(tab->hist));
+	make_request(tab, &req, p->proto, hist_cur(tab->hist), 0);
 }
 
 static void
-make_request(struct tab *tab, struct get_req *req, int proto, const char *r)
+make_request(struct tab *tab, struct get_req *req, int proto, const char *r,
+    int use_cert)
 {
+	int	 fd = -1;
+
 	stop_tab(tab);
 	tab->id = tab_new_id();
 	req->proto = proto;
@@ -705,7 +713,15 @@ make_request(struct tab *tab, struct get_req *req, int proto, const char *r)
 	}
 
 	start_loading_anim(tab);
-	ui_send_net(IMSG_GET, tab->id, req, sizeof(*req));
+
+	if (!use_cert)
+		tab->client_cert = NULL;
+	if (use_cert && (fd = cert_open(tab->client_cert)) == -1) {
+		tab->client_cert = NULL;
+		message("failed to open certificate: %s", strerror(errno));
+	}
+
+	ui_send_net(IMSG_GET, tab->id, fd, req, sizeof(*req));
 }
 
 void
@@ -731,7 +747,7 @@ gopher_send_search_req(struct tab *tab, const char *text)
 	erase_buffer(&tab->buffer);
 	parser_init(tab, gophermap_initparser);
 
-	make_request(tab, &req, PROTO_GOPHER, NULL);
+	make_request(tab, &req, PROTO_GOPHER, NULL, 0);
 }
 
 void
@@ -1003,10 +1019,10 @@ send_url(const char *url)
 }
 
 int
-ui_send_net(int type, uint32_t peerid, const void *data,
+ui_send_net(int type, uint32_t peerid, int fd, const void *data,
     uint16_t datalen)
 {
-	return imsg_compose_event(iev_net, type, peerid, 0, -1, data,
+	return imsg_compose_event(iev_net, type, peerid, 0, fd, data,
 	    datalen);
 }
 
@@ -1091,6 +1107,7 @@ main(int argc, char * const *argv)
 	TAILQ_INIT(&minibuffer_map.m);
 
 	fs_init();
+	certs_init(certs_file);
 	config_init();
 	parseconfig(config_path, fail);
 	if (configtest) {
@@ -1172,7 +1189,7 @@ main(int argc, char * const *argv)
 		ui_end();
 	}
 
-	ui_send_net(IMSG_QUIT, 0, NULL, 0);
+	ui_send_net(IMSG_QUIT, 0, -1, NULL, 0);
 	imsg_flush(&iev_net->ibuf);
 
 	/* wait for children to terminate */

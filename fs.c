@@ -67,6 +67,8 @@ char		known_hosts_file[PATH_MAX], known_hosts_tmp[PATH_MAX];
 char		crashed_file[PATH_MAX];
 char		session_file[PATH_MAX], session_file_tmp[PATH_MAX];
 char		history_file[PATH_MAX], history_file_tmp[PATH_MAX];
+char		cert_dir[PATH_MAX];
+char		certs_file[PATH_MAX], certs_file_tmp[PATH_MAX];
 
 char		cwd[PATH_MAX];
 
@@ -370,8 +372,16 @@ fs_init(void)
 	    sizeof(history_file));
 	join_path(history_file_tmp, cache_path_base, "/history.XXXXXXXXXX",
 	    sizeof(history_file_tmp));
+	join_path(cert_dir, data_path_base, "/certs/",
+	    sizeof(cert_dir));
+	join_path(certs_file, data_path_base, "/certs/certs",
+	    sizeof(certs_file));
+	join_path(certs_file_tmp, data_path_base, "/certs/certs.XXXXXXXXXX",
+	    sizeof(certs_file_tmp));
 	join_path(crashed_file, cache_path_base, "/crashed",
 	    sizeof(crashed_file));
+
+	mkdirs(cert_dir, S_IRWXU);
 
 	return 1;
 }

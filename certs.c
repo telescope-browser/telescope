@@ -18,8 +18,17 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+/*
+ * The routines to generate a certificate were derived from acme-client.
+ */
+
 #include "compat.h"
 
+#include <sys/stat.h>
+
+#include <ctype.h>
+#include <fcntl.h>
+#include <limits.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -33,11 +42,250 @@
 #include <openssl/x509v3.h>
 
 #include "certs.h"
+#include "fs.h"
+#include "iri.h"
+
+/* client certificate */
+struct ccert {
+	char	*line;	/* fields below points inside here */
+	char	*host;
+	char	*port;
+	char	*path;
+	char	*cert;
+};
+
+static struct cert_store {
+	struct ccert	*certs;
+	size_t		 len;
+	size_t		 cap;
+} cert_store;
+
+char		**identities;
+static size_t	  id_len, id_cap;
 
 /*
  * Default number of bits when creating a new RSA key.
  */
 #define KBITS 4096
+
+static int
+identities_cmp(const void *a, const void *b)
+{
+	return (strcmp(a, b));
+}
+
+static inline int
+push_identity(char *name)
+{
+	void	*t;
+	size_t	 newcap, i;
+
+	for (i = 0; i < id_len; ++i) {
+		if (!strcmp(identities[i], name))
+			return (0);
+	}
+
+	/* id_cap is initilized to 8 in certs_init() */
+	if (id_len >= id_cap - 1) {
+		newcap = id_cap + 8;
+		t = recallocarray(identities, id_cap, newcap,
+		    sizeof(*identities));
+		if (t == NULL)
+			return (-1);
+		identities = t;
+		id_cap = newcap;
+	}
+
+	identities[id_len++] = name;
+	qsort(identities, id_len, sizeof(*identities), identities_cmp);
+
+	return (0);
+}
+
+static int
+certs_cmp(const void *a, const void *b)
+{
+	const struct ccert	*ca = a, *cb = b;
+	int			 r;
+
+	if ((r = strcmp(ca->host, cb->host)) != 0)
+		return (r);
+	if ((r = strcmp(ca->port, cb->port)) != 0)
+		return (r);
+	if ((r = strcmp(ca->path, cb->path)) != 0)
+		return (r);
+	return (strcmp(ca->cert, cb->cert));
+}
+
+static int
+certs_store_add(const char *l)
+{
+	size_t			 newcap;
+	void			*t;
+	char			*line, *host, *port, *path, *cert;
+
+	if ((line = strdup(l)) == NULL)
+		return (-1);
+
+	host = line;
+	while (isspace((unsigned char)*host))
+		++host;
+
+	if (*host == '#') {
+		free(line);
+		return (0);
+	}
+
+	port = host + strcspn(host, " \t");
+	if (*port == '\0')
+		goto err;
+	*port++ = '\0';
+	while (isspace((unsigned char)*port))
+		++port;
+
+	path = port + strcspn(port, " \t");
+	if (*path == '\0')
+		goto err;
+	*path++ = '\0';
+	while (isspace((unsigned char)*path))
+		++path;
+
+	cert = path + strcspn(path, " \t");
+	if (*cert == '\0')
+		goto err;
+	*cert++ = '\0';
+	while (isspace((unsigned char)*cert))
+		++cert;
+
+	if (*cert == '\0')
+		goto err;
+
+	if (cert_store.len == cert_store.cap) {
+		newcap = cert_store.cap + 8;
+		t = reallocarray(cert_store.certs, newcap,
+		    sizeof(*cert_store.certs));
+		if (t == NULL)
+			goto err;
+		cert_store.certs = t;
+		cert_store.cap = newcap;
+	}
+
+	cert_store.certs[cert_store.len].line = line;
+	cert_store.certs[cert_store.len].host = host;
+	cert_store.certs[cert_store.len].port = port;
+	cert_store.certs[cert_store.len].path = path;
+	cert_store.certs[cert_store.len].cert = cert;
+	cert_store.len++;
+
+	return (push_identity(cert));
+
+ err:
+	free(line);
+	return (-1);
+}
+
+int
+certs_init(const char *certfile)
+{
+	FILE	*fp;
+	char	*line = NULL;
+	size_t	 linesize = 0;
+	ssize_t	 linelen;
+
+	id_cap = 8;
+	if ((identities = calloc(id_cap, sizeof(*identities))) == NULL)
+		return (-1);
+
+	if ((fp = fopen(certfile, "r")) == NULL) {
+		if (errno == ENOENT)
+			return (0);
+		return (-1);
+	}
+
+	while ((linelen = getline(&line, &linesize, fp)) != -1) {
+		if (line[linelen - 1] == '\n')
+			line[--linelen] = '\0';
+
+		if (certs_store_add(line) == -1) {
+			fclose(fp);
+			free(line);
+			return (-1);
+		}
+	}
+
+	if (ferror(fp)) {
+		fclose(fp);
+		free(line);
+		return (-1);
+	}
+
+	/*
+	 * Data should already be in order, so mergesort should be
+	 * faster.  If it fails (memory scarcity), fall back to qsort()
+	 * which is in place.
+	 */
+	if (mergesort(cert_store.certs, cert_store.len,
+	    sizeof(*cert_store.certs), certs_cmp) == -1)
+		qsort(cert_store.certs, cert_store.len,
+		    sizeof(*cert_store.certs), certs_cmp);
+
+	fclose(fp);
+	free(line);
+	return (0);
+}
+
+const char *
+ccert(const char *name)
+{
+	size_t		 i;
+
+	for (i = 0; i < id_len; ++i) {
+		if (!strcmp(name, identities[i]))
+			return (identities[i]);
+	}
+
+	return (NULL);
+}
+
+const char *
+cert_for(struct iri *iri)
+{
+	struct ccert	*c;
+	size_t		 i;
+
+	for (i = 0; i < cert_store.len; ++i) {
+		c = &cert_store.certs[i];
+
+		if (!strcmp(c->host, iri->iri_host) &&
+		    !strcmp(c->port, iri->iri_portstr) &&
+		    !strncmp(c->path, iri->iri_path, strlen(c->path)))
+			return (c->cert);
+	}
+
+	return (NULL);
+}
+
+int
+cert_open(const char *cert)
+{
+	char		 path[PATH_MAX];
+	struct stat	 sb;
+	int		 fd;
+
+	strlcpy(path, cert_dir, sizeof(path));
+	strlcat(path, "/", sizeof(path));
+	strlcat(path, cert, sizeof(path));
+
+	if ((fd = open(path, O_RDONLY)) == -1)
+		return (-1);
+
+	if (fstat(fd, &sb) == -1 || !S_ISREG(sb.st_mode)) {
+		close(fd);
+		return (-1);
+	}
+
+	return (fd);
+}
 
 static EVP_PKEY *
 rsa_key_create(FILE *f, const char *fname)

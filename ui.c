@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Omar Polo <op@omarpolo.com>
+ * Copyright (c) 2021, 2024 Omar Polo <op@omarpolo.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -846,9 +846,10 @@ redraw_modeline(struct tab *tab)
 	wattr_on(modeline, modeline_face.background, NULL);
 	wmove(modeline, 0, 0);
 
-	wprintw(modeline, "-%c%c- %s ",
+	wprintw(modeline, "-%c%c%c %s ",
 	    spin[tab->loading_anim_step],
 	    trust_status_char(tab->trust),
+	    tab->client_cert ? 'C' : '-',
 	    mode == NULL ? "(none)" : mode);
 
 	pct = (buffer->line_off + buffer->curs_y) * 100.0

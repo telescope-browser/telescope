@@ -205,6 +205,7 @@ struct tab {
 
 	char			*cert;
 	enum trust_state	 trust;
+	const char		*client_cert;
 	struct proxy		*proxy;
 	struct iri		 iri;
 	struct hist		*hist;
@@ -300,7 +301,7 @@ int		 load_next_page(struct tab*);
 void		 write_buffer(const char *, struct tab *);
 void		 humanify_url(const char *, const char *, char *, size_t);
 int		 bookmark_page(const char *);
-int		 ui_send_net(int, uint32_t, const void *, uint16_t);
+int		 ui_send_net(int, uint32_t, int, const void *, uint16_t);
 
 /* tofu.c */
 void			 tofu_init(struct ohash*, unsigned int, ptrdiff_t);

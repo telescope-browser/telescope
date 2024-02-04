@@ -18,4 +18,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-int	 cert_new(const char *, const char *, const char *, int);
+struct iri;
+
+extern char	**identities;
+
+int		 certs_init(const char *);
+const char	*ccert(const char *);
+const char	*cert_for(struct iri *);
+int		 cert_open(const char *);
+int		 cert_new(const char *, const char *, const char *, int);

@@ -166,7 +166,7 @@ free_tab(struct tab *tab)
 void
 stop_tab(struct tab *tab)
 {
-	ui_send_net(IMSG_STOP, tab->id, NULL, 0);
+	ui_send_net(IMSG_STOP, tab->id, -1, NULL, 0);
 }
 
 static inline void

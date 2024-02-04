@@ -31,7 +31,7 @@
 void
 sandbox_net_process(void)
 {
-	if (pledge("stdio inet dns", NULL) == -1)
+	if (pledge("stdio inet dns recvfd", NULL) == -1)
 		err(1, "pledge");
 }
 
@@ -57,7 +57,7 @@ sandbox_ui_process(void)
 	if (unveil(cache_path_base, "rwc") == -1)
 		err(1, "unveil(%s)", cache_path_base);
 
-	if (pledge("stdio rpath wpath cpath unix tty", NULL) == -1)
+	if (pledge("stdio rpath wpath cpath unix sendfd tty", NULL) == -1)
 		err(1, "pledge");
 }
 

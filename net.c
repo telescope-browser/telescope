@@ -16,8 +16,10 @@
 
 #include "compat.h"
 
+#include <sys/mman.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 
 #include <netinet/in.h>
 
@@ -51,6 +53,9 @@ struct req {
 	char			*port;
 	char			*req;
 	size_t			 len;
+	void			*ccert;
+	size_t			 ccert_len;
+	int			 ccert_fd;
 	int			 done_header;
 	struct bufferevent	*bev;
 
@@ -192,16 +197,27 @@ done:
 		tls_config_insecure_noverifycert(conf);
 		tls_config_insecure_noverifyname(conf);
 
+		if (req->ccert && tls_config_set_keypair_mem(conf,
+		    req->ccert, req->ccert_len, req->ccert, req->ccert_len)
+		    == -1) {
+			close_with_errf(req, "failed to load keypair: %s",
+			    tls_config_error(conf));
+			tls_config_free(conf);
+			return;
+		}
+
 		/* prepare tls */
 		if ((req->ctx = tls_client()) == NULL) {
 			close_with_errf(req, "tls_client: %s",
 			    strerror(errno));
+			tls_config_free(conf);
 			return;
 		}
 
 		if (tls_configure(req->ctx, conf) == -1) {
 			close_with_errf(req, "tls_configure: %s",
 			    tls_error(req->ctx));
+			tls_config_free(conf);
 			return;
 		}
 		tls_config_free(conf);
@@ -302,6 +318,11 @@ close_conn(int fd, short ev, void *d)
 
 		tls_free(req->ctx);
 		req->ctx = NULL;
+	}
+
+	if (req->ccert != NULL) {
+		munmap(req->ccert, req->ccert_len);
+		close(req->ccert_fd);
 	}
 
 	free(req->host);
@@ -634,6 +655,38 @@ net_error(struct bufferevent *bev, short error, void *d)
 	close_with_errf(req, "unknown event error %x", error);
 }
 
+static int
+load_cert(struct imsg *imsg, struct req *req)
+{
+	struct stat	 sb;
+	int		 fd;
+
+	if ((fd = imsg_get_fd(imsg)) == -1)
+		return (0);
+
+	if (fstat(fd, &sb) == -1)
+		return (-1);
+
+#if 0
+	if (sb.st_size >= (off_t)SIZE_MAX) {
+		close(fd);
+		return (-1);
+	}
+#endif
+
+	req->ccert = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+	if (req->ccert == MAP_FAILED) {
+		req->ccert = NULL;
+		close(fd);
+		return (-1);
+	}
+
+	req->ccert_len = sb.st_size;
+	req->ccert_fd = fd;
+
+	return (0);
+}
+
 static void
 handle_dispatch_imsg(int fd, short event, void *d)
 {
@@ -678,6 +731,7 @@ handle_dispatch_imsg(int fd, short event, void *d)
 			if ((req = calloc(1, sizeof(*req))) == NULL)
 				die();
 
+			req->ccert_fd = -1;
 			req->id = imsg_get_id(&imsg);
 			TAILQ_INSERT_HEAD(&reqhead, req, reqs);
 
@@ -686,6 +740,8 @@ handle_dispatch_imsg(int fd, short event, void *d)
 			if ((req->port = strdup(r.port)) == NULL)
 				die();
 			if ((req->req = strdup(r.req)) == NULL)
+				die();
+			if (load_cert(&imsg, req) == -1)
 				die();
 
 			req->len = strlen(req->req);
