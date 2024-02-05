@@ -219,15 +219,8 @@ certs_init(const char *certfile)
 		return (-1);
 	}
 
-	/*
-	 * Data should already be in order, so mergesort should be
-	 * faster.  If it fails (memory scarcity), fall back to qsort()
-	 * which is in place.
-	 */
-	if (mergesort(cert_store.certs, cert_store.len,
-	    sizeof(*cert_store.certs), certs_cmp) == -1)
-		qsort(cert_store.certs, cert_store.len,
-		    sizeof(*cert_store.certs), certs_cmp);
+	qsort(cert_store.certs, cert_store.len, sizeof(*cert_store.certs),
+	    certs_cmp);
 
 	fclose(fp);
 	free(line);
