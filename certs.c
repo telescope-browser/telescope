@@ -24,9 +24,11 @@
 
 #include "compat.h"
 
+#include <sys/types.h>
 #include <sys/stat.h>
 
 #include <ctype.h>
+#include <dirent.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <string.h>
@@ -75,13 +77,14 @@ identities_cmp(const void *a, const void *b)
 }
 
 static inline int
-push_identity(char *name)
+push_identity(const char *n)
 {
+	char	*name;
 	void	*t;
 	size_t	 newcap, i;
 
 	for (i = 0; i < id_len; ++i) {
-		if (!strcmp(identities[i], name))
+		if (!strcmp(identities[i], n))
 			return (0);
 	}
 
@@ -96,9 +99,10 @@ push_identity(char *name)
 		id_cap = newcap;
 	}
 
-	identities[id_len++] = name;
-	qsort(identities, id_len, sizeof(*identities), identities_cmp);
+	if ((name = strdup(n)) == NULL)
+		return (-1);
 
+	identities[id_len++] = name;
 	return (0);
 }
 
@@ -177,7 +181,7 @@ certs_store_add(const char *l)
 	cert_store.certs[cert_store.len].cert = cert;
 	cert_store.len++;
 
-	return (push_identity(cert));
+	return (0);
 
  err:
 	free(line);
@@ -187,6 +191,8 @@ certs_store_add(const char *l)
 int
 certs_init(const char *certfile)
 {
+	struct dirent *dp;
+	DIR	*certdir;
 	FILE	*fp;
 	char	*line = NULL;
 	size_t	 linesize = 0;
@@ -195,6 +201,20 @@ certs_init(const char *certfile)
 	id_cap = 8;
 	if ((identities = calloc(id_cap, sizeof(*identities))) == NULL)
 		return (-1);
+
+	if ((certdir = opendir(cert_dir)) == NULL)
+		return (-1);
+
+	while ((dp = readdir(certdir)) != NULL) {
+		if (dp->d_type != DT_REG)
+			continue;
+		if (push_identity(dp->d_name) == -1) {
+			closedir(certdir);
+			return (-1);
+		}
+	}
+	closedir(certdir);
+	qsort(identities, id_len, sizeof(*identities), identities_cmp);
 
 	if ((fp = fopen(certfile, "r")) == NULL) {
 		if (errno == ENOENT)
