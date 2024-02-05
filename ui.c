@@ -575,7 +575,8 @@ print_vline(int off, int width, WINDOW *window, struct vline *vl)
 	wattr_off(window, f->prefix, NULL);
 
 	wattr_on(window, f->text, NULL);
-	wprintw(window, "%.*s", textlen, text);
+	if (text)
+		wprintw(window, "%.*s", textlen, text);
 	print_vline_descr(width, window, vl);
 	wattr_off(window, f->text, NULL);
 
