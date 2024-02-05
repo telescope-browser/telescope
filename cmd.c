@@ -1093,3 +1093,14 @@ cmd_up(struct buffer *buffer)
 {
 	load_url_in_tab(current_tab, "..", NULL, LU_MODE_NOCACHE);
 }
+
+void
+cmd_use_certificate(struct buffer *buffer)
+{
+	GUARD_RECURSIVE_MINIBUFFER();
+
+	enter_minibuffer(sensible_self_insert, uc_select, exit_minibuffer,
+	    NULL, compl_uc, NULL, 1);
+	strlcpy(ministate.prompt, "Select certificate: ",
+	    sizeof(ministate.prompt));
+}

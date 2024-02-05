@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Omar Polo <op@omarpolo.com>
+ * Copyright (c) 2021, 2024 Omar Polo <op@omarpolo.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -18,6 +18,7 @@
 
 #include <stdlib.h>
 
+#include "certs.h"
 #include "compl.h"
 #include "hist.h"
 #include "telescope.h"
@@ -157,4 +158,23 @@ compl_toc(void **data, void **ret, const char **descr)
 	*ret = l;
 	*line = TAILQ_NEXT(l, lines);
 	return text;
+}
+
+/*
+ * Provide completions for use-certificate
+ */
+const char *
+compl_uc(void **data, void **ret, const char **descr)
+{
+	const char	***state = (const char ***)data;
+
+	/* first time: init the state */
+	if (*state == NULL)
+		*state = (const char **)identities;
+
+	if (**state == NULL)
+		return NULL;
+
+	/* XXX filling descr too would be nice */
+	return *((*state)++);
 }

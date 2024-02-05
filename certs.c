@@ -49,18 +49,17 @@
 
 /* client certificate */
 struct ccert {
-	char	*line;	/* fields below points inside here */
 	char	*host;
 	char	*port;
 	char	*path;
 	char	*cert;
 };
 
-static struct cert_store {
+static struct cstore {
 	struct ccert	*certs;
 	size_t		 len;
 	size_t		 cap;
-} cert_store;
+} cert_store, temp_store;
 
 char		**identities;
 static size_t	  id_len, id_cap;
@@ -122,70 +121,76 @@ certs_cmp(const void *a, const void *b)
 }
 
 static int
-certs_store_add(const char *l)
+certs_store_add(struct cstore *cstore, const char *host, const char *port,
+    const char *path, const char *cert)
 {
-	size_t			 newcap;
-	void			*t;
-	char			*line, *host, *port, *path, *cert;
+	struct ccert	*c;
+	void		*t;
+	size_t		 newcap;
 
-	if ((line = strdup(l)) == NULL)
-		return (-1);
+	if (cstore->len == cstore->cap) {
+		newcap = cstore->cap + 8;
+		t = reallocarray(cstore->certs, newcap,
+		    sizeof(*cstore->certs));
+		if (t == NULL)
+			return (-1);
+		cstore->certs = t;
+		cstore->cap = newcap;
+	}
+
+	c = &cstore->certs[cstore->len];
+	if ((c->host = strdup(host)) == NULL ||
+	    (c->port = strdup(port)) == NULL ||
+	    (c->path = strdup(path)) == NULL ||
+	    (c->cert = strdup(cert)) == NULL) {
+		free(c->host);
+		free(c->port);
+		free(c->path);
+		free(c->cert);
+		memset(c, 0, sizeof(*c));
+	}
+	cstore->len++;
+
+	return (0);
+}
+
+static int
+certs_store_parse_line(struct cstore *cstore, char *line)
+{
+	char		*host, *port, *path, *cert;
+
+	while (isspace((unsigned char)*line))
+		++line;
+	if (*line == '#' || *line == '\0')
+		return (0);
 
 	host = line;
-	while (isspace((unsigned char)*host))
-		++host;
-
-	if (*host == '#') {
-		free(line);
-		return (0);
-	}
 
 	port = host + strcspn(host, " \t");
 	if (*port == '\0')
-		goto err;
+		return (-1);
 	*port++ = '\0';
 	while (isspace((unsigned char)*port))
 		++port;
 
 	path = port + strcspn(port, " \t");
 	if (*path == '\0')
-		goto err;
+		return (-1);
 	*path++ = '\0';
 	while (isspace((unsigned char)*path))
 		++path;
 
 	cert = path + strcspn(path, " \t");
 	if (*cert == '\0')
-		goto err;
+		return (-1);
 	*cert++ = '\0';
 	while (isspace((unsigned char)*cert))
 		++cert;
 
 	if (*cert == '\0')
-		goto err;
+		return (-1);
 
-	if (cert_store.len == cert_store.cap) {
-		newcap = cert_store.cap + 8;
-		t = reallocarray(cert_store.certs, newcap,
-		    sizeof(*cert_store.certs));
-		if (t == NULL)
-			goto err;
-		cert_store.certs = t;
-		cert_store.cap = newcap;
-	}
-
-	cert_store.certs[cert_store.len].line = line;
-	cert_store.certs[cert_store.len].host = host;
-	cert_store.certs[cert_store.len].port = port;
-	cert_store.certs[cert_store.len].path = path;
-	cert_store.certs[cert_store.len].cert = cert;
-	cert_store.len++;
-
-	return (0);
-
- err:
-	free(line);
-	return (-1);
+	return (certs_store_add(cstore, host, port, path, cert));
 }
 
 int
@@ -226,7 +231,7 @@ certs_init(const char *certfile)
 		if (line[linelen - 1] == '\n')
 			line[--linelen] = '\0';
 
-		if (certs_store_add(line) == -1) {
+		if (certs_store_parse_line(&cert_store, line) == -1) {
 			fclose(fp);
 			free(line);
 			return (-1);
@@ -283,22 +288,118 @@ path_under(const char *cpath, const char *tpath)
 	return (cpath[-1] == '/');
 }
 
-const char *
-cert_for(struct iri *iri)
+static struct ccert *
+find_cert_for(struct cstore *cstore, struct iri *iri)
 {
 	struct ccert	*c;
 	size_t		 i;
 
-	for (i = 0; i < cert_store.len; ++i) {
-		c = &cert_store.certs[i];
+	for (i = 0; i < cstore->len; ++i) {
+		c = &cstore->certs[i];
 
 		if (!strcmp(c->host, iri->iri_host) &&
 		    !strcmp(c->port, iri->iri_portstr) &&
 		    path_under(c->path, iri->iri_path))
-			return (c->cert);
+			return (c);
 	}
 
 	return (NULL);
+}
+
+const char *
+cert_for(struct iri *iri)
+{
+	struct ccert	*c;
+
+	if ((c = find_cert_for(&temp_store, iri)) != NULL)
+		return (c->cert);
+	if ((c = find_cert_for(&cert_store, iri)) != NULL)
+		return (c->cert);
+	return (NULL);
+}
+
+static int
+write_cert_file(void)
+{
+	struct ccert	*c;
+	FILE		*fp;
+	char		 sfn[PATH_MAX];
+	size_t		 i;
+	int		 fd, r;
+
+	strlcpy(sfn, certs_file_tmp, sizeof(sfn));
+	if ((fd = mkstemp(sfn)) == -1 ||
+	    (fp = fdopen(fd, "w")) == NULL) {
+		if (fd != -1) {
+			unlink(sfn);
+			close(fd);
+		}
+		return (-1);
+	}
+
+	for (i = 0; i < cert_store.len; ++i) {
+		c = &cert_store.certs[i];
+		if (c->cert == NULL)
+			continue;
+
+		r = fprintf(fp, "%s\t%s\t%s\t%s\n", c->host, c->port,
+		    c->path, c->cert);
+		if (r < 0) {
+			fclose(fp);
+			unlink(sfn);
+			return (-1);
+		}
+	}
+
+	if (ferror(fp)) {
+		fclose(fp);
+		unlink(sfn);
+		return (-1);
+	}
+
+	if (fclose(fp) == EOF) {
+		unlink(sfn);
+		return (-1);
+	}
+
+	if (rename(sfn, certs_file) == -1) {
+		unlink(sfn);
+		return (-1);
+	}
+
+	return (0);
+}
+
+int
+cert_save_for(const char *cert, struct iri *i, int persist)
+{
+	struct cstore	*cstore;
+	struct ccert	*c;
+	char		*d;
+
+	cstore = persist ? &cert_store : &temp_store;
+
+	if ((c = find_cert_for(cstore, i)) != NULL) {
+		if ((d = strdup(cert)) == NULL)
+			return (-1);
+
+		free(c->cert);
+		c->cert = d;
+
+		return (0);
+	}
+
+	if (certs_store_add(cstore, i->iri_host, i->iri_portstr, i->iri_path,
+	    cert) == -1)
+		return (-1);
+
+	qsort(cert_store.certs, cert_store.len, sizeof(*cert_store.certs),
+	    certs_cmp);
+
+	if (persist && write_cert_file() == -1)
+		return (-1);
+
+	return (0);
 }
 
 int

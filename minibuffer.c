@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "certs.h"
 #include "fs.h"
 #include "hist.h"
 #include "iri.h"
@@ -423,6 +424,34 @@ toc_select(void)
 
 	exit_minibuffer();
 	jump_to_line(l);
+}
+
+static void
+save_cert_for_site_cb(int r, struct tab *tab)
+{
+	cert_save_for(tab->client_cert, &tab->iri, r);
+}
+
+void
+uc_select(void)
+{
+	const char	*name;
+
+	name = minibuffer_compl_text();
+	if (!strcmp(name, "Generate new certificate")) {
+		message("Not implemented yet!");
+		return;
+	}
+
+	if ((current_tab->client_cert = ccert(name)) == NULL) {
+		message("Certificate %s not found", name);
+		return;
+	}
+
+	exit_minibuffer();
+
+	yornp("Always use this cert on this page?", save_cert_for_site_cb,
+	    current_tab);
 }
 
 static void

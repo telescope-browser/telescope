@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Omar Polo <op@omarpolo.com>
+ * Copyright (c) 2021, 2024 Omar Polo <op@omarpolo.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -23,5 +23,6 @@ const char	*compl_ts(void **, void **, const char **);
 const char	*compl_ls(void **, void **, const char **);
 const char	*compl_swiper(void **, void **, const char **);
 const char	*compl_toc(void **, void **, const char **);
+const char	*compl_uc(void **, void **, const char **);
 
 #endif
