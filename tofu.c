@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, 2022 Omar Polo <op@omarpolo.com>
+ * Copyright (c) 2021, 2022, 2024 Omar Polo <op@omarpolo.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -138,7 +138,7 @@ tofu_update_persist(struct ohash *h, struct tofu_entry *e)
 		return -1;
 	}
 
-	if (rename(sfn, known_hosts_file))
+	if (rename(sfn, known_hosts_file) == -1)
 		return -1;
 	return 0;
 }
