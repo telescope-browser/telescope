@@ -16,6 +16,7 @@ CMD(cmd_backward_paragraph,	"Move point on paragraph backward.");
 CMD(cmd_beginning_of_buffer,	"Move point to the beginning of the buffer.");
 CMD(cmd_bookmark_page,		"Save a page in the bookmark file.");
 CMD(cmd_cache_info,		"Show cache stats.");
+CMD(cmd_client_certificate_info,"Show the client certificate in use.");
 CMD(cmd_clear_minibuf,		"Clear the echo area.");
 CMD(cmd_dec_fill_column,	"Decrement fill-column by two.");
 CMD(cmd_end_of_buffer,		"Move the point to the end of the buffer.");

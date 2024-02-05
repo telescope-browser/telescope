@@ -1104,3 +1104,12 @@ cmd_use_certificate(struct buffer *buffer)
 	strlcpy(ministate.prompt, "Select certificate: ",
 	    sizeof(ministate.prompt));
 }
+
+void
+cmd_client_certificate_info(struct buffer *buffer)
+{
+	if (current_tab->client_cert)
+		message("Using certificate %s", current_tab->client_cert);
+	else
+		message("Not using any client certificate.");
+}
