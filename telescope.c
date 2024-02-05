@@ -31,6 +31,7 @@
 #include <unistd.h>
 
 #include "certs.h"
+#include "cmd.h"
 #include "control.h"
 #include "defaults.h"
 #include "fs.h"

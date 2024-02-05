@@ -41,6 +41,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "cmd.h"
 #include "defaults.h"
 #include "hist.h"
 #include "minibuffer.h"

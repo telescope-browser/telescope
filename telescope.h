@@ -22,7 +22,6 @@
 #include <limits.h>
 #include <stdio.h>		/* XXX: for parsers.h */
 
-#include "cmd.h"
 #include "iri.h"
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))

@@ -22,6 +22,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "cmd.h"
 #include "defaults.h"
 #include "telescope.h"
 #include "ui.h"

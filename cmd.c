@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "cmd.h"
 #include "compl.h"
 #include "defaults.h"
 #include "hist.h"
