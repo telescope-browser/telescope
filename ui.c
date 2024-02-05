@@ -594,7 +594,6 @@ print_vline(int off, int width, WINDOW *window, struct vline *vl)
 	for (i = 0; i < off; i++)
 		waddch(window, ' ');
 	wattr_off(window, body_face.right, NULL);
-
 }
 
 static void
