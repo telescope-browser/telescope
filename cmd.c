@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "certs.h"
 #include "cmd.h"
 #include "compl.h"
 #include "defaults.h"
@@ -1113,4 +1114,25 @@ cmd_client_certificate_info(struct buffer *buffer)
 		message("Using certificate %s", current_tab->client_cert);
 	else
 		message("Not using any client certificate.");
+}
+
+static void
+unload_certificate_cb(int r, struct tab *tab)
+{
+	cert_delete_for(tab->client_cert, &tab->iri, r);
+}
+
+void
+cmd_unload_certificate(struct buffer *buffer)
+{
+	GUARD_RECURSIVE_MINIBUFFER();
+
+	if (current_tab->client_cert == NULL) {
+		message("No client certificate in use!");
+		return;
+	}
+
+	/* Sucks that we ask this even when the cert is already temporary */
+	yornp("Unload only for the current session?", unload_certificate_cb,
+	    current_tab);
 }

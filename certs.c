@@ -289,7 +289,7 @@ path_under(const char *cpath, const char *tpath)
 }
 
 static struct ccert *
-find_cert_for(struct cstore *cstore, struct iri *iri)
+find_cert_for(struct cstore *cstore, struct iri *iri, size_t *n)
 {
 	struct ccert	*c;
 	size_t		 i;
@@ -299,8 +299,11 @@ find_cert_for(struct cstore *cstore, struct iri *iri)
 
 		if (!strcmp(c->host, iri->iri_host) &&
 		    !strcmp(c->port, iri->iri_portstr) &&
-		    path_under(c->path, iri->iri_path))
+		    path_under(c->path, iri->iri_path)) {
+			if (n)
+				*n = i;
 			return (c);
+		}
 	}
 
 	return (NULL);
@@ -311,9 +314,9 @@ cert_for(struct iri *iri)
 {
 	struct ccert	*c;
 
-	if ((c = find_cert_for(&temp_store, iri)) != NULL)
+	if ((c = find_cert_for(&temp_store, iri, NULL)) != NULL)
 		return (c->cert);
-	if ((c = find_cert_for(&cert_store, iri)) != NULL)
+	if ((c = find_cert_for(&cert_store, iri, NULL)) != NULL)
 		return (c->cert);
 	return (NULL);
 }
@@ -379,7 +382,7 @@ cert_save_for(const char *cert, struct iri *i, int persist)
 
 	cstore = persist ? &cert_store : &temp_store;
 
-	if ((c = find_cert_for(cstore, i)) != NULL) {
+	if ((c = find_cert_for(cstore, i, NULL)) != NULL) {
 		if ((d = strdup(cert)) == NULL)
 			return (-1);
 
@@ -398,6 +401,37 @@ cert_save_for(const char *cert, struct iri *i, int persist)
 
 	if (persist && write_cert_file() == -1)
 		return (-1);
+
+	return (0);
+}
+
+int
+cert_delete_for(const char *cert, struct iri *iri, int persist)
+{
+	struct ccert	*c;
+	size_t		 i;
+
+	if ((c = find_cert_for(&temp_store, iri, &i)) != NULL) {
+		free(c->host);
+		free(c->port);
+		free(c->path);
+		free(c->cert);
+
+		if (i == temp_store.len - 1) {
+			memset(c, 0, sizeof(*c));
+			temp_store.len--;
+		} else {
+			memmove(&temp_store.certs[i], &temp_store.certs[i + 1],
+			    sizeof(*temp_store.certs) * (temp_store.len - i));
+		}
+	}
+
+	if ((c = find_cert_for(&cert_store, iri, NULL)) != NULL) {
+		free(c->cert);
+		c->cert = NULL;
+
+		return (write_cert_file() == -1);
+	}
 
 	return (0);
 }
