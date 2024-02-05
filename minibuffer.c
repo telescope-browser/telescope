@@ -450,7 +450,7 @@ uc_select(void)
 
 	exit_minibuffer();
 
-	yornp("Always use this cert on this page?", save_cert_for_site_cb,
+	yornp("Remember for future sessions too?", save_cert_for_site_cb,
 	    current_tab);
 }
 
