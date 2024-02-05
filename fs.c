@@ -374,9 +374,9 @@ fs_init(void)
 	    sizeof(history_file_tmp));
 	join_path(cert_dir, data_path_base, "/certs/",
 	    sizeof(cert_dir));
-	join_path(certs_file, data_path_base, "/certs/certs",
+	join_path(certs_file, config_path_base, "/certs.conf",
 	    sizeof(certs_file));
-	join_path(certs_file_tmp, data_path_base, "/certs/certs.XXXXXXXXXX",
+	join_path(certs_file_tmp, config_path_base, "/certs.conf",
 	    sizeof(certs_file_tmp));
 	join_path(crashed_file, cache_path_base, "/crashed",
 	    sizeof(crashed_file));
