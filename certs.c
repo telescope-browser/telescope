@@ -417,13 +417,12 @@ cert_delete_for(const char *cert, struct iri *iri, int persist)
 		free(c->path);
 		free(c->cert);
 
-		if (i == temp_store.len - 1) {
+		if (i == temp_store.len - 1)
 			memset(c, 0, sizeof(*c));
-			temp_store.len--;
-		} else {
+		else
 			memmove(&temp_store.certs[i], &temp_store.certs[i + 1],
-			    sizeof(*temp_store.certs) * (temp_store.len - i));
-		}
+			    sizeof(*temp_store.certs) * (temp_store.len -1 -i));
+		temp_store.len--;
 	}
 
 	if ((c = find_cert_for(&cert_store, iri, NULL)) != NULL) {
