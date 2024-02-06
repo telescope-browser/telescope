@@ -1120,20 +1120,28 @@ cmd_client_certificate_info(struct buffer *buffer)
 static void
 unload_certificate_cb(int r, struct tab *tab)
 {
+	message("Won't use %s for this site.", tab->client_cert);
 	cert_delete_for(tab->client_cert, &tab->iri, r);
 }
 
 void
 cmd_unload_certificate(struct buffer *buffer)
 {
+	struct tab	*tab = current_tab;
+
 	GUARD_RECURSIVE_MINIBUFFER();
 
-	if (current_tab->client_cert == NULL) {
+	if (tab->client_cert == NULL) {
 		message("No client certificate in use!");
 		return;
 	}
 
-	/* Sucks that we ask this even when the cert is already temporary */
+	if (tab->client_cert_temp) {
+		message("Won't use %s for this site.", tab->client_cert);
+		cert_delete_for(tab->client_cert, &tab->iri, 0);
+		return;
+	}
+
 	yornp("Unload only for the current session?", unload_certificate_cb,
 	    current_tab);
 }

@@ -24,7 +24,7 @@ extern char	**identities;
 
 int		 certs_init(const char *);
 const char	*ccert(const char *);
-const char	*cert_for(struct iri *);
+const char	*cert_for(struct iri *, int *);
 int		 cert_save_for(const char *, struct iri *, int);
 int		 cert_delete_for(const char *, struct iri *, int);
 int		 cert_open(const char *);

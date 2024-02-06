@@ -128,7 +128,7 @@ static void		 load_gopher_url(struct tab *, const char *);
 static void		 load_via_proxy(struct tab *, const char *,
 			     struct proxy *);
 static void		 make_request(struct tab *, struct get_req *, int,
-			     const char *, int);
+			     const char *);
 static void		 do_load_url(struct tab *, const char *, const char *, int);
 static pid_t		 start_child(enum telescope_process, const char *, int);
 static void		 send_url(const char *);
@@ -598,23 +598,19 @@ load_finger_url(struct tab *tab, const char *url)
 	strlcat(req.req, "\r\n", sizeof(req.req));
 
 	parser_init(tab, textplain_initparser);
-	make_request(tab, &req, PROTO_FINGER, NULL, 0);
+	make_request(tab, &req, PROTO_FINGER, NULL);
 }
 
 static void
 load_gemini_url(struct tab *tab, const char *url)
 {
 	struct get_req	 req;
-	int		 use_cert = 0;
-
-	if ((tab->client_cert = cert_for(&tab->iri)) != NULL)
-		use_cert = 1;
 
 	memset(&req, 0, sizeof(req));
 	strlcpy(req.host, tab->iri.iri_host, sizeof(req.host));
 	strlcpy(req.port, tab->iri.iri_portstr, sizeof(req.port));
 
-	make_request(tab, &req, PROTO_GEMINI, hist_cur(tab->hist), use_cert);
+	make_request(tab, &req, PROTO_GEMINI, hist_cur(tab->hist));
 }
 
 static inline const char *
@@ -685,7 +681,7 @@ load_gopher_url(struct tab *tab, const char *url)
 	}
 	strlcat(req.req, "\r\n", sizeof(req.req));
 
-	make_request(tab, &req, PROTO_GOPHER, NULL, 0);
+	make_request(tab, &req, PROTO_GOPHER, NULL);
 }
 
 static void
@@ -699,14 +695,18 @@ load_via_proxy(struct tab *tab, const char *url, struct proxy *p)
 
 	tab->proxy = p;
 
-	make_request(tab, &req, p->proto, hist_cur(tab->hist), 0);
+	make_request(tab, &req, p->proto, hist_cur(tab->hist));
 }
 
 static void
-make_request(struct tab *tab, struct get_req *req, int proto, const char *r,
-    int use_cert)
+make_request(struct tab *tab, struct get_req *req, int proto, const char *r)
 {
-	int	 fd = -1;
+	int	 use_cert = 0, fd = -1;
+
+	if (proto == PROTO_GEMINI) {
+		tab->client_cert = cert_for(&tab->iri, &tab->client_cert_temp);
+		use_cert = (tab->client_cert != NULL);
+	}
 
 	stop_tab(tab);
 	tab->id = tab_new_id();
@@ -752,7 +752,7 @@ gopher_send_search_req(struct tab *tab, const char *text)
 	erase_buffer(&tab->buffer);
 	parser_init(tab, gophermap_initparser);
 
-	make_request(tab, &req, PROTO_GOPHER, NULL, 0);
+	make_request(tab, &req, PROTO_GOPHER, NULL);
 }
 
 void

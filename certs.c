@@ -310,12 +310,16 @@ find_cert_for(struct cstore *cstore, struct iri *iri, size_t *n)
 }
 
 const char *
-cert_for(struct iri *iri)
+cert_for(struct iri *iri, int *temporary)
 {
 	struct ccert	*c;
 
-	if ((c = find_cert_for(&temp_store, iri, NULL)) != NULL)
+	*temporary = 0;
+
+	if ((c = find_cert_for(&temp_store, iri, NULL)) != NULL) {
+		*temporary = 1;
 		return (c->cert);
+	}
 	if ((c = find_cert_for(&cert_store, iri, NULL)) != NULL)
 		return (c->cert);
 	return (NULL);
