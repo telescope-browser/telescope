@@ -27,6 +27,7 @@
 #include "fs.h"
 #include "hist.h"
 #include "iri.h"
+#include "keymap.h"
 #include "minibuffer.h"
 #include "session.h"
 #include "ui.h"

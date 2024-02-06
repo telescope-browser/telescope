@@ -37,6 +37,7 @@
 #include "fs.h"
 #include "hist.h"
 #include "iri.h"
+#include "keymap.h"
 #include "mcache.h"
 #include "minibuffer.h"
 #include "parser.h"

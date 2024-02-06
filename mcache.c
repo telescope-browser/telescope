@@ -20,7 +20,6 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "telescope.h"
 #include "hist.h"
 #include "mcache.h"
 #include "parser.h"

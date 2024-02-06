@@ -17,6 +17,8 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+struct imsgev;
+
 int		 mark_nonblock_cloexec(int);
 
 int		 has_suffix(const char *, const char *);

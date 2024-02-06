@@ -22,7 +22,6 @@
 #include <string.h>
 
 #include "keymap.h"
-#include "telescope.h"
 #include "utils.h"
 
 #define CTRL(n)	((n)&0x1F)

@@ -17,8 +17,6 @@
 #ifndef KEYMAP_H
 #define KEYMAP_H
 
-#include "compat.h"
-
 #include <stdint.h>
 
 struct buffer;

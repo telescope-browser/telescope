@@ -24,6 +24,7 @@
 
 #include "cmd.h"
 #include "defaults.h"
+#include "keymap.h"
 #include "telescope.h"
 #include "ui.h"
 #include "utils.h"

@@ -28,7 +28,6 @@
 #include <stdint.h>
 #include <wchar.h>
 
-#include "telescope.h"
 #include "utf8.h"
 
 #define UTF8_ACCEPT 0

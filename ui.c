@@ -44,6 +44,7 @@
 #include "cmd.h"
 #include "defaults.h"
 #include "hist.h"
+#include "keymap.h"
 #include "minibuffer.h"
 #include "session.h"
 #include "telescope.h"

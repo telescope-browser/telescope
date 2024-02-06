@@ -35,7 +35,6 @@
 #include "pages.h"
 #include "parser.h"
 #include "session.h"
-#include "telescope.h"
 #include "utils.h"
 
 #include "fs.h"

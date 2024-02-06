@@ -22,6 +22,7 @@
 #include <string.h>
 
 #include "cmd.h"
+#include "keymap.h"
 #include "telescope.h"
 #include "ui.h"
 

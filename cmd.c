@@ -25,6 +25,7 @@
 #include "compl.h"
 #include "defaults.h"
 #include "hist.h"
+#include "keymap.h"
 #include "mcache.h"
 #include "minibuffer.h"
 #include "session.h"

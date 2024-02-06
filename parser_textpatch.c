@@ -23,7 +23,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "telescope.h"
 #include "parser.h"
 #include "utils.h"
 
