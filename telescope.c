@@ -43,6 +43,7 @@
 #include "parser.h"
 #include "session.h"
 #include "telescope.h"
+#include "tofu.h"
 #include "ui.h"
 #include "utils.h"
 

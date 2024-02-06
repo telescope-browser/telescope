@@ -156,17 +156,6 @@ enum trust_state {
 	TS_VERIFIED,
 };
 
-struct tofu_entry {
-	char	domain[GEMINI_URL_LEN];
-
-	/*
-	 * enough space for ``PROTO:HASH''.  probably isn't a good
-	 * idea tho.
-	 */
-	char	hash[128+1];
-	int	verified;
-};
-
 struct buffer {
 	struct parser		 page;
 
@@ -292,15 +281,6 @@ void		 write_buffer(const char *, struct tab *);
 void		 humanify_url(const char *, const char *, char *, size_t);
 int		 bookmark_page(const char *);
 int		 ui_send_net(int, uint32_t, int, const void *, uint16_t);
-
-/* tofu.c */
-void			 tofu_init(struct ohash*, unsigned int, ptrdiff_t);
-struct tofu_entry	*tofu_lookup(struct ohash*, const char*, const char*);
-void			 tofu_add(struct ohash*, struct tofu_entry*);
-int			 tofu_save(struct ohash *, struct tofu_entry *);
-void			 tofu_update(struct ohash*, struct tofu_entry*);
-int			 tofu_update_persist(struct ohash *, struct tofu_entry *);
-void			 tofu_temp_trust(struct ohash *, const char *, const char *, const char *);
 
 /* wrap.c */
 void		 erase_buffer(struct buffer *);

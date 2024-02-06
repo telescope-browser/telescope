@@ -30,6 +30,7 @@
 #include "hist.h"
 #include "minibuffer.h"
 #include "session.h"
+#include "tofu.h"
 #include "ui.h"
 
 struct history	history;

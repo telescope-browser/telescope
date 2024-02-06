@@ -49,6 +49,7 @@ telescope_SOURCES =	certs.c			\
 			telescope.c		\
 			telescope.h		\
 			tofu.c			\
+			tofu.h			\
 			ui.c			\
 			ui.h			\
 			utf8.c			\

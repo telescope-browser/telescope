@@ -17,12 +17,13 @@
 #include "compat.h"
 
 #include <limits.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
 #include "fs.h"
-#include "telescope.h"
+#include "tofu.h"
 #include "utils.h"
 
 void
@@ -41,7 +42,7 @@ tofu_init(struct ohash *h, unsigned int sz, ptrdiff_t ko)
 struct tofu_entry *
 tofu_lookup(struct ohash *h, const char *domain, const char *port)
 {
-	char		buf[GEMINI_URL_LEN];
+	char		buf[TOFU_URL_MAX_LEN];
 	unsigned int	slot;
 
 	strlcpy(buf, domain, sizeof(buf));
