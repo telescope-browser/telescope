@@ -89,7 +89,7 @@ CMD(cmd_toc,			"Jump to a heading using the minibuffer.");
 CMD(cmd_toggle_downloads,	"Toggle the downloads side window.");
 CMD(cmd_toggle_help,		"Toggle side window with help.");
 CMD(cmd_toggle_pre_wrap,	"Toggle the wrapping of preformatted blocks.");
-CMD(cmd_unload_certificate,	"Stop using the certificate.");
+CMD(cmd_unload_certificate,	"Forget to use a certificate on this page.");
 CMD(cmd_up,			"Go up one level.");
 CMD(cmd_use_certificate,	"Use a certificate for the current page.");
 CMD(cmd_write_buffer,		"Save the current page to the disk.");
