@@ -18,6 +18,8 @@
  * A streaming text/plain "parser."
  */
 
+#include "compat.h"
+
 #include <stdlib.h>
 #include <string.h>
 

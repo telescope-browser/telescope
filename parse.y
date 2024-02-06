@@ -20,10 +20,7 @@
 
 %{
 
-#include "cmd.h"
-#include "keymap.h"
-#include "telescope.h"
-#include "utils.h"
+#include "compat.h"
 
 #include <assert.h>
 #include <ctype.h>
@@ -34,8 +31,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "cmd.h"
 #include "defaults.h"
 #include "iri.h"
+#include "keymap.h"
+#include "telescope.h"
+#include "utils.h"
 
 typedef struct {
 	union {

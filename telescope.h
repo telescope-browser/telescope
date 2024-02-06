@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Omar Polo <op@omarpolo.com>
+ * Copyright (c) 2021, 2024 Omar Polo <op@omarpolo.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,8 +16,6 @@
 
 #ifndef TELESCOPE_H
 #define TELESCOPE_H
-
-#include "compat.h"
 
 #include <limits.h>
 #include <stdio.h>		/* XXX: for parsers.h */

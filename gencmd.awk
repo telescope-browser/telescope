@@ -1,7 +1,7 @@
 BEGIN {
 	FS = "[(,)]";
 
-	print "#include \"telescope.h\""
+	print "#include \"compat.h\""
 	print "#include \"cmd.h\""
 	print "struct cmd cmds[] = {";
 }
