@@ -23,6 +23,10 @@
 #include "parser.h"
 #include "utils.h"
 
+#ifndef LINE_MAX
+#define LINE_MAX 2048
+#endif
+
 struct gm_selector {
 	char		 type;
 	const char	*ds;
