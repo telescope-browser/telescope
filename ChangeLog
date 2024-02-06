@@ -1,3 +1,23 @@
+2024-02-05  Omar Polo  <op@omarpolo.com>
+
+	* cmd.c (cmd_use_certificate): add use-certificate command to start
+	using a client certificate on the current page and the ones below.
+	* telescope.c (handle_request_response): implicitly call
+	use-certificate when the server replies with a 6x.
+	* cmd.c (cmd_client_certificate_info): add client-certificate-info
+	to show the name of the current client certificate in use (if any.)
+	* cmd.c (cmd_unload_certificate): to forget the rule that
+	enabled client certificates on the current page.
+
+2024-02-04  Omar Polo  <op@omarpolo.com>
+
+	* certs.c: initial client certificates support.
+
+2024-02-02  Omar Polo  <op@omarpolo.com>
+
+	* pages/about_new.gmi.in: update link to the official gemini project
+	capsule.
+
 2024-01-23  Omar Polo  <op@omarpolo.com>
 
 	* telescope.c (handle_imsg_eof): cache finger pages as well
