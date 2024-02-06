@@ -20,6 +20,7 @@
 
 %{
 
+#include "cmd.h"
 #include "keymap.h"
 #include "telescope.h"
 #include "utils.h"

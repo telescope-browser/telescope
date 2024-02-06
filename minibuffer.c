@@ -23,6 +23,7 @@
 #include <string.h>
 
 #include "certs.h"
+#include "cmd.h"
 #include "fs.h"
 #include "hist.h"
 #include "iri.h"

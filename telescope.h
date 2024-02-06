@@ -246,13 +246,6 @@ struct get_req {
 	char		req[1027];
 };
 
-struct cmd {
-	const char	*cmd;
-	void		(*fn)(struct buffer *);
-	const char	*descr;
-};
-extern struct cmd cmds[];
-
 /* downloads.c */
 extern STAILQ_HEAD(downloads, download) downloads;
 struct download {

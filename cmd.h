@@ -1,5 +1,12 @@
 struct buffer;
 
+struct cmd {
+	const char	*cmd;
+	void		(*fn)(struct buffer *);
+	const char	*descr;
+};
+extern struct cmd cmds[];
+
 #define CMD(fnname, descr)	void fnname(struct buffer *)
 #define DEFALIAS(s, d)		/* nothing */
 

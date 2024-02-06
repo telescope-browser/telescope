@@ -19,6 +19,7 @@
 #include <stdlib.h>
 
 #include "certs.h"
+#include "cmd.h"
 #include "compl.h"
 #include "hist.h"
 #include "telescope.h"
