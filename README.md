@@ -11,13 +11,13 @@ Features:
  - minibuffer live narrowing
  - multiple protocols support
  - fully customizable
+ - client certificates
 
 There are still various things missing or, if you prefer, various
 things that you can help develop :)
 
  - subscriptions
  - tofu oob verification
- - client certificates
  - add other GUIs: at the moment it uses only ncurses, but telescope
    shouldn't be restricted to TTYs only!
 
