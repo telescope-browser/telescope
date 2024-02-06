@@ -43,6 +43,7 @@ AC_REPLACE_FUNCS([
 	getdtablesize \
 	getprogname \
 	memmem \
+	reallocarray \
 	recallocarray \
 	strcasestr \
 	strlcat \
