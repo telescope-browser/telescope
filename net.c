@@ -621,7 +621,8 @@ net_error(struct bufferevent *bev, short error, void *d)
 	}
 
 	if (error & EVBUFFER_ERROR) {
-		close_with_err(req, "buffer event error");
+		close_with_errf(req, "%s error (0x%x)",
+		    (error & EVBUFFER_READ) ? "read" : "write", error);
 		return;
 	}
 
