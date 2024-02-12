@@ -32,6 +32,7 @@
 char	*default_protocol = NULL;
 char	*download_path = NULL;
 char	*new_tab_url = NULL;
+char	*default_search_engine = NULL;
 
 int autosave = 20;
 int dont_wrap_pre = 0;
@@ -459,6 +460,7 @@ load_default_keys(void)
 	global_set_key("M-/",		cmd_swiper);
 	global_set_key("t",		cmd_toc);
 	global_set_key("M-r",		cmd_reply_last_input);
+	global_set_key("s",		cmd_search);
 
 	/* === minibuffer map === */
 	minibuffer_set_key("ret",	cmd_mini_complete_and_exit);
@@ -504,6 +506,10 @@ config_init(void)
 {
 	struct line_face *f;
 	size_t i, len;
+
+	default_search_engine = strdup("gemini://geminispace.info/search");
+	if (default_search_engine == NULL)
+		err(1, "strdup");
 
 	len = sizeof(line_faces)/sizeof(line_faces[0]);
 	for (i = 0; i < len; ++i) {

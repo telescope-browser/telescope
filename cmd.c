@@ -1145,3 +1145,13 @@ cmd_unload_certificate(struct buffer *buffer)
 	yornp("Unload only for the current session?", unload_certificate_cb,
 	    current_tab);
 }
+
+void
+cmd_search(struct buffer *buffer)
+{
+	GUARD_RECURSIVE_MINIBUFFER();
+
+	enter_minibuffer(sensible_self_insert, search_select, exit_minibuffer, NULL,
+	    NULL, NULL, 0);
+	strlcpy(ministate.prompt, "Search: ", sizeof(ministate.prompt));
+}

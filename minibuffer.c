@@ -24,6 +24,7 @@
 
 #include "certs.h"
 #include "cmd.h"
+#include "defaults.h"
 #include "fs.h"
 #include "hist.h"
 #include "iri.h"
@@ -449,6 +450,21 @@ uc_select(void)
 
 	yornp("Remember for future sessions too?", save_cert_for_site_cb,
 	    current_tab);
+}
+
+void
+search_select(void)
+{
+	static struct iri	 iri;
+	static char		 buf[1025];
+
+	/* a bit ugly but... */
+	iri_parse(NULL, default_search_engine, &iri);
+	iri_setquery(&iri, minibuffer_compl_text());
+	iri_unparse(&iri, buf, sizeof(buf));
+
+	exit_minibuffer();
+	load_url_in_tab(current_tab, buf, NULL, LU_MODE_NOCACHE);
 }
 
 static void

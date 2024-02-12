@@ -74,6 +74,7 @@ CMD(cmd_scroll_down,		"Scroll down by one visual page");
 CMD(cmd_scroll_line_down,	"Scroll down by one line");
 CMD(cmd_scroll_line_up,		"Scroll up by one line.");
 CMD(cmd_scroll_up,		"Scroll up by one visual page");
+CMD(cmd_search,			"Search using the preferred search engine");
 CMD(cmd_suspend_telescope,	"Suspend the current Telescope session.");
 CMD(cmd_swiper,			"Jump to a line using the minibuffer.");
 CMD(cmd_tab_close,		"Close the current tab.");

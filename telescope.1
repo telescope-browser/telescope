@@ -11,7 +11,7 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: February 8 2024$
+.Dd $Mdocdate: February 12 2024$
 .Dt TELESCOPE 1
 .Os
 .Sh NAME
@@ -707,6 +707,8 @@ link-select
 swiper
 .It M-r
 reply-last-input
+.It s
+search
 .El
 .Ss Minibuffer-specific keys
 .Bl -tag -width xxxxxxxxxxxx -offset indent -compact
@@ -898,6 +900,8 @@ Reload the current page.
 Reply the last input request.
 .It Ic root
 Go to the root directory.
+.It Ic search
+Search using the preferred search engine.
 .It Ic scroll-down
 Scroll down by one visual page.
 .It Ic scroll-line-down
