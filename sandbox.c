@@ -214,8 +214,6 @@ sandbox_ui_process(void)
 
 #else
 
-#warning "No sandbox for this OS"
-
 void
 sandbox_net_process(void)
 {
