@@ -440,11 +440,6 @@ uc_select(void)
 	const char	*name;
 
 	name = minibuffer_compl_text();
-	if (!strcmp(name, "Generate new certificate")) {
-		message("Not implemented yet!");
-		return;
-	}
-
 	if ((current_tab->client_cert = ccert(name)) == NULL) {
 		message("Certificate %s not found", name);
 		return;
