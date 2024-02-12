@@ -1151,6 +1151,12 @@ cmd_search(struct buffer *buffer)
 {
 	GUARD_RECURSIVE_MINIBUFFER();
 
+	if (!strncmp(default_search_engine, "gopher://", 9)) {
+		load_url_in_tab(current_tab, default_search_engine, NULL,
+		    LU_MODE_NOCACHE);
+		return;
+	}
+
 	enter_minibuffer(sensible_self_insert, search_select, exit_minibuffer, NULL,
 	    NULL, NULL, 0);
 	strlcpy(ministate.prompt, "Search: ", sizeof(ministate.prompt));

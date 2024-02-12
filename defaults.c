@@ -585,6 +585,16 @@ config_setvars(const char *var, char *val)
 		return 1;
 	}
 
+	if (!strcmp(var, "default-search-engine")) {
+		if (strncmp(val, "gemini://", 9) != 0 &&
+		    strncmp(val, "gopher://", 9) != 0)
+			return 0;
+
+		free(default_search_engine);
+		default_search_engine = val;
+		return 1;
+	}
+
 	if (!strcmp(var, "download-path")) {
 		const char *prfx = "", *v = val, *sufx = "";
 
