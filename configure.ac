@@ -152,8 +152,7 @@ AC_SEARCH_LIBS([SSL_CTX_new], [ssl], [:], [
 	AC_MSG_ERROR([can't find libssl])
 ])
 
-# don't check for landlock: it currently unusable.
-dnl AC_CHECK_HEADERS([linux/landlock.h])
+AC_CHECK_HEADERS([linux/landlock.h])
 
 dnl after all the function checks, add optional support for -Werror
 AS_IF([test "x$with_Werror" = "xyes"], [
