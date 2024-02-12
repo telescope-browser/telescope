@@ -460,7 +460,7 @@ search_select(void)
 
 	/* a bit ugly but... */
 	if (iri_parse(NULL, default_search_engine, &iri) == -1) {
-		message("default-search-engine is a malformed IRI.")
+		message("default-search-engine is a malformed IRI.");
 		exit_minibuffer();
 		return;
 	}
