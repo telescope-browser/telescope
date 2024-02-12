@@ -459,7 +459,11 @@ search_select(void)
 	static char		 buf[1025];
 
 	/* a bit ugly but... */
-	iri_parse(NULL, default_search_engine, &iri);
+	if (iri_parse(NULL, default_search_engine, &iri) == -1) {
+		message("default-search-engine is a malformed IRI.")
+		exit_minibuffer();
+		return;
+	}
 	iri_setquery(&iri, minibuffer_compl_text());
 	iri_unparse(&iri, buf, sizeof(buf));
 
