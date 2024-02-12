@@ -34,6 +34,8 @@
 #include <tls.h>
 #include <unistd.h>
 
+#include <openssl/err.h>
+
 #if HAVE_ASR_RUN
 # include <asr.h>
 #endif
@@ -292,6 +294,19 @@ conn_towards(struct req *req)
 #endif
 
 static void
+ssl_error(const char *where)
+{
+	unsigned long	 code;
+	char		 errbuf[256];
+
+	fprintf(stderr, "failure(s) in %s:\n", where);
+	while ((code = ERR_get_error()) != 0) {
+		ERR_error_string_n(code, errbuf, sizeof(errbuf));
+		fprintf(stderr, "- %s\n", errbuf);
+	}
+}
+
+static void
 close_conn(int fd, short ev, void *d)
 {
 	struct req	*req = d;
@@ -314,6 +329,8 @@ close_conn(int fd, short ev, void *d)
 		case TLS_WANT_POLLOUT:
 			yield_w(req, close_conn, NULL);
 			return;
+		case -1:
+			ssl_error("tls_close");
 		}
 
 		tls_free(req->ctx);
@@ -375,10 +392,13 @@ net_tls_handshake(int fd, short event, void *d)
 	case TLS_WANT_POLLOUT:
 		yield_w(req, net_tls_handshake, NULL);
 		return;
+	case -1:
+		ssl_error("tls_handshake");
 	}
 
 	hash = tls_peer_cert_hash(req->ctx);
 	if (hash == NULL) {
+		ssl_error("tls_peer_cert_hash");
 		close_with_errf(req, "handshake failed: %s",
 		    tls_error(req->ctx));
 		return;
@@ -411,6 +431,7 @@ net_tls_readcb(int fd, short event, void *d)
 	case TLS_WANT_POLLOUT:
 		goto retry;
 	case -1:
+		ssl_error("tls_read");
 		what |= EVBUFFER_ERROR;
 		goto err;
 	}
@@ -467,6 +488,7 @@ net_tls_writecb(int fd, short event, void *d)
 		case TLS_WANT_POLLOUT:
 			goto retry;
 		case -1:
+			ssl_error("tls_write");
 			what |= EVBUFFER_ERROR;
 			goto err;
 		}
