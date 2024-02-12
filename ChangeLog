@@ -1,3 +1,11 @@
+2024-02-12  Omar Polo  <op@omarpolo.com>
+
+	* defaults.c (config_setvars): allow to change the
+	default-search-engine used by the `search' command.
+
+	* cmd.c (cmd_search): add the `search' command to consult the
+	preferred oracle.
+
 2024-02-05  Omar Polo  <op@omarpolo.com>
 
 	* cmd.c (cmd_use_certificate): add use-certificate command to start
