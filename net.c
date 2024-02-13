@@ -153,7 +153,10 @@ again:
 			goto err;
 		if (error != 0) {
 			errno = error;
-			goto err;
+			close(req->fd);
+			req->fd = -1;
+			req->p = req->p->ai_next;
+			goto again;
 		}
 		goto done;
 	}
