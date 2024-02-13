@@ -59,6 +59,9 @@ struct req {
 	int			 done_header;
 	struct bufferevent	*bev;
 
+	int			 conn_error;
+	const char		*cause;
+
 	struct addrinfo		*servinfo, *p;
 #if HAVE_ASR_RUN
 	struct addrinfo		 hints;
@@ -152,7 +155,8 @@ again:
 		    &len) == -1)
 			goto err;
 		if (error != 0) {
-			errno = error;
+			req->conn_error = error;
+			req->cause = "connect";
 			close(req->fd);
 			req->fd = -1;
 			req->p = req->p->ai_next;
@@ -164,12 +168,17 @@ again:
 	req->fd = socket(req->p->ai_family, req->p->ai_socktype,
 	    req->p->ai_protocol);
 	if (req->fd == -1) {
+		req->conn_error = errno;
+		req->cause = "socket";
 		req->p = req->p->ai_next;
 		goto again;
 	}
 
-	if (!mark_nonblock_cloexec(req->fd))
+	if (!mark_nonblock_cloexec(req->fd)) {
+		req->conn_error = errno;
+		req->cause = "setsockopt";
 		goto err;
+	}
 	if (connect(req->fd, req->p->ai_addr, req->p->ai_addrlen) == 0)
 		goto done;
 	yield_w(req, try_to_connect, NULL);
@@ -177,7 +186,8 @@ again:
 
 err:
 	freeaddrinfo(req->servinfo);
-	close_with_errf(req, "failed to connect to %s", req->host);
+	close_with_errf(req, "failed to connect to %s (%s: %s.)", req->host,
+	    req->cause, strerror(req->conn_error));
 	return;
 
 done:
