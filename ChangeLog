@@ -1,4 +1,12 @@
+2024-02-13  Omar Polo  <op@omarpolo.com>
+
+	* net.c (try_to_connect): improve handling of connect(2) failures.
+	(try_to_connect): improve error messages for connection failures.
+
 2024-02-12  Omar Polo  <op@omarpolo.com>
+
+	* sandbox.c (landlock_unveil): sync landlock shim with gmid and
+	re-enable it.
 
 	* defaults.c (config_setvars): allow to change the
 	default-search-engine used by the `search' command.
