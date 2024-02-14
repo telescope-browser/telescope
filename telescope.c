@@ -1111,8 +1111,10 @@ main(int argc, char * const *argv)
 	global_map.unhandled_input = global_key_unbound;
 	TAILQ_INIT(&minibuffer_map.m);
 
-	fs_init();
-	certs_init(certs_file);
+	if (fs_init() == -1)
+		err(1, "fs_init failed");
+	if (certs_init(certs_file) == -1)
+		err(1, "certs_init failed");
 	config_init();
 	parseconfig(config_path, fail);
 	if (configtest) {
