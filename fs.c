@@ -382,5 +382,5 @@ fs_init(void)
 
 	mkdirs(cert_dir, S_IRWXU);
 
-	return 1;
+	return 0;
 }
