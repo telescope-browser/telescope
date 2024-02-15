@@ -20,7 +20,27 @@
 
 struct iri;
 
-extern char	**identities;
+/* client certificate */
+struct ccert {
+	char	*host;
+	char	*port;
+	char	*path;
+	char	*cert;
+
+#define CERT_OK		0x00
+#define CERT_TEMP	0x01
+#define CERT_TEMP_DEL	0x02
+	int	 flags;
+};
+
+struct cstore {
+	struct ccert	*certs;
+	size_t		 len;
+	size_t		 cap;
+};
+
+extern struct cstore	 cert_store;
+extern char		**identities;
 
 int		 certs_init(const char *);
 const char	*ccert(const char *);
@@ -28,4 +48,4 @@ const char	*cert_for(struct iri *, int *);
 int		 cert_save_for(const char *, struct iri *, int);
 int		 cert_delete_for(const char *, struct iri *, int);
 int		 cert_open(const char *);
-int		 cert_new(const char *, const char *, const char *, int);
+int		 cert_new(const char *, const char *, int);

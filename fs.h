@@ -32,7 +32,7 @@ extern char	known_hosts_file[PATH_MAX], known_hosts_tmp[PATH_MAX];
 extern char	crashed_file[PATH_MAX];
 extern char	session_file[PATH_MAX], session_file_tmp[PATH_MAX];
 extern char	history_file[PATH_MAX], history_file_tmp[PATH_MAX];
-extern char	cert_dir[PATH_MAX];
+extern char	cert_dir[PATH_MAX], cert_dir_tmp[PATH_MAX];
 extern char	certs_file[PATH_MAX], certs_file_tmp[PATH_MAX];
 
 extern char	cwd[PATH_MAX];

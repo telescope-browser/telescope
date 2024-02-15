@@ -1,6 +1,6 @@
 SUBDIRS = test
 
-bin_PROGRAMS =		telescope
+bin_PROGRAMS =		telescope telescope-identity
 
 EXTRA_telescope_SOURCES = compat/ohash.h compat/queue.h compat/imsg.h contrib
 
@@ -57,6 +57,19 @@ telescope_SOURCES =	certs.c			\
 			utils.c			\
 			utils.h			\
 			wrap.c
+
+telescope_identity_SOURCES =			\
+			certs.c			\
+			certs.h			\
+			fs.c			\
+			fs.h			\
+			hist.c			\
+			hist.h			\
+			identity.c		\
+			parser.c		\
+			parser.h		\
+			utils.c		\
+			utils.h
 
 noinst_PROGRAMS =	pagebundler
 pagebundler_SOURCES =	pagebundler.c

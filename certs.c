@@ -47,24 +47,7 @@
 #include "fs.h"
 #include "iri.h"
 
-/* client certificate */
-struct ccert {
-	char	*host;
-	char	*port;
-	char	*path;
-	char	*cert;
-
-#define CERT_OK		0x00
-#define CERT_TEMP	0x01
-#define CERT_TEMP_DEL	0x02
-	int	 flags;
-};
-
-static struct cstore {
-	struct ccert	*certs;
-	size_t		 len;
-	size_t		 cap;
-} cert_store;
+struct cstore cert_store;
 
 char		**identities;
 static size_t	  id_len, id_cap;
@@ -485,7 +468,7 @@ cert_open(const char *cert)
 }
 
 static EVP_PKEY *
-rsa_key_create(FILE *f, const char *fname)
+rsa_key_create(FILE *f)
 {
 	EVP_PKEY_CTX	*ctx = NULL;
 	EVP_PKEY	*pkey = NULL;
@@ -520,7 +503,7 @@ rsa_key_create(FILE *f, const char *fname)
 }
 
 static EVP_PKEY *
-ec_key_create(FILE *f, const char *fname)
+ec_key_create(FILE *f)
 {
 	EC_KEY		*eckey = NULL;
 	EVP_PKEY	*pkey = NULL;
@@ -554,8 +537,7 @@ ec_key_create(FILE *f, const char *fname)
 }
 
 int
-cert_new(const char *common_name, const char *certpath, const char *keypath,
-    int eckey)
+cert_new(const char *common_name, const char *path, int eckey)
 {
 	EVP_PKEY	*pkey = NULL;
 	X509		*x509 = NULL;
@@ -564,19 +546,15 @@ cert_new(const char *common_name, const char *certpath, const char *keypath,
 	int		 ret = -1;
 	const unsigned char *cn = (const unsigned char*)common_name;
 
-	if ((fp = fopen(keypath, "w")) == NULL)
+	if ((fp = fopen(path, "wx")) == NULL)
 		goto done;
 
 	if (eckey)
-		pkey = ec_key_create(fp, keypath);
+		pkey = ec_key_create(fp);
 	else
-		pkey = rsa_key_create(fp, keypath);
+		pkey = rsa_key_create(fp);
 	if (pkey == NULL)
 		goto done;
-
-	if (fflush(fp) == EOF || fclose(fp) == EOF)
-		goto done;
-	fp = NULL;
 
 	if ((x509 = X509_new()) == NULL)
 		goto done;
@@ -602,9 +580,6 @@ cert_new(const char *common_name, const char *certpath, const char *keypath,
 	if (!X509_sign(x509, pkey, EVP_sha256()))
 		goto done;
 
-	if ((fp = fopen(certpath, "w")) == NULL)
-		goto done;
-
 	if (!PEM_write_X509(fp, x509))
 		goto done;
 
@@ -621,10 +596,7 @@ cert_new(const char *common_name, const char *certpath, const char *keypath,
 		X509_NAME_free(name);
 	if (fp)
 		fclose(fp);
-
-	if (ret == -1) {
-		(void) unlink(certpath);
-		(void) unlink(keypath);
-	}
+	if (ret == -1)
+		(void) unlink(path);
 	return (ret);
 }
