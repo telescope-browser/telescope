@@ -520,8 +520,8 @@ config_init(void)
 	}
 
 	line_faces[LINE_LINK].fg = COLOR_BLUE;
-	line_faces[LINE_PATCH_ADD].fg = COLOR_GREEN;
-	line_faces[LINE_PATCH_DEL].fg = COLOR_RED;
+	line_faces[LINE_PATCH_ADD].fg = COLOR_CYAN;
+	line_faces[LINE_PATCH_DEL].fg = COLOR_MAGENTA;
 
 	load_default_keys();
 }
