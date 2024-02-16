@@ -53,7 +53,7 @@ static const struct cmd cmds[] = {
 	{ "generate",	cmd_generate,	"[-t type] name" },
 	{ "remove",	cmd_remove,	"name" },
 	{ "import",	cmd_import,	"-C cert [-K key] name" },
-	{ "export",	cmd_export,	"-C cert name path" },
+	{ "export",	cmd_export,	"-C cert name" },
 	{ "list",	cmd_list,	"" },
 	{ "mappings",	cmd_mappings,	"" },
 	{ "use",	cmd_use,	"name host[:port][/path]" },
@@ -141,6 +141,7 @@ main(int argc, char **argv)
 		return (cmd->fn(cmd, argc, argv));
 	}
 
+	warnx("unknown command: %s", argv[0]);
 	usage();
 }
 
@@ -399,7 +400,8 @@ cmd_list(const struct cmd *cmd, int argc, char **argv)
 static int
 cmd_mappings(const struct cmd *cmd, int argc, char **argv)
 {
-	struct ccert	*ccert;
+	struct ccert	*c;
+	const char	*id = NULL;
 	int		 ch, defport;
 	size_t		 i;
 
@@ -411,17 +413,25 @@ cmd_mappings(const struct cmd *cmd, int argc, char **argv)
 	}
 	argc -= optind;
 	argv += optind;
+	if (argc == 1) {
+		if ((id = ccert(*argv)) == NULL)
+			errx(1, "unknown identity %s", *argv);
+		argc--, argv++;
+	}
 	if (argc != 0)
 		cmd_usage(cmd);
 
 	for (i = 0; i < cert_store.len; ++i) {
-		ccert = &cert_store.certs[i];
+		c = &cert_store.certs[i];
 
-		defport = !strcmp(ccert->port, "1965");
+		if (id && strcmp(id, c->cert) != 0)
+			continue;
 
-		printf("%s\t%s%s%s%s\n", ccert->host, ccert->host,
-		    defport ? "" : ":", defport ? "" : ccert->port,
-		    ccert->path);
+		defport = !strcmp(c->port, "1965");
+
+		printf("%s\t%s%s%s%s\n", c->cert, c->host,
+		    defport ? "" : ":", defport ? "" : c->port,
+		    c->path);
 	}
 
 	return (0);
