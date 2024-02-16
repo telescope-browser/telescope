@@ -94,7 +94,7 @@ EXTRA_telescope_DEPENDENCIES = $(LIBGRAPHEME)
 
 EXTRA_DIST =		ChangeLog LICENSE README.md data/emoji.txt pages/*.gmi
 
-dist_man1_MANS =	telescope.1
+dist_man1_MANS =	telescope.1 telescope-identity.1
 
 cmd.gen.c: $(srcdir)/cmd.h $(srcdir)/gencmd.awk
 	${AWK} -f $(srcdir)/gencmd.awk < $(srcdir)/cmd.h > $@
