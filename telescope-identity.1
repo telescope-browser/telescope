@@ -1,0 +1,94 @@
+.\" Copyright (c) 2024 Omar Polo <op@omarpolo.com>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.Dd $Mdocdate: February 16 2024$
+.Dt TELESCOPE-IDENTITY 1
+.Os
+.Sh NAME
+.Nm telescope-identity
+.Nd manage telescope identities
+.Sh SYNOPSIS
+.Nm
+.Bk -words
+.Ar command
+.Ar args...
+.Ek
+.Sh DESCRIPTION
+.Nm
+is an utility to manage
+.Xr telescope 1
+identities.
+Identities are TLS client certificates used for Gemini.
+.Pp
+The commands for
+.Nm
+are as follows:
+.Bl -tag -width generate
+.It Xo
+.Cm generate
+.Op Fl t Ar type
+.Ar name
+.Xc
+Generate a new keypair under the given
+.Ar name .
+If
+.Ar type
+is
+.Dq RSA ,
+an RSA key with 4096 bit will be created.
+By default it's an EC key with secp384r1.
+.It Cm remove Ar name
+Remove the
+.Ar name
+identity.
+.It Cm import Fl C Ar cert Oo Fl K Ar key Oc Ar name
+Imports a certificate as
+.Ar name .
+.Fl C
+is the path to the certificate itself.
+If the key is on a separate file, it needs to be passed with
+.Fl K .
+.It Cm export Fl C Ar cert Ar name
+Exports the certificate for the identity
+.Ar name .
+The certificate and the key will be saved at
+.Ar cert .
+At the moment, it's not possible to export the certificate and the
+private key in different files.
+.It Cm list
+Print one per line the available identities.
+.It Cm mappings Op Ar name
+Show on which servers and paths the identities are used.
+The output consist of the identity name, a tab character, and the the
+hostname, optional port number and path under which that identity will
+be loaded by
+.Xr telescope 1 .
+.Pp
+If
+.Ar name
+is given, limit the output only to the instances of that identity.
+.It Cm use Ar name Ar host Ns Oo : Ns Ar port Oc Ns Op / Ns Ar path
+Save the a new mapping for the given identity
+.Ar name .
+.It Cm forget Ar name Ar host Ns Oo : Ns Ar port Oc Ns Op / Ns Ar path
+Remove the mapping for the given identity
+.Ar name .
+.El
+.Sh SEE ALSO
+.Xr telescope 1
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+utility was written by
+.An Omar Polo Aq Mt op@omarpolo.com .
