@@ -1,4 +1,4 @@
-check_PROGRAMS =	gmparser gmiparser iritest
+check_PROGRAMS =	gmparser gmiparser iritest evtest
 
 gmparser_SOURCES =	gmparser.c				\
 			$(top_srcdir)/compat.h			\
@@ -22,9 +22,14 @@ iritest_SOURCES =	iritest.c				\
 			$(top_srcdir)/iri.c			\
 			$(top_srcdir)/iri.h
 
+evtest_SOURCES =	evtest.c				\
+			$(top_srcdir)/ev.c			\
+			$(top_srcdir)/ev.h
+
 gmparser_CFLAGS =	-I$(top_srcdir)
 gmiparser_CFLAGS =	-I$(top_srcdir)
 iritest_CFLAGS =	-I$(top_srcdir)
+evtest_CFLAGS =		-I$(top_srcdir)
 
 EXTRA_DIST =		test-gmparser	\
 			gm-00		\
@@ -33,4 +38,4 @@ EXTRA_DIST =		test-gmparser	\
 
 CLEANFILES =		serialized.*
 
-TESTS =	test-gmparser iritest
+TESTS =	test-gmparser iritest evtest
