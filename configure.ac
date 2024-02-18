@@ -107,20 +107,6 @@ PKG_CHECK_MODULES([libgrapheme], [libgrapheme], [
 	CFLAGS="-I$srcdir/libgrapheme $CFLAGS"
 ])
 
-case "$host_os" in
-	*openbsd*)
-		AC_SEARCH_LIBS([event_init], [event], [],
-			[AC_MSG_ERROR([requires libevent])])
-		;;
-	*)
-		PKG_CHECK_MODULES([libevent2], [libevent_core >= 2], [
-			AC_DEFINE([HAVE_EVENT2], 1, [1 if using event2])
-			CFLAGS="$libevent2_CFLAGS $CFLAGS"
-			LIBS="$libevent2_LIBS $LIBS"
-		], [AC_MSG_ERROR([requires libevent])])
-		;;
-esac
-
 AS_IF([test "x$with_libimsg" = "xyes"], [
 	PKG_CHECK_MODULES([libimsg], [libimsg], [
 		CFLAGS="$libimsg_CFLAGS $CFLAGS"
