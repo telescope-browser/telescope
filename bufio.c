@@ -234,7 +234,7 @@ bufio_read(struct bufio *bio)
 
 	if (bio->ctx) {
 		r = tls_read(bio->ctx, rbuf->buf + rbuf->len,
-		    rbuf->cap - rbuf->cap);
+		    rbuf->cap - rbuf->len);
 		switch (r) {
 		case TLS_WANT_POLLIN:
 		case TLS_WANT_POLLOUT:
