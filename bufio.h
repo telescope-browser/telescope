@@ -53,7 +53,7 @@ int	bufio_close(struct bufio *);
 int	bufio_reset(struct bufio *);
 void	bufio_set_fd(struct bufio *, int);
 int	bufio_starttls(struct bufio *, const char *, int);
-short	bufio_pollev(struct bufio *);
+int	bufio_ev(struct bufio *);
 ssize_t	bufio_read(struct bufio *);
 ssize_t	bufio_write(struct bufio *);
 int	bufio_compose(struct bufio *, const void *, size_t);
