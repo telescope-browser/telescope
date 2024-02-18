@@ -1,3 +1,15 @@
+2024-02-19  Omar Polo  <op@omarpolo.com>
+
+	* ev.c: replace libevent with ev
+
+2024-02-15  Omar Polo  <op@omarpolo.com>
+
+	* defaults.c (config_init): change default patch/diff colours to
+	magenta and cyan.
+
+	* identity.c (main): add the telescope-identity(1) helper
+	utility to manage certificates.
+
 2024-02-13  Omar Polo  <op@omarpolo.com>
 
 	* net.c (try_to_connect): improve handling of connect(2) failures.
