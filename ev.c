@@ -63,8 +63,17 @@ struct evbase {
 	struct evcb	 sigcb;
 
 	unsigned int	 tid;
+
+	/*
+	 * Binary heap of timers.  At runtime, new timers are added in
+	 * the ``reserve'', a space after the caninocal end of the
+	 * array, and at the end of every tick they're added to the
+	 * heap.
+	 */
 	struct evtimer	*timers;
 	size_t		 ntimers;
+	size_t		 reserve_from;
+	size_t		 reserve_till;
 	size_t		 timerscap;
 };
 
@@ -239,15 +248,23 @@ ev_timer(const struct timeval *tv, void (*cb)(int, int, void*), void *udata)
 {
 	struct evtimer	*evt;
 	void		*t;
-	size_t		 newcap;
+	size_t		 tot, newcap, n;
 	unsigned int	 nextid;
+	int		 use_reserve;
 
 	if (tv == NULL) {
 		errno = EINVAL;
 		return 0;
 	}
 
-	if (base->ntimers == base->timerscap) {
+	use_reserve = 0;
+	tot = base->ntimers;
+	if (base->reserve_from != 0) {
+		use_reserve = 1;
+		tot = base->reserve_till;
+	}
+
+	if (tot == base->timerscap) {
 		newcap = base->timerscap + 8;
 		t = recallocarray(base->timers, base->timerscap, newcap,
 		    sizeof(*base->timers));
@@ -260,16 +277,49 @@ ev_timer(const struct timeval *tv, void (*cb)(int, int, void*), void *udata)
 	if ((nextid = ++base->tid) == 0)
 		nextid = ++base->tid;
 
-	evt = &base->timers[base->ntimers];
+	n = base->ntimers;
+	if (use_reserve)
+		n = base->reserve_till;
+
+	evt = &base->timers[n];
 	evt->id = nextid;
 	memcpy(&evt->tv, tv, sizeof(*tv));
 	evt->cb.cb = cb;
 	evt->cb.udata = udata;
 
-	bubbleup(base->ntimers);
-	base->ntimers++;
+	if (use_reserve)
+		base->reserve_till++;
+	else {
+		bubbleup(base->ntimers);
+		base->ntimers++;
+	}
 
 	return (nextid);
+}
+
+static int
+find_timer(unsigned int id, size_t *pos)
+{
+	size_t		 i;
+
+	if (id == 0)
+		return (0);
+
+	for (i = 0; i < base->ntimers; ++i) {
+		if (base->timers[i].id == id) {
+			*pos = i;
+			return (1);
+		}
+	}
+
+	for (i = base->reserve_from; i < base->reserve_till; ++i) {
+		if (base->timers[i].id == id) {
+			*pos = i;
+			return (1);
+		}
+	}
+
+	return (0);
 }
 
 int
@@ -277,12 +327,7 @@ ev_timer_pending(unsigned int id)
 {
 	size_t		 i;
 
-	for (i = 0; i < base->ntimers; ++i) {
-		if (base->timers[i].id == id)
-			return (1);
-	}
-
-	return (0);
+	return (find_timer(id, &i));
 }
 
 static void
@@ -340,15 +385,20 @@ ev_timer_cancel(unsigned int id)
 {
 	size_t		 i;
 
-	for (i = 0; i < base->ntimers; ++i) {
-		if (base->timers[i].id == id)
-			break;
+	if (!find_timer(id, &i))
+		return (0);
+
+	if (i < base->ntimers) {
+		cancel_timer(i);
+		return (0);
 	}
 
-	if (i == base->ntimers)
-		return -1;
+	base->reserve_till--;
 
-	cancel_timer(i);
+	if (i != base->reserve_till)
+		memmove(&base->timers[i], &base->timers[i + 1],
+		    (base->reserve_till - i) * sizeof(*base->timers));
+
 	return (0);
 }
 
@@ -393,7 +443,7 @@ ev_loop(void)
 	struct timespec	 elapsed, beg, end, min, *wait;
 	struct timeval	 tv, sub;
 	int		 n;
-	size_t		 i;
+	size_t		 i, gap;
 
 	while (!ev_stop) {
 		wait = NULL;
@@ -417,6 +467,9 @@ ev_loop(void)
 
 		TIMESPEC_TO_TIMEVAL(&tv, &elapsed);
 
+		base->reserve_from = base->ntimers;
+		base->reserve_till = base->ntimers;
+
 		for (i = 0; i < base->ntimers && !ev_stop; /* nop */) {
 			timersub(&base->timers[i].tv, &tv, &sub);
 			if (sub.tv_sec <= 0) {
@@ -439,6 +492,24 @@ ev_loop(void)
 				    poll2ev(base->pfds[i].revents),
 				    base->cbs[i].udata);
 			}
+		}
+
+		if (base->reserve_from == base->reserve_till)
+			continue;
+
+		/* integrate the new timers in the heap */
+		gap = base->reserve_from - base->ntimers;
+		if (gap != 0) {
+			memmove(&base->timers[base->ntimers],
+			    &base->timers[base->reserve_from],
+			    gap * sizeof(*base->timers));
+			base->reserve_from -= gap;
+			base->reserve_till -= gap;
+		}
+
+		for (i = base->ntimers; i < base->reserve_till; ++i) {
+			base->ntimers++;
+			bubbleup(i);
 		}
 	}
 
