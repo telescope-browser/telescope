@@ -93,9 +93,9 @@ main(void)
 	if (ev_add(p[0], POLLIN, pipe_ev, NULL) == -1)
 		err(1, "ev_add");
 
-	if ((tout_a = ev_timer(&tv_a, timeout_cancel_b, &fired_a)) == 0 ||
+	if ((tout_c = ev_timer(&tv_c, timeout_quit, &fired_c)) == 0 ||
 	    (tout_b = ev_timer(&tv_b, timeout_cb, &fired_b)) == 0 ||
-	    (tout_c = ev_timer(&tv_c, timeout_quit, &fired_c)) == 0)
+	    (tout_a = ev_timer(&tv_a, timeout_cancel_b, &fired_a)) == 0)
 		err(1, "ev_timer");
 
 	ev_loop();
