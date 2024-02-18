@@ -167,7 +167,8 @@ bufio_set_fd(struct bufio *bio, int fd)
 }
 
 int
-bufio_starttls(struct bufio *bio, const char *host, int insecure)
+bufio_starttls(struct bufio *bio, const char *host, int insecure,
+    const uint8_t *cert, size_t certlen, const uint8_t *key, size_t keylen)
 {
 	struct tls_config	*conf;
 
@@ -178,6 +179,12 @@ bufio_starttls(struct bufio *bio, const char *host, int insecure)
 		tls_config_insecure_noverifycert(conf);
 		tls_config_insecure_noverifyname(conf);
 		tls_config_insecure_noverifytime(conf);
+	}
+
+	if (cert && tls_config_set_keypair_mem(conf, cert, certlen,
+	    key, keylen) == -1) {
+		tls_config_free(conf);
+		return (-1);
 	}
 
 	if ((bio->ctx = tls_client()) == NULL) {

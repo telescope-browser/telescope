@@ -52,7 +52,8 @@ void	bufio_free(struct bufio *);
 int	bufio_close(struct bufio *);
 int	bufio_reset(struct bufio *);
 void	bufio_set_fd(struct bufio *, int);
-int	bufio_starttls(struct bufio *, const char *, int);
+int	bufio_starttls(struct bufio *, const char *, int,
+	    const uint8_t *, size_t, const uint8_t *, size_t);
 int	bufio_ev(struct bufio *);
 ssize_t	bufio_read(struct bufio *);
 ssize_t	bufio_write(struct bufio *);
