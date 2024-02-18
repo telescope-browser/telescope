@@ -27,7 +27,6 @@
 
 #include <assert.h>
 #include <errno.h>
-#include <poll.h>
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -37,6 +36,7 @@
 #include <unistd.h>
 
 #include "bufio.h"
+#include "ev.h"		/* for EV_* flags */
 
 int
 buf_init(struct buf *buf)
@@ -170,17 +170,17 @@ bufio_starttls(struct bufio *bio, const char *host, int insecure)
 	return (0);
 }
 
-short
-bufio_pollev(struct bufio *bio)
+int
+bufio_ev(struct bufio *bio)
 {
 	short		 ev;
 
 	if (bio->pflags)
 		return (bio->pflags);
 
-	ev = POLLIN;
+	ev = EV_READ;
 	if (bio->wbuf.len != 0)
-		ev |= POLLOUT;
+		ev |= EV_WRITE;
 
 	return (ev);
 }
@@ -203,7 +203,7 @@ bufio_read(struct bufio *bio)
 		switch (r) {
 		case TLS_WANT_POLLIN:
 		case TLS_WANT_POLLOUT:
-			bio->pflags = POLLIN | POLLOUT;
+			bio->pflags = EV_READ | EV_WRITE;
 			errno = EAGAIN;
 			return (-1);
 		case -1:
@@ -232,7 +232,7 @@ bufio_write(struct bufio *bio)
 		switch (w = tls_write(bio->ctx, wbuf->buf, wbuf->len)) {
 		case TLS_WANT_POLLIN:
 		case TLS_WANT_POLLOUT:
-			bio->pflags = POLLIN | POLLOUT;
+			bio->pflags = EV_WRITE | EV_READ;
 			errno = EAGAIN;
 			return (-1);
 		case -1:
