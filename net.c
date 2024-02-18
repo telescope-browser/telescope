@@ -492,6 +492,7 @@ net_ev(int fd, int ev, void *d)
 	if (req->eof) {
 		net_send_ui(IMSG_EOF, req->id, NULL, 0);
 		close_conn(0, 0, req);
+		return;
 	}
 
 	ev_add(req->fd, bufio_ev(&req->bio), net_ev, req);
