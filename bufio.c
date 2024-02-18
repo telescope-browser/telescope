@@ -119,16 +119,25 @@ bufio_init(struct bufio *bio)
 	return (0);
 }
 
-int
-bufio_reset(struct bufio *bio)
+void
+bufio_free(struct bufio *bio)
 {
 	if (bio->ctx)
-		tls_close(bio->ctx);
+		tls_free(bio->ctx);
+	bio->ctx = NULL;
+
 	if (bio->fd != -1)
 		close(bio->fd);
+	bio->fd = -1;
 
 	buf_free(&bio->rbuf);
 	buf_free(&bio->wbuf);
+}
+
+int
+bufio_reset(struct bufio *bio)
+{
+	bufio_free(bio);
 	return (bufio_init(bio));
 }
 
