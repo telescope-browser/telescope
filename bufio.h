@@ -57,6 +57,7 @@ int	bufio_starttls(struct bufio *, const char *, int,
 int	bufio_ev(struct bufio *);
 int	bufio_handshake(struct bufio *);
 ssize_t	bufio_read(struct bufio *);
+size_t	bufio_drain(struct bufio *, void *, size_t);
 ssize_t	bufio_write(struct bufio *);
 int	bufio_compose(struct bufio *, const void *, size_t);
 int	bufio_compose_str(struct bufio *, const char *);

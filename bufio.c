@@ -278,6 +278,18 @@ bufio_read(struct bufio *bio)
 	return (r);
 }
 
+size_t
+bufio_drain(struct bufio *bio, void *d, size_t len)
+{
+	struct buf	*rbuf = &bio->rbuf;
+
+	if (len > rbuf->len)
+		len = rbuf->len;
+	memcpy(d, rbuf->buf, len);
+	buf_drain(rbuf, len);
+	return (len);
+}
+
 ssize_t
 bufio_write(struct bufio *bio)
 {
