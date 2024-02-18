@@ -49,6 +49,7 @@ void	buf_free(struct buf *);
 
 int	bufio_init(struct bufio *);
 void	bufio_free(struct bufio *);
+int	bufio_close(struct bufio *);
 int	bufio_reset(struct bufio *);
 void	bufio_set_fd(struct bufio *, int);
 int	bufio_starttls(struct bufio *, const char *, int);

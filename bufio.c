@@ -135,6 +135,25 @@ bufio_free(struct bufio *bio)
 }
 
 int
+bufio_close(struct bufio *bio)
+{
+	if (bio->ctx == NULL)
+		return (0);
+
+	switch (tls_close(bio->ctx)) {
+	case 0:
+		return 0;
+	case TLS_WANT_POLLIN:
+	case TLS_WANT_POLLOUT:
+		errno = EAGAIN;
+		bio->pflags = EV_READ | EV_WRITE;
+		/* fallthrough */
+	default:
+		return (-1);
+	}
+}
+
+int
 bufio_reset(struct bufio *bio)
 {
 	bufio_free(bio);
