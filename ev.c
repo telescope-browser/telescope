@@ -121,6 +121,19 @@ ev_init(void)
 	return 0;
 }
 
+static inline int
+ev2poll(int ev)
+{
+	int	 ret = 0;
+
+	if (ev & EV_READ)
+		ret |= POLLIN;
+	if (ev & EV_WRITE)
+		ret |= POLLOUT;
+
+	return (ret);
+}
+
 int
 ev_add(int fd, int ev, void (*cb)(int, int, void *), void *udata)
 {
@@ -130,7 +143,8 @@ ev_add(int fd, int ev, void (*cb)(int, int, void *), void *udata)
 	}
 
 	base->pfds[fd].fd = fd;
-	base->pfds[fd].events = ev;
+	base->pfds[fd].events = ev2poll(ev);
+	base->pfds[fd].revents = 0;
 
 	base->cbs[fd].cb = cb;
 	base->cbs[fd].udata = udata;
@@ -164,7 +178,7 @@ ev_sigdispatch(int fd, int ev, void *data)
 	if (read(fd, &signo, sizeof(signo)) != sizeof(signo))
 		return;
 
-	base->sigcb.cb(signo, 0, base->sigcb.udata);
+	base->sigcb.cb(signo, EV_SIGNAL, base->sigcb.udata);
 }
 
 int
@@ -181,7 +195,7 @@ ev_signal(int sig, void (*cb)(int, int, void *), void *udata)
 		    fcntl(base->sigpipe[1], F_SETFL, flags | O_NONBLOCK) == -1)
 			return -1;
 
-		if (ev_add(base->sigpipe[0], POLLIN, ev_sigdispatch, NULL)
+		if (ev_add(base->sigpipe[0], EV_READ, ev_sigdispatch, NULL)
 		    == -1)
 			return -1;
 	}
@@ -350,6 +364,19 @@ ev_del(int fd)
 	return 0;
 }
 
+static inline int
+poll2ev(int ev)
+{
+	int r = 0;
+
+	if (ev & (POLLIN|POLLHUP))
+		r |= EV_READ;
+	if (ev & (POLLOUT|POLLWRNORM|POLLWRBAND))
+		r |= EV_WRITE;
+
+	return (r);
+}
+
 int
 ev_loop(void)
 {
@@ -383,7 +410,7 @@ ev_loop(void)
 		for (i = 0; i < base->ntimers && !ev_stop; /* nop */) {
 			timersub(&base->timers[i].tv, &tv, &sub);
 			if (sub.tv_sec <= 0) {
-				base->timers[i].cb.cb(-1, POLLHUP,
+				base->timers[i].cb.cb(-1, EV_TIMEOUT,
 				    base->timers[i].cb.udata);
 				cancel_timer(i);
 				continue;
@@ -399,7 +426,7 @@ ev_loop(void)
 			if (base->pfds[i].revents & (POLLIN|POLLOUT|POLLHUP)) {
 				n--;
 				base->cbs[i].cb(base->pfds[i].fd,
-				    base->pfds[i].revents,
+				    poll2ev(base->pfds[i].revents),
 				    base->cbs[i].udata);
 			}
 		}

@@ -25,6 +25,11 @@
 
 struct timeval;
 
+#define EV_READ		0x1
+#define EV_WRITE	0x2
+#define EV_SIGNAL	0x4
+#define EV_TIMEOUT	0x8
+
 int		ev_init(void);
 int		ev_add(int, int, void(*)(int, int, void *), void *);
 int		ev_signal(int, void(*)(int, int, void * ), void *);
