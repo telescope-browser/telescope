@@ -16,6 +16,8 @@
 
 #include "compat.h"
 
+#include <sys/time.h>
+
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
@@ -26,6 +28,7 @@
 #include <unistd.h>
 
 #include "defaults.h"
+#include "ev.h"
 #include "fs.h"
 #include "hist.h"
 #include "minibuffer.h"
@@ -35,7 +38,7 @@
 
 struct history	history;
 
-static struct event	 autosaveev;
+static unsigned int	 autosavetimer;
 
 void
 switch_to_tab(struct tab *tab)
@@ -65,19 +68,18 @@ new_tab(const char *url, const char *base, struct tab *after)
 	autosave_hook();
 
 	if ((tab = calloc(1, sizeof(*tab))) == NULL) {
-		event_loopbreak();
+		ev_break();
 		return NULL;
 	}
 
 	if ((tab->hist = hist_new(HIST_LINEAR)) == NULL) {
 		free(tab);
-		event_loopbreak();
+		ev_break();
 		return NULL;
 	}
 
 	TAILQ_INIT(&tab->buffer.head);
 	TAILQ_INIT(&tab->buffer.page.head);
-	evtimer_set(&tab->loadingev, NULL, NULL);
 
 	tab->id = tab_new_id();
 
@@ -111,8 +113,7 @@ kill_tab(struct tab *tab, int append)
 	ui_schedule_redraw();
 	autosave_hook();
 
-	if (evtimer_pending(&tab->loadingev, NULL))
-		evtimer_del(&tab->loadingev);
+	ev_timer_cancel(tab->loading_timer);
 
 	if (append)
 		TAILQ_INSERT_TAIL(&ktabshead, tab, tabs);
@@ -406,11 +407,11 @@ history_add(const char *uri)
 void
 autosave_init(void)
 {
-	evtimer_set(&autosaveev, autosave_timer, NULL);
+	return;
 }
 
 void
-autosave_timer(int fd, short event, void *data)
+autosave_timer(int fd, int event, void *data)
 {
 	save_session();
 }
@@ -427,11 +428,11 @@ autosave_hook(void)
 	if (autosave <= 0)
 		return;
 
-	if (!evtimer_pending(&autosaveev, NULL)) {
+	if (!ev_timer_pending(autosavetimer)) {
 		tv.tv_sec = autosave;
 		tv.tv_usec = 0;
 
-		evtimer_add(&autosaveev, &tv);
+		autosavetimer = ev_timer(&tv, autosave_timer, NULL);
 	}
 }
 

@@ -17,6 +17,7 @@
 #include "compat.h"
 
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <sys/un.h>
 #include <sys/wait.h>
 
@@ -34,6 +35,7 @@
 #include "cmd.h"
 #include "control.h"
 #include "defaults.h"
+#include "ev.h"
 #include "fs.h"
 #include "hist.h"
 #include "iri.h"
@@ -119,7 +121,7 @@ static void		 handle_check_cert_user_choice(int, struct tab *);
 static void		 handle_maybe_save_new_cert(int, struct tab *);
 static void		 handle_maybe_save_page(int, struct tab *);
 static void		 handle_save_page_path(const char *, struct tab *);
-static void		 handle_dispatch_imsg(int, short, void *);
+static void		 handle_dispatch_imsg(int, int, void *);
 static void		 load_about_url(struct tab *, const char *);
 static void		 load_file_url(struct tab *, const char *);
 static void		 load_finger_url(struct tab *, const char *);
@@ -435,7 +437,7 @@ handle_save_page_path(const char *path, struct tab *tab)
 }
 
 static void
-handle_dispatch_imsg(int fd, short event, void *data)
+handle_dispatch_imsg(int fd, int event, void *data)
 {
 	struct imsgev	*iev = data;
 	struct imsgbuf	*imsgbuf = &iev->ibuf;
@@ -844,7 +846,7 @@ load_url(struct tab *tab, const char *url, const char *base, int mode)
 
 	if (dohist) {
 		if (hist_push(tab->hist, url) == -1) {
-			event_loopbreak();
+			ev_break();
 			return;
 		}
 
@@ -1165,7 +1167,8 @@ main(int argc, char * const *argv)
 	/* initialize tofu store */
 	tofu_init(&certs, 5, offsetof(struct tofu_entry, domain));
 
-	event_init();
+	if (ev_init() == -1)
+		err(1, "ev_init");
 
 	if (!safe_mode) {
 		if ((control_fd = control_init(ctlsock_path)) == -1)
@@ -1181,9 +1184,7 @@ main(int argc, char * const *argv)
 
 	/* Setup event handlers for pipes to net */
 	iev_net->events = EV_READ;
-	event_set(&iev_net->ev, iev_net->ibuf.fd, iev_net->events,
-	    iev_net->handler, iev_net);
-	event_add(&iev_net->ev, NULL);
+	ev_add(iev_net->ibuf.fd, iev_net->events, iev_net->handler, iev_net);
 
 	if (ui_init()) {
 		sandbox_ui_process();

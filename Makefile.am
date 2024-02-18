@@ -4,7 +4,9 @@ bin_PROGRAMS =		telescope telescope-identity
 
 EXTRA_telescope_SOURCES = compat/ohash.h compat/queue.h compat/imsg.h contrib
 
-telescope_SOURCES =	certs.c			\
+telescope_SOURCES =	bufio.c			\
+			bufio.h			\
+			certs.c			\
 			certs.h			\
 			cmd.c			\
 			cmd.gen.c		\
@@ -18,6 +20,8 @@ telescope_SOURCES =	certs.c			\
 			defaults.h		\
 			downloads.c		\
 			emoji-matcher.c		\
+			ev.c			\
+			ev.h			\
 			fs.c			\
 			fs.h			\
 			gencmd.awk		\
@@ -61,6 +65,8 @@ telescope_SOURCES =	certs.c			\
 telescope_identity_SOURCES =			\
 			certs.c			\
 			certs.h			\
+			ev.c			\
+			ev.h			\
 			fs.c			\
 			fs.h			\
 			hist.c			\
@@ -68,7 +74,7 @@ telescope_identity_SOURCES =			\
 			identity.c		\
 			parser.c		\
 			parser.h		\
-			utils.c		\
+			utils.c			\
 			utils.h
 
 noinst_PROGRAMS =	pagebundler

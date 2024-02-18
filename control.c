@@ -30,6 +30,7 @@
 #include <unistd.h>
 
 #include "control.h"
+#include "ev.h"
 #include "minibuffer.h"
 #include "telescope.h"
 #include "utils.h"
@@ -38,8 +39,7 @@
 #define	CONTROL_BACKLOG	5
 
 struct {
-	struct event	ev;
-	struct event	evt;
+	unsigned long	timeout;
 	int		fd;
 } control_state = {.fd = -1};
 
@@ -110,23 +110,19 @@ control_listen(int fd)
 		return (-1);
 	}
 
-	event_set(&control_state.ev, control_state.fd, EV_READ,
-	    control_accept, NULL);
-	event_add(&control_state.ev, NULL);
-	evtimer_set(&control_state.evt, control_accept, NULL);
-
+	ev_add(control_state.fd, EV_READ, control_accept, NULL);
 	return (0);
 }
 
 void
-control_accept(int listenfd, short event, void *bula)
+control_accept(int listenfd, int event, void *bula)
 {
 	int			 connfd;
 	socklen_t		 len;
 	struct sockaddr_un	 sun;
 	struct ctl_conn		*c;
 
-	event_add(&control_state.ev, NULL);
+	ev_add(control_state.fd, EV_READ, control_accept, NULL);
 	if ((event & EV_TIMEOUT))
 		return;
 
@@ -134,13 +130,14 @@ control_accept(int listenfd, short event, void *bula)
 	if ((connfd = accept(listenfd, (struct sockaddr *)&sun, &len)) == -1) {
 		/*
 		 * Pause accept if we are out of file descriptors, or
-		 * libevent will haunt us here too.
+		 * ev will haunt us here too.
 		 */
 		if (errno == ENFILE || errno == EMFILE) {
 			struct timeval evtpause = { 1, 0 };
 
-			event_del(&control_state.ev);
-			evtimer_add(&control_state.evt, &evtpause);
+			ev_del(control_state.fd);
+			control_state.timeout = ev_timer(&evtpause,
+			    control_accept, NULL);
 		} else if (errno != EWOULDBLOCK && errno != EINTR &&
 		    errno != ECONNABORTED)
 			message("%s: accept4: %s", __func__, strerror(errno));
@@ -163,9 +160,12 @@ control_accept(int listenfd, short event, void *bula)
 	imsg_init(&c->iev.ibuf, connfd);
 	c->iev.handler = control_dispatch_imsg;
 	c->iev.events = EV_READ;
-	event_set(&c->iev.ev, c->iev.ibuf.fd, c->iev.events,
-	    c->iev.handler, &c->iev);
-	event_add(&c->iev.ev, NULL);
+	if (ev_add(connfd, c->iev.events, c->iev.handler, &c->iev) == -1) {
+		message("%s: ev_add: %s", __func__, strerror(errno));
+		close(connfd);
+		free(c);
+		return;
+	}
 
 	TAILQ_INSERT_TAIL(&ctl_conns, c, entry);
 }
@@ -209,20 +209,21 @@ control_close(int fd)
 	msgbuf_clear(&c->iev.ibuf.w);
 	TAILQ_REMOVE(&ctl_conns, c, entry);
 
-	event_del(&c->iev.ev);
+	ev_del(c->iev.ibuf.fd);
 	close(c->iev.ibuf.fd);
 
 	/* Some file descriptors are available again. */
-	if (evtimer_pending(&control_state.evt, NULL)) {
-		evtimer_del(&control_state.evt);
-		event_add(&control_state.ev, NULL);
+	if (ev_timer_pending(control_state.timeout)) {
+		ev_timer_cancel(control_state.timeout);
+		control_state.timeout = 0;
+		ev_add(control_state.fd, EV_READ, control_accept, NULL);
 	}
 
 	free(c);
 }
 
 void
-control_dispatch_imsg(int fd, short event, void *bula)
+control_dispatch_imsg(int fd, int event, void *bula)
 {
 	struct ctl_conn	*c;
 	struct imsg	 imsg;

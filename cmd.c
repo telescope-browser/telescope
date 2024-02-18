@@ -24,6 +24,7 @@
 #include "cmd.h"
 #include "compl.h"
 #include "defaults.h"
+#include "ev.h"
 #include "hist.h"
 #include "keymap.h"
 #include "mcache.h"
@@ -278,7 +279,7 @@ kill_telescope_cb(int r, struct tab *tab)
 {
 	if (r) {
 		save_session();
-		event_loopbreak();
+		ev_break();
 	}
 }
 

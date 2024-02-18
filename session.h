@@ -67,7 +67,7 @@ void		 history_sort(void);
 void		 history_add(const char *);
 
 void		 autosave_init(void);
-void		 autosave_timer(int, short, void *);
+void		 autosave_timer(int, int, void *);
 void		 autosave_hook(void);
 
 int		 load_session(struct ohash *);

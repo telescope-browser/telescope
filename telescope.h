@@ -33,8 +33,7 @@
 
 struct imsgev {
 	struct imsgbuf	 ibuf;
-	void		(*handler)(int, short, void *);
-	struct event	 ev;
+	void		(*handler)(int, int, void *);
 	short		 events;
 };
 
@@ -206,7 +205,7 @@ struct tab {
 
 	short			 loading_anim;
 	short			 loading_anim_step;
-	struct event		 loadingev;
+	unsigned long		 loading_timer;
 };
 
 extern TAILQ_HEAD(proxylist, proxy) proxies;

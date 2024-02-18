@@ -16,6 +16,8 @@
 
 #include "compat.h"
 
+#include <sys/time.h>
+
 #include <errno.h>
 #include <limits.h>
 #include <stdio.h>
@@ -25,6 +27,7 @@
 #include "certs.h"
 #include "cmd.h"
 #include "defaults.h"
+#include "ev.h"
 #include "fs.h"
 #include "hist.h"
 #include "iri.h"
@@ -45,10 +48,10 @@ static void		 yornp_abort(void);
 static void		 read_self_insert(void);
 static void		 read_abort(void);
 static void		 read_select(void);
-static void		 handle_clear_echoarea(int, short, void *);
+static void		 handle_clear_echoarea(int, int, void *);
 
-static struct event	clechoev;
-static struct timeval	clechoev_timer = { 5, 0 };
+static unsigned long	clechotimer;
+static struct timeval	clechotv = { 5, 0 };
 
 static void (*yornp_cb)(int, struct tab *);
 static struct tab *yornp_data;
@@ -642,7 +645,7 @@ minibuffer_read(const char *prompt, void (*fn)(const char *, struct tab *),
 }
 
 static void
-handle_clear_echoarea(int fd, short ev, void *d)
+handle_clear_echoarea(int fd, int ev, void *d)
 {
 	free(ministate.curmesg);
 	ministate.curmesg = NULL;
@@ -653,15 +656,14 @@ handle_clear_echoarea(int fd, short ev, void *d)
 void
 vmessage(const char *fmt, va_list ap)
 {
-	if (evtimer_pending(&clechoev, NULL))
-		evtimer_del(&clechoev);
+	ev_timer_cancel(clechotimer);
 
 	free(ministate.curmesg);
 	ministate.curmesg = NULL;
 
 	if (fmt != NULL) {
-		evtimer_set(&clechoev, handle_clear_echoarea, NULL);
-		evtimer_add(&clechoev, &clechoev_timer);
+		clechotimer = ev_timer(&clechotv, handle_clear_echoarea,
+		    NULL);
 
 		/* TODO: what to do if the allocation fails here? */
 		if (vasprintf(&ministate.curmesg, fmt, ap) == -1)
@@ -697,6 +699,4 @@ minibuffer_init(void)
 	ministate.vline.parent = &ministate.line;
 	ministate.buffer.page.name = "*minibuffer*";
 	ministate.buffer.current_line = &ministate.vline;
-
-	evtimer_set(&clechoev, handle_clear_echoarea, NULL);
 }

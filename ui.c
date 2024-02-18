@@ -32,6 +32,8 @@
 
 #include "compat.h"
 
+#include <sys/time.h>
+
 #include <assert.h>
 #include <curses.h>
 #include <locale.h>
@@ -43,6 +45,7 @@
 
 #include "cmd.h"
 #include "defaults.h"
+#include "ev.h"
 #include "hist.h"
 #include "keymap.h"
 #include "minibuffer.h"
@@ -51,17 +54,15 @@
 #include "ui.h"
 #include "utf8.h"
 
-static struct event	stdioev, winchev;
-
 static void		 set_scroll_position(struct tab *, size_t, size_t);
 
 static void		 restore_curs_x(struct buffer *);
 
 static int		 readkey(void);
-static void		 dispatch_stdio(int, short, void*);
-static void		 handle_resize(int, short, void*);
-static void		 handle_resize_nodelay(int, short, void*);
-static void		 handle_download_refresh(int, short, void *);
+static void		 dispatch_stdio(int, int, void*);
+static void		 handle_resize(int, int, void*);
+static void		 handle_resize_nodelay(int, int, void*);
+static void		 handle_download_refresh(int, int, void *);
 static void		 rearrange_windows(void);
 static void		 line_prefix_and_text(struct vline *, char *, size_t, const char **, const char **, int *);
 static void		 print_vline(int, int, WINDOW*, struct vline*);
@@ -77,7 +78,7 @@ static void		 do_redraw_minibuffer(void);
 static void		 do_redraw_minibuffer_compl(void);
 static void		 place_cursor(int);
 static void		 redraw_tab(struct tab*);
-static void		 update_loading_anim(int, short, void*);
+static void		 update_loading_anim(int, int, void*);
 static void		 stop_loading_anim(struct tab*);
 
 static int		 should_rearrange_windows;
@@ -88,10 +89,10 @@ static int		 x_offset;
 struct thiskey	 thiskey;
 struct tab	*current_tab;
 
-static struct event	resizeev;
-static struct timeval	resize_timer = { 0, 250000 };
+static unsigned int	resize_timer;
+static struct timeval	resize_tv = { 0, 250000 };
 
-static struct event	download_refreshev;
+static unsigned int	download_timer;
 static struct timeval	download_refresh_timer = { 0, 250000 };
 
 static WINDOW	*tabline, *body, *modeline, *echoarea, *minibuffer;
@@ -112,7 +113,7 @@ int			 download_cols;
 static int		 side_window;
 static int		 in_side_window;
 
-static struct timeval	loadingev_timer = { 0, 250000 };
+static struct timeval	loading_tv = { 0, 250000 };
 
 static char	keybuf[64];
 
@@ -296,7 +297,7 @@ readkey(void)
 }
 
 static void
-dispatch_stdio(int fd, short ev, void *d)
+dispatch_stdio(int fd, int ev, void *d)
 {
 	int		 lk;
 	const char	*keyname;
@@ -344,17 +345,14 @@ dispatch_stdio(int fd, short ev, void *d)
 }
 
 static void
-handle_resize(int sig, short ev, void *d)
+handle_resize(int sig, int ev, void *d)
 {
-	if (event_pending(&resizeev, EV_TIMEOUT, NULL)) {
-		event_del(&resizeev);
-	}
-	evtimer_set(&resizeev, handle_resize_nodelay, NULL);
-	evtimer_add(&resizeev, &resize_timer);
+	ev_timer_cancel(resize_timer);
+	resize_timer = ev_timer(&resize_tv, handle_resize_nodelay, NULL);
 }
 
 static void
-handle_resize_nodelay(int s, short ev, void *d)
+handle_resize_nodelay(int s, int ev, void *d)
 {
 	endwin();
 	refresh();
@@ -364,7 +362,7 @@ handle_resize_nodelay(int s, short ev, void *d)
 }
 
 static void
-handle_download_refresh(int s, short v, void *d)
+handle_download_refresh(int s, int v, void *d)
 {
 	if (side_window & SIDE_WINDOW_BOTTOM) {
 		recompute_downloads();
@@ -1055,12 +1053,13 @@ start_loading_anim(struct tab *tab)
 	if (tab->loading_anim)
 		return;
 	tab->loading_anim = 1;
-	evtimer_set(&tab->loadingev, update_loading_anim, tab);
-	evtimer_add(&tab->loadingev, &loadingev_timer);
+
+	ev_timer_cancel(tab->loading_timer);
+	tab->loading_timer = ev_timer(&loading_tv, update_loading_anim, tab);
 }
 
 static void
-update_loading_anim(int fd, short ev, void *d)
+update_loading_anim(int fd, int ev, void *d)
 {
 	struct tab	*tab = d;
 
@@ -1074,7 +1073,7 @@ update_loading_anim(int fd, short ev, void *d)
 			wrefresh(echoarea);
 	}
 
-	evtimer_add(&tab->loadingev, &loadingev_timer);
+	tab->loading_timer = ev_timer(&loading_tv, update_loading_anim, tab);
 }
 
 static void
@@ -1082,7 +1081,8 @@ stop_loading_anim(struct tab *tab)
 {
 	if (!tab->loading_anim)
 		return;
-	evtimer_del(&tab->loadingev);
+
+	ev_timer_cancel(tab->loading_timer);
 	tab->loading_anim = 0;
 	tab->loading_anim_step = 0;
 
@@ -1173,19 +1173,14 @@ ui_init(void)
 void
 ui_main_loop(void)
 {
-	evtimer_set(&resizeev, handle_resize, NULL);
-	evtimer_set(&download_refreshev, handle_download_refresh, NULL);
-
-	event_set(&stdioev, 0, EV_READ | EV_PERSIST, dispatch_stdio, NULL);
-	event_add(&stdioev, NULL);
-
-	signal_set(&winchev, SIGWINCH, handle_resize, NULL);
-	signal_add(&winchev, NULL);
+	if (ev_signal(SIGWINCH, handle_resize, NULL) == -1 ||
+	    ev_add(0, EV_READ, dispatch_stdio, NULL) == -1)
+		err(1, "ev_signal or ev_add failed");
 
 	switch_to_tab(current_tab);
 	rearrange_windows();
 
-	event_dispatch();
+	ev_loop();
 }
 
 void
@@ -1224,11 +1219,11 @@ ui_on_tab_refresh(struct tab *tab)
 void
 ui_on_download_refresh(void)
 {
-	if (event_pending(&download_refreshev, EV_TIMEOUT, NULL))
+	if (ev_timer_pending(download_timer))
 		return;
 
-	evtimer_set(&download_refreshev, handle_download_refresh, NULL);
-	evtimer_add(&download_refreshev, &download_refresh_timer);
+	download_timer = ev_timer(&download_refresh_timer,
+	    handle_download_refresh, NULL);
 }
 
 void

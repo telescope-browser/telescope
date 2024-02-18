@@ -23,6 +23,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "ev.h"
 #include "telescope.h"
 #include "utils.h"
 
@@ -77,9 +78,7 @@ imsg_event_add(struct imsgev *iev)
 	if (iev->ibuf.w.queued)
 		iev->events |= EV_WRITE;
 
-	event_del(&iev->ev);
-	event_set(&iev->ev, iev->ibuf.fd, iev->events, iev->handler, iev);
-	event_add(&iev->ev, NULL);
+	ev_add(iev->ibuf.fd, iev->events, iev->handler, iev);
 }
 
 int

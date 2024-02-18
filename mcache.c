@@ -16,17 +16,20 @@
 
 #include "compat.h"
 
+#include <sys/time.h>
+
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
 
+#include "ev.h"
 #include "hist.h"
 #include "mcache.h"
 #include "parser.h"
 #include "utils.h"
 
 static struct timeval tv = { 5 * 60, 0 };
-static struct event timerev;
+static unsigned int timeout;
 
 static struct ohash	h;
 static size_t		npages;
@@ -59,7 +62,7 @@ mcache_free_entry(const char *url)
 }
 
 static void
-clean_old_entries(int fd, short ev, void *data)
+clean_old_entries(int fd, int ev, void *data)
 {
 	struct mcache_entry	*e;
 	unsigned int		 i;
@@ -72,7 +75,7 @@ clean_old_entries(int fd, short ev, void *data)
 		if (e->ts < treshold)
 			mcache_free_entry(e->url);
 
-	evtimer_add(&timerev, &tv);
+	timeout = ev_timer(&tv, clean_old_entries, NULL);
 }
 
 void
@@ -86,8 +89,6 @@ mcache_init(void)
 	};
 
 	ohash_init(&h, 5, &info);
-
-	evtimer_set(&timerev, clean_old_entries, NULL);
 }
 
 int
@@ -127,8 +128,8 @@ mcache_tab(struct tab *tab)
 	npages++;
 	tot += e->buflen;
 
-	if (!evtimer_pending(&timerev, NULL))
-		evtimer_add(&timerev, &tv);
+	if (!ev_timer_pending(timeout))
+		timeout = ev_timer(&tv, clean_old_entries, NULL);
 
 	return 0;
 

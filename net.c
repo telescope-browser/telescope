@@ -16,6 +16,9 @@
 
 #include "compat.h"
 
+/* XXX needs some work to run on top of ev */
+#undef HAVE_ASR_RUN
+
 #include <sys/mman.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -38,17 +41,28 @@
 # include <asr.h>
 #endif
 
+#include "bufio.h"
+#include "ev.h"
 #include "telescope.h"
 #include "utils.h"
 
 static struct imsgev		*iev_ui;
 
+enum conn_state {
+	CONN_CONNECTING,
+	CONN_HANDSHAKE,
+	CONN_HEADER,
+	CONN_BODY,
+	CONN_CLOSE,
+	CONN_ERROR,
+};
+
 /* a pending request */
 struct req {
 	uint32_t		 id;
+	enum conn_state		 state;
 	int			 proto;
 	int			 fd;
-	struct tls		*ctx;
 	char			*host;
 	char			*port;
 	char			*req;
@@ -56,8 +70,10 @@ struct req {
 	void			*ccert;
 	size_t			 ccert_len;
 	int			 ccert_fd;
-	int			 done_header;
-	struct bufferevent	*bev;
+
+	int			 eof;
+	unsigned int		 handshake_tout;
+	struct bufio		 bio;
 
 	int			 conn_error;
 	const char		*cause;
@@ -75,7 +91,6 @@ static struct req	*req_by_id(uint32_t);
 
 static void	 die(void) __attribute__((__noreturn__));
 
-static void	 try_to_connect(int, short, void*);
 
 #if HAVE_ASR_RUN
 static void	 query_done(struct asr_result*, void*);
@@ -86,39 +101,17 @@ static void	 close_with_err(struct req*, const char*);
 static void	 close_with_errf(struct req*, const char*, ...)
     __attribute__((format(printf, 2, 3)));
 
-static void	 net_tls_handshake(int, short, void *);
-static void	 net_tls_readcb(int, short, void *);
-static void	 net_tls_writecb(int, short, void *);
-
+static int	 try_to_connect(struct req *);
 static int	 gemini_parse_reply(struct req *, const char *, size_t);
-
-static void	 net_ready(struct req *req);
-static void	 net_read(struct bufferevent *, void *);
-static void	 net_write(struct bufferevent *, void *);
-static void	 net_error(struct bufferevent *, short, void *);
-
-static void	 handle_dispatch_imsg(int, short, void*);
+static void	 net_ev(int, int, void *);
+static void	 handle_dispatch_imsg(int, int, void*);
 
 static int	 net_send_ui(int, uint32_t, const void *, uint16_t);
 
 /* TODO: making this customizable */
 struct timeval timeout_for_handshake = { 5, 0 };
 
-typedef void (*statefn)(int, short, void*);
-
 TAILQ_HEAD(, req) reqhead;
-
-static inline void
-yield_r(struct req *req, statefn fn, struct timeval *tv)
-{
-	event_once(req->fd, EV_READ, fn, req, tv);
-}
-
-static inline void
-yield_w(struct req *req, statefn fn, struct timeval *tv)
-{
-	event_once(req->fd, EV_WRITE, fn, req, tv);
-}
 
 static struct req *
 req_by_id(uint32_t id)
@@ -139,117 +132,6 @@ die(void)
 	abort(); 		/* TODO */
 }
 
-static void
-try_to_connect(int fd, short ev, void *d)
-{
-	struct req	*req = d;
-	int		 error = 0;
-	socklen_t	 len = sizeof(error);
-
-again:
-	if (req->p == NULL)
-		goto err;
-
-	if (req->fd != -1) {
-		if (getsockopt(req->fd, SOL_SOCKET, SO_ERROR, &error,
-		    &len) == -1)
-			goto err;
-		if (error != 0) {
-			req->conn_error = error;
-			req->cause = "connect";
-			close(req->fd);
-			req->fd = -1;
-			req->p = req->p->ai_next;
-			goto again;
-		}
-		goto done;
-	}
-
-	req->fd = socket(req->p->ai_family, req->p->ai_socktype,
-	    req->p->ai_protocol);
-	if (req->fd == -1) {
-		req->conn_error = errno;
-		req->cause = "socket";
-		req->p = req->p->ai_next;
-		goto again;
-	}
-
-	if (!mark_nonblock_cloexec(req->fd)) {
-		req->conn_error = errno;
-		req->cause = "setsockopt";
-		goto err;
-	}
-	if (connect(req->fd, req->p->ai_addr, req->p->ai_addrlen) == 0)
-		goto done;
-	yield_w(req, try_to_connect, NULL);
-	return;
-
-err:
-	freeaddrinfo(req->servinfo);
-	close_with_errf(req, "failed to connect to %s (%s: %s.)", req->host,
-	    req->cause, strerror(req->conn_error));
-	return;
-
-done:
-	freeaddrinfo(req->servinfo);
-
-	switch (req->proto) {
-	case PROTO_FINGER:
-	case PROTO_GOPHER:
-		/* finger and gopher don't have a header nor TLS */
-		req->done_header = 1;
-		net_ready(req);
-		break;
-
-	case PROTO_GEMINI: {
-		struct tls_config *conf;
-
-		if ((conf = tls_config_new()) == NULL)
-			die();
-
-		tls_config_insecure_noverifycert(conf);
-		tls_config_insecure_noverifyname(conf);
-
-		if (req->ccert && tls_config_set_keypair_mem(conf,
-		    req->ccert, req->ccert_len, req->ccert, req->ccert_len)
-		    == -1) {
-			close_with_errf(req, "failed to load keypair: %s",
-			    tls_config_error(conf));
-			tls_config_free(conf);
-			return;
-		}
-
-		/* prepare tls */
-		if ((req->ctx = tls_client()) == NULL) {
-			close_with_errf(req, "tls_client: %s",
-			    strerror(errno));
-			tls_config_free(conf);
-			return;
-		}
-
-		if (tls_configure(req->ctx, conf) == -1) {
-			close_with_errf(req, "tls_configure: %s",
-			    tls_error(req->ctx));
-			tls_config_free(conf);
-			return;
-		}
-		tls_config_free(conf);
-
-		if (tls_connect_socket(req->ctx, req->fd, req->host)
-		    == -1) {
-			close_with_errf(req, "tls_connect_socket: %s",
-			    tls_error(req->ctx));
-			return;
-		}
-		yield_w(req, net_tls_handshake, &timeout_for_handshake);
-		break;
-	}
-
-	default:
-		die();
-	}
-}
-
 #if HAVE_ASR_RUN
 static void
 query_done(struct asr_result *res, void *d)
@@ -266,7 +148,8 @@ query_done(struct asr_result *res, void *d)
 	req->fd = -1;
 	req->servinfo = res->ar_addrinfo;
 	req->p = res->ar_addrinfo;
-	try_to_connect(0, 0, req);
+	req->state = CONN_CONNECTING;
+	net_ev(-1, EV_READ, req);
 }
 
 static void
@@ -300,38 +183,40 @@ conn_towards(struct req *req)
 
 	req->fd = -1;
 	req->p = req->servinfo;
-	try_to_connect(0, 0, req);
+	req->state = CONN_CONNECTING;
+	net_ev(-1, EV_READ, req);
 }
 #endif
 
 static void
-close_conn(int fd, short ev, void *d)
+close_conn(int fd, int ev, void *d)
 {
 	struct req	*req = d;
+
+	if (req->state != CONN_ERROR)
+		req->state = CONN_CLOSE;
 
 #if HAVE_ASR_RUN
 	if (req->asrev != NULL)
 		event_asr_abort(req->asrev);
 #endif
 
-	if (req->bev != NULL) {
-		bufferevent_free(req->bev);
-		req->bev = NULL;
+	if (req->handshake_tout != 0) {
+		ev_timer_cancel(req->handshake_tout);
+		req->handshake_tout = 0;
 	}
 
-	if (req->ctx != NULL) {
-		switch (tls_close(req->ctx)) {
-		case TLS_WANT_POLLIN:
-			yield_r(req, close_conn, NULL);
-			return;
-		case TLS_WANT_POLLOUT:
-			yield_w(req, close_conn, NULL);
-			return;
-		}
-
-		tls_free(req->ctx);
-		req->ctx = NULL;
+	if (req->state == CONN_CLOSE &&
+	    bufio_close(&req->bio) == -1 &&
+	    errno == EAGAIN) {
+		ev_add(req->fd, bufio_ev(&req->bio), close_conn, req);
+		return;
 	}
+
+	if (req->servinfo)
+		freeaddrinfo(req->servinfo);
+
+	bufio_free(&req->bio);
 
 	if (req->ccert != NULL) {
 		munmap(req->ccert, req->ccert_len);
@@ -343,14 +228,17 @@ close_conn(int fd, short ev, void *d)
 	free(req->req);
 
 	TAILQ_REMOVE(&reqhead, req, reqs);
-	if (req->fd != -1)
+	if (req->fd != -1) {
+		ev_del(req->fd);
 		close(req->fd);
+	}
 	free(req);
 }
 
 static void
 close_with_err(struct req *req, const char *err)
 {
+	req->state = CONN_ERROR;
 	net_send_ui(IMSG_ERR, req->id, err, strlen(err)+1);
 	close_conn(0, 0, req);
 }
@@ -370,138 +258,54 @@ close_with_errf(struct req *req, const char *fmt, ...)
 	free(s);
 }
 
-static void
-net_tls_handshake(int fd, short event, void *d)
+static int
+try_to_connect(struct req *req)
 {
-	struct req	*req = d;
-	const char	*hash;
+	int		 error;
+	socklen_t	 len = sizeof(error);
 
-	if (event == EV_TIMEOUT) {
-		close_with_err(req, "Timeout loading page");
-		return;
-	}
+ again:
+	if (req->p == NULL)
+		return (-1);
 
-	switch (tls_handshake(req->ctx)) {
-	case TLS_WANT_POLLIN:
-		yield_r(req, net_tls_handshake, NULL);
-		return;
-	case TLS_WANT_POLLOUT:
-		yield_w(req, net_tls_handshake, NULL);
-		return;
-	}
-
-	hash = tls_peer_cert_hash(req->ctx);
-	if (hash == NULL) {
-		close_with_errf(req, "handshake failed: %s",
-		    tls_error(req->ctx));
-		return;
-	}
-	net_send_ui(IMSG_CHECK_CERT, req->id, hash, strlen(hash)+1);
-}
-
-static void
-net_tls_readcb(int fd, short event, void *d)
-{
-	struct bufferevent	*bufev = d;
-	struct req		*req = bufev->cbarg;
-	char			 buf[IBUF_READ_SIZE];
-	int			 what = EVBUFFER_READ;
-	int			 howmuch = IBUF_READ_SIZE;
-	int			 res;
-	ssize_t			 ret;
-	size_t			 len;
-
-	if (event == EV_TIMEOUT) {
-		what |= EVBUFFER_TIMEOUT;
-		goto err;
-	}
-
-	if (bufev->wm_read.high != 0)
-		howmuch = MIN(sizeof(buf), bufev->wm_read.high);
-
-	switch (ret = tls_read(req->ctx, buf, howmuch)) {
-	case TLS_WANT_POLLIN:
-	case TLS_WANT_POLLOUT:
-		goto retry;
-	case -1:
-		what |= EVBUFFER_ERROR;
-		goto err;
-	}
-	len = ret;
-
-	if (len == 0) {
-		what |= EVBUFFER_EOF;
-		goto err;
-	}
-
-	res = evbuffer_add(bufev->input, buf, len);
-	if (res == -1) {
-		what |= EVBUFFER_ERROR;
-		goto err;
-	}
-
-	event_add(&bufev->ev_read, NULL);
-
-	len = EVBUFFER_LENGTH(bufev->input);
-	if (bufev->wm_read.low != 0 && len < bufev->wm_read.low)
-		return;
-
-	if (bufev->readcb != NULL)
-		(*bufev->readcb)(bufev, bufev->cbarg);
-	return;
-
-retry:
-	event_add(&bufev->ev_read, NULL);
-	return;
-
-err:
-	(*bufev->errorcb)(bufev, what, bufev->cbarg);
-}
-
-static void
-net_tls_writecb(int fd, short event, void *d)
-{
-	struct bufferevent	*bufev = d;
-	struct req		*req = bufev->cbarg;
-	ssize_t			 ret;
-	size_t			 len;
-	short			 what = EVBUFFER_WRITE;
-
-	if (event & EV_TIMEOUT) {
-		what |= EVBUFFER_TIMEOUT;
-		goto err;
-	}
-
-	if (EVBUFFER_LENGTH(bufev->output) != 0) {
-		ret = tls_write(req->ctx, EVBUFFER_DATA(bufev->output),
-		    EVBUFFER_LENGTH(bufev->output));
-		switch (ret) {
-		case TLS_WANT_POLLIN:
-		case TLS_WANT_POLLOUT:
-			goto retry;
-		case -1:
-			what |= EVBUFFER_ERROR;
-			goto err;
+	if (req->fd != -1) {
+		if (getsockopt(req->fd, SOL_SOCKET, SO_ERROR, &error,
+		    &len) == -1) {
+			req->conn_error = errno;
+			req->cause = "getsockopt";
+			return (-1);
 		}
-		len = ret;
 
-		evbuffer_drain(bufev->output, len);
+		if (error == 0) /* connected */
+			return (0);
+
+		req->conn_error = error;
+		req->cause = "connect";
+		close(req->fd);
+		req->fd = -1;
+		req->p = req->p->ai_next;
+		goto again;
 	}
 
-	if (EVBUFFER_LENGTH(bufev->output) != 0)
-		event_add(&bufev->ev_write, NULL);
+	req->fd = socket(req->p->ai_family, req->p->ai_socktype,
+	    req->p->ai_protocol);
+	if (req->fd == -1) {
+		req->conn_error = errno;
+		req->cause = "socket";
+		req->p = req->p->ai_next;
+		goto again;
+	}
 
-	if (bufev->writecb != NULL &&
-	    EVBUFFER_LENGTH(bufev->output) <= bufev->wm_write.low)
-		(*bufev->writecb)(bufev, bufev->cbarg);
-	return;
+	if (!mark_nonblock_cloexec(req->fd)) {
+		req->conn_error = errno;
+		req->cause = "setsockopt";
+		return (-1);
+	}
 
-retry:
-	event_add(&bufev->ev_write, NULL);
-	return;
-
-err:
-	(*bufev->errorcb)(bufev, what, bufev->cbarg);
+	if (connect(req->fd, req->p->ai_addr, req->p->ai_addrlen) == 0)
+		return (0);
+	errno = EAGAIN;
+	return (-1);
 }
 
 static int
@@ -533,140 +337,164 @@ gemini_parse_reply(struct req *req, const char *header, size_t len)
 	imsg_close(&iev_ui->ibuf, ibuf);
 	imsg_event_add(iev_ui);
 
-	bufferevent_disable(req->bev, EV_READ|EV_WRITE);
+	/* pause until we've told go go ahead */
+	ev_del(req->fd);
 
 	return code;
 }
 
-/* called when we're ready to read/write */
-static void
-net_ready(struct req *req)
+static inline int
+net_send_req(struct req *req)
 {
-	req->bev = bufferevent_new(req->fd, net_read, net_write, net_error,
-	    req);
-	if (req->bev == NULL)
-		die();
-
-#if HAVE_EVENT2
-	evbuffer_unfreeze(req->bev->input, 0);
-	evbuffer_unfreeze(req->bev->output, 1);
-#endif
-
-	/* setup tls i/o layer */
-	if (req->ctx != NULL) {
-		event_set(&req->bev->ev_read, req->fd, EV_READ,
-		    net_tls_readcb, req->bev);
-		event_set(&req->bev->ev_write, req->fd, EV_WRITE,
-		    net_tls_writecb, req->bev);
-	}
-
-	/* TODO: adjust watermarks */
-	bufferevent_setwatermark(req->bev, EV_WRITE, 1, 0);
-	bufferevent_setwatermark(req->bev, EV_READ,  1, 0);
-
-	bufferevent_enable(req->bev, EV_READ|EV_WRITE);
-
-	bufferevent_write(req->bev, req->req, req->len);
+	return (bufio_compose(&req->bio, req->req, req->len));
 }
 
-/* called after a read has been done */
 static void
-net_read(struct bufferevent *bev, void *d)
+net_ev(int fd, int ev, void *d)
 {
 	static char	 buf[4096];
 	struct req	*req = d;
-	struct evbuffer	*src = EVBUFFER_INPUT(bev);
+	const char	*hash;
+	ssize_t		 read;
 	size_t		 len;
+	char		*header, *endl;
 	int		 r;
-	char		*header;
 
-	if (!req->done_header) {
-		header = evbuffer_readln(src, &len, EVBUFFER_EOL_CRLF_STRICT);
-		if (header == NULL && EVBUFFER_LENGTH(src) >= 1024) {
-			(*bev->errorcb)(bev, EVBUFFER_READ, bev->cbarg);
+	if (ev == EV_TIMEOUT) {
+		close_with_err(req, "Timeout loading page");
+		return;
+	}
+
+	if (req->state == CONN_CONNECTING) {
+		ev_del(req->fd);
+		if (try_to_connect(req) == -1) {
+			if (req->fd != -1 && errno == EAGAIN) {
+				ev_add(req->fd, EV_WRITE, net_ev, req);
+				return;
+			}
+			close_with_errf(req, "failed to connect to %s"
+			    " (%s: %s)", req->host, req->cause,
+			    strerror(req->conn_error));
 			return;
 		}
-		if (header == NULL)
-			return;
-		r = gemini_parse_reply(req, header, len);
-		free(header);
-		req->done_header = 1;
-		if (r == 0) {
-			(*bev->errorcb)(bev, EVBUFFER_READ, bev->cbarg);
-			return;
-		}
-		if (r < 20 || r >= 30) {
-			close_conn(0, 0, req);
-			return;
+
+		bufio_set_fd(&req->bio, req->fd);
+
+		switch (req->proto) {
+		case PROTO_FINGER:
+		case PROTO_GOPHER:
+			/* finger and gopher don't have a header nor TLS */
+			req->state = CONN_BODY;
+			if (net_send_req(req) == -1) {
+				close_with_err(req, "failed to send request");
+				return;
+			}
+			break;
+		case PROTO_GEMINI:
+			req->state = CONN_HANDSHAKE;
+			if (bufio_starttls(&req->bio, req->host, 1,
+			    req->ccert, req->ccert_len,
+			    req->ccert, req->ccert_len) == -1) {
+				close_with_err(req, "failed to setup TLS");
+				return;
+			}
+			req->handshake_tout = ev_timer(&timeout_for_handshake,
+			    net_ev, req);
+			if (req->handshake_tout == 0) {
+				close_with_err(req, "failed to setup"
+				    " handshake timer");
+				return;
+			}
+			break;
 		}
 	}
 
+	if (req->state == CONN_HANDSHAKE) {
+		if (bufio_handshake(&req->bio) == -1 && errno == EAGAIN) {
+			ev_add(req->fd, bufio_ev(&req->bio),
+			    net_ev, req);
+			return;
+		}
+
+		ev_timer_cancel(req->handshake_tout);
+		req->handshake_tout = 0;
+
+		req->state = CONN_HEADER;
+
+		/* pause until we've told the certificate is OK */
+		ev_del(req->fd);
+
+		hash = tls_peer_cert_hash(req->bio.ctx);
+		if (hash == NULL) {
+			close_with_errf(req, "handshake failed: %s",
+			    tls_error(req->bio.ctx));
+			return;
+		}
+
+		net_send_ui(IMSG_CHECK_CERT, req->id, hash, strlen(hash)+1);
+		return;
+	}
+
+	if (ev & EV_READ) {
+		read = bufio_read(&req->bio);
+		if (read == -1 && errno != EAGAIN) {			
+			close_with_errf(req, "Read error");
+			return;
+		}
+		if (read == 0)
+			req->eof = 1;
+	}
+
+	if ((ev & EV_WRITE) && bufio_write(&req->bio) == -1 &&
+	    errno != EAGAIN) {
+		close_with_errf(req, "bufio_write: %s", strerror(errno));
+		return;
+	}
+
+	if (req->state == CONN_HEADER) {
+		header = req->bio.rbuf.buf;
+		endl = memmem(header, req->bio.rbuf.len, "\r\n", 2);
+		if (endl == NULL && req->bio.rbuf.len >= 1024) {
+			close_with_err(req, "Invalid gemini reply (too long)");
+			return;
+		}
+		if (endl == NULL && req->eof) {
+			close_with_err(req, "Invalid gemini reply.");
+			return;
+		}
+		if (endl == NULL) {
+			ev_add(req->fd, bufio_ev(&req->bio), net_ev, req);
+			return;
+		}
+		*endl = '\0';
+		req->state = CONN_BODY;
+		r = gemini_parse_reply(req, header, strlen(header));
+		buf_drain(&req->bio.rbuf, endl - header + 2);
+		if (r == 0) {
+			close_with_err(req, "Malformed gemini reply");
+			return;
+		}
+		if (r < 20 || r >= 30)
+			close_conn(0, 0, req);
+		return;
+	}
+	
 	/*
 	 * Split data into chunks before sending.  imsg can't handle
 	 * message that are "too big".
 	 */
 	for (;;) {
-		if ((len = bufferevent_read(bev, buf, sizeof(buf))) == 0)
+		if ((len = bufio_drain(&req->bio, buf, sizeof(buf))) == 0)
 			break;
 		net_send_ui(IMSG_BUF, req->id, buf, len);
 	}
-}
 
-/* called after a write has been done */
-static void
-net_write(struct bufferevent *bev, void *d)
-{
-	struct evbuffer	*dst = EVBUFFER_OUTPUT(bev);
-
-	if (EVBUFFER_LENGTH(dst) == 0)
-		(*bev->errorcb)(bev, EVBUFFER_WRITE, bev->cbarg);
-}
-
-static void
-net_error(struct bufferevent *bev, short error, void *d)
-{
-	struct req	*req = d;
-	struct evbuffer	*src;
-
-	if (error & EVBUFFER_TIMEOUT) {
-		close_with_err(req, "Timeout loading page");
-		return;
-	}
-
-	if (error & EVBUFFER_ERROR) {
-		close_with_errf(req, "%s error (0x%x)",
-		    (error & EVBUFFER_READ) ? "read" : "write", error);
-		return;
-	}
-
-	if (error & EVBUFFER_EOF) {
-		/* EOF and no header */
-		if (!req->done_header) {
-			close_with_err(req, "protocol error");
-			return;
-		}
-
-		src = EVBUFFER_INPUT(req->bev);
-		if (EVBUFFER_LENGTH(src) != 0)
-			net_send_ui(IMSG_BUF, req->id, EVBUFFER_DATA(src),
-			    EVBUFFER_LENGTH(src));
+	if (req->eof) {
 		net_send_ui(IMSG_EOF, req->id, NULL, 0);
 		close_conn(0, 0, req);
-		return;
 	}
 
-	if (error & EVBUFFER_WRITE) {
-		/* finished sending request */
-		bufferevent_disable(bev, EV_WRITE);
-		return;
-	}
-
-	if (error & EVBUFFER_READ) {
-		close_with_err(req, "protocol error");
-		return;
-	}
-
-	close_with_errf(req, "unknown event error %x", error);
+	ev_add(req->fd, bufio_ev(&req->bio), net_ev, req);
 }
 
 static int
@@ -702,7 +530,7 @@ load_cert(struct imsg *imsg, struct req *req)
 }
 
 static void
-handle_dispatch_imsg(int fd, short event, void *d)
+handle_dispatch_imsg(int fd, int event, void *d)
 {
 	struct imsgev	*iev = d;
 	struct imsgbuf	*ibuf = &iev->ibuf;
@@ -757,9 +585,10 @@ handle_dispatch_imsg(int fd, short event, void *d)
 				die();
 			if (load_cert(&imsg, req) == -1)
 				die();
+			if (bufio_init(&req->bio) == -1)
+				die();
 
 			req->len = strlen(req->req);
-
 			req->proto = r.proto;
 			conn_towards(req);
 			break;
@@ -771,16 +600,28 @@ handle_dispatch_imsg(int fd, short event, void *d)
 			if (imsg_get_data(&imsg, &certok, sizeof(certok)) ==
 			    -1)
 				die();
-			if (certok)
-				net_ready(req);
-			else
+			if (!certok) {
 				close_conn(0, 0, req);
+				break;
+			}
+
+			if (net_send_req(req) == -1) {
+				close_with_err(req, "failed to send request");
+				break;
+			}
+
+			if (ev_add(req->fd, EV_WRITE, net_ev, req) == -1) {
+				close_with_err(req,
+				    "failed to register event.");
+				break;
+			}
 			break;
 
 		case IMSG_PROCEED:
 			if ((req = req_by_id(imsg_get_id(&imsg))) == NULL)
 				break;
-			bufferevent_enable(req->bev, EV_READ);
+			ev_add(req->fd, EV_READ, net_ev, req);
+			net_ev(req->fd, 0, req);
 			break;
 
 		case IMSG_STOP:
@@ -790,7 +631,7 @@ handle_dispatch_imsg(int fd, short event, void *d)
 			break;
 
 		case IMSG_QUIT:
-			event_loopbreak();
+			ev_break();
 			imsg_free(&imsg);
 			return;
 
@@ -819,7 +660,8 @@ net_main(void)
 
 	TAILQ_INIT(&reqhead);
 
-	event_init();
+	if (ev_init() == -1)
+		exit(1);
 
 	/* Setup pipe and event handler to the main process */
 	if ((iev_ui = malloc(sizeof(*iev_ui))) == NULL)
@@ -827,13 +669,11 @@ net_main(void)
 	imsg_init(&iev_ui->ibuf, 3);
 	iev_ui->handler = handle_dispatch_imsg;
 	iev_ui->events = EV_READ;
-	event_set(&iev_ui->ev, iev_ui->ibuf.fd, iev_ui->events,
-	    iev_ui->handler, iev_ui);
-	event_add(&iev_ui->ev, NULL);
+	ev_add(iev_ui->ibuf.fd, iev_ui->events, iev_ui->handler, iev_ui);
 
 	sandbox_net_process();
 
-	event_dispatch();
+	ev_loop();
 
 	msgbuf_clear(&iev_ui->ibuf.w);
 	close(iev_ui->ibuf.fd);
