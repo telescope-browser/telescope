@@ -220,6 +220,27 @@ bufio_ev(struct bufio *bio)
 	return (ev);
 }
 
+int
+bufio_handshake(struct bufio *bio)
+{
+	if (bio->ctx == NULL) {
+		errno = EINVAL;
+		return (-1);
+	}
+
+	switch (tls_handshake(bio->ctx)) {
+	case 0:
+		return (0);
+	case TLS_WANT_POLLIN:
+	case TLS_WANT_POLLOUT:
+		errno = EAGAIN;
+		bio->pflags = EV_READ | EV_WRITE;
+		/* fallthrough */
+	default:
+		return (-1);
+	}
+}
+
 ssize_t
 bufio_read(struct bufio *bio)
 {
