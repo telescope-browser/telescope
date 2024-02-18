@@ -137,7 +137,12 @@ ev2poll(int ev)
 int
 ev_add(int fd, int ev, void (*cb)(int, int, void *), void *udata)
 {
-	if (fd < 0 || (size_t)fd >= base->len) {
+	if (fd < 0) {
+		errno = EBADF;
+		return -1;
+	}
+
+	if ((size_t)fd >= base->len) {
 		if (ev_resize(fd + 1) == -1)
 			return -1;
 	}
@@ -350,7 +355,12 @@ ev_timer_cancel(unsigned int id)
 int
 ev_del(int fd)
 {
-	if (fd < 0 || (size_t)fd >= base->len) {
+	if (fd < 0) {
+		errno = EBADF;
+		return -1;
+	}
+
+	if ((size_t)fd >= base->len) {
 		errno = ERANGE;
 		return -1;
 	}
