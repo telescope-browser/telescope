@@ -207,6 +207,7 @@ close_conn(int fd, int ev, void *d)
 	}
 
 	if (req->state == CONN_CLOSE &&
+	    req->fd != -1 &&
 	    bufio_close(&req->bio) == -1 &&
 	    errno == EAGAIN) {
 		ev_add(req->fd, bufio_ev(&req->bio), close_conn, req);
