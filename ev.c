@@ -221,50 +221,20 @@ ev_signal(int sig, void (*cb)(int, int, void *), void *udata)
 	return 0;
 }
 
-static inline void
-bubbleup(size_t i)
-{
-	struct evtimer	 tmp;
-	size_t		 p;
-
-	for (;;) {
-		if (i == 0)
-			return;
-
-		p = (i - 1) / 2;
-		if (timercmp(&base->timers[p].tv, &base->timers[i].tv, <))
-		    	return;
-
-		/* swap */
-		memcpy(&tmp, &base->timers[p], sizeof(tmp));
-		memcpy(&base->timers[p], &base->timers[i], sizeof(tmp));
-		memcpy(&base->timers[i], &tmp, sizeof(tmp));
-		i = p;
-	}
-}
-
 unsigned int
 ev_timer(const struct timeval *tv, void (*cb)(int, int, void*), void *udata)
 {
 	struct evtimer	*evt;
 	void		*t;
-	size_t		 tot, newcap, n;
+	size_t		 newcap;
 	unsigned int	 nextid;
-	int		 use_reserve;
 
 	if (tv == NULL) {
 		errno = EINVAL;
 		return 0;
 	}
 
-	use_reserve = 0;
-	tot = base->ntimers;
-	if (base->reserve_from != 0) {
-		use_reserve = 1;
-		tot = base->reserve_till;
-	}
-
-	if (tot == base->timerscap) {
+	if (base->reserve_till == base->timerscap) {
 		newcap = base->timerscap + 8;
 		t = recallocarray(base->timers, base->timerscap, newcap,
 		    sizeof(*base->timers));
@@ -277,23 +247,13 @@ ev_timer(const struct timeval *tv, void (*cb)(int, int, void*), void *udata)
 	if ((nextid = ++base->tid) == 0)
 		nextid = ++base->tid;
 
-	n = base->ntimers;
-	if (use_reserve)
-		n = base->reserve_till;
-
-	evt = &base->timers[n];
+	evt = &base->timers[base->reserve_till];
 	evt->id = nextid;
 	memcpy(&evt->tv, tv, sizeof(*tv));
 	evt->cb.cb = cb;
 	evt->cb.udata = udata;
 
-	if (use_reserve)
-		base->reserve_till++;
-	else {
-		bubbleup(base->ntimers);
-		base->ntimers++;
-	}
-
+	base->reserve_till++;
 	return (nextid);
 }
 
@@ -415,6 +375,38 @@ ev_del(int fd)
 	return 0;
 }
 
+static void
+timerheapify(void)
+{
+	size_t		 i, reserve, gap;
+
+	reserve = base->reserve_till - base->reserve_from;
+	if (reserve == 0)
+		return;
+
+	gap = base->reserve_from - base->ntimers;
+	if (gap != 0) {
+		memmove(&base->timers[base->ntimers],
+		    &base->timers[base->reserve_from],
+		    reserve * sizeof(*base->timers));
+		base->reserve_from -= gap;
+		base->reserve_till -= gap;
+	}
+
+	base->ntimers = base->reserve_till;
+
+	if (base->ntimers < 2)
+		return;
+
+	i = base->ntimers / 2 - 1;
+	for (;;) {
+		bubbledown(i);
+		if (i == 0)
+			break;
+		i--;
+	}
+}
+
 static inline int
 poll2ev(int ev)
 {
@@ -434,9 +426,13 @@ ev_loop(void)
 	struct timespec	 elapsed, beg, end, min, *wait;
 	struct timeval	 tv, sub;
 	int		 n;
-	size_t		 i, gap;
+	size_t		 i;
 
 	while (!ev_stop) {
+		timerheapify();
+		base->reserve_from = base->ntimers;
+		base->reserve_till = base->ntimers;
+
 		wait = NULL;
 		if (base->ntimers) {
 			TIMEVAL_TO_TIMESPEC(&base->timers[0].tv, &min);
@@ -457,9 +453,6 @@ ev_loop(void)
 		}
 
 		TIMESPEC_TO_TIMEVAL(&tv, &elapsed);
-
-		base->reserve_from = base->ntimers;
-		base->reserve_till = base->ntimers;
 
 		for (i = 0; i < base->ntimers && !ev_stop; /* nop */) {
 			timersub(&base->timers[i].tv, &tv, &sub);
@@ -483,24 +476,6 @@ ev_loop(void)
 				    poll2ev(base->pfds[i].revents),
 				    base->cbs[i].udata);
 			}
-		}
-
-		if (base->reserve_from == base->reserve_till)
-			continue;
-
-		/* integrate the new timers in the heap */
-		gap = base->reserve_from - base->ntimers;
-		if (gap != 0) {
-			memmove(&base->timers[base->ntimers],
-			    &base->timers[base->reserve_from],
-			    gap * sizeof(*base->timers));
-			base->reserve_from -= gap;
-			base->reserve_till -= gap;
-		}
-
-		for (i = base->ntimers; i < base->reserve_till; ++i) {
-			base->ntimers++;
-			bubbleup(i);
 		}
 	}
 
