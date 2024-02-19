@@ -333,7 +333,7 @@ ev_timer_pending(unsigned int id)
 static void
 bubbledown(size_t i)
 {
-	struct timeval	 tmp;
+	struct evtimer	 tmp;
 	size_t		 l, r, s;
 
 	for (;;) {
