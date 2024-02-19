@@ -171,11 +171,14 @@ AS_IF([test "x$with_Werror" = "xyes"], [
 AC_DEFUN([CC_ADD_CHECK_FLAGS], [
 	AC_MSG_CHECKING([if $CC supports $1 flag])
 	old_CFLAGS="$CFLAGS"
-	CFLAGS="$CFLAGS $1"
-	AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],[])],
-		AC_MSG_RESULT(yes),
+	CFLAGS="$CFLAGS -Werror $1"
+	AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],[])], [
+		AC_MSG_RESULT(yes)
+		CFLAGS="$old_CFLAGS $1"
+	], [
 		AC_MSG_RESULT(no)
-		CFLAGS="$old_CFLAGS")
+		CFLAGS="$old_CFLAGS"
+	])
 ])
 CC_ADD_CHECK_FLAGS([-Wall])
 CC_ADD_CHECK_FLAGS([-Wextra])
