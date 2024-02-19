@@ -657,6 +657,7 @@ void
 vmessage(const char *fmt, va_list ap)
 {
 	ev_timer_cancel(clechotimer);
+	clechotimer = 0;
 
 	free(ministate.curmesg);
 	ministate.curmesg = NULL;
