@@ -379,7 +379,7 @@ ev_timer_cancel(unsigned int id)
 	size_t		 i;
 
 	if (!find_timer(id, &i))
-		return (0);
+		return (-1);
 
 	if (i < base->ntimers) {
 		cancel_timer(i);
