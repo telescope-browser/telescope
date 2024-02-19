@@ -341,12 +341,12 @@ bubbledown(size_t i)
 		r = 2 * i + 2;
 
 		/* base case: there are no children */
-		if (l > base->ntimers)
+		if (l >= base->ntimers)
 			return;
 
 		/* find the smaller child */
 		s = r;
-		if (r > base->ntimers ||
+		if (r >= base->ntimers ||
 		    timercmp(&base->timers[l].tv, &base->timers[r].tv, <))
 			s = l;
 
