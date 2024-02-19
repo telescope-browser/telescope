@@ -144,4 +144,8 @@ long long	 strtonum(const char*, long long, long long, const char**);
 void		 setproctitle(const char*, ...);
 #endif
 
+#ifndef __dead
+#define __dead __attribute__((__noreturn__))
+#endif
+
 #endif /* COMPAT_H */
