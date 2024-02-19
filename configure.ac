@@ -72,6 +72,28 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
 	AC_DEFINE([HAVE_QUEUE_H], 1, [QUEUE_H])
 ], AC_MSG_RESULT(no))
 
+AC_CHECK_DECL(timespecsub,
+    [AC_DEFINE([HAVE_TIMESPECSUB], 1, [have timespecsub])], [],
+    [#include <sys/time.h>])
+
+AC_CHECK_DECL(timercmp,
+    [AC_DEFINE([HAVE_TIMERCMP], 1, [have timercmp])], [],
+    [#include <sys/time.h>])
+
+dnl can't be used as r-value.
+AC_MSG_CHECKING([for TIMEVAL_TO_TIMESPEC])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
+#include <sys/time.h>
+], [
+	struct timeval a = {0, 0};
+	struct timespec b;
+	TIMEVAL_TO_TIMESPEC(&a, &b);
+	return (int)b.tv_sec;
+])], [
+	AC_MSG_RESULT(yes)
+	AC_DEFINE([HAVE_TIMEVAL_TO_TIMESPEC], 1, [have TIMEVAL_TO_TIMESPEC])
+], AC_MSG_RESULT(no))
+
 AC_CHECK_HEADER([endian.h], [AC_DEFINE(HAVE_ENDIAN_H, 1, [have endian.h])], [
 	AC_CHECK_HEADER([sys/endian.h],
 		[AC_DEFINE(HAVE_SYS_ENDIAN_H, 1, [have sys/endian.h])], [
