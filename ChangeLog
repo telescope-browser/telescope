@@ -1,6 +1,6 @@
 2024-02-19  Omar Polo  <op@omarpolo.com>
 
-	* ev.c: replace libevent with ev
+	* ev.c: replace libevent with a custom event loop
 
 2024-02-15  Omar Polo  <op@omarpolo.com>
 
