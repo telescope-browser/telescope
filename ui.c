@@ -1165,7 +1165,7 @@ ui_init(void)
 	wtimeout(body, 0);
 	wtimeout(help, 0);
 
-	mvwprintw(body, 0, 0, "");
+	wmove(body, 0, 0);
 
 	return 1;
 }
