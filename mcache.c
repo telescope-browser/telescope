@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <time.h>
 
 #include "ev.h"
 #include "hist.h"
