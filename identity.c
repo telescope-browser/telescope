@@ -112,19 +112,24 @@ int
 main(int argc, char **argv)
 {
 	const struct cmd	*cmd;
-	int			 ch;
 	size_t			 i;
 
-	while ((ch = getopt(argc, argv, "")) != -1) {
-		switch (ch) {
-		default:
-			usage();
-		}
-	}
-	argc -= optind;
-	argv += optind;
-	optind = 0;
-	optreset = 1;
+	/*
+	 * Can't use portably getopt() since there's no cross-platform
+	 * way of resetting it.
+	 */
+
+	if (argc == 0)
+		usage();
+	argc--, argv++;
+
+	if (argc == 0)
+		usage();
+
+	if (!strcmp(*argv, "--"))
+		argc--, argv++;
+	else if (**argv == '-')
+		usage();
 
 	if (argc == 0)
 		usage();
