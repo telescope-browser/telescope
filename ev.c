@@ -366,17 +366,10 @@ bubbledown(size_t i)
 static inline void
 cancel_timer(size_t i)
 {
-	/* special case: it's the last one */
-	if (i == base->ntimers - 1) {
-		base->ntimers--;
-		memset(&base->timers[base->ntimers], 0, sizeof(*base->timers));
-		return;
-	}
-
-	memcpy(&base->timers[i], &base->timers[base->ntimers - 1],
-	    sizeof(*base->timers));
 	base->ntimers--;
-
+	if (i != base->ntimers)
+		memcpy(&base->timers[i], &base->timers[base->ntimers],
+		    sizeof(*base->timers));
 	bubbledown(i);
 }
 
@@ -394,11 +387,9 @@ ev_timer_cancel(unsigned int id)
 	}
 
 	base->reserve_till--;
-
 	if (i != base->reserve_till)
-		memmove(&base->timers[i], &base->timers[i + 1],
-		    (base->reserve_till - i) * sizeof(*base->timers));
-
+		memcpy(&base->timers[i], &base->timers[base->reserve_till],
+		    sizeof(*base->timers));
 	return (0);
 }
 
