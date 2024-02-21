@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Omar Polo <op@omarpolo.com>
+ * Copyright (c) 2022, 2024 Omar Polo <op@omarpolo.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -43,5 +43,8 @@ int	iri_unparse(const struct iri *, char *, size_t);
 int	iri_human(const struct iri *, char *, size_t);
 int	iri_setport(struct iri *, const char *);
 int	iri_setquery(struct iri *, const char *);
+
+int	iri_urlescape(const char *, char *, size_t);
+int	iri_urlunescape(const char *, char *, size_t);
 
 #endif /* IRI_H */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Omar Polo <op@omarpolo.com>
+ * Copyright (c) 2022, 2024 Omar Polo <op@omarpolo.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -761,4 +761,76 @@ iri_setquery(struct iri *iri, const char *p)
  err:
 	errno = ENOBUFS;
 	return (-1);
+}
+
+int
+iri_urlescape(const char *path, char *buf, size_t len)
+{
+	const char	*hex = "0123456789abcdef";
+	const uint8_t	*p = path;
+
+	while (*p) {
+		if (len == 0)
+			break;
+
+		if (unreserved(*p) || sub_delims(*p) ||
+		    *p == ':' || *p == '@' ||
+		    *p == '/') {
+			*buf++ = *p++;
+			len--;
+			continue;
+		}
+
+		if (len < 3)
+			break;
+		*buf++ = '%';
+		*buf++ = hex[*p >> 4];
+		*buf++ = hex[*p & 0xf];
+		len -= 3;
+		p++;
+	}
+
+	if (len == 0 || *p)
+		return (-1);
+
+	*buf = '\0';
+	return (0);
+}
+
+int
+iri_urlunescape(const char *str, char *buf, size_t len)
+{
+	char		 t[3];
+	unsigned long	 l;
+
+	t[2] = '\0';
+
+	while (*str) {
+		if (len == 0)
+			return (-1);
+
+		if (*str != '%') {
+			*buf++ = *str++;
+			len--;
+			continue;
+		}
+
+		if (!isxdigit((unsigned char)str[1]) ||
+		    !isxdigit((unsigned char)str[2]))
+			return (-1);
+	
+		t[0] = str[1];
+		t[1] = str[2];
+
+		/* we know it's a proper number and will fit a char */
+		l = strtol(t, NULL, 16);
+		*buf++ = (unsigned char)l;
+		len--;
+		str += 3;
+	}
+
+	if (len == 0)
+		return (-1);
+	*buf = '\0';
+	return (0);
 }

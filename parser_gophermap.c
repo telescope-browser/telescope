@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Omar Polo <op@omarpolo.com>
+ * Copyright (c) 2021, 2024 Omar Polo <op@omarpolo.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -21,6 +21,7 @@
 #include <string.h>
 
 #include "parser.h"
+#include "iri.h"
 #include "utils.h"
 
 #ifndef LINE_MAX
@@ -86,11 +87,26 @@ gm_parse(struct parser *p, const char *buf, size_t size)
 	return parser_foreach_line(p, buf, size, gm_foreach_line);
 }
 
+static int
+selector2uri(struct gm_selector *s, char *buf, size_t len)
+{
+	int	 r;
+
+	r = snprintf(buf, len, "gopher://%s:%s/%c%s",
+	    s->addr, s->port, s->type, *s->selector != '/' ? "/" : "");
+	if (r < 0 || (size_t)r >= len)
+		return (-1);
+
+	buf += r;
+	len -= r;
+	return (iri_urlescape(s->selector, buf, len));
+}
+
 static inline int
 emit_line(struct parser *p, enum line_type type, struct gm_selector *s)
 {
 	struct line *l;
-	char buf[LINE_MAX], b[2] = {0};
+	char buf[LINE_MAX];
 
 	if ((l = calloc(1, sizeof(*l))) == NULL)
 		goto err;
@@ -102,18 +118,8 @@ emit_line(struct parser *p, enum line_type type, struct gm_selector *s)
 	case LINE_LINK:
 		if (s->type == 'h' && !strncmp(s->selector, "URL:", 4)) {
 			strlcpy(buf, s->selector+4, sizeof(buf));
-		} else {
-			strlcpy(buf, "gopher://", sizeof(buf));
-			strlcat(buf, s->addr, sizeof(buf));
-			strlcat(buf, ":", sizeof(buf));
-			strlcat(buf, s->port, sizeof(buf));
-			strlcat(buf, "/", sizeof(buf));
-			b[0] = s->type;
-			strlcat(buf, b, sizeof(buf));
-			if (*s->selector != '/')
-				strlcat(buf, "/", sizeof(buf));
-			strlcat(buf, s->selector, sizeof(buf));
-		}
+		} else if (selector2uri(s, buf, sizeof(buf)) == -1)
+			goto err;
 
 		if ((l->alt = strdup(buf)) == NULL)
 			goto err;

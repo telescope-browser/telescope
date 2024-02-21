@@ -676,7 +676,8 @@ load_gopher_url(struct tab *tab, const char *url)
 		return;
 	}
 
-	strlcpy(req.req, path, sizeof(req.req));
+	if (iri_urlunescape(path, req.req, sizeof(req.req)) == -1)
+		strlcpy(req.req, path, sizeof(req.req));
 	if (tab->iri.iri_flags & IH_QUERY) {
 		strlcat(req.req, "?", sizeof(req.req));
 		strlcat(req.req, tab->iri.iri_query, sizeof(req.req));
