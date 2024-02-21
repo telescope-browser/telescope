@@ -1,3 +1,13 @@
+2024-02-21  Omar Polo  <op@omarpolo.com>
+
+	* parser_gophermap.c (emit_line): fix handling of gopher selector with
+	spaces and other characters disallowed in URI paths.
+
+2024-02-20  Omar Polo  <op@omarpolo.com>
+
+	pages/about_license.gmi.in: extend the about:license to include the
+	full copyrights and license texts.
+
 2024-02-19  Omar Polo  <op@omarpolo.com>
 
 	* ev.c: replace libevent with a custom event loop
