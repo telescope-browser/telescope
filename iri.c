@@ -646,7 +646,9 @@ iri_unparse(const struct iri *i, char *buf, size_t buflen)
 	int	 need_ss, have_path, need_s;
 	int	 r;
 
-	need_ss = (i->iri_flags & IH_AUTHORITY);
+	/* file is a quirky scheme */
+	need_ss = (i->iri_flags & IH_AUTHORITY) ||
+	    !strcmp(i->iri_scheme, "file");
 	have_path = i->iri_flags & IH_PATH;
 	need_s = have_path && (i->iri_flags & IH_AUTHORITY) &&
 	    i->iri_path[0] != '/';

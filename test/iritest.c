@@ -170,5 +170,8 @@ main(void)
 	ret |= setquery(base, "%20", "gemini://a/?%2520");
 	ret |= setquery(base, "%20%20%20", "gemini://a/?%2520%2520%2520");
 
+	ret |= resolve(base, "file:///tmp/foo", "file:///tmp/foo");
+	ret |= resolve(base, "file:/tmp/foo", "file:///tmp/foo");
+
 	return (ret);
 }
