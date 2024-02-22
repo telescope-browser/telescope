@@ -87,6 +87,45 @@ setquery(const char *iri, const char *query, const char *expected)
 	return (0);
 }
 
+static int
+urlencode(const char *str, const char *exp)
+{
+	char			 enc[512];
+	char			 dec[512];
+
+	if (iri_urlescape(str, enc, sizeof(enc)) == -1) {
+		fprintf(stderr, "FAIL can't percent encode %s\n", str);
+		return (1);
+	}
+
+	if (strcmp(enc, exp) != 0) {
+		fprintf(stderr, "FAIL %%enc: expecting <%s>; got <%s>\n",
+		    exp, enc);
+		return (1);
+	}
+
+	if (iri_urlunescape(enc, dec, sizeof(dec)) == -1) {
+		fprintf(stderr, "FAIL can't %%decode %s\n", enc);
+		return (1);
+	}
+
+	if (strcmp(str, dec) != 0) {
+		fprintf(stderr,
+		    "FAIL urlencode/decode not identity: <%s> vs <%s>\n",
+		    str, dec);
+		return (1);
+	}
+
+	if (strcmp(enc, exp) != 0) {
+		fprintf(stderr, "FAIL %%enc: expecting <%s>; got <%s>\n",
+		    exp, enc);
+		return (1);
+	}
+
+	fprintf(stderr, "OK urlencode(\"%s\") -> %s\n", str, enc);
+	return (0);
+}
+
 int
 main(void)
 {
@@ -172,6 +211,12 @@ main(void)
 
 	ret |= resolve(base, "file:///tmp/foo", "file:///tmp/foo");
 	ret |= resolve(base, "file:/tmp/foo", "file:///tmp/foo");
+
+	ret |= urlencode("foobar", "foobar");
+	ret |= urlencode("foo/bar", "foo/bar");
+	ret |= urlencode("foo bar", "foo%20bar");
+	ret |= urlencode("/Teloschistes flavicans",
+	    "/Teloschistes%20flavicans");
 
 	return (ret);
 }
