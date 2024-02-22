@@ -38,6 +38,7 @@
 #include "ev.h"
 #include "fs.h"
 #include "hist.h"
+#include "imsgev.h"
 #include "iri.h"
 #include "keymap.h"
 #include "mcache.h"

@@ -71,41 +71,6 @@ unicode_isgraph(uint32_t cp)
 	return 1;
 }
 
-void
-imsg_event_add(struct imsgev *iev)
-{
-	iev->events = EV_READ;
-	if (iev->ibuf.w.queued)
-		iev->events |= EV_WRITE;
-
-	ev_add(iev->ibuf.fd, iev->events, iev->handler, iev);
-}
-
-int
-imsg_compose_event(struct imsgev *iev, uint16_t type, uint32_t peerid,
-    pid_t pid, int fd, const void *data, uint16_t datalen)
-{
-	int	ret;
-
-	if ((ret = imsg_compose(&iev->ibuf, type, peerid, pid, fd, data,
-	    datalen) != -1))
-		imsg_event_add(iev);
-
-	return ret;
-}
-
-int
-ibuf_borrow_str(struct ibuf *ibuf, char **data)
-{
-	size_t		 len;
-
-	if ((*data = ibuf_data(ibuf)) == NULL ||
-	    (len = ibuf_size(ibuf)) == 0 ||
-	    (*data)[len - 1] != '\0')
-		return -1;
-	return 0;
-}
-
 void *
 hash_alloc(size_t len, void *d)
 {

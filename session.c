@@ -31,6 +31,7 @@
 #include "ev.h"
 #include "fs.h"
 #include "hist.h"
+#include "imsgev.h"
 #include "minibuffer.h"
 #include "session.h"
 #include "tofu.h"

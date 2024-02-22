@@ -31,31 +31,6 @@
 #define SIDE_WINDOW_LEFT	0x1
 #define SIDE_WINDOW_BOTTOM	0x2
 
-struct imsgev {
-	struct imsgbuf	 ibuf;
-	void		(*handler)(int, int, void *);
-	short		 events;
-};
-
-#define IMSG_DATA_SIZE(imsg)	((imsg).hdr.len - IMSG_HEADER_SIZE)
-
-enum imsg_type {
-	/* ui <-> net */
-	IMSG_GET,		/* struct get_req, peerid is the tab id */
-	IMSG_ERR,
-	IMSG_CHECK_CERT,
-	IMSG_CERT_STATUS,
-	IMSG_REPLY,		/* reply code (int) + meta string */
-	IMSG_PROCEED,
-	IMSG_STOP,
-	IMSG_BUF,
-	IMSG_EOF,
-	IMSG_QUIT,
-
-	/* ui <-> ctl */
-	IMSG_CTL_OPEN_URL,
-};
-
 enum line_type {
 	/* text/gemini */
 	LINE_TEXT,

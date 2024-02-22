@@ -31,6 +31,7 @@
 
 #include "control.h"
 #include "ev.h"
+#include "imsgev.h"
 #include "minibuffer.h"
 #include "telescope.h"
 #include "utils.h"

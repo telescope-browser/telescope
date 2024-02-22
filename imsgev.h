@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, 2024 Omar Polo <op@omarpolo.com>
+ * Copyright (c) 2021, 2024 Omar Polo <op@omarpolo.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,17 +14,32 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef UTILS_H
-#define UTILS_H
+struct imsgev {
+	struct imsgbuf	 ibuf;
+	void		(*handler)(int, int, void *);
+	short		 events;
+};
 
-int		 mark_nonblock_cloexec(int);
+#define IMSG_DATA_SIZE(imsg)	((imsg).hdr.len - IMSG_HEADER_SIZE)
 
-int		 has_suffix(const char *, const char *);
-int		 unicode_isspace(uint32_t);
-int		 unicode_isgraph(uint32_t);
+enum imsg_type {
+	/* ui <-> net */
+	IMSG_GET,		/* struct get_req, peerid is the tab id */
+	IMSG_ERR,
+	IMSG_CHECK_CERT,
+	IMSG_CERT_STATUS,
+	IMSG_REPLY,		/* reply code (int) + meta string */
+	IMSG_PROCEED,
+	IMSG_STOP,
+	IMSG_BUF,
+	IMSG_EOF,
+	IMSG_QUIT,
 
-void		*hash_alloc(size_t, void *);
-void		*hash_calloc(size_t, size_t, void *);
-void		 hash_free(void *, void *);
+	/* ui <-> ctl */
+	IMSG_CTL_OPEN_URL,
+};
 
-#endif /* UTILS_H */
+void		 imsg_event_add(struct imsgev *);
+int		 imsg_compose_event(struct imsgev *, uint16_t, uint32_t, pid_t, int, const void *, uint16_t);
+
+int		 ibuf_borrow_str(struct ibuf *, char **);

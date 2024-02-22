@@ -28,6 +28,8 @@ telescope_SOURCES =	bufio.c			\
 			genemoji.sh		\
 			help.c			\
 			hist.c			\
+			imsgev.c		\
+			imsgev.h		\
 			iri.c			\
 			iri.h			\
 			keymap.c		\
@@ -65,8 +67,6 @@ telescope_SOURCES =	bufio.c			\
 telescope_identity_SOURCES =			\
 			certs.c			\
 			certs.h			\
-			ev.c			\
-			ev.h			\
 			fs.c			\
 			fs.h			\
 			hist.c			\

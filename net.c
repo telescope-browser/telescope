@@ -40,6 +40,7 @@
 
 #include "bufio.h"
 #include "ev.h"
+#include "imsgev.h"
 #include "telescope.h"
 #include "utils.h"
 
