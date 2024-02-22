@@ -41,6 +41,9 @@ struct bufio {
 	struct buf	 rbuf;
 };
 
+#define	BUFIO_WANT_READ		0x1
+#define	BUFIO_WANT_WRITE	0x2
+
 int	buf_init(struct buf *);
 int	buf_has_line(struct buf *, const char *);
 void	buf_drain(struct buf *, size_t);

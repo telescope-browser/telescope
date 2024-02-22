@@ -124,6 +124,20 @@ die(void)
 	abort(); 		/* TODO */
 }
 
+static inline int
+req_bio_ev(struct req *req)
+{
+	int	 ret, ev;
+
+	ret = 0;
+	ev = bufio_ev(&req->bio);
+	if (ev & BUFIO_WANT_READ)
+		ret |= EV_READ;
+	if (ev & BUFIO_WANT_WRITE)
+		ret |= EV_WRITE;
+	return (ret);
+}
+
 static void
 close_conn(int fd, int ev, void *d)
 {
@@ -148,7 +162,7 @@ close_conn(int fd, int ev, void *d)
 	    req->fd != -1 &&
 	    bufio_close(&req->bio) == -1 &&
 	    errno == EAGAIN) {
-		ev_add(req->fd, bufio_ev(&req->bio), close_conn, req);
+		ev_add(req->fd, req_bio_ev(req), close_conn, req);
 		return;
 	}
 
@@ -440,8 +454,7 @@ net_ev(int fd, int ev, void *d)
 
 	if (req->state == CONN_HANDSHAKE) {
 		if (bufio_handshake(&req->bio) == -1 && errno == EAGAIN) {
-			ev_add(req->fd, bufio_ev(&req->bio),
-			    net_ev, req);
+			ev_add(req->fd, req_bio_ev(req), net_ev, req);
 			return;
 		}
 
@@ -492,7 +505,7 @@ net_ev(int fd, int ev, void *d)
 			return;
 		}
 		if (endl == NULL) {
-			ev_add(req->fd, bufio_ev(&req->bio), net_ev, req);
+			ev_add(req->fd, req_bio_ev(req), net_ev, req);
 			return;
 		}
 		*endl = '\0';
@@ -524,7 +537,7 @@ net_ev(int fd, int ev, void *d)
 		return;
 	}
 
-	ev_add(req->fd, bufio_ev(&req->bio), net_ev, req);
+	ev_add(req->fd, req_bio_ev(req), net_ev, req);
 }
 
 static int

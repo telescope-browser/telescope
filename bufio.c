@@ -36,7 +36,6 @@
 #include <unistd.h>
 
 #include "bufio.h"
-#include "ev.h"		/* for EV_* flags */
 
 int
 buf_init(struct buf *buf)
@@ -144,10 +143,13 @@ bufio_close(struct bufio *bio)
 	case 0:
 		return 0;
 	case TLS_WANT_POLLIN:
+		errno = EAGAIN;
+		bio->pflags = BUFIO_WANT_READ;
+		return (-1);
 	case TLS_WANT_POLLOUT:
 		errno = EAGAIN;
-		bio->pflags = EV_READ | EV_WRITE;
-		/* fallthrough */
+		bio->pflags = BUFIO_WANT_WRITE;
+		return (-1);
 	default:
 		return (-1);
 	}
@@ -213,9 +215,9 @@ bufio_ev(struct bufio *bio)
 	if (bio->pflags)
 		return (bio->pflags);
 
-	ev = EV_READ;
+	ev = BUFIO_WANT_READ;
 	if (bio->wbuf.len != 0)
-		ev |= EV_WRITE;
+		ev |= BUFIO_WANT_WRITE;
 
 	return (ev);
 }
@@ -232,10 +234,13 @@ bufio_handshake(struct bufio *bio)
 	case 0:
 		return (0);
 	case TLS_WANT_POLLIN:
+		errno = EAGAIN;
+		bio->pflags = BUFIO_WANT_READ;
+		return (-1);
 	case TLS_WANT_POLLOUT:
 		errno = EAGAIN;
-		bio->pflags = EV_READ | EV_WRITE;
-		/* fallthrough */
+		bio->pflags = BUFIO_WANT_WRITE;
+		return (-1);
 	default:
 		return (-1);
 	}
@@ -258,9 +263,12 @@ bufio_read(struct bufio *bio)
 		    rbuf->cap - rbuf->len);
 		switch (r) {
 		case TLS_WANT_POLLIN:
-		case TLS_WANT_POLLOUT:
-			bio->pflags = EV_READ | EV_WRITE;
 			errno = EAGAIN;
+			bio->pflags = BUFIO_WANT_READ;
+			return (-1);
+		case TLS_WANT_POLLOUT:
+			errno = EAGAIN;
+			bio->pflags = BUFIO_WANT_WRITE;
 			return (-1);
 		case -1:
 			return (-1);
@@ -299,9 +307,12 @@ bufio_write(struct bufio *bio)
 	if (bio->ctx) {
 		switch (w = tls_write(bio->ctx, wbuf->buf, wbuf->len)) {
 		case TLS_WANT_POLLIN:
-		case TLS_WANT_POLLOUT:
-			bio->pflags = EV_WRITE | EV_READ;
 			errno = EAGAIN;
+			bio->pflags = BUFIO_WANT_READ;
+			return (-1);
+		case TLS_WANT_POLLOUT:
+			errno = EAGAIN;
+			bio->pflags = BUFIO_WANT_WRITE;
 			return (-1);
 		case -1:
 			return (-1);
