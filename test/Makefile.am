@@ -8,8 +8,7 @@ gmparser_SOURCES =	gmparser.c				\
 			$(top_srcdir)/iri.h			\
 			$(top_srcdir)/parser.c			\
 			$(top_srcdir)/parser.h			\
-			$(top_srcdir)/parser_gophermap.c	\
-			$(top_srcdir)/utils.c
+			$(top_srcdir)/parser_gophermap.c
 
 gmiparser_SOURCES =	gmiparser.c				\
 			$(top_srcdir)/compat.h			\
@@ -17,8 +16,7 @@ gmiparser_SOURCES =	gmiparser.c				\
 			$(top_srcdir)/hist.h			\
 			$(top_srcdir)/parser.c			\
 			$(top_srcdir)/parser.h			\
-			$(top_srcdir)/parser_gemtext.c		\
-			$(top_srcdir)/utils.c
+			$(top_srcdir)/parser_gemtext.c
 
 iritest_SOURCES =	iritest.c				\
 			$(top_srcdir)/iri.c			\

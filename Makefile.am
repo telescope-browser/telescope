@@ -73,9 +73,7 @@ telescope_identity_SOURCES =			\
 			hist.h			\
 			identity.c		\
 			parser.c		\
-			parser.h		\
-			utils.c			\
-			utils.h
+			parser.h
 
 noinst_PROGRAMS =	pagebundler
 pagebundler_SOURCES =	pagebundler.c
