@@ -260,7 +260,6 @@ req_resolve(int fd, int ev, void *d)
 
 	req->servinfo = ar.ar_addrinfo;
 
-	req->fd = -1;
 	req->p = req->servinfo;
 	net_ev(-1, EV_READ, req);
 }
@@ -604,6 +603,10 @@ handle_dispatch_imsg(int fd, int event, void *d)
 			if ((req = calloc(1, sizeof(*req))) == NULL)
 				die();
 
+			req->fd = -1;
+#if HAVE_ASR_RUN
+			req->ar_fd = -1;
+#endif
 			req->ccert_fd = -1;
 			req->id = imsg_get_id(&imsg);
 			TAILQ_INSERT_HEAD(&reqhead, req, reqs);
