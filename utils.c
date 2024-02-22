@@ -16,7 +16,6 @@
 
 #include "compat.h"
 
-#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
@@ -53,14 +52,6 @@ has_suffix(const char *str, const char *sufx)
 		return 0;
 
 	return !strcmp(str + (l - s), sufx);
-}
-
-int
-unicode_isgraph(uint32_t cp)
-{
-	if (cp < INT8_MAX)
-		return isgraph(cp);
-	return 1;
 }
 
 void *

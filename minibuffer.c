@@ -18,6 +18,7 @@
 
 #include <sys/time.h>
 
+#include <ctype.h>
 #include <errno.h>
 #include <limits.h>
 #include <stdio.h>
@@ -69,6 +70,14 @@ struct ministate ministate;
 struct buffer minibufferwin;
 
 int in_minibuffer;
+
+static int
+codepoint_isgraph(uint32_t cp)
+{
+	if (cp < INT8_MAX)
+		return isgraph((unsigned char)cp);
+	return 1;
+}
 
 static inline int
 matches(char **words, size_t len, struct line *l)
@@ -247,7 +256,7 @@ void
 sensible_self_insert(void)
 {
 	if (thiskey.meta ||
-	    (!unicode_isgraph(thiskey.key) && thiskey.key != ' ')) {
+	    (!codepoint_isgraph(thiskey.key) && thiskey.key != ' ')) {
 		global_key_unbound();
 		return;
 	}
@@ -496,7 +505,7 @@ yornp_abort(void)
 static void
 read_self_insert(void)
 {
-	if (thiskey.meta || !unicode_isgraph(thiskey.cp)) {
+	if (thiskey.meta || !codepoint_isgraph(thiskey.cp)) {
 		global_key_unbound();
 		return;
 	}
