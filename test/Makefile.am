@@ -31,6 +31,8 @@ gmiparser_CFLAGS =	-I$(top_srcdir)
 iritest_CFLAGS =	-I$(top_srcdir)
 evtest_CFLAGS =		-I$(top_srcdir)
 
+LDADD =			$(LIBOBJS)
+
 EXTRA_DIST =		test-gmparser	\
 			gm-00		\
 			gm-01		\
