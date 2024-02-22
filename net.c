@@ -70,7 +70,7 @@ struct req {
 	int			 ccert_fd;
 
 	int			 eof;
-	unsigned int		 handshake_tout;
+	unsigned int		 timer;
 	struct bufio		 bio;
 
 	int			 conn_error;
@@ -80,7 +80,6 @@ struct req {
 #if HAVE_ASR_RUN
 	struct asr_query	*q;
 	int			 ar_fd;
-	unsigned long		 ar_timeout;
 #endif
 
 	TAILQ_ENTRY(req)	 reqs;
@@ -134,19 +133,15 @@ close_conn(int fd, int ev, void *d)
 		req->state = CONN_CLOSE;
 
 #if HAVE_ASR_RUN
-	if (req->ar_timeout) {
-		ev_timer_cancel(req->ar_timeout);
-		req->ar_timeout = 0;
-	}
 	if (req->q) {
 		asr_abort(req->q);
 		ev_del(req->ar_fd);
 	}
 #endif
 
-	if (req->handshake_tout != 0) {
-		ev_timer_cancel(req->handshake_tout);
-		req->handshake_tout = 0;
+	if (req->timer != 0) {
+		ev_timer_cancel(req->timer);
+		req->timer = 0;
 	}
 
 	if (req->state == CONN_CLOSE &&
@@ -226,9 +221,9 @@ req_resolve(int fd, int ev, void *d)
 
 	if (fd != -1)
 		ev_del(fd);
-	if (req->ar_timeout) {
-		ev_timer_cancel(req->ar_timeout);
-		req->ar_timeout = 0;
+	if (req->timer) {
+		ev_timer_cancel(req->timer);
+		req->timer = 0;
 	}
 
 	if (asr_run(req->q, &ar) == 0) {
@@ -247,8 +242,8 @@ req_resolve(int fd, int ev, void *d)
 
 		tv.tv_sec = ar.ar_timeout / 1000;
 		tv.tv_usec = (ar.ar_timeout % 1000) * 1000;
-		req->ar_timeout = ev_timer(&tv, req_resolve, req);
-		if (req->ar_timeout == 0)
+		req->timer = ev_timer(&tv, req_resolve, req);
+		if (req->timer == 0)
 			close_with_errf(req, "ev_timer failure: %s",
 			    strerror(errno));
 		return;
@@ -433,9 +428,9 @@ net_ev(int fd, int ev, void *d)
 				close_with_err(req, "failed to setup TLS");
 				return;
 			}
-			req->handshake_tout = ev_timer(&timeout_for_handshake,
+			req->timer = ev_timer(&timeout_for_handshake,
 			    net_ev, req);
-			if (req->handshake_tout == 0) {
+			if (req->timer == 0) {
 				close_with_err(req, "failed to setup"
 				    " handshake timer");
 				return;
@@ -451,8 +446,8 @@ net_ev(int fd, int ev, void *d)
 			return;
 		}
 
-		ev_timer_cancel(req->handshake_tout);
-		req->handshake_tout = 0;
+		ev_timer_cancel(req->timer);
+		req->timer = 0;
 
 		req->state = CONN_HEADER;
 
