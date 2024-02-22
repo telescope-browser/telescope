@@ -16,9 +16,6 @@
 
 #include "compat.h"
 
-/* XXX needs some work to run on top of ev */
-#undef HAVE_ASR_RUN
-
 #include <sys/mman.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -80,8 +77,9 @@ struct req {
 
 	struct addrinfo		*servinfo, *p;
 #if HAVE_ASR_RUN
-	struct addrinfo		 hints;
-	struct event_asr	*asrev;
+	struct asr_query	*q;
+	int			 ar_fd;
+	unsigned long		 ar_timeout;
 #endif
 
 	TAILQ_ENTRY(req)	 reqs;
@@ -90,12 +88,6 @@ struct req {
 static struct req	*req_by_id(uint32_t);
 
 static void	 die(void) __attribute__((__noreturn__));
-
-
-#if HAVE_ASR_RUN
-static void	 query_done(struct asr_result*, void*);
-#endif
-static void	 conn_towards(struct req*);
 
 static void	 close_with_err(struct req*, const char*);
 static void	 close_with_errf(struct req*, const char*, ...)
@@ -132,62 +124,6 @@ die(void)
 	abort(); 		/* TODO */
 }
 
-#if HAVE_ASR_RUN
-static void
-query_done(struct asr_result *res, void *d)
-{
-	struct req	*req = d;
-
-	req->asrev = NULL;
-	if (res->ar_gai_errno != 0) {
-		close_with_errf(req, "failed to resolve %s: %s",
-		    req->host, gai_strerror(res->ar_gai_errno));
-		return;
-	}
-
-	req->fd = -1;
-	req->servinfo = res->ar_addrinfo;
-	req->p = res->ar_addrinfo;
-	req->state = CONN_CONNECTING;
-	net_ev(-1, EV_READ, req);
-}
-
-static void
-conn_towards(struct req *req)
-{
-	struct asr_query	*q;
-
-	req->hints.ai_family = AF_UNSPEC;
-	req->hints.ai_socktype = SOCK_STREAM;
-	q = getaddrinfo_async(req->host, req->port, &req->hints,
-	    NULL);
-	req->asrev = event_asr_run(q, query_done, req);
-}
-#else
-static void
-conn_towards(struct req *req)
-{
-	struct addrinfo	 hints;
-	int		 status;
-
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = AF_UNSPEC;
-	hints.ai_socktype = SOCK_STREAM;
-
-	if ((status = getaddrinfo(req->host, req->port, &hints,
-	    &req->servinfo))) {
-		close_with_errf(req, "failed to resolve %s: %s",
-		    req->host, gai_strerror(status));
-		return;
-	}
-
-	req->fd = -1;
-	req->p = req->servinfo;
-	req->state = CONN_CONNECTING;
-	net_ev(-1, EV_READ, req);
-}
-#endif
-
 static void
 close_conn(int fd, int ev, void *d)
 {
@@ -197,8 +133,14 @@ close_conn(int fd, int ev, void *d)
 		req->state = CONN_CLOSE;
 
 #if HAVE_ASR_RUN
-	if (req->asrev != NULL)
-		event_asr_abort(req->asrev);
+	if (req->ar_timeout) {
+		ev_timer_cancel(req->ar_timeout);
+		req->ar_timeout = 0;
+	}
+	if (req->q) {
+		asr_abort(req->q);
+		ev_del(req->ar_fd);
+	}
 #endif
 
 	if (req->handshake_tout != 0) {
@@ -258,6 +200,97 @@ close_with_errf(struct req *req, const char *fmt, ...)
 	close_with_err(req, s);
 	free(s);
 }
+
+#if HAVE_ASR_RUN
+static void
+req_resolve(int fd, int ev, void *d)
+{
+	struct req		*req = d;
+	struct addrinfo		 hints;
+	struct asr_result	 ar;
+	struct timeval		 tv;
+
+	if (req->q == NULL) {
+		memset(&hints, 0, sizeof(hints));
+		hints.ai_family = AF_UNSPEC;
+		hints.ai_socktype = SOCK_STREAM;
+
+		req->q = getaddrinfo_async(req->host, req->port, &hints, NULL);
+		if (req->q == NULL) {
+			close_with_errf(req, "getaddrinfo_async: %s",
+			    strerror(errno));
+			return;
+		}
+	}
+
+	if (fd != -1)
+		ev_del(fd);
+	if (req->ar_timeout) {
+		ev_timer_cancel(req->ar_timeout);
+		req->ar_timeout = 0;
+	}
+
+	if (asr_run(req->q, &ar) == 0) {
+		ev = 0;
+		if (ar.ar_cond & ASR_WANT_READ)
+			ev |= EV_READ;
+		if (ar.ar_cond & ASR_WANT_WRITE)
+			ev |= EV_WRITE;
+
+		req->ar_fd = ar.ar_fd;
+		if (ev_add(req->ar_fd, ev, req_resolve, req) == -1) {
+			close_with_errf(req, "ev_add failure: %s",
+			    strerror(errno));
+			return;
+		}
+
+		tv.tv_sec = ar.ar_timeout / 1000;
+		tv.tv_usec = (ar.ar_timeout % 1000) * 1000;
+		req->ar_timeout = ev_timer(&tv, req_resolve, req);
+		if (req->ar_timeout == 0)
+			close_with_errf(req, "ev_timer failure: %s",
+			    strerror(errno));
+		return;
+	}
+
+	req->ar_fd = -1;
+	req->q = NULL;
+
+	if (ar.ar_gai_errno) {
+		close_with_errf(req, "failed to resolve %s: %s",
+		    req->host, gai_strerror(ar.ar_gai_errno));
+		return;
+	}
+
+	req->servinfo = ar.ar_addrinfo;
+
+	req->fd = -1;
+	req->p = req->servinfo;
+	net_ev(-1, EV_READ, req);
+}
+#else
+static void
+req_resolve(int fd, int ev, struct req *req)
+{
+	struct addrinfo		 hints;
+	int			 s;
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+
+	s = getaddrinfo(req->host, req->port, &hints, &req->servinfo);
+	if (s != 0) {
+		close_with_errf(req, "failed to resolve %s: %s",
+		    req->host, gai_strerror(s));
+		return;
+	}
+
+	req->fd = -1;
+	req->p = req->servinfo;
+	net_ev(-1, EV_READ, req);
+}
+#endif
 
 static int
 try_to_connect(struct req *req)
@@ -592,7 +625,7 @@ handle_dispatch_imsg(int fd, int event, void *d)
 
 			req->len = strlen(req->req);
 			req->proto = r.proto;
-			conn_towards(req);
+			req_resolve(-1, 0, req);
 			break;
 
 		case IMSG_CERT_STATUS:
