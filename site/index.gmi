@@ -42,11 +42,7 @@ Source code and precompiled binaries for linux are available:
 
 => https://github.com/omar-polo/telescope/releases/download/0.8/telescope.amd64	telescope.amd64
 
-The dependencies are:
-* libncurses
-* libevent
-* libtls (from either LibreSSL or libretls)
-* yacc (or GNU bison)
+Telescope depends are ncursesw, libtls or libretls, and pkg-config.  libgrapheme is also needed, although there's a bundled copy.  When building from a git checkout yacc (or bison) is also needed.
 
 Once all the dependencies are installed, building is as easy as:
 
@@ -79,34 +75,40 @@ telescope.amd64: OK
 
 ## Changelog
 
-0.8.1  “Le Scarpe Volanti” buildfix release — Released May 25, 2022
-
-* Fix the build on macos.  Reported by sikmir, thanks!
-
-
-0.8 “Le Scarpe Volanti” — Released May 25, 2022
+0.9 “Cielo Super Acceso” — Released February 2X, 2024
 
 ### New features
-* save and restore scroll position
-* new command reply-last-input; idea from a conversation with thfr@, thanks!
-* allow push urls to an already opened telescope session
-* autocompletions for load-url and load-current-url
-* new command write-buffer (with alias w)
-* new command mini-kill-whole-line for the minibuffer
-* split the minibuffer input into words and try to match out of order
+
+* Initial client certificate support.
+* Use libgrapheme for text reflowing: improves the word-wrapping for languages that don't use latin characters.
+* New commands for quick navigation: `up', `root' and `home' bound to "g u", "g r" and "g h" respectively.
+* Added a `search' command to quickly consult a search engine, as well as the `default-search-engine' option.
+* Added `load-url-use-heuristic' configuration option.
+* Added `default-protocol' configuration option.
+* Added telescope-identity(1) to create, delete and manage client certificates.
 
 ### Improvements
-* move aliases at the top of the completions
-* add alias `open' for load-url; suggested by Florian, thanks!
-* update emoji-data.txt to 14.0.0
-* persist the list of visited URLs to the disk
-* fix builds out-of-tree
-* correctly mark variables in the manpage so it's possible to jump to them
-* rework completions selection: the selected entry is *always* the one used.  if nothing is selected, the minibuffer content is used instead.
-* merge the ui and fs processes
-* rate-limit the update of the download pane
+
+* Implemented a new URI parser: this will allow in the future to support IRIs too.
+* Allow configuration options to be booleans ("on" / "off") and change a few options where it made sense.  The old settings with 0 and 1 will continue to work for some time.
+* Removed the dependency on libevent: Telescope now uses a custom built-in event loop.
+* Rework the history management: the code is cleaner and requires less memory.
+* Reduced the amount of memory needed for rendering the pages by roughly 50%.
+* Landlock sandboxing is enabled again on Linux.
+* Update data/emoji.txt to UNICODE 15.0.
 
 ### Bug Fixes
-* fix parsing of invalid link lines
-* initialize each tab' loadingev timer event
-* fix the build on recent version of musl
+
+* Fixed wrapping of link lines.
+* Fixed `bookmark-page' bogus error message.
+* Fixed caching of finger pages too.
+* Save to the persistent history finger:// and gopher:// URLs as well.
+* Fixed handling of gopher selectors with spaces and other "funny" characters.
+* Improved handling of connect(2) failures, as well as error reporting.
+* Changed the default colours for patch/diff to magenta and cyan.
+* Updated the link to the official gemini project capsule in about:new.
+* Corrected and extended about:license.
+
+### Breaking changes
+
+* Removed the -C/--colours flag: telescope is not a colour picker.
