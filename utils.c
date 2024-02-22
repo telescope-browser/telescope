@@ -56,14 +56,6 @@ has_suffix(const char *str, const char *sufx)
 }
 
 int
-unicode_isspace(uint32_t cp)
-{
-	if (cp < INT8_MAX)
-		return isspace(cp);
-	return 0;
-}
-
-int
 unicode_isgraph(uint32_t cp)
 {
 	if (cp < INT8_MAX)

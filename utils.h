@@ -20,7 +20,6 @@
 int		 mark_nonblock_cloexec(int);
 
 int		 has_suffix(const char *, const char *);
-int		 unicode_isspace(uint32_t);
 int		 unicode_isgraph(uint32_t);
 
 void		*hash_alloc(size_t, void *);
