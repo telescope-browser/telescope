@@ -4,6 +4,8 @@ gmparser_SOURCES =	gmparser.c				\
 			$(top_srcdir)/compat.h			\
 			$(top_srcdir)/hist.c			\
 			$(top_srcdir)/hist.h			\
+			$(top_srcdir)/iri.c			\
+			$(top_srcdir)/iri.h			\
 			$(top_srcdir)/parser.c			\
 			$(top_srcdir)/parser.h			\
 			$(top_srcdir)/parser_gophermap.c	\
