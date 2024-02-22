@@ -89,6 +89,15 @@
 
 	* iri.c: introduce the new URI/IRI parser.
 
+2022-11-07  Omar Polo  <op@omarpolo.com>
+
+	* u/wrap.c (push_line): reduce the amount of memory needed for the
+	rendering by roughly 50%.
+
+2022-10-09  Omar Polo  <op@omarpolo.com>
+
+	* u/wrap.c (wrap_text): use libgrapheme for text reflowing
+
 2022-05-25  Omar Polo  <op@omarpolo.com>
 
 	* configure.ac: tag 0.8.1 "Le Scarpe Volanti"
