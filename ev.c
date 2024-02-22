@@ -425,6 +425,7 @@ ev_loop(void)
 {
 	struct timespec	 elapsed, beg, end;
 	struct timeval	 tv, sub, *min;
+	struct evcb	 cb;
 	int		 n, msec;
 	size_t		 i;
 
@@ -456,9 +457,14 @@ ev_loop(void)
 		for (i = 0; i < base->ntimers && !ev_stop; /* nop */) {
 			timersub(&base->timers[i].tv, &tv, &sub);
 			if (sub.tv_sec <= 0) {
-				base->timers[i].cb.cb(-1, EV_TIMEOUT,
-				    base->timers[i].cb.udata);
+				/*
+				 * delete the timer before calling its
+				 * callback; protects from timer that
+				 * attempt to delete themselves.
+				 */
+				memcpy(&cb, &base->timers[i].cb, sizeof(cb));
 				cancel_timer(i);
+				cb.cb(-1, EV_TIMEOUT, cb.udata);
 				continue;
 			}
 
