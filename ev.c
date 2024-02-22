@@ -423,9 +423,9 @@ poll2ev(int ev)
 int
 ev_loop(void)
 {
-	struct timespec	 elapsed, beg, end, min, *wait;
-	struct timeval	 tv, sub;
-	int		 n;
+	struct timespec	 elapsed, beg, end;
+	struct timeval	 tv, sub, *min;
+	int		 n, msec;
 	size_t		 i;
 
 	while (!ev_stop) {
@@ -433,26 +433,25 @@ ev_loop(void)
 		base->reserve_from = base->ntimers;
 		base->reserve_till = base->ntimers;
 
-		wait = NULL;
+		msec = -1;
 		if (base->ntimers) {
-			TIMEVAL_TO_TIMESPEC(&base->timers[0].tv, &min);
-			wait = &min;
+			min = &base->timers[0].tv;	
+			msec = min->tv_sec * 1000 + (min->tv_usec + 999) / 1000;
 		}
 
 		clock_gettime(CLOCK_MONOTONIC, &beg);
-		if ((n = ppoll(base->pfds, base->len, wait, NULL)) == -1) {
+		if ((n = poll(base->pfds, base->len, msec)) == -1) {
 			if (errno != EINTR)
 				return -1;
 		}
 
 		if (n == 0)
-			memcpy(&elapsed, &min, sizeof(min));
+			memcpy(&tv, min, sizeof(tv));
 		else {
 			clock_gettime(CLOCK_MONOTONIC, &end);
 			timespecsub(&end, &beg, &elapsed);
+			TIMESPEC_TO_TIMEVAL(&tv, &elapsed);
 		}
-
-		TIMESPEC_TO_TIMEVAL(&tv, &elapsed);
 
 		for (i = 0; i < base->ntimers && !ev_stop; /* nop */) {
 			timersub(&base->timers[i].tv, &tv, &sub);
