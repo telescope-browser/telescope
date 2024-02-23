@@ -32,44 +32,40 @@ The UI is strongly inspired from Emacs and W3M, so you’ll find some familiar c
 <p class='repology'><a href='REPOLOGY_URL'><img src='REPOLOGY_BANNER' alt='distro that provide a telescope package' /></a></p>
 => REPOLOGY_URL Some distros provide a package — thanks to the maintainers!
 
-Source code and precompiled binaries for linux are available:
+Source code is available for download:
 
-=> https://github.com/omar-polo/telescope/releases/download/0.8.1/telescope-0.8.1.tar.gz telescope-0.8.1.tar.gz
+=> https://ftp.omarpolo.com/telescope-CURRV.tar.gz telescope-CURRV.tar.gz
 
 => https://git.omarpolo.com/?index_page=&path=telescope.git&action=summary git repository
 => https://codeberg.org/op/telescope/		Codeberg mirror
 => https://github.com/omar-polo/telescope	GitHub mirror
 
-=> https://github.com/omar-polo/telescope/releases/download/0.8/telescope.amd64	telescope.amd64
-
-Telescope depends are ncursesw, libtls or libretls, and pkg-config.  libgrapheme is also needed, although there's a bundled copy.  When building from a git checkout yacc (or bison) is also needed.
+Telescope depends are ncursesw, libtls or libretls, and pkg-config.  libgrapheme is also needed, although there's a bundled copy.  When building from a git checkout, yacc (or bison) is also needed.
 
 Once all the dependencies are installed, building is as easy as:
 
 ```Example of how to compile from source
-$ curl -LO https://github.com/omar-polo/telescope/releases/download/0.8.1/telescope-0.8.1.tar.gz
-$ tar xzvf telescope-0.8.1.tar.gz
-$ cd telescope-0.8.1
+$ curl -LO https://ftp.omarpolo.com/telescope-CURRV.tar.gz
+$ tar xzvf telescope-CURRV.tar.gz
+$ cd telescope-CURRV
 $ ./configure
 $ make
 $ sudo make install # eventually
 ```
 
-A SHA256 file containing the checksums is available.  However, that only checks for accidental corruption: you can use signify (SHA256.sig and the public key telescope-0.8.pub).  The hash of the current and next signify public key is also included in the SHA256.
+A telescope-CURRV.sha256 file containing the checksums is available.  However, that only checks for accidental corruption: you can use signify (telescope-CURRV.sha256.sig and the public key telescope-CURRKEY.pub).  The hash of the current and next signify public key is also included in the telescope-CURRV.sha256.
 
-=> https://github.com/omar-polo/telescope/releases/download/0.8.1/SHA256		SHA256
-=> https://github.com/omar-polo/telescope/releases/download/0.8.1/SHA256.sig		SHA256.sig
-=> https://github.com/omar-polo/telescope/releases/download/0.8.1/telescope-0.8.pub	telescope-0.8.pub
-=> https://github.com/omar-polo/telescope/releases/download/0.8.1/telescope-0.9.pub	telescope-0.9.pub
+=> https://ftp.omarpolo.com/telescope-CURRV.sha256	telescope-CURRV.sha256
+=> https://ftp.omarpolo.com/telescope-CURRV.sha256.sig	telescope-CURRV.sha256.sig
+=> https://ftp.omarpolo.com/telescope-CURRKEY.pub	telescope-CURRKEY.pub
+=> https://ftp.omarpolo.com/telescope-NEXTKEY.pub	telescope-NEXTKEY.pub
 
 ```Example of how to verify the signature with signify
-$ signify -C -p telescope-0.8.pub -x SHA256.sig
+$ signify -C -p telescope-CURRKEY.pub -x telescope-CURRV.sha256.sig
 Signature Verified
-telescope-0.8-binaries.tar.gz: OK
-telescope-0.8.1.tar.gz: OK
-telescope-0.8.pub: OK
-telescope-0.9.pub: OK
-telescope.amd64: OK
+telescope-CURRV.tar.gz: OK
+telescope-CURRKEY.pub: OK
+telescope-NEXTKEY.pub: OK
 ```
 
 
@@ -90,7 +86,7 @@ telescope.amd64: OK
 ### Improvements
 
 * Implemented a new URI parser: this will allow in the future to support IRIs too.
-* Allow configuration options to be booleans ("on" / "off") and change a few options where it made sense.  The old settings with 0 and 1 will continue to work for some time.
+* Allow configuration options to be booleans ("true" and "false") and change a few options where it made sense.  The old settings with 0 and 1 will continue to work for some time.
 * Removed the dependency on libevent: Telescope now uses a custom built-in event loop.
 * Rework the history management: the code is cleaner and requires less memory.
 * Reduced the amount of memory needed for rendering the pages by roughly 50%.
