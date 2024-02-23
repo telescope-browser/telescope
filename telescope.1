@@ -11,7 +11,7 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: February 12 2024$
+.Dd $Mdocdate: February 23 2024$
 .Dt TELESCOPE 1
 .Os
 .Sh NAME
@@ -1063,9 +1063,5 @@ program was written by
 assumes a UTF-8 environment and doesn't try to cope with other encodings.
 This can cause strange rendering issues if you're lucky, or possibly
 weird thing happening depending on your locale and terminal emulator.
-.Pp
-The algorithm used for text-wrapping is naive and doesn't really work for
-languages that make heavily use of glyphs composed by multiple UNICODE
-codepoints.
 .Sh BUGS
 There's no UI for out-of-band certificates validation.
