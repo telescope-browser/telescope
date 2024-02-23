@@ -2,7 +2,8 @@ SUBDIRS = test
 
 bin_PROGRAMS =		telescope telescope-identity
 
-EXTRA_telescope_SOURCES = compat/ohash.h compat/queue.h compat/imsg.h contrib
+EXTRA_telescope_SOURCES = compat/ohash.h compat/queue.h compat/imsg.h contrib \
+			keys
 
 telescope_SOURCES =	bufio.c			\
 			bufio.h			\
