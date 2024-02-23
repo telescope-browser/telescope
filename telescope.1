@@ -26,11 +26,10 @@
 .Ek
 .Sh DESCRIPTION
 .Nm
-is an interactive browser that supports the Finger, Gemini and Gopher
-protocols.
+is a browser that supports the Finger, Gemini and Gopher protocols.
 .Nm
 features tabs, a minibuffer, interactive completions, bookmarks and
-out-of-band TOFU verification.
+client certificates.
 .Pp
 The arguments are as follows:
 .Bl -tag -width xxxxxxxxxxxxx
@@ -102,7 +101,7 @@ The idea is to define three level of verification for a certificate:
 .Bl -tag -width 12m
 .It untrusted
 .Pq Sq \&!
-the server fingerprint does NOT match the stored value.
+the server fingerprint does not match the stored value.
 .It trusted
 .Pq Sq v
 the server fingerprint matches the store one.
@@ -155,10 +154,10 @@ and
 .Lk finger://hostname/user
 are treated as the same URL.
 .It gemini://
-Gemini is fully supported, with the exception of client-certificates.
+Gemini is fully supported.
 .It gopher://
 Gopher support is limited to items type 0, 1 and 7.
-All text is assumed to be encoded in UTF-8 (or ASCII).
+All text is assumed to be encoded in UTF-8 (superset of ASCII).
 .El
 .Pp
 User-entered URLs, given as argument on the command line or entered
@@ -252,7 +251,7 @@ Valid options are:
 .It Ic autosave
 .Pq integer
 If greater than zero, save the session after the specified amount of
-seconds after some events happens
+seconds after some events happened
 .Pq new or closed tabs, visited a link ...
 Defaults to 20.
 .It Ic default-protocol
@@ -305,8 +304,11 @@ Defaults to false.
 .It Ic hide-pre-context
 .Pq boolean
 If true, hide the start and end line of the preformatted blocks.
-If both hide-pre-context and hide-pre-blocks are nonzero, preformatted
-blocks are irremediably hidden.
+If both
+.Ic hide-pre-context
+and
+.Ic hide-pre-blocks
+are true, preformatted blocks are irremediably hidden.
 Defaults to false.
 .It Ic new-tab-url
 .Pq string
@@ -328,7 +330,7 @@ Must be a positive number; if zero, don't save closed tabs at all.
 .It Ic olivetti-mode
 .Pq boolean
 If true, enable
-.Ic olivetti-mode
+.Ic olivetti-mode .
 Defaults to true.
 .It Ic default-search-engine
 .Pq string
@@ -344,7 +346,7 @@ No other URI scheme are allowed.
 .Pq integer
 If tab-bar-show is -1 hide the tab bar permanently, if 0 show it
 unconditionally.
-If it's 1, show the bar only when there is more than one tab.
+If 1, show the bar only when there is more than one tab.
 Defaults to 1.
 .It Ic update-title
 .Pq boolean
@@ -1010,10 +1012,16 @@ can further alter the location of these files.
 .Bl -tag -width Ds -compact
 .It Pa ~/.config/telescope/config
 Default configuration file.
+.It Pa ~/.config/telescope/certs.conf
+URLs to client certificate mappings.
 .It Pa ~/.local/share/telescope/pages/about_*.gmi
 Overrides for built-in about: pages.
 .It Pa ~/.local/share/telescope/bookmarks.gmi
 Bookmarks file.
+.It Pa ~/.local/share/telescope/certs/
+Directory where client certificates
+.Pq identities
+are stored.
 .It Pa ~/.local/share/telescope/known_hosts
 Hash of the certificates for all the known hosts.
 Each line contains three fields: hostname with optional port number,
@@ -1040,8 +1048,10 @@ To load
 .Nm
 without any configuration
 .Bd -literal -offset indent
-telescope -c /dev/null
+$ telescope -c /dev/null
 .Ed
+.Sh SEE ALSO
+.Xr telescope-identity 1
 .Sh STANDARDS
 .Rs
 .%B XDG Base Directory Specification
