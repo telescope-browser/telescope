@@ -123,3 +123,13 @@ pages.c: pagebundler $(srcdir)/pages.h ${PAGES}
 	./pagebundler $(builddir)/pages/about_license.gmi >> $@
 	./pagebundler $(builddir)/pages/about_new.gmi     >> $@
 	./pagebundler $(builddir)/pages/bookmarks.gmi     >> $@
+
+# --- maintainer targets ---
+
+PUBKEY =	missing
+PRIVKEY =	missing
+
+release: dist
+	sha256 ${distdir}.tar.gz > ${distdir}.tar.gz.sha256
+	signify -S -e -m ${distdir}.tar.gz.sha256 -s ${PRIVKEY}
+	signify -C -p ${PUBKEY} -x ${distdir}.tar.gz.sha256.sig
