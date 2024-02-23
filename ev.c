@@ -327,10 +327,11 @@ static inline void
 cancel_timer(size_t i)
 {
 	base->ntimers--;
-	if (i != base->ntimers)
+	if (i != base->ntimers) {
 		memcpy(&base->timers[i], &base->timers[base->ntimers],
 		    sizeof(*base->timers));
-	bubbledown(i);
+		bubbledown(i);
+	}
 }
 
 int
