@@ -13,10 +13,8 @@ TITLE_gallery.gmi =	Gallery
 REPOLOGY_BANNER =	https://repology.org/badge/vertical-allrepos/telescope.svg
 REPOLOGY_URL =		https://repology.org/project/telescope/versions
 
-SUBST =	./subst CURRV=0.8.1 CURRKEY=0.8 NEXTKEY=0.9 \
-	GH=https://github.com/omar-polo/telescope \
-	CURRSIGN=RWQ12hzRNC/1NhZD56pU1YaRg5AYSEWg9gId5M3e9zwuufmwnbd7WrMb \
-	NEXTSIGN=RWSmshjFM8Q0IDYUd4I/8G2q9Y0DUaZLac4enOtQh5rzsIcVF+ePXCy7 \
+SUBST =	./subst CURRV=0.9 CURRKEY=0.9 NEXTKEY=0.10 \
+	CURRSIGN=RWRkrb76bmCHNKaMnALGf2UgKgq0d/O/ULTeGq36Dos7MGm79CXoZLWN \
 	REPOLOGY_BANNER=${REPOLOGY_BANNER} \
 	REPOLOGY_URL=${REPOLOGY_URL}
 
