@@ -4,33 +4,29 @@ It seems that Telescope crashed last time!  Please consider reporting this bug s
 
 => mailto:@PACKAGE_BUGREPORT@	@PACKAGE_BUGREPORT@
 
-When reporting a bug, please include the following information, otherwise it won’t be helpful:
+When reporting a bug, please include the following information, otherwise it won’t be very helpful:
 
 * Operating system
 * Telescope version (i.e. @PACKAGE_STRING@)
 * how to reproduce the crash, if known
 
-If possible, a backtrace (the state of the program when it crashed) contains invaluable data to unveil the source of the bug.  Obtaining a backtrace is usually simple, but unfortunately depends on your system.
+If possible, a backtrace (the state of the program when it crashed) should be included too, as it contains invaluable data to understand the source of the bug.  Obtaining a backtrace is usually simple, but the exact procedure depends on the operating system.
 
-On most system, you should find a file named ‘telescope.core’ or ‘<number>.core’ or just ‘core’ in the directory where you launched telescope (probably your home).
+On most system, after a crash a file named ‘telescope.core’ or ‘<number>.core’ or just ‘core’ should appear in the directory where Telescope was launched (probably your home).
 
-Your shell may be configured to disallow coredumps.  If
-
-> $ ulimit -c
-
-prints 0 then you’ll need to enable coredumps using
+The shell may have to be configured to allow coredumps.  Running
 
 > $ ulimits -c unlimited
 
-and try to reproduce the bug again.
+should enable core dump for the current session on most shells.
 
-To open a core file you need to install ‘gdb’ (the GNU debugger) and type
+Once the core dump is located, a backtrace may be obtained with the aid of a debugger, like ‘gdb’ (the GNU debugger) or ‘lldb’ (the LLVM debugger):
 
 > $ gdb telescope path/to/core-file
 
-If you’re using a linux distro with systemd (Arch, Fedora, Debian, ...) you have to use coredumpctl to obtain a backtrace.  Please refer to the following page on the Arch wiki:
+On a linux distro with systemd (Arch, Fedora, Debian, ...) ‘coredumpctl’ may be needed to launch the debugger.  Please refer to the following Arch wiki page:
 
-> https://wiki.archlinux.org/title/Core_dump
+=> https://wiki.archlinux.org/title/Core_dump
 
 in particular the “Examining a core dump” section.
 
@@ -42,4 +38,4 @@ At this point you should be at the GDB prompt.  Just type ‘bt’, press enter 
 
 To quit gdb, just type ‘q’ and enter.
 
-Thanks!
+Thank you!
