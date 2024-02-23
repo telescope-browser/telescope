@@ -45,12 +45,12 @@ Telescope depends are ncursesw, libtls or libretls, and pkg-config.  libgrapheme
 Once all the dependencies are installed, building is as easy as:
 
 ```Example of how to compile from source
-$ curl -LO https://ftp.omarpolo.com/telescope-CURRV.tar.gz
+$ curl -O https://ftp.omarpolo.com/telescope-CURRV.tar.gz
 $ tar xzvf telescope-CURRV.tar.gz
 $ cd telescope-CURRV
 $ ./configure
 $ make
-$ sudo make install # eventually
+$ sudo make install	# eventually
 ```
 
 A telescope-CURRV.sha256 file containing the checksums is available.  However, that only checks for accidental corruption: you can use signify (telescope-CURRV.sha256.sig and the public key telescope-CURRKEY.pub).  The hash of the current and next signify public key is also included in the telescope-CURRV.sha256.
@@ -66,6 +66,20 @@ Signature Verified
 telescope-CURRV.tar.gz: OK
 telescope-CURRKEY.pub: OK
 telescope-NEXTKEY.pub: OK
+```
+
+telescope-CURKEY.pub is:
+
+```
+RWRkrb76bmCHNKaMnALGf2UgKgq0d/O/ULTeGq36Dos7MGm79CXoZLWN
+```
+
+and is available inside the tarball in the keys/ directory, along with all the previous and public key for the next release as well.
+
+Starting from Telescope 0.9, git tags are signed with the following ssh key:
+
+```
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJ0nD5I8BNVJknT87gnpLIJWK0fXTayDktQOlS38CGj4 op@omarpolo.com
 ```
 
 
