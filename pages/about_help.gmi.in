@@ -2,7 +2,7 @@
 
 Welcome to Telescope!
 
-Essential key bindings: arrow keys to move the cursor and read the page, > to enter an URL, B and F (uppercase) to navigate backward and forward in the history.  ‘q’ to quit.
+Survival guide: arrow keys to move the cursor around the page, ‘>’ to enter an URL, B and F (uppercase) to navigate backward and forward in the history.  ‘q’ to quit.
 
 This page is always available as
 
@@ -19,14 +19,14 @@ The UI is strongly inspired from Emacs and w3m, so it’s possible to notice var
 
 > Tip: move the cursor over a link and press M-RET (alt + enter) to open it in another tab.  Then use [ and ] to switch between tabs.
 
-Telescope is documented carefully, so please refer to the manual page to know more about all the available keybindings, the format and location of the configuration file and more:
+Telescope is carefully documented, so please refer to the manual page to know more about all the available keybindings, the format and location of the configuration file and more:
 
 > man telescope
 
 
 ## Operate the Telescope
 
-By default Telescope includes various keys inspired from either Emacs or vi.  However, knowledge of these editors is not required.  Here’s a list of essential commands
+By default Telescope includes various keys inspired from either Emacs or vi.  However, knowledge of these editors is not required.  Here’s a list of essential commands:
 
 * > to prompt for a URL;
 * < to edit the current URL;
@@ -100,3 +100,14 @@ Gemini is a new internet protocol which:
 * takes user privacy very seriously
 
 => gemini://gemini.circumlunar.space Project Gemini Homepage
+
+
+## Client certificates
+
+Some Gemini services may require the use of a “client certificate” in order to log-in.  The telescope-identity utility can be used to create a new identity (that is, a client certificate)
+
+> $ telescope-identity generate "Flan Hacker"
+
+Then, a certificate may be be put in use with the ‘use-certificate’ command, which Telescope invokes automatically when the server explicitly requires a certificate.
+
+These “identities” can be used permanently or just for the current session.
