@@ -435,6 +435,7 @@ ev_loop(void)
 		base->reserve_from = base->ntimers;
 		base->reserve_till = base->ntimers;
 
+		min = NULL;
 		msec = -1;
 		if (base->ntimers) {
 			min = &base->timers[0].tv;	
@@ -447,7 +448,7 @@ ev_loop(void)
 				return -1;
 		}
 
-		if (n == 0)
+		if (n == 0 && min)
 			memcpy(&tv, min, sizeof(tv));
 		else {
 			clock_gettime(CLOCK_MONOTONIC, &end);
