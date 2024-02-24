@@ -14,7 +14,7 @@ REPOLOGY_BANNER =	https://repology.org/badge/vertical-allrepos/telescope.svg
 REPOLOGY_URL =		https://repology.org/project/telescope/versions
 
 SUBST =	./subst CURRV=0.9 CURRKEY=0.9 NEXTKEY=0.10 \
-	CURRSIGN=RWRkrb76bmCHNKaMnALGf2UgKgq0d/O/ULTeGq36Dos7MGm79CXoZLWN \
+	CURRSIGN=RWSmshjFM8Q0IDYUd4I/8G2q9Y0DUaZLac4enOtQh5rzsIcVF+ePXCy7 \
 	REPOLOGY_BANNER=${REPOLOGY_BANNER} \
 	REPOLOGY_URL=${REPOLOGY_URL}
 

@@ -53,25 +53,23 @@ $ make
 $ sudo make install	# eventually
 ```
 
-A telescope-CURRV.sha256 file containing the checksums is available.  However, that only checks for accidental corruption: you can use signify (telescope-CURRV.sha256.sig and the public key telescope-CURRKEY.pub).  The hash of the current and next signify public key is also included in the telescope-CURRV.sha256.
+A telescope-CURRV.tar.gz.sha256 file containing the checksums is available.  However, that only checks for accidental corruption: you can use signify (telescope-CURRV.tar.gz.sha256.sig and the public key telescope-CURRKEY.pub).  The hash of the current and next signify public key is also included in the telescope-CURRV.tar.gz.
 
-=> https://ftp.omarpolo.com/telescope-CURRV.sha256	telescope-CURRV.sha256
-=> https://ftp.omarpolo.com/telescope-CURRV.sha256.sig	telescope-CURRV.sha256.sig
-=> https://ftp.omarpolo.com/telescope-CURRKEY.pub	telescope-CURRKEY.pub
-=> https://ftp.omarpolo.com/telescope-NEXTKEY.pub	telescope-NEXTKEY.pub
+=> https://ftp.omarpolo.com/telescope-CURRV.tar.gz.sha256	telescope-CURRV.tar.gz.sha256
+=> https://ftp.omarpolo.com/telescope-CURRV.tar.gz.sha256.sig	telescope-CURRV.tar.gz.sha256.sig
+=> https://ftp.omarpolo.com/telescope-CURRKEY.pub		telescope-CURRKEY.pub
+=> https://ftp.omarpolo.com/telescope-NEXTKEY.pub		telescope-NEXTKEY.pub
 
 ```Example of how to verify the signature with signify
-$ signify -C -p telescope-CURRKEY.pub -x telescope-CURRV.sha256.sig
+$ signify -C -p telescope-CURRKEY.pub -x telescope-CURRV.tar.gz.sha256.sig
 Signature Verified
 telescope-CURRV.tar.gz: OK
-telescope-CURRKEY.pub: OK
-telescope-NEXTKEY.pub: OK
 ```
 
-telescope-CURKEY.pub is:
+telescope-CURRKEY.pub is:
 
 ```
-RWRkrb76bmCHNKaMnALGf2UgKgq0d/O/ULTeGq36Dos7MGm79CXoZLWN
+CURRSIGN
 ```
 
 and is available inside the tarball in the keys/ directory, along with all the previous and public key for the next release as well.
