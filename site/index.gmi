@@ -85,6 +85,8 @@ ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJ0nD5I8BNVJknT87gnpLIJWK0fXTayDktQOlS38CGj4
 
 0.9 “Cielo Super Acceso” — Released February 23, 2024
 
+Note to packagers: starting from this release, Telescope doesn't depend on libevent anymore, and optionally depends on libgrapheme.
+
 ### New features
 
 * Initial client certificate support.
