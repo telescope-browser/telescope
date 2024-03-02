@@ -438,7 +438,7 @@ ev_loop(void)
 		min = NULL;
 		msec = -1;
 		if (base->ntimers) {
-			min = &base->timers[0].tv;	
+			min = &base->timers[0].tv;
 			msec = min->tv_sec * 1000 + (min->tv_usec + 999) / 1000;
 		}
 
