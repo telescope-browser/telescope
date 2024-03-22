@@ -70,6 +70,22 @@ buf_has_line(struct buf *buf, const char *nl)
 	return (memmem(buf->buf, buf->len, nl, strlen(nl)) != NULL);
 }
 
+char *
+buf_getdelim(struct buf *buf, const char *nl, size_t *len)
+{
+	uint8_t	*endl;
+	size_t	 nlen;
+
+	*len = 0;
+
+	nlen = strlen(nl);
+	if ((endl = memmem(buf->buf, buf->len, nl, nlen)) == NULL)
+		return (NULL);
+	*len = endl + nlen - buf->buf;
+	*endl = '\0';
+	return (buf->buf);
+}
+
 void
 buf_drain(struct buf *buf, size_t l)
 {

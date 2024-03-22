@@ -46,6 +46,7 @@ struct bufio {
 
 int	buf_init(struct buf *);
 int	buf_has_line(struct buf *, const char *);
+char	*buf_getdelim(struct buf *, const char *, size_t *);
 void	buf_drain(struct buf *, size_t);
 void	buf_drain_line(struct buf *, const char *);
 void	buf_free(struct buf *);
