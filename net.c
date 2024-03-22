@@ -400,7 +400,7 @@ net_ev(int fd, int ev, void *d)
 	const char	*hash;
 	ssize_t		 read;
 	size_t		 len;
-	char		*header, *endl;
+	char		*header;
 	int		 r;
 
 	if (ev == EV_TIMEOUT) {
@@ -494,24 +494,22 @@ net_ev(int fd, int ev, void *d)
 	}
 
 	if (req->state == CONN_HEADER) {
-		header = req->bio.rbuf.buf;
-		endl = memmem(header, req->bio.rbuf.len, "\r\n", 2);
-		if (endl == NULL && req->bio.rbuf.len >= 1024) {
+		header = buf_getdelim(&req->bio.rbuf, "\r\n", &len);
+		if (header == NULL && req->bio.rbuf.len >= 1024) {
 			close_with_err(req, "Invalid gemini reply (too long)");
 			return;
 		}
-		if (endl == NULL && req->eof) {
+		if (header == NULL && req->eof) {
 			close_with_err(req, "Invalid gemini reply.");
 			return;
 		}
-		if (endl == NULL) {
+		if (header == NULL) {
 			ev_add(req->fd, req_bio_ev(req), net_ev, req);
 			return;
 		}
-		*endl = '\0';
 		req->state = CONN_BODY;
-		r = gemini_parse_reply(req, header, strlen(header));
-		buf_drain(&req->bio.rbuf, endl - header + 2);
+		r = gemini_parse_reply(req, header, len);
+		buf_drain(&req->bio.rbuf, len);
 		if (r == 0) {
 			close_with_err(req, "Malformed gemini reply");
 			return;
