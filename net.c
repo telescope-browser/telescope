@@ -359,11 +359,11 @@ gemini_parse_reply(struct req *req, const char *header)
 	int		 code;
 
 	if (!isdigit(header[0]) || !isdigit(header[1]))
-		return 0;
+		return -1;
 
 	code = (header[0] - '0')*10 + (header[1] - '0');
 	if (header[2] != ' ')
-		return 0;
+		return -1;
 
 	header += 3;
 	len = strlen(header) + 1;
@@ -503,7 +503,7 @@ net_ev(int fd, int ev, void *d)
 		req->state = CONN_BODY;
 		r = gemini_parse_reply(req, header);
 		buf_drain(&req->bio.rbuf, len);
-		if (r == 0) {
+		if (r == -1) {
 			close_with_err(req, "Malformed gemini reply");
 			return;
 		}
