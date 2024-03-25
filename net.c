@@ -394,7 +394,7 @@ net_ev(int fd, int ev, void *d)
 	ssize_t		 read;
 	size_t		 len;
 	char		*header;
-	int		 r;
+	int		 code;
 
 	if (ev == EV_TIMEOUT) {
 		close_with_err(req, "Timeout loading page");
@@ -501,16 +501,16 @@ net_ev(int fd, int ev, void *d)
 			return;
 		}
 		req->state = CONN_BODY;
-		r = gemini_parse_reply(req, header);
-		buf_drain(&req->bio.rbuf, len);
-		if (r == -1) {
+		if ((code = gemini_parse_reply(req, header)) == -1) {
 			close_with_err(req, "Malformed gemini reply");
 			return;
 		}
-		if (r < 20 || r >= 30) {
+		if (code < 20 || code >= 30) {
 			close_conn(0, 0, req);
 			return;
 		}
+
+		buf_drain(&req->bio.rbuf, len);
 
 		/* pause until we've been told to go ahead */
 		ev_del(req->fd);
