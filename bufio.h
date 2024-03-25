@@ -36,7 +36,7 @@ struct buf {
 struct bufio {
 	int		 fd;
 	struct tls	*ctx;
-	int		 pflags;	/* poll flags */
+	int		 wantev;
 	struct buf	 wbuf;
 	struct buf	 rbuf;
 };

@@ -160,11 +160,11 @@ bufio_close(struct bufio *bio)
 		return 0;
 	case TLS_WANT_POLLIN:
 		errno = EAGAIN;
-		bio->pflags = BUFIO_WANT_READ;
+		bio->wantev = BUFIO_WANT_READ;
 		return (-1);
 	case TLS_WANT_POLLOUT:
 		errno = EAGAIN;
-		bio->pflags = BUFIO_WANT_WRITE;
+		bio->wantev = BUFIO_WANT_WRITE;
 		return (-1);
 	default:
 		return (-1);
@@ -228,8 +228,8 @@ bufio_ev(struct bufio *bio)
 {
 	short		 ev;
 
-	if (bio->pflags)
-		return (bio->pflags);
+	if (bio->wantev)
+		return (bio->wantev);
 
 	ev = BUFIO_WANT_READ;
 	if (bio->wbuf.len != 0)
@@ -251,11 +251,11 @@ bufio_handshake(struct bufio *bio)
 		return (0);
 	case TLS_WANT_POLLIN:
 		errno = EAGAIN;
-		bio->pflags = BUFIO_WANT_READ;
+		bio->wantev = BUFIO_WANT_READ;
 		return (-1);
 	case TLS_WANT_POLLOUT:
 		errno = EAGAIN;
-		bio->pflags = BUFIO_WANT_WRITE;
+		bio->wantev = BUFIO_WANT_WRITE;
 		return (-1);
 	default:
 		return (-1);
@@ -280,16 +280,16 @@ bufio_read(struct bufio *bio)
 		switch (r) {
 		case TLS_WANT_POLLIN:
 			errno = EAGAIN;
-			bio->pflags = BUFIO_WANT_READ;
+			bio->wantev = BUFIO_WANT_READ;
 			return (-1);
 		case TLS_WANT_POLLOUT:
 			errno = EAGAIN;
-			bio->pflags = BUFIO_WANT_WRITE;
+			bio->wantev = BUFIO_WANT_WRITE;
 			return (-1);
 		case -1:
 			return (-1);
 		default:
-			bio->pflags = 0;
+			bio->wantev = 0;
 			rbuf->len += r;
 			return (r);
 		}
@@ -324,16 +324,16 @@ bufio_write(struct bufio *bio)
 		switch (w = tls_write(bio->ctx, wbuf->buf, wbuf->len)) {
 		case TLS_WANT_POLLIN:
 			errno = EAGAIN;
-			bio->pflags = BUFIO_WANT_READ;
+			bio->wantev = BUFIO_WANT_READ;
 			return (-1);
 		case TLS_WANT_POLLOUT:
 			errno = EAGAIN;
-			bio->pflags = BUFIO_WANT_WRITE;
+			bio->wantev = BUFIO_WANT_WRITE;
 			return (-1);
 		case -1:
 			return (-1);
 		default:
-			bio->pflags = 0;
+			bio->wantev = 0;
 			buf_drain(wbuf, w);
 			return (w);
 		}
