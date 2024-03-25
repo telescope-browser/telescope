@@ -94,7 +94,7 @@ static void	 close_with_errf(struct req*, const char*, ...)
     __attribute__((format(printf, 2, 3)));
 
 static int	 try_to_connect(struct req *);
-static int	 gemini_parse_reply(struct req *, const char *, size_t);
+static int	 gemini_parse_reply(struct req *, const char *);
 static void	 net_ev(int, int, void *);
 static void	 handle_dispatch_imsg(int, int, void*);
 
@@ -352,14 +352,11 @@ try_to_connect(struct req *req)
 }
 
 static int
-gemini_parse_reply(struct req *req, const char *header, size_t len)
+gemini_parse_reply(struct req *req, const char *header)
 {
 	struct ibuf	*ibuf;
+	size_t		 len;
 	int		 code;
-	const char	*t;
-
-	if (len < 4)
-		return 0;
 
 	if (!isdigit(header[0]) || !isdigit(header[1]))
 		return 0;
@@ -368,14 +365,14 @@ gemini_parse_reply(struct req *req, const char *header, size_t len)
 	if (header[2] != ' ')
 		return 0;
 
-	t = header + 3;
-	len = strlen(t) + 1;
+	header += 3;
+	len = strlen(header) + 1;
 
 	if ((ibuf = imsg_create(&iev_ui->ibuf, IMSG_REPLY, req->id, 0,
 	    sizeof(code) + len)) == NULL)
 		die();
 	if (imsg_add(ibuf, &code, sizeof(code)) == -1 ||
-	    imsg_add(ibuf, t, len) == -1)
+	    imsg_add(ibuf, header, len) == -1)
 		die();
 	imsg_close(&iev_ui->ibuf, ibuf);
 	imsg_event_add(iev_ui);
@@ -508,7 +505,7 @@ net_ev(int fd, int ev, void *d)
 			return;
 		}
 		req->state = CONN_BODY;
-		r = gemini_parse_reply(req, header, len);
+		r = gemini_parse_reply(req, header);
 		buf_drain(&req->bio.rbuf, len);
 		if (r == 0) {
 			close_with_err(req, "Malformed gemini reply");
