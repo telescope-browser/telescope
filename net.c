@@ -376,10 +376,6 @@ gemini_parse_reply(struct req *req, const char *header)
 		die();
 	imsg_close(&iev_ui->ibuf, ibuf);
 	imsg_event_add(iev_ui);
-
-	/* pause until we've told go go ahead */
-	ev_del(req->fd);
-
 	return code;
 }
 
@@ -511,8 +507,13 @@ net_ev(int fd, int ev, void *d)
 			close_with_err(req, "Malformed gemini reply");
 			return;
 		}
-		if (r < 20 || r >= 30)
+		if (r < 20 || r >= 30) {
 			close_conn(0, 0, req);
+			return;
+		}
+
+		/* pause until we've told go go ahead */
+		ev_del(req->fd);
 		return;
 	}
 	
