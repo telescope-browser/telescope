@@ -161,6 +161,22 @@ AC_SEARCH_LIBS([SSL_CTX_new], [ssl], [:], [
 	AC_MSG_ERROR([can't find libssl])
 ])
 
+# Sanity check for Libre/OpenSSL headers vs library mismatch
+AC_MSG_CHECKING([whether libcrypto headers match the library])
+AC_RUN_IFELSE([AC_LANG_PROGRAM([[
+#include <openssl/opensslv.h>
+#include <openssl/crypto.h>
+]], [[
+	return (OpenSSL_version_num() != OPENSSL_VERSION_NUMBER);
+]])], [
+	AC_MSG_RESULT([yes])
+], [
+	AC_MSG_RESULT([no])
+	AC_MSG_ERROR([libcrypto headers do not match the library.])
+], [
+	AC_MSG_WARN([skip (due to cross-compiling)])
+])
+
 AC_CHECK_HEADERS([linux/landlock.h])
 
 dnl after all the function checks, add optional support for -Werror
