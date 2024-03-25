@@ -512,7 +512,7 @@ net_ev(int fd, int ev, void *d)
 			return;
 		}
 
-		/* pause until we've told go go ahead */
+		/* pause until we've been told to go ahead */
 		ev_del(req->fd);
 		return;
 	}
