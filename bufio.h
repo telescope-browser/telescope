@@ -44,32 +44,32 @@ struct bufio {
 #define	BUFIO_WANT_READ		0x1
 #define	BUFIO_WANT_WRITE	0x2
 
-int	buf_init(struct buf *);
-int	buf_has_line(struct buf *, const char *);
-char	*buf_getdelim(struct buf *, const char *, size_t *);
-void	buf_drain(struct buf *, size_t);
-void	buf_drain_line(struct buf *, const char *);
-void	buf_free(struct buf *);
+int		 buf_init(struct buf *);
+int		 buf_has_line(struct buf *, const char *);
+char		*buf_getdelim(struct buf *, const char *, size_t *);
+void		 buf_drain(struct buf *, size_t);
+void		 buf_drain_line(struct buf *, const char *);
+void		 buf_free(struct buf *);
 
-int	bufio_init(struct bufio *);
-void	bufio_free(struct bufio *);
-int	bufio_close(struct bufio *);
-int	bufio_reset(struct bufio *);
-void	bufio_set_fd(struct bufio *, int);
-int	bufio_starttls(struct bufio *, const char *, int,
-	    const uint8_t *, size_t, const uint8_t *, size_t);
-int	bufio_ev(struct bufio *);
-int	bufio_handshake(struct bufio *);
-ssize_t	bufio_read(struct bufio *);
-size_t	bufio_drain(struct bufio *, void *, size_t);
-ssize_t	bufio_write(struct bufio *);
-const char *bufio_io_err(struct bufio *);
-int	bufio_compose(struct bufio *, const void *, size_t);
-int	bufio_compose_str(struct bufio *, const char *);
-int	bufio_compose_fmt(struct bufio *, const char *, ...)
-	    __attribute__((__format__ (printf, 2, 3)));
-void	bufio_rewind_cursor(struct bufio *);
+int		 bufio_init(struct bufio *);
+void		 bufio_free(struct bufio *);
+int		 bufio_close(struct bufio *);
+int		 bufio_reset(struct bufio *);
+void		 bufio_set_fd(struct bufio *, int);
+int		 bufio_starttls(struct bufio *, const char *, int,
+		    const uint8_t *, size_t, const uint8_t *, size_t);
+int		 bufio_ev(struct bufio *);
+int		 bufio_handshake(struct bufio *);
+ssize_t		 bufio_read(struct bufio *);
+size_t		 bufio_drain(struct bufio *, void *, size_t);
+ssize_t		 bufio_write(struct bufio *);
+const char	*bufio_io_err(struct bufio *);
+int		 bufio_compose(struct bufio *, const void *, size_t);
+int		 bufio_compose_str(struct bufio *, const char *);
+int		 bufio_compose_fmt(struct bufio *, const char *, ...)
+		    __attribute__((__format__ (printf, 2, 3)));
+void		 bufio_rewind_cursor(struct bufio *);
 
 /* callbacks for pdjson */
-int	bufio_get_cb(void *);
-int	bufio_peek_cb(void *);
+int		 bufio_get_cb(void *);
+int		 bufio_peek_cb(void *);
