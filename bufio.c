@@ -346,6 +346,15 @@ bufio_write(struct bufio *bio)
 	return (w);
 }
 
+const char *
+bufio_io_err(struct bufio *bio)
+{
+	if (bio->ctx)
+		return tls_error(bio->ctx);
+
+	return strerror(errno);
+}
+
 int
 bufio_compose(struct bufio *bio, const void *d, size_t len)
 {

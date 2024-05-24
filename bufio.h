@@ -63,6 +63,7 @@ int	bufio_handshake(struct bufio *);
 ssize_t	bufio_read(struct bufio *);
 size_t	bufio_drain(struct bufio *, void *, size_t);
 ssize_t	bufio_write(struct bufio *);
+const char *bufio_io_err(struct bufio *);
 int	bufio_compose(struct bufio *, const void *, size_t);
 int	bufio_compose_str(struct bufio *, const char *);
 int	bufio_compose_fmt(struct bufio *, const char *, ...)
