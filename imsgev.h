@@ -28,6 +28,7 @@ enum imsg_type {
 	IMSG_ERR,
 	IMSG_CHECK_CERT,
 	IMSG_CERT_STATUS,
+	IMSG_FAULTY_GEMSERVER,
 	IMSG_REPLY,		/* reply code (int) + meta string */
 	IMSG_PROCEED,
 	IMSG_STOP,

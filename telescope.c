@@ -517,6 +517,16 @@ handle_dispatch_imsg(int fd, int event, void *data)
 				ui_on_download_refresh();
 			}
 			break;
+		case IMSG_FAULTY_GEMSERVER:
+			if ((tab = tab_by_id(imsg_get_id(&imsg))) == NULL &&
+			    ((d = download_by_id(imsg_get_id(&imsg)))) == NULL)
+				return;
+
+			if (tab) {
+				tab->faulty_gemserver = 1;
+				ui_on_tab_refresh(tab);
+			}
+			break;
 		case IMSG_EOF:
 			if ((tab = tab_by_id(imsg_get_id(&imsg))) == NULL &&
 			    ((d = download_by_id(imsg_get_id(&imsg)))) == NULL)
@@ -714,6 +724,7 @@ make_request(struct tab *tab, struct get_req *req, int proto, const char *r)
 
 	stop_tab(tab);
 	tab->id = tab_new_id();
+	tab->faulty_gemserver = 0;
 	req->proto = proto;
 
 	if (r != NULL) {

@@ -846,10 +846,11 @@ redraw_modeline(struct tab *tab)
 	wattr_on(modeline, modeline_face.background, NULL);
 	wmove(modeline, 0, 0);
 
-	wprintw(modeline, "-%c%c%c %s ",
+	wprintw(modeline, "-%c%c%c%c %s ",
 	    spin[tab->loading_anim_step],
 	    trust_status_char(tab->trust),
 	    tab->client_cert ? 'C' : '-',
+	    tab->faulty_gemserver ? 'W' : '-',
 	    mode == NULL ? "(none)" : mode);
 
 	pct = (buffer->line_off + buffer->curs_y) * 100.0

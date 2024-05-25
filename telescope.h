@@ -165,6 +165,7 @@ struct tab {
 
 	char			*cert;
 	enum trust_state	 trust;
+	int			 faulty_gemserver;
 	const char		*client_cert;
 	int			 client_cert_temp;
 	struct proxy		*proxy;

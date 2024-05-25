@@ -472,9 +472,9 @@ net_ev(int fd, int ev, void *d)
 
 	if (ev & EV_READ) {
 		read = bufio_read(&req->bio);
-		if (read == -1 && errno != EAGAIN) {			
-			close_with_errf(req, "Read error");
-			return;
+		if (read == -1 && errno != EAGAIN) {
+			req->eof = 1;
+			net_send_ui(IMSG_FAULTY_GEMSERVER, req->id, NULL, 0);
 		}
 		if (read == 0)
 			req->eof = 1;
