@@ -3,10 +3,12 @@ RSYNC =		openrsync --rsync-path=openrsync
 MANPAGES =	../telescope.1
 
 PAGES =		index.gmi \
+		telescope.1.txt \
 		gallery.gmi
 #		changelog.gmi
 
 TITLE_index.gmi =	Home
+TITLE_telescope.1.txt =	Manpage
 TITLE_changelog.gmi =	ChangeLog
 TITLE_gallery.gmi =	Gallery
 
@@ -42,6 +44,7 @@ manpages:
 
 pages:
 .for p in ${PAGES}
+. if "$p" != "telescope.1.txt"
 	grep -v '^<' $p | ${SUBST_GEM} > gemini/$p
 
 	${SUBST_WWW} TITLE=${TITLE_${p}:Q} header.html > www/$p
@@ -49,6 +52,7 @@ pages:
 	${SUBST_WWW} $p | ./gem2html >> www/$p
 	cat footer.html >> www/$p
 	cd www && mv $p ${p:.gmi=.html}
+. endif
 .endfor
 
 serve-www:
@@ -66,5 +70,5 @@ clean:
 
 titles:
 .for p in ${PAGES}
-	@printf "%s %s\n" "${p:.gmi=.html}" ${TITLE_${p}:Q}
+	@printf "%s %s\n" "${p:R}.html" ${TITLE_${p}:Q}
 .endfor

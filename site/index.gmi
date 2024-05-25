@@ -16,7 +16,9 @@
 
 Telescope is written entirely for fun, as a hobbystic project in my free time.  As such, it lacks a ton of features you’ll find in more mature Gemini browsers, but it also has some unique ones.
 
-=> telescope.1.MANEXT	documentation
+=> telescope.1.MANEXT				Documentation
+=> ircs://irc.libera.chat:6697/telescope	Join the official IRC channel
+
 
 The UI is strongly inspired from Emacs and W3M, so you’ll find some familiar concepts, such as the minibuffer or the tabline, and the default keybindigs also reflect this, but care has been taken to add keys familiar for vi and CUA users too.
 
