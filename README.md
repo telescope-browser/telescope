@@ -104,6 +104,10 @@ If you have a sample configuration, custom theme, a script or anything
 that could be helpful to others, consider adding it to the `contrib`
 directory.
 
+Consider also joining the official
+[irc channel](ircs://irc.libera.chat:6697/telescope),
+`#telescope` on libera.chat!
+
 
 ## User files
 
