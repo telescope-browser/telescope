@@ -507,7 +507,7 @@ config_init(void)
 	struct line_face *f;
 	size_t i, len;
 
-	default_search_engine = strdup("gemini://geminispace.info/search");
+	default_search_engine = strdup("gemini://kennedy.gemi.dev/search");
 	if (default_search_engine == NULL)
 		err(1, "strdup");
 
