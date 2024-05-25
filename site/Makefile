@@ -55,7 +55,7 @@ serve-www:
 	python3 -m http.server --directory www 8888
 
 serve-gemini:
-	ge -p 1966 gemini
+	gemexp -p 1966 gemini
 
 upload:
 	${RSYNC} --del -a gemini/ antartica:/var/gemini/telescope.omarpolo.com
