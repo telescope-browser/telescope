@@ -525,6 +525,8 @@ handle_dispatch_imsg(int fd, int event, void *data)
 			if (tab) {
 				tab->faulty_gemserver = 1;
 				ui_on_tab_refresh(tab);
+			} else {
+				message("Download interrupted!");
 			}
 			break;
 		case IMSG_EOF:
