@@ -8,8 +8,6 @@ AC_PROG_CC
 AC_USE_SYSTEM_EXTENSIONS
 AC_PROG_YACC
 
-PKG_PROG_PKG_CONFIG
-
 AC_ARG_VAR(HOSTCC, [The C compiler on the host.])
 AC_ARG_VAR(HOSTCFLAGS, [CFLAGS for the host compiler])
 
