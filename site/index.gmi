@@ -85,42 +85,12 @@ ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJ0nD5I8BNVJknT87gnpLIJWK0fXTayDktQOlS38CGj4
 
 ## Changelog
 
-0.9 “Cielo Super Acceso” — Released February 23, 2024
-
-Note to packagers: starting from this release, Telescope doesn't depend on libevent anymore, and optionally depends on libgrapheme.
-
-### New features
-
-* Initial client certificate support.
-* Use libgrapheme for text reflowing: improves the word-wrapping for languages that don't use latin characters.
-* New commands for quick navigation: `up', `root' and `home' bound to "g u", "g r" and "g h" respectively.
-* Added a `search' command to quickly consult a search engine, as well as the `default-search-engine' option.
-* Added `load-url-use-heuristic' configuration option.
-* Added `default-protocol' configuration option.
-* Added telescope-identity(1) to create, delete and manage client certificates.
-
-### Improvements
-
-* Implemented a new URI parser: this will allow in the future to support IRIs too.
-* Allow configuration options to be booleans ("true" and "false") and change a few options where it made sense.  The old settings with 0 and 1 will continue to work for some time.
-* Removed the dependency on libevent: Telescope now uses a custom built-in event loop.
-* Rework the history management: the code is cleaner and requires less memory.
-* Reduced the amount of memory needed for rendering the pages by roughly 50%.
-* Landlock sandboxing is enabled again on Linux.
-* Update data/emoji.txt to UNICODE 15.0.
+0.9.1 “Cielo Super Acceso” — Bugfix Release, May 26, 2024
 
 ### Bug Fixes
 
-* Fixed wrapping of link lines.
-* Fixed `bookmark-page' bogus error message.
-* Fixed caching of finger pages too.
-* Save to the persistent history finger:// and gopher:// URLs as well.
-* Fixed handling of gopher selectors with spaces and other "funny" characters.
-* Improved handling of connect(2) failures, as well as error reporting.
-* Changed the default colours for patch/diff to magenta and cyan.
-* Updated the link to the official gemini project capsule in about:new.
-* Corrected and extended about:license.
-
-### Breaking changes
-
-* Removed the -C/--colours flag: telescope is not a colour picker.
+* add a check in the configure to detect LibreSSL and OpenSSL mixings
+* fix parallel build with the bundled libgrapheme, by Thomas Adam
+* fix handling of missing TLS close_notify, also by Thomas Adam
+* update links to new gemcap, still by Thomas Adam :)
+* remove pkg-config handling in the configure, unused since 0.9
