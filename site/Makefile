@@ -15,7 +15,7 @@ TITLE_gallery.gmi =	Gallery
 REPOLOGY_BANNER =	https://repology.org/badge/vertical-allrepos/telescope.svg
 REPOLOGY_URL =		https://repology.org/project/telescope/versions
 
-SUBST =	./subst CURRV=0.9 CURRKEY=0.9 NEXTKEY=0.10 \
+SUBST =	./subst CURRV=0.9.1 CURRKEY=0.9 NEXTKEY=0.10 \
 	CURRSIGN=RWSmshjFM8Q0IDYUd4I/8G2q9Y0DUaZLac4enOtQh5rzsIcVF+ePXCy7 \
 	REPOLOGY_BANNER=${REPOLOGY_BANNER} \
 	REPOLOGY_URL=${REPOLOGY_URL}
