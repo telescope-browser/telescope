@@ -1,7 +1,33 @@
+2024-05-25  Thomas Adam  <thomas.adam22@gmail.com>
+
+	* cmd.c (cmd_toggle_styling): add toggle-styling to toggle the styling.
+
+2024-05-26  Omar Polo  <op@omarpolo.com>
+
+	* configure.ac: tag 0.9.1 "Cielo Super Acceso"
+
+2024-05-25  Thomas Adam  <thomas.adam22@gmail.com>
+
+	* net.c (net_ev): guard against faulty gemini servers that don't use close_notify.
+	* defaults.c: update links to new gemcap.
+
+2024-05-24  Thomas Adam  <thomas.adam22@gmail.com>
+
+	* Makefile.am: fix parallel builds with bundled libgrapheme.
+
+2024-03-25  Omar Polo  <op@omarpolo.com>
+
+	* configure.ac: add a check to detect invalid LibreSSL/OpenSSL mixings.
+
+2024-02-23  Omar Polo  <op@omarpolo.com>
+
+	* configure.ac: tag 0.9 "Cielo Super Acceso"
+
 2024-02-21  Omar Polo  <op@omarpolo.com>
 
 	* parser_gophermap.c (emit_line): fix handling of gopher selector with
 	spaces and other characters disallowed in URI paths.
+	* iric. (iri_unparse): always emit file: URIs with the // 
 
 2024-02-20  Omar Polo  <op@omarpolo.com>
 
