@@ -36,6 +36,7 @@ char	*default_search_engine = NULL;
 
 int autosave = 20;
 int dont_wrap_pre = 0;
+int dont_apply_styling = 0;
 int emojify_link = 1;
 int enable_colors = 1;
 int fill_column = 120;
@@ -67,6 +68,36 @@ struct lineprefix line_prefixes[] = {
 	[LINE_PRE_START] =	{ "─── ",	"    " },
 	[LINE_PRE_CONTENT] =	{ "",		"" },
 	[LINE_PRE_END] =	{ "─── ",	"" },
+
+	[LINE_PATCH] =		{"", ""},
+	[LINE_PATCH_HDR] =	{"", ""},
+	[LINE_PATCH_HUNK_HDR] =	{"", ""},
+	[LINE_PATCH_ADD] =	{"", ""},
+	[LINE_PATCH_DEL] =	{"", ""},
+
+	[LINE_COMPL] =		{"", ""},
+	[LINE_COMPL_CURRENT] =	{"", ""},
+
+	[LINE_HELP] =		{"", ""},
+
+	[LINE_DOWNLOAD] =	{" Fetching ", "          "},
+	[LINE_DOWNLOAD_DONE] =	{" Done     ", "          "},
+	[LINE_DOWNLOAD_INFO] =	{" ", " "},
+
+	[LINE_FRINGE] =		{"~", ""},
+};
+
+struct lineprefix raw_prefixes[] = {
+	[LINE_TEXT] =		{ "",		"" },
+	[LINE_LINK] =		{ "=> ",	"" },
+	[LINE_TITLE_1] =	{ "# ",		"" },
+	[LINE_TITLE_2] =	{ "## ",	"" },
+	[LINE_TITLE_3] =	{ "### ",	"" },
+	[LINE_ITEM] =		{ "* ",		"" },
+	[LINE_QUOTE] =		{ "> ",		"" },
+	[LINE_PRE_START] =	{ "``` ",	"" },
+	[LINE_PRE_CONTENT] =	{ "",		"" },
+	[LINE_PRE_END] =	{ "``` ",	"" },
 
 	[LINE_PATCH] =		{"", ""},
 	[LINE_PATCH_HDR] =	{"", ""},
@@ -814,8 +845,12 @@ config_apply_style(void)
 {
 	size_t i, colors, len;
 	struct line_face *f;
+	int old_ec = enable_colors;
 
 	colors = COLORS;
+
+	if (dont_apply_styling)
+		enable_colors = 0;
 
 	len = sizeof(line_faces)/sizeof(line_faces[0]);
 	for (i = 0; i < len; ++i) {
@@ -831,6 +866,15 @@ config_apply_style(void)
 		f->trail = COLOR_PAIR(f->trail_pair) | f->trail_attr;
 	}
 
+	/* body */
+	tl_init_pair(colors, PBODY, body_face.fg, body_face.bg);
+	body_face.body = COLOR_PAIR(PBODY);
+
+	/* Restore color setting here -- it's only potentially disabled for
+	 * the body.
+	 */
+	enable_colors = old_ec;
+
 	/* tab line */
 	tl_init_pair(colors, PTL_BG, tab_face.bg_fg, tab_face.bg_bg);
 	tab_face.background = COLOR_PAIR(PTL_BG) | tab_face.bg_attr;
@@ -840,10 +884,6 @@ config_apply_style(void)
 
 	tl_init_pair(colors, PTL_CURR, tab_face.c_fg, tab_face.c_bg);
 	tab_face.current = COLOR_PAIR(PTL_CURR) | tab_face.c_attr;
-
-	/* body */
-	tl_init_pair(colors, PBODY, body_face.fg, body_face.bg);
-	body_face.body = COLOR_PAIR(PBODY);
 
 	tl_init_pair(colors, PBLEFT, body_face.lfg, body_face.lbg);
 	body_face.left = COLOR_PAIR(PBLEFT);

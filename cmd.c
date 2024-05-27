@@ -914,6 +914,20 @@ cmd_toggle_pre_wrap(struct buffer *buffer)
 }
 
 void
+cmd_toggle_styling(struct buffer *buffer)
+{
+	dont_apply_styling = !dont_apply_styling;
+
+	config_apply_style();
+
+	/* Force a reload here, rather than calling ui_schedule_redraw() so
+	 * that any lines which are set as L_HIDDEN are redrawn appropriately.
+	 */
+	load_url_in_tab(current_tab, hist_cur(current_tab->hist), NULL,
+	    LU_MODE_NOHIST);
+}
+
+void
 cmd_mini_goto_beginning(struct buffer *buffer)
 {
 	struct vline *vl;

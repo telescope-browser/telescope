@@ -215,7 +215,11 @@ static void
 restore_curs_x(struct buffer *buffer)
 {
 	struct vline	*vl;
+	struct lineprefix *lp = line_prefixes;
 	const char	*prfx, *text;
+
+	if (dont_apply_styling)
+		lp = raw_prefixes;
 
 	vl = buffer->current_line;
 	if (vl == NULL || vl->len == 0)
@@ -239,7 +243,7 @@ restore_curs_x(struct buffer *buffer)
 		buffer->curs_x += utf8_swidth_between(vl->parent->line,
 		    vl->parent->data);
 	else {
-		prfx = line_prefixes[vl->parent->type].prfx1;
+		prfx = lp[vl->parent->type].prfx1;
 		buffer->curs_x += utf8_swidth(prfx);
 	}
 }
@@ -461,9 +465,13 @@ static void
 line_prefix_and_text(struct vline *vl, char *buf, size_t len,
     const char **prfx_ret, const char **text_ret, int *text_len)
 {
+	struct lineprefix *lp = line_prefixes;
 	int type, cont;
 	size_t i, width;
 	char *space, *t;
+
+	if (dont_apply_styling)
+		lp = raw_prefixes;
 
 	if (vl->len == 0) {
 		*text_ret = "";
@@ -473,9 +481,9 @@ line_prefix_and_text(struct vline *vl, char *buf, size_t len,
 	cont = vl->flags & L_CONTINUATION;
 	type = vl->parent->type;
 	if (!cont)
-		*prfx_ret = line_prefixes[type].prfx1;
+		*prfx_ret = lp[type].prfx1;
 	else
-		*prfx_ret = line_prefixes[type].prfx2;
+		*prfx_ret = lp[type].prfx2;
 
 	space = vl->parent->data;
 	*text_ret = vl->parent->line + vl->from;

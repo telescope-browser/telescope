@@ -109,6 +109,9 @@ emit_line(struct parser *p, enum line_type type, char *line, char *alt)
 		break;
 	}
 
+	if (dont_apply_styling)
+		l->flags &= ~L_HIDDEN;
+
 	TAILQ_INSERT_TAIL(&p->head, l, lines);
 
 	return 1;

@@ -24,6 +24,7 @@ extern char	*new_tab_url;
 
 extern int	 autosave;
 extern int	 dont_wrap_pre;
+extern int	 dont_apply_styling;
 extern int	 emojify_link;
 extern int	 enable_colors;
 extern int	 fill_column;
@@ -43,6 +44,8 @@ struct lineprefix {
 	const char	*prfx1;
 	const char	*prfx2;
 };
+
+extern struct lineprefix raw_prefixes[];
 extern struct lineprefix line_prefixes[];
 
 struct line_face {
