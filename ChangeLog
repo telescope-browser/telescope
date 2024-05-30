@@ -27,7 +27,7 @@
 
 	* parser_gophermap.c (emit_line): fix handling of gopher selector with
 	spaces and other characters disallowed in URI paths.
-	* iric. (iri_unparse): always emit file: URIs with the // 
+	* iri.c (iri_unparse): always emit file: URIs with the // 
 
 2024-02-20  Omar Polo  <op@omarpolo.com>
 
