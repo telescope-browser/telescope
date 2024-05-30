@@ -268,6 +268,16 @@ The default protocol assumed for the
 heuristic.
 Defaults to
 .Dq gemini .
+.It Ic default-search-engine
+.Pq string
+URL of the preferred search engine, used by the
+.Cm search
+command.
+If it's a Gemini URI, the user query will be appended as query,
+replacing it if present.
+If it's a Gopher URI, the user query will be sent as gopher search
+parameter.
+No other URI scheme are allowed.
 .It Ic dont-wrap-pre
 .Pq boolean
 If true, don't wrap preformatted blocks.
@@ -339,16 +349,6 @@ Must be a positive number; if zero, don't save closed tabs at all.
 If true, enable
 .Ic olivetti-mode .
 Defaults to true.
-.It Ic default-search-engine
-.Pq string
-URL of the preferred search engine, used by the
-.Cm search
-command.
-If it's a Gemini URI, the user query will be appended as query,
-replacing it if present.
-If it's a Gopher URI, the user query will be sent as gopher search
-parameter.
-No other URI scheme are allowed.
 .It Ic tab-bar-show
 .Pq integer
 If tab-bar-show is -1 hide the tab bar permanently, if 0 show it
