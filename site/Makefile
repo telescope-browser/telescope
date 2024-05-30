@@ -4,13 +4,13 @@ MANPAGES =	../telescope.1
 
 PAGES =		index.gmi \
 		telescope.1.txt \
-		gallery.gmi
-#		changelog.gmi
+		gallery.gmi \
+		log.gmi
 
 TITLE_index.gmi =	Home
 TITLE_telescope.1.txt =	Manpage
-TITLE_changelog.gmi =	ChangeLog
 TITLE_gallery.gmi =	Gallery
+TITLE_log.gmi =		ChangeLog
 
 REPOLOGY_BANNER =	https://repology.org/badge/vertical-allrepos/telescope.svg
 REPOLOGY_URL =		https://repology.org/project/telescope/versions
