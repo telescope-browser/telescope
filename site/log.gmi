@@ -1,6 +1,6 @@
 # logs
 
-Changelog for all past versions of telescope.
+Changelog for all versions of telescope.
 
 ## 2024/05/26 0.9.1 "Cielo Super Acceso"
 
