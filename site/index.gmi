@@ -39,8 +39,8 @@ Source code is available for download:
 => https://ftp.omarpolo.com/telescope-CURRV.tar.gz telescope-CURRV.tar.gz
 
 => https://git.omarpolo.com/?index_page=&path=telescope.git&action=summary git repository
-=> https://codeberg.org/op/telescope/		Codeberg mirror
-=> https://github.com/omar-polo/telescope	GitHub mirror
+=> https://codeberg.org/telescope-browser/telescope/	Codeberg mirror
+=> https://github.com/telescope-browser/telescope	GitHub mirror
 
 Telescope depends are ncursesw and libtls or libretls.  libgrapheme is also needed, although there's a bundled copy.  When building from a git checkout, yacc (or bison) is also needed.
 
