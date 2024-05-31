@@ -770,6 +770,8 @@ cmd_mini_kill_whole_line(struct buffer *buffer)
 	minibuffer_taint_hist();
 	*buffer->current_line->parent->line = '\0';
 	buffer->cpoff = 0;
+
+	recompute_completions(0);
 }
 
 void
