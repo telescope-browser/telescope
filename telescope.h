@@ -117,7 +117,7 @@ struct parser {
 };
 
 /*
- * differnt types of trust for a certificate.  Following
+ * different types of trust for a certificate.  Following
  * gemini://thfr.info/gemini/modified-trust-verify.gmi
  */
 enum trust_state {
