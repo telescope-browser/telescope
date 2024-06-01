@@ -91,8 +91,6 @@ struct vline {
 
 struct parser;
 
-typedef int	(*printfn)(void *, const char *, ...);
-
 typedef void	(*parserinit)(struct parser *);
 
 typedef int	(*parsechunkfn)(struct parser *, const char *, size_t);
