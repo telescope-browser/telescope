@@ -31,7 +31,7 @@
 
 	* parser_gophermap.c (emit_line): fix handling of gopher selector with
 	spaces and other characters disallowed in URI paths.
-	* iri.c (iri_unparse): always emit file: URIs with the // 
+	* iri.c (iri_unparse): always emit file: URIs with the //
 
 2024-02-20  Omar Polo  <op@omarpolo.com>
 
@@ -693,4 +693,3 @@
 	* gemini.c (blocking_conn_towards): fix compilation if !HAVE_ASR_RUN
 
 	* phos/phos_uri.c (phos_serialize_uri): handle URIs which port is not 1965
-
