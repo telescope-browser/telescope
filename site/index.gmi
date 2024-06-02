@@ -42,7 +42,7 @@ Source code is available for download:
 => https://codeberg.org/telescope-browser/telescope/	Codeberg mirror
 => https://github.com/telescope-browser/telescope	GitHub mirror
 
-Telescope depends are ncursesw and libtls or libretls.  libgrapheme is also needed, although there's a bundled copy.  When building from a git checkout, yacc (or bison) is also needed.
+Telescope depends are ncursesw, libtls or libretls, and pkg-config.  libgrapheme is also needed, although there's a bundled copy.  When building from a git checkout, yacc (or bison) is also needed.
 
 Once all the dependencies are installed, building is as easy as:
 

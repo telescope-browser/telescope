@@ -70,7 +70,7 @@ At the moment there is no UI for out-of-band verification though.
 
 ## Building
 
-Telescope depends on ncursesw and libtls or libretls.
+Telescope depends on ncursesw, libtls or libretls, and pkg-config.
 [libgrapheme][libgrapheme] is an optional dependency: there's a
 bundled copy but it's reccomended to install it with a package manager
 if available.  When building from a git checkout, yacc (or bison) is
