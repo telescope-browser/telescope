@@ -8,6 +8,12 @@ AC_PROG_CC
 AC_USE_SYSTEM_EXTENSIONS
 AC_PROG_YACC
 
+# AC_PROC_YACC sets the environment variable $YACC for a suitable program to
+# use, but doesn't check to see if it exists.  Test for this -- if it's not
+# present, error out.
+AC_CHECK_PROG(found_yacc, $YACC, yes, no)
+AS_IF([test "x$found_yacc" = "xno"], [AC_MSG_ERROR("yacc/bison not found")])
+
 PKG_PROG_PKG_CONFIG
 
 AC_ARG_VAR(HOSTCC, [The C compiler on the host.])
