@@ -33,9 +33,11 @@
 #include "compat.h"
 
 #include <sys/time.h>
+#include <sys/wait.h>
 
 #include <assert.h>
 #include <curses.h>
+#include <errno.h>
 #include <locale.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -80,6 +82,7 @@ static void		 place_cursor(int);
 static void		 redraw_tab(struct tab*);
 static void		 update_loading_anim(int, int, void*);
 static void		 stop_loading_anim(struct tab*);
+static void 		 exec_external_cmd(const char *, struct tab *);
 
 static int		 should_rearrange_windows;
 static int		 show_tab_bar;
@@ -1236,6 +1239,16 @@ ui_on_download_refresh(void)
 }
 
 void
+ui_prompt_download_cmd(char *path)
+{
+	char cmd[8192];
+
+	snprintf(cmd, sizeof(cmd), "%s %s", external_cmd, path);
+
+	ui_read("Execute", exec_external_cmd, current_tab, cmd);
+}
+
+void
 ui_remotely_open_link(const char *uri)
 {
 	new_tab(uri, NULL, NULL);
@@ -1362,3 +1375,36 @@ ui_end(void)
 {
 	endwin();
 }
+
+static void
+exec_external_cmd(const char *cmd, struct tab *tab)
+{
+	int s;
+	pid_t p;
+
+	if (cmd == NULL)
+		return;
+
+	endwin();
+
+	switch (p = fork()) {
+	case -1:
+		message("failed to fork: %s", strerror(errno));
+		return;
+	case 0:
+		execl("/bin/sh", "sh", "-c", cmd, NULL);
+		warn("exec \"%s\" failed", cmd);
+		_exit(1);
+	}
+
+again:
+	if (waitpid(p, &s, 0) == -1) {
+		if (errno == EINTR)
+			goto again;
+	}
+
+	refresh();
+	clear();
+	ui_schedule_redraw();
+}
+

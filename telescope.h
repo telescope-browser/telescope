@@ -222,6 +222,7 @@ struct download {
 void		 recompute_downloads(void);
 struct download	*enqueue_download(uint32_t, const char *);
 struct download	*download_by_id(uint32_t);
+void 	 	 download_finished(struct download *);
 
 /* help.c */
 void		 recompute_help(void);

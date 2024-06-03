@@ -31,6 +31,7 @@
 
 char	*default_protocol = NULL;
 char	*download_path = NULL;
+char 	*external_cmd = NULL;
 char	*new_tab_url = NULL;
 char	*default_search_engine = NULL;
 
@@ -640,6 +641,17 @@ config_setvars(const char *var, char *val)
 		free(download_path);
 		if (asprintf(&download_path, "%s%s%s", prfx, v, sufx) == -1) {
 			download_path = NULL;
+			return 0;
+		}
+
+		free(val);
+		return 1;
+	}
+
+	if (!strcmp(var, "external-cmd")) {
+		free(external_cmd);
+		if (asprintf(&external_cmd, "%s", val) == -1) {
+			external_cmd = NULL;
 			return 0;
 		}
 

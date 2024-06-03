@@ -20,6 +20,7 @@
 extern char	*default_protocol;
 extern char	*default_search_engine;
 extern char	*download_path;
+extern char	*external_cmd;
 extern char	*new_tab_url;
 
 extern int	 autosave;

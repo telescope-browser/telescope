@@ -534,6 +534,11 @@ handle_dispatch_imsg(int fd, int event, void *data)
 			    ((d = download_by_id(imsg_get_id(&imsg)))) == NULL)
 				return;
 
+			if (tab == NULL && d != NULL) {
+				download_finished(d);
+				return;
+			}
+
 			if (tab != NULL) {
 				if (!parser_free(tab))
 					die();
@@ -553,10 +558,6 @@ handle_dispatch_imsg(int fd, int event, void *data)
 
 				ui_on_tab_refresh(tab);
 				ui_on_tab_loaded(tab);
-			} else {
-				close(d->fd);
-				d->fd = -1;
-				ui_on_download_refresh();
 			}
 			break;
 		default:
@@ -1145,6 +1146,10 @@ main(int argc, char * const *argv)
 
 	if (download_path == NULL &&
 	    (download_path = strdup("/tmp/")) == NULL)
+		errx(1, "strdup");
+
+	if (external_cmd == NULL &&
+	    (external_cmd = strdup("xdg-open")) == NULL)
 		errx(1, "strdup");
 
 	if (argc != 0) {

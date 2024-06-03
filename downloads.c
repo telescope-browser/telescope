@@ -18,6 +18,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "telescope.h"
 #include "ui.h"
@@ -107,4 +108,17 @@ download_by_id(uint32_t id)
 	}
 
 	return NULL;
+}
+
+void
+download_finished(struct download *d)
+{
+	if (d == NULL)
+		return;
+
+	close(d->fd);
+	d->fd = -1;
+
+	ui_on_download_refresh();
+	ui_prompt_download_cmd(d->path);
 }
