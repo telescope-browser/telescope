@@ -776,9 +776,9 @@ void
 load_page_from_str(struct tab *tab, const char *page)
 {
 	parser_init(tab, gemtext_initparser);
-	if (!tab->buffer.page.parse(&tab->buffer.page, page, strlen(page)))
+	if (!parser_parse(tab, page, strlen(page)))
 		abort();
-	if (!tab->buffer.page.free(&tab->buffer.page))
+	if (!parser_free(tab))
 		abort();
 	ui_on_tab_refresh(tab);
 	ui_on_tab_loaded(tab);
