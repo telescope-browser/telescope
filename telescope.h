@@ -94,6 +94,7 @@ struct parser;
 typedef void	(*parserinit)(struct parser *);
 
 typedef int	(*parsechunkfn)(struct parser *, const char *, size_t);
+typedef int	(*parselinefn)(struct parser *, const char *, size_t);
 typedef int	(*parserfreefn)(struct parser *);
 typedef int	(*parserserial)(struct parser *, FILE *);
 
@@ -110,6 +111,7 @@ struct parser {
 	int		 flags;
 	parserinit	 init;
 	parsechunkfn	 parse;
+	parselinefn	 parseline;
 	parserfreefn	 free;
 	parserserial	 serialize;
 

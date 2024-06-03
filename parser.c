@@ -34,7 +34,11 @@ parser_init(struct tab *tab, parserfn fn)
 int
 parser_parse(struct tab *tab, const char *chunk, size_t len)
 {
-	return tab->buffer.page.parse(&tab->buffer.page, chunk, len);
+	struct parser *p = &tab->buffer.page;
+
+	if (p->parse)
+		return p->parse(p, chunk, len);
+	return parser_foreach_line(p, chunk, len, p->parseline);
 }
 
 int
@@ -59,12 +63,21 @@ parser_parsef(struct tab *tab, const char *fmt, ...)
 int
 parser_free(struct tab *tab)
 {
-	int	 r;
-	char	*tilde, *slash;
+	struct parser	*p = &tab->buffer.page;
+	int		 r = 1;
+	char		*tilde, *slash;
 
-	r = tab->buffer.page.free(&tab->buffer.page);
+	if (p->free) {
+		r = p->free(p);
+	} else if (p->len != 0) {
+		if (p->parse)
+			r = p->parse(p, p->buf, p->len);
+		else
+			r = parser_foreach_line(p, p->buf, p->len,
+			    p->parseline);
+	}
 
-	if (*tab->buffer.page.title != '\0')
+	if (*p->title != '\0')
 		return r;
 
 	/*
@@ -72,14 +85,12 @@ parser_free(struct tab *tab)
 	 * page title, using the full domain name as fallback.
 	 */
 	if ((tilde = strstr(hist_cur(tab->hist), "/~")) != NULL) {
-		strlcpy(tab->buffer.page.title, tilde+1,
-		    sizeof(tab->buffer.page.title));
+		strlcpy(p->title, tilde+1, sizeof(p->title));
 
-		if ((slash = strchr(tab->buffer.page.title, '/')) != NULL)
+		if ((slash = strchr(p->title, '/')) != NULL)
 			*slash = '\0';
 	} else
-		strlcpy(tab->buffer.page.title, tab->iri.iri_host,
-		    sizeof(tab->buffer.page.title));
+		strlcpy(p->title, tab->iri.iri_host, sizeof(p->title));
 
 	return r;
 }

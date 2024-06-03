@@ -25,9 +25,7 @@
 
 #include "parser.h"
 
-static int	textplain_parse(struct parser*, const char*, size_t);
-static int	textplain_foreach_line(struct parser*, const char*, size_t);
-static int	textplain_free(struct parser*);
+static int	textplain_parse_line(struct parser*, const char*, size_t);
 
 static inline int
 emit_line(struct parser *p, const char *line, size_t len)
@@ -59,28 +57,13 @@ textplain_initparser(struct parser *p)
 	memset(p, 0, sizeof(*p));
 
 	p->name = "text/plain";
-	p->parse = &textplain_parse;
-	p->free = &textplain_free;
+	p->parseline = &textplain_parse_line;
 
 	TAILQ_INIT(&p->head);
 }
 
 static int
-textplain_parse(struct parser *p, const char *buf, size_t size)
-{
-	return parser_foreach_line(p, buf, size, textplain_foreach_line);
-}
-
-static int
-textplain_foreach_line(struct parser *p, const char *line, size_t linelen)
+textplain_parse_line(struct parser *p, const char *line, size_t linelen)
 {
 	return emit_line(p, line, linelen);
-}
-
-static int
-textplain_free(struct parser *p)
-{
-	if (p->len != 0)
-		return emit_line(p, p->buf, p->len);
-	return 1;
 }

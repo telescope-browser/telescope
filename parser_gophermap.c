@@ -38,9 +38,7 @@ struct gm_selector {
 
 static void	gm_parse_selector(char *, struct gm_selector *);
 
-static int	gm_parse(struct parser *, const char *, size_t);
-static int	gm_foreach_line(struct parser *, const char *, size_t);
-static int	gm_free(struct parser *);
+static int	gm_parse_line(struct parser *, const char *, size_t);
 static int	gm_serialize(struct parser *, FILE *);
 
 void
@@ -49,8 +47,7 @@ gophermap_initparser(struct parser *p)
 	memset(p, 0, sizeof(*p));
 
 	p->name = "gophermap";
-	p->parse = &gm_parse;
-	p->free = &gm_free;
+	p->parseline = &gm_parse_line;
 	p->serialize = &gm_serialize;
 
 	TAILQ_INIT(&p->head);
@@ -79,12 +76,6 @@ gm_parse_selector(char *line, struct gm_selector *s)
 		return;
 	*line++ = '\0';
 	s->port = line;
-}
-
-static int
-gm_parse(struct parser *p, const char *buf, size_t size)
-{
-	return parser_foreach_line(p, buf, size, gm_foreach_line);
 }
 
 static int
@@ -143,7 +134,7 @@ err:
 }
 
 static int
-gm_foreach_line(struct parser *p, const char *line, size_t linelen)
+gm_parse_line(struct parser *p, const char *line, size_t linelen)
 {
 	char buf[LINE_MAX] = {0};
 	struct gm_selector s = {0};
@@ -184,18 +175,6 @@ gm_foreach_line(struct parser *p, const char *line, size_t linelen)
 			return 0;
 		break;
 	}
-
-	return 1;
-}
-
-static int
-gm_free(struct parser *p)
-{
-	/* flush the buffer */
-	if (p->len != 0)
-		gm_foreach_line(p, p->buf, p->len);
-
-	free(p->buf);
 
 	return 1;
 }

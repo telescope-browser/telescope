@@ -26,10 +26,8 @@
 #include "parser.h"
 #include "utils.h"
 
-static int	tpatch_parse(struct parser *, const char *, size_t);
 static int	tpatch_emit_line(struct parser *, const char *, size_t);
-static int	tpatch_foreach_line(struct parser *, const char *, size_t);
-static int	tpatch_free(struct parser *);
+static int	tpatch_parse_line(struct parser *, const char *, size_t);
 
 void
 textpatch_initparser(struct parser *p)
@@ -37,18 +35,11 @@ textpatch_initparser(struct parser *p)
 	memset(p, 0, sizeof(*p));
 
 	p->name = "text/x-patch";
-	p->parse = &tpatch_parse;
-	p->free = &tpatch_free;
+	p->parseline = &tpatch_parse_line;
 
 	p->flags = PARSER_IN_PATCH_HDR;
 
 	TAILQ_INIT(&p->head);
-}
-
-static int
-tpatch_parse(struct parser *p, const char *buf, size_t size)
-{
-	return parser_foreach_line(p, buf, size, tpatch_foreach_line);
 }
 
 static int
@@ -107,15 +98,7 @@ tpatch_emit_line(struct parser *p, const char *line, size_t linelen)
 }
 
 static int
-tpatch_foreach_line(struct parser *p, const char *line, size_t linelen)
+tpatch_parse_line(struct parser *p, const char *line, size_t linelen)
 {
 	return tpatch_emit_line(p, line, linelen);
-}
-
-static int
-tpatch_free(struct parser *p)
-{
-	if (p->len != 0)
-		return tpatch_emit_line(p, p->buf, p->len);
-	return 1;
 }

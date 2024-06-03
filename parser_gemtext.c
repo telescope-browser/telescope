@@ -47,9 +47,9 @@ static int	parse_pre_cnt(struct parser*, enum line_type, const char*, size_t);
 static int	parse_pre_end(struct parser*, enum line_type, const char*, size_t);
 static void	search_title(struct parser*, enum line_type);
 
-typedef int (parselinefn)(struct parser*, enum line_type, const char*, size_t);
+typedef int (plinefn)(struct parser*, enum line_type, const char*, size_t);
 
-static parselinefn *parsers[] = {
+static plinefn *parsers[] = {
 	[LINE_TEXT]		= parse_text,
 	[LINE_LINK]		= parse_link,
 	[LINE_TITLE_1]		= parse_title,
