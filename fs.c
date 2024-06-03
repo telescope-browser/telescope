@@ -225,7 +225,6 @@ fs_load_url(struct tab *tab, const char *url)
 		goto done;
 
 	if (is_dir(fp)) {
-		fclose(fp);
 		send_dir(tab, path);
 		goto done;
 	}
