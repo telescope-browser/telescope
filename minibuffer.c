@@ -638,8 +638,6 @@ void
 minibuffer_read(const char *prompt, void (*fn)(const char *, struct tab *),
     struct tab *data)
 {
-	size_t len;
-
 	if (in_minibuffer)
 		return;
 
@@ -648,9 +646,7 @@ minibuffer_read(const char *prompt, void (*fn)(const char *, struct tab *),
 	enter_minibuffer(read_self_insert, read_select, read_abort,
 	    read_history, NULL, NULL, 0);
 
-	len = sizeof(ministate.prompt);
-	strlcpy(ministate.prompt, prompt, len);
-	strlcat(ministate.prompt, ": ", len);
+	snprintf(ministate.prompt, sizeof(ministate.prompt), "%s: ", prompt);
 }
 
 static void
