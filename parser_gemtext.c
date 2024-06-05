@@ -32,35 +32,13 @@
 #include "parser.h"
 #include "utf8.h"
 
-static int	gemtext_parse(struct parser *, const char *, size_t);
-static int	gemtext_foreach_line(struct parser *, const char *, size_t);
+static int	gemtext_parse_line(struct parser *, const char *, size_t);
 static int	gemtext_free(struct parser *);
 static int	gemtext_serialize(struct parser *, FILE *);
 
-static int	parse_text(struct parser*, enum line_type, const char*, size_t);
-static int	parse_link(struct parser*, enum line_type, const char*, size_t);
-static int	parse_title(struct parser*, enum line_type, const char*, size_t);
-static int	parse_item(struct parser*, enum line_type, const char*, size_t);
-static int	parse_quote(struct parser*, enum line_type, const char*, size_t);
-static int	parse_pre_start(struct parser*, enum line_type, const char*, size_t);
-static int	parse_pre_cnt(struct parser*, enum line_type, const char*, size_t);
-static int	parse_pre_end(struct parser*, enum line_type, const char*, size_t);
-static void	search_title(struct parser*, enum line_type);
-
-typedef int (plinefn)(struct parser*, enum line_type, const char*, size_t);
-
-static plinefn *parsers[] = {
-	[LINE_TEXT]		= parse_text,
-	[LINE_LINK]		= parse_link,
-	[LINE_TITLE_1]		= parse_title,
-	[LINE_TITLE_2]		= parse_title,
-	[LINE_TITLE_3]		= parse_title,
-	[LINE_ITEM]		= parse_item,
-	[LINE_QUOTE]		= parse_quote,
-	[LINE_PRE_START]	= parse_pre_start,
-	[LINE_PRE_CONTENT]	= parse_pre_cnt,
-	[LINE_PRE_END]		= parse_pre_end,
-};
+static int	parse_link(struct parser *, const char*, size_t);
+static int	parse_title(struct parser *, const char*, size_t);
+static void	search_title(struct parser *, enum line_type);
 
 void
 gemtext_initparser(struct parser *p)
@@ -68,7 +46,7 @@ gemtext_initparser(struct parser *p)
 	memset(p, 0, sizeof(*p));
 
 	p->name = "text/gemini";
-	p->parse = &gemtext_parse;
+	p->parseline = &gemtext_parse_line;
 	p->free  = &gemtext_free;
 	p->serialize = &gemtext_serialize;
 
@@ -118,285 +96,149 @@ emit_line(struct parser *p, enum line_type type, char *line, char *alt)
 }
 
 static int
-parse_text(struct parser *p, enum line_type t, const char *buf, size_t len)
+parse_link(struct parser *p, const char *line, size_t len)
 {
-	char *l;
-
-	if ((l = calloc(1, len+1)) == NULL)
-		return 0;
-	memcpy(l, buf, len);
-	return emit_line(p, t, l, NULL);
-}
-
-static int
-parse_link(struct parser *p, enum line_type t, const char *buf, size_t len)
-{
-	char *l, *u;
-	const char *url_start;
+	char *label, *url;
+	const char *start;
 
 	if (len <= 2)
 		return emit_line(p, LINE_TEXT, NULL, NULL);
-	buf += 2;
-	len -= 2;
 
-	while (len > 0 && isspace(buf[0])) {
-		buf++;
-		len--;
-	}
+	line += 2, len -= 2;
+	while (len > 0 && isspace((unsigned char)line[0]))
+		line++, len--;
 
 	if (len == 0)
 		return emit_line(p, LINE_TEXT, NULL, NULL);
 
-	url_start = buf;
-	while (len > 0 && !isspace(buf[0])) {
-		buf++;
-		len--;
+	start = line;
+	while (len > 0 && !isspace((unsigned char)line[0]))
+		line++, len--;
+
+	if ((url = strndup(start, line - start)) == NULL)
+		return 0;
+
+	while (len > 0 && isspace(line[0]))
+		line++, len--;
+
+	if (len == 0) {
+		if ((label = strdup(url)) == NULL)
+			return 0;
+	} else {
+		if ((label = strndup(line, len)) == NULL)
+			return 0;
 	}
 
-	if ((u = calloc(1, buf - url_start + 1)) == NULL)
-		return 0;
-	memcpy(u, url_start, buf - url_start);
-
-	if (len == 0)
-		goto nolabel;
-
-	while (len > 0 && isspace(buf[0])) {
-		buf++;
-		len--;
-	}
-
-	if (len == 0)
-		goto nolabel;
-
-	if ((l = calloc(1, len + 1)) == NULL)
-		return 0;
-
-	memcpy(l, buf, len);
-	return emit_line(p, t, l, u);
-
-nolabel:
-	if ((l = strdup(u)) == NULL)
-		return 0;
-	return emit_line(p, t, l, u);
+	return emit_line(p, LINE_LINK, label, url);
 }
 
 static int
-parse_title(struct parser *p, enum line_type t, const char *buf, size_t len)
+parse_title(struct parser *p, const char *line, size_t len)
 {
+	enum line_type t = LINE_TITLE_1;
 	char *l;
 
-	switch (t) {
-	case LINE_TITLE_1:
-		if (len <= 1)
-			return emit_line(p, t, NULL, NULL);
-		buf++;
-		len--;
-		break;
-	case LINE_TITLE_2:
-		if (len <= 2)
-			return emit_line(p, t, NULL, NULL);
-		buf += 2;
-		len -= 2;
-		break;
-	case LINE_TITLE_3:
-		if (len <= 3)
-			return emit_line(p, t, NULL, NULL);
-		buf += 3;
-		len -= 3;
-		break;
-	default:
-		/* unreachable */
-		abort();
+	while (len > 0 && *line == '#') {
+		line++, len--;
+		t++;
+		if (t == LINE_TITLE_3)
+			break;
 	}
 
-	while (len > 0 && isspace(buf[0])) {
-		buf++;
-		len--;
-	}
+	while (len > 0 && isspace((unsigned char)*line))
+		line++, len--;
 
 	if (len == 0)
 		return emit_line(p, t, NULL, NULL);
 
 	if (t == LINE_TITLE_1 && *p->title == '\0')
-		strncpy(p->title, buf, MIN(sizeof(p->title)-1, len));
+		strncpy(p->title, line, MIN(sizeof(p->title)-1, len));
 
-	if ((l = calloc(1, len+1)) == NULL)
+	if ((l = strndup(line, len)) == NULL)
 		return 0;
-	memcpy(l, buf, len);
 	return emit_line(p, t, l, NULL);
 }
 
 static int
-parse_item(struct parser *p, enum line_type t, const char *buf, size_t len)
+gemtext_parse_line(struct parser *p, const char *line, size_t len)
 {
 	char *l;
 
-	if (len == 1)
-		return emit_line(p, t, NULL, NULL);
+	if (p->flags & PARSER_IN_PRE) {
+		if (len >= 3 && !strncmp(line, "```", 3)) {
+			p->flags ^= PARSER_IN_PRE;
+			return emit_line(p, LINE_PRE_END, NULL, NULL);
+		}
 
-	buf++;
-	len--;
-
-	while (len > 0 && isspace(buf[0])) {
-		buf++;
-		len--;
+		if (len == 0)
+			return emit_line(p, LINE_PRE_CONTENT, NULL, NULL);
+		if ((l = strndup(line, len)) == NULL)
+			return 0;
+		return emit_line(p, LINE_PRE_CONTENT, l, NULL);
 	}
 
 	if (len == 0)
-		return emit_line(p, t, NULL, NULL);
+		return emit_line(p, LINE_TEXT, NULL, NULL);
 
-	if ((l = calloc(1, len+1)) == NULL)
-		return 0;
-	memcpy(l, buf, len);
-	return emit_line(p, t, l, NULL);
-}
-
-static int
-parse_quote(struct parser *p, enum line_type t, const char *buf, size_t len)
-{
-	char *l;
-
-	if (len == 1)
-		return emit_line(p, t, NULL, NULL);
-
-	buf++;
-	len--;
-
-	while (len > 0 && isspace(buf[0])) {
-		buf++;
-		len--;
-	}
-
-	if (len == 0)
-		return emit_line(p, t, NULL, NULL);
-
-	if ((l = calloc(1, len+1)) == NULL)
-		return 0;
-	memcpy(l, buf, len);
-	return emit_line(p, t, l, NULL);
-}
-
-static int
-parse_pre_start(struct parser *p, enum line_type t, const char *buf, size_t len)
-{
-	char *l;
-
-	if (len <= 3)
-		return emit_line(p, t, NULL, NULL);
-
-	buf += 3;
-	len -= 3;
-
-	while (len > 0 && isspace(buf[0])) {
-		buf++;
-		len--;
-	}
-
-	if (len == 0)
-		return emit_line(p, t, NULL, NULL);
-
-	if ((l = calloc(1, len+1)) == NULL)
-		return 0;
-
-	memcpy(l, buf, len);
-	return emit_line(p, t, l, NULL);
-}
-
-static int
-parse_pre_cnt(struct parser *p, enum line_type t, const char *buf, size_t len)
-{
-	char *l;
-
-	if (len == 0)
-		return emit_line(p, t, NULL, NULL);
-
-	if ((l = calloc(1, len+1)) == NULL)
-		return 0;
-	memcpy(l, buf, len);
-	return emit_line(p, t, l, NULL);
-}
-
-static int
-parse_pre_end(struct parser *p, enum line_type t, const char *buf, size_t len)
-{
-	return emit_line(p, t, NULL, NULL);
-}
-
-static inline enum line_type
-detect_line_type(const char *buf, size_t len, int in_pre)
-{
-	if (in_pre) {
-		if (len >= 3 &&
-		    buf[0] == '`' && buf[1] == '`' && buf[2] == '`')
-			return LINE_PRE_END;
-		else
-			return LINE_PRE_CONTENT;
-	}
-
-	if (len == 0)
-		return LINE_TEXT;
-
-	switch (*buf) {
+	switch (*line) {
 	case '*':
-		if (len > 1 && buf[1] == ' ')
-			return LINE_ITEM;
-		break;
-	case '>': return LINE_QUOTE;
+		if (len < 1 || line[1] != ' ')
+			break;
+
+		line += 2, len -= 2;
+		while (len > 0 && isspace((unsigned char)*line))
+			line++, len--;
+		if (len == 0)
+			return emit_line(p, LINE_ITEM, NULL, NULL);
+		if ((l = strndup(line, len)) == NULL)
+			return 0;
+		return emit_line(p, LINE_ITEM, l, NULL);
+
+	case '>':
+		line++, len--;
+		while (len > 0 && isspace((unsigned char)*line))
+			line++, len--;
+		if (len == 0)
+			return emit_line(p, LINE_QUOTE, NULL, NULL);
+		if ((l = strndup(line, len)) == NULL)
+			return 0;
+		return emit_line(p, LINE_QUOTE, l, NULL);
+
 	case '=':
-		if (len >= 1 && buf[1] == '>')
-			return LINE_LINK;
+		if (len > 1 && line[1] == '>')
+			return parse_link(p, line, len);
 		break;
+
 	case '#':
-		if (len == 1)
-			return LINE_TEXT;
-		if (buf[1] != '#')
-			return LINE_TITLE_1;
-		if (len == 2)
-			return LINE_TEXT;
-		if (buf[2] != '#')
-			return LINE_TITLE_2;
-		if (len == 3)
-			return LINE_TEXT;
-		return LINE_TITLE_3;
+		return parse_title(p, line, len);
+
 	case '`':
-		if (len < 3)
-			return LINE_TEXT;
-		if (buf[0] == '`' && buf[1] == '`' && buf[2] == '`')
-			return LINE_PRE_START;
-		break;
+		if (len < 3 || strncmp(line, "```", 3) != 0)
+			break;
+
+		p->flags |= PARSER_IN_PRE;
+		line += 3, len -= 3;
+		while (len > 0 && isspace((unsigned char)*line))
+			line++, len--;
+		if (len == 0)
+			return emit_line(p, LINE_PRE_START,
+			    NULL, NULL);
+		if ((l = strndup(line, len)) == NULL)
+			return 0;
+		return emit_line(p, LINE_PRE_START, l, NULL);
 	}
 
-	return LINE_TEXT;
-}
-
-static int
-gemtext_parse(struct parser *p, const char *buf, size_t size)
-{
-	return parser_foreach_line(p, buf, size, gemtext_foreach_line);
-}
-
-static int
-gemtext_foreach_line(struct parser *p, const char *line, size_t linelen)
-{
-	enum line_type t;
-
-	t = detect_line_type(line, linelen, p->flags & PARSER_IN_PRE);
-	if (t == LINE_PRE_START)
-		p->flags ^= PARSER_IN_PRE;
-	if (t == LINE_PRE_END)
-		p->flags ^= PARSER_IN_PRE;
-	return parsers[t](p, t, line, linelen);
+	if ((l = strndup(line, len)) == NULL)
+		return 0;
+	return emit_line(p, LINE_TEXT, l, NULL);
 }
 
 static int
 gemtext_free(struct parser *p)
 {
-	enum line_type	t;
-
 	/* flush the buffer */
 	if (p->len != 0) {
-		t = detect_line_type(p->buf, p->len, p->flags & PARSER_IN_PRE);
-		if (!parsers[t](p, t, p->buf, p->len))
+		if (!gemtext_parse_line(p, p->buf, p->len))
 			return 0;
 		if ((p->flags & PARSER_IN_PRE) &&
 		    !emit_line(p, LINE_PRE_END, NULL, NULL))
