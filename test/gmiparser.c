@@ -30,6 +30,7 @@ int hide_pre_context;
 int hide_pre_closing_line;
 int hide_pre_blocks;
 int emojify_link;
+int dont_apply_styling;
 
 int
 emojied_line(const char *s, const char **space_ret)
