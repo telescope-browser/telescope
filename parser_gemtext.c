@@ -138,6 +138,7 @@ parse_title(struct parser *p, const char *line, size_t len)
 	enum line_type t = LINE_TITLE_1;
 	char *l;
 
+	line++, len--;
 	while (len > 0 && *line == '#') {
 		line++, len--;
 		t++;
