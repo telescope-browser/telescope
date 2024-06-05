@@ -403,8 +403,6 @@ gemtext_free(struct parser *p)
 			return 0;
 	}
 
-	free(p->buf);
-
 	/*
 	 * use the first level 2 or 3 header as page title if none
 	 * found yet.

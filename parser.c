@@ -77,6 +77,10 @@ parser_free(struct tab *tab)
 			    p->parseline);
 	}
 
+	free(p->buf);
+	p->buf = NULL;
+	p->len = 0;
+
 	if (*p->title != '\0')
 		return r;
 
