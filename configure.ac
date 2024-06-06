@@ -41,6 +41,33 @@ AS_IF([test "x$with_libbsd" = "xyes"], [
 	])
 ])
 
+AC_MSG_CHECKING([platform])
+case "$host_os" in
+	*darwin*)
+		PLATFORM=darwin
+		;;
+	*linux*)
+		PLATFORM=linux
+		;;
+	*freebsd*)
+		PLATFORM=freebsd
+		;;
+	*openbsd*)
+		PLATFORM=openbsd
+		;;
+	*)
+		PLATFORM=unknown
+		;;
+esac
+AC_MSG_RESULT($PLATFORM)
+AC_SUBST(PLATFORM)
+
+if test "x$PLATFORM" = "xdarwin"; then
+	export LDFLAGS="-L/opt/homebrew/opt/libressl/lib $LDFLAGS"
+	export CPPFLAGS="-I/opt/homebrew/opt/libressl/include $CPPFLAGS"
+	export PKG_CONFIG_PATH="/opt/homebrew/opt/libressl/lib/pkgconfig $PKG_CONFIG_PATH"
+fi
+
 AC_REPLACE_FUNCS([
 	asprintf \
 	err \
