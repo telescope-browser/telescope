@@ -1,0 +1,26 @@
+telescope_ubuntu_task:
+  container:
+    image: ubuntu:latest
+  before_build_script: .github/ci/before-install.sh
+  build:script: .github/ci/build.sh
+  test_script: make install
+
+telescope_alpine_linux_task:
+  container:
+    image: alpine:latest
+  script:
+    - apk add git build-base bsd-compat-headers bison automake make autoconf libbsd-dev libressl-dev ncurses-dev
+    - .github/ci/build.sh
+
+telescope_freebsd_task:
+  freebsd_instance:
+    image_family: freebsd-14-0
+  before_build_script: .github/ci/before-install.sh
+  build:script: .github/ci/build.sh
+  test_script: make install
+
+telescope_macos_task:
+  macos_instance:
+    image: ghcr.io/cirruslabs/macos-ventura-base:latest
+  before_build_script: .github/ci/before-install.sh
+  build:script: .github/ci/build.sh
