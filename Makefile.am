@@ -84,7 +84,9 @@ pagebundler$(EXEEXT): pagebundler.c
 	$(HOSTCC) $(HOSTCFLAGS) -o $@ $(srcdir)/pagebundler.c
 
 # ugly; builds bundled libgrapheme if needed
-.NOTPARALLEL $(LIBGRAPHEME):
+.NOTPARALLEL:
+.NOPARALLEL:
+$(LIBGRAPHEME):
 	${MAKE} -C $(srcdir)/libgrapheme libgrapheme.a
 
 clean-local:

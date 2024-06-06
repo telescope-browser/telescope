@@ -122,8 +122,13 @@ AC_SEARCH_LIBS([keyname], [ncursesw ncurses tinfow tinfo], [], [
 	AC_MSG_ERROR([requires either ncursesw or ncurses library with terminfo support])
 ])
 
-AC_SEARCH_LIBS([tls_init], [tls], [], [
-	AC_MSG_ERROR([requires libtls])
+AC_SEARCH_LIBS([tls_init], [tls], [found_tls=yes], [found_tls=no])
+
+AS_IF([test "x$found_tls" = "xno"], [
+	PKG_CHECK_MODULES([libtls], [libtls], [
+		CFLAGS="$libtls_CFLAGS $CFLAGS"
+		LIBS="$libtls_LIBS $LIBS"
+	], [AC_MSG_ERROR([libtls not found.])])
 ])
 
 PKG_CHECK_MODULES([libgrapheme], [libgrapheme], [
