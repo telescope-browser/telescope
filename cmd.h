@@ -42,6 +42,7 @@ CMD(cmd_mini_abort,		"Abort the current minibuffer action.");
 CMD(cmd_mini_complete_and_exit,	"Complete the current minibuffer action.");
 CMD(cmd_mini_delete_backward_char, "Delete the character before the point.");
 CMD(cmd_mini_delete_char,	"Delete the character after the point.");
+CMD(cmd_mini_edit_external,	"Use an external editor to compose the text.");
 CMD(cmd_mini_goto_beginning,	"Select the first completion.");
 CMD(cmd_mini_goto_end,		"Select the last completion.");
 CMD(cmd_mini_kill_line,		"Delete from point until the end of the line.");

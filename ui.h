@@ -158,5 +158,6 @@ void		 ui_read(const char *, void (*)(const char *, struct tab *), struct tab *,
 void		 ui_other_window(void);
 void		 ui_suspend(void);
 void		 ui_end(void);
+void		 ui_edit_externally(void);
 
 #endif

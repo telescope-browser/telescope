@@ -1177,3 +1177,11 @@ cmd_search(struct buffer *buffer)
 	    NULL, NULL, 0);
 	strlcpy(ministate.prompt, "Search: ", sizeof(ministate.prompt));
 }
+
+void
+cmd_mini_edit_external(struct buffer *buffer)
+{
+	GUARD_READ_ONLY();
+
+	ui_edit_externally();
+}

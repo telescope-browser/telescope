@@ -1408,3 +1408,86 @@ again:
 	ui_schedule_redraw();
 }
 
+#define TMPFILE "/tmp/telescope.XXXXXXXXXX"
+
+void
+ui_edit_externally(void)
+{
+	FILE		*fp;
+	char		 buf[1024 + 1];
+	size_t		 r, len = 0;
+	const char	*editor;
+	char		 sfn[sizeof(TMPFILE)];
+	pid_t		 pid;
+	int		 fd, ret, s;
+
+	if (!in_minibuffer) {
+		message("Not in minibuffer!");
+		return;
+	}
+
+	if (ministate.compl.must_select || ministate.donefn == NULL) {
+		message("Can't use an external editor to complete");
+		return;
+	}
+
+	strlcpy(sfn, TMPFILE, sizeof(sfn));
+	if ((fd = mkstemp(sfn)) == -1) {
+		message("failed to create a temp file: %s", strerror(errno));
+		return;
+	}
+	(void) write(fd, ministate.buf, strlen(ministate.buf));
+	close(fd);
+
+	if ((editor = getenv("VISUAL")) == NULL ||
+	    (editor = getenv("EDITOR")) == NULL)
+		editor = "ed";
+
+	endwin();
+	fprintf(stderr, "%s: running %s %s\n", getprogname(), editor, sfn);
+
+	switch (pid = fork()) {
+	case -1:
+		message("failed to fork: %s", strerror(errno));
+		(void) unlink(sfn);
+		return;
+	case 0:
+		execlp(editor, editor, sfn, NULL);
+		warn("exec \"%s\" failed", editor);
+		_exit(1);
+	}
+
+	do {
+		ret = waitpid(pid, &s, 0);
+	} while (ret == -1 && errno == EINTR);
+
+	refresh();
+	clear();
+	ui_schedule_redraw();
+
+	if (WIFSIGNALED(s) || WEXITSTATUS(s) != 0) {
+		message("%s failed", editor);
+		(void) unlink(sfn);
+		return;
+	}
+
+	if ((fp = fopen(sfn, "r")) == NULL) {
+		message("can't open temp file!");
+		(void) unlink(sfn);
+		return;
+	}
+	(void) unlink(sfn);
+
+	while (len < sizeof(buf) - 1) {
+		r = fread(buf + len, 1, sizeof(buf) - 1 - len, fp);
+		len += r;
+		if (r == 0)
+			break;
+	}
+	buf[len] = '\0';
+	while (len > 0 && buf[len-1] == '\n')
+		buf[--len] = '\0';
+
+	ministate.donefn(buf);
+	exit_minibuffer();
+}
