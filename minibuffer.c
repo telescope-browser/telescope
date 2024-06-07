@@ -48,7 +48,7 @@ static void		 yornp_self_insert(void);
 static void		 yornp_abort(void);
 static void		 read_self_insert(void);
 static void		 read_abort(void);
-static void		 read_select(void);
+static void		 read_select(const char *);
 static void		 handle_clear_echoarea(int, int, void *);
 
 static unsigned long	clechotimer;
@@ -229,6 +229,16 @@ minibuffer_taint_hist(void)
 }
 
 void
+minibuffer_confirm(void)
+{
+	if (!in_minibuffer || ministate.donefn == NULL)
+		return;
+
+	minibuffer_taint_hist();
+	ministate.donefn(minibuffer_compl_text());
+}
+
+void
 minibuffer_self_insert(void)
 {
 	char	*c, tmp[5] = {0};
@@ -265,12 +275,10 @@ sensible_self_insert(void)
 }
 
 void
-eecmd_select(void)
+eecmd_select(const char *t)
 {
 	struct cmd	*cmd;
-	const char	*t;
 
-	t = minibuffer_compl_text();
 	for (cmd = cmds; cmd->cmd != NULL; ++cmd) {
 		if (!strcmp(cmd->cmd, t)) {
 			minibuffer_hist_save_entry();
@@ -284,7 +292,7 @@ eecmd_select(void)
 }
 
 void
-ir_select_gemini(void)
+ir_select_gemini(const char *text)
 {
 	static struct iri	iri;
 	char		 buf[1025];
@@ -294,7 +302,7 @@ ir_select_gemini(void)
 
 	if (iri_parse(NULL, hist_cur(tab->hist), &iri) == -1)
 		goto err;
-	if (iri_setquery(&iri, minibuffer_compl_text()) == -1)
+	if (iri_setquery(&iri, text) == -1)
 		goto err;
 	if (iri_unparse(&iri, buf, sizeof(buf)) == -1)
 		goto err;
@@ -308,7 +316,7 @@ ir_select_gemini(void)
 }
 
 void
-ir_select_reply(void)
+ir_select_reply(const char *text)
 {
 	static struct iri iri;
 	char		 buf[1025] = {0};
@@ -318,7 +326,7 @@ ir_select_reply(void)
 
 	/* a bit ugly but... */
 	iri_parse(NULL, tab->last_input_url, &iri);
-	iri_setquery(&iri, minibuffer_compl_text());
+	iri_setquery(&iri, text);
 	iri_unparse(&iri, buf, sizeof(buf));
 
 	exit_minibuffer();
@@ -326,32 +334,28 @@ ir_select_reply(void)
 }
 
 void
-ir_select_gopher(void)
+ir_select_gopher(const char *text)
 {
 	minibuffer_hist_save_entry();
-	gopher_send_search_req(current_tab, minibuffer_compl_text());
+	gopher_send_search_req(current_tab, text);
 	exit_minibuffer();
 }
 
 void
-lu_select(void)
+lu_select(const char *text)
 {
 	char url[GEMINI_URL_LEN+1];
 
 	minibuffer_hist_save_entry();
-	humanify_url(minibuffer_compl_text(), hist_cur(current_tab->hist),
-	    url, sizeof(url));
+	humanify_url(text, hist_cur(current_tab->hist), url, sizeof(url));
 
 	exit_minibuffer();
 	load_url_in_tab(current_tab, url, NULL, LU_MODE_NOCACHE);
 }
 
 void
-bp_select(void)
+bp_select(const char *url)
 {
-	const char *url;
-
-	url = minibuffer_compl_text();
 	if (*url != '\0') {
 		if (bookmark_page(url) == -1)
 			message("failed to bookmark page: %s",
@@ -364,7 +368,7 @@ bp_select(void)
 }
 
 void
-ts_select(void)
+ts_select(const char *text)
 {
 	struct tab	*tab;
 
@@ -378,7 +382,7 @@ ts_select(void)
 }
 
 void
-ls_select(void)
+ls_select(const char *text)
 {
 	struct line	*l;
 
@@ -414,7 +418,7 @@ jump_to_line(struct line *l)
 }
 
 void
-swiper_select(void)
+swiper_select(const char *text)
 {
 	struct line	*l;
 
@@ -428,7 +432,7 @@ swiper_select(void)
 }
 
 void
-toc_select(void)
+toc_select(const char *text)
 {
 	struct line	*l;
 
@@ -448,11 +452,8 @@ save_cert_for_site_cb(int r, struct tab *tab)
 }
 
 void
-uc_select(void)
+uc_select(const char *name)
 {
-	const char	*name;
-
-	name = minibuffer_compl_text();
 	if ((current_tab->client_cert = ccert(name)) == NULL) {
 		message("Certificate %s not found", name);
 		return;
@@ -465,7 +466,7 @@ uc_select(void)
 }
 
 void
-search_select(void)
+search_select(const char *text)
 {
 	static struct iri	 iri;
 	static char		 buf[1025];
@@ -476,7 +477,7 @@ search_select(void)
 		exit_minibuffer();
 		return;
 	}
-	iri_setquery(&iri, minibuffer_compl_text());
+	iri_setquery(&iri, text);
 	iri_unparse(&iri, buf, sizeof(buf));
 
 	exit_minibuffer();
@@ -521,11 +522,11 @@ read_abort(void)
 }
 
 static void
-read_select(void)
+read_select(const char *text)
 {
 	exit_minibuffer();
 	minibuffer_hist_save_entry();
-	read_cb(ministate.buf, read_data);
+	read_cb(text, read_data);
 }
 
 /*
@@ -567,7 +568,7 @@ populate_compl_buffer(complfn *fn, void *data)
 }
 
 void
-enter_minibuffer(void (*self_insert_fn)(void), void (*donefn)(void),
+enter_minibuffer(void (*self_insert_fn)(void), void (*donefn)(const char *),
     void (*abortfn)(void), struct hist *hist,
     complfn *complfn, void *compldata, int must_select)
 {
@@ -626,7 +627,7 @@ yornp(const char *prompt, void (*fn)(int, struct tab*),
 
 	yornp_cb = fn;
 	yornp_data = data;
-	enter_minibuffer(yornp_self_insert, yornp_self_insert,
+	enter_minibuffer(yornp_self_insert, NULL,
 	    yornp_abort, NULL, NULL, NULL, 0);
 
 	len = sizeof(ministate.prompt);

@@ -1301,7 +1301,7 @@ ui_schedule_redraw(void)
 }
 
 void
-ui_require_input(struct tab *tab, int hide, void (*fn)(void))
+ui_require_input(struct tab *tab, int hide, void (*fn)(const char *))
 {
 	/* TODO: hard-switching to another tab is ugly */
 	switch_to_tab(tab);

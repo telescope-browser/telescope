@@ -46,7 +46,7 @@ struct ministate {
 	char		*curmesg;
 
 	char		 prompt[64];
-	void		 (*donefn)(void);
+	void		 (*donefn)(const char *);
 	void		 (*abortfn)(void);
 
 	char		 buf[1025];
@@ -72,22 +72,23 @@ extern int		 in_minibuffer;
 void	 recompute_completions(int);
 int	 minibuffer_insert_current_candidate(void);
 void	 minibuffer_taint_hist(void);
+void	 minibuffer_confirm(void);
 void	 minibuffer_self_insert(void);
 void	 sensible_self_insert(void);
-void	 eecmd_select(void);
-void	 ir_select_gemini(void);
-void	 ir_select_reply(void);
-void	 ir_select_gopher(void);
-void	 lu_select(void);
-void	 bp_select(void);
-void	 ts_select(void);
-void	 ls_select(void);
-void	 swiper_select(void);
-void	 toc_select(void);
-void	 uc_select(void);
-void	 search_select(void);
+void	 eecmd_select(const char *);
+void	 ir_select_gemini(const char *);
+void	 ir_select_reply(const char *);
+void	 ir_select_gopher(const char *);
+void	 lu_select(const char *);
+void	 bp_select(const char *);
+void	 ts_select(const char *);
+void	 ls_select(const char *);
+void	 swiper_select(const char *);
+void	 toc_select(const char *);
+void	 uc_select(const char *);
+void	 search_select(const char *);
 
-void	 enter_minibuffer(void(*)(void), void(*)(void), void(*)(void),
+void	 enter_minibuffer(void(*)(void), void(*)(const char *), void(*)(void),
     struct hist *, complfn *, void *, int);
 
 void	 exit_minibuffer(void);

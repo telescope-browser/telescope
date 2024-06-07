@@ -800,8 +800,7 @@ cmd_mini_complete_and_exit(struct buffer *buffer)
 		}
 	}
 
-	minibuffer_taint_hist();
-	ministate.donefn();
+	minibuffer_confirm();
 }
 
 void

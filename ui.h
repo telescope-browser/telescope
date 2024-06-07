@@ -152,7 +152,7 @@ void		 ui_toggle_side_window(int);
 void		 ui_show_downloads_pane(void);
 void		 ui_schedule_redraw(void);
 void		 ui_after_message_hook(void);
-void		 ui_require_input(struct tab *, int, void (*)(void));
+void		 ui_require_input(struct tab *, int, void (*)(const char *));
 void		 ui_yornp(const char *, void (*)(int, struct tab *), struct tab *);
 void		 ui_read(const char *, void (*)(const char *, struct tab *), struct tab *, const char *);
 void		 ui_other_window(void);
