@@ -39,6 +39,7 @@ sandbox_net_process(void)
 void
 sandbox_ui_process(void)
 {
+#if notyet
 	char path[PATH_MAX];
 
 	if (unveil("/tmp", "rwc") == -1)
@@ -60,6 +61,7 @@ sandbox_ui_process(void)
 
 	if (unveil("/bin/sh", "rx") == -1)
 		err(1, "unveil(xdg-open)");
+#endif
 
 	if (pledge("stdio rpath wpath cpath unix tty proc exec",
 	    NULL) == -1)
