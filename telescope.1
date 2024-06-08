@@ -1014,6 +1014,13 @@ To decide whether to use colors or not.
 The content of the variable doesn't matter.
 .It Ev TERM
 The user's terminal name.
+.It Ev VISUAL , Ev EDITOR
+The editor spawned by the
+.Ic mini-edit-external
+command.
+If not set,
+.Xr ed 1
+the standard text editor is used.
 .It Ev XDG_CACHE_HOME , Ev XDG_CONFIG_HOME , Ev XDG_DATA_HOME
 If defined can alter the default location of the files used.
 .El
