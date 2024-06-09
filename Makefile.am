@@ -116,8 +116,7 @@ PAGES =	$(builddir)/pages/about_about.gmi	\
 	$(builddir)/pages/about_license.gmi	\
 	$(builddir)/pages/about_new.gmi
 pages.c: pagebundler $(srcdir)/pages.h ${PAGES}
-	echo > $@
-	echo "#include \"pages.h\"" >> $@
+	echo "#include \"pages.h\"" > $@
 	./pagebundler $(builddir)/pages/about_about.gmi   >> $@
 	./pagebundler $(builddir)/pages/about_blank.gmi   >> $@
 	./pagebundler $(builddir)/pages/about_crash.gmi   >> $@
