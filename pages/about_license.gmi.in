@@ -16,7 +16,7 @@ with some parts available as Public Domain software:
 >
 > THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-Telescope also includes code which is subject to the following copyrights.  These people probably don't know their code is being re-used here, wonders of free/open source software.
+Telescope also includes code which is subject to the following copyrights.  These people probably don't know their code is being reused here, wonders of free/open source software!
 
 * compat/asprintf.c and compat/setproctitle.c
 > Copyright (c) 2006 Nicholas Marriott <nicholas.marriott@gmail.com>
