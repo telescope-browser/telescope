@@ -181,15 +181,14 @@ fs_load_url(struct tab *tab, const char *url)
 		const char	*name;
 		const char	*path;
 		const uint8_t	*data;
-		size_t		 len;
 	} pages[] = {
-		{"about",	NULL,	about_about,	about_about_len},
-		{"blank",	NULL,	about_blank,	about_blank_len},
-		{"bookmarks",	bpath,	bookmarks,	bookmarks_len},
-		{"crash",	NULL,	about_crash,	about_crash_len},
-		{"help",	NULL,	about_help,	about_help_len},
-		{"license",	NULL,	about_license,	about_license_len},
-		{"new",		NULL,	about_new,	about_new_len},
+		{"about",	NULL,	about_about},
+		{"blank",	NULL,	about_blank},
+		{"bookmarks",	bpath,	bookmarks},
+		{"crash",	NULL,	about_crash},
+		{"help",	NULL,	about_help},
+		{"license",	NULL,	about_license},
+		{"new",		NULL,	about_new},
 	}, *page = NULL;
 
 	if (!strncmp(url, "about:", 6)) {

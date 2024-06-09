@@ -64,8 +64,7 @@ validc(int c)
 int
 main(int argc, char **argv)
 {
-	size_t	 len, r, i, n;
-	int	 did;
+	size_t	 r, i, n;
 	FILE	*f;
 	uint8_t	 buf[BUFSIZ];
 	char	 varname[PATH_MAX];
@@ -85,15 +84,9 @@ main(int argc, char **argv)
 
 	printf("const uint8_t %s[] = {", varname);
 
-	did = 0;
-	len = 0;
 	n = 0;
 	for (;;) {
 		r = fread(buf, 1, sizeof(buf), f);
-		len += r;
-
-		if (r != 0)
-			did = 1;
 
 		for (i = 0; i < r; ++i, ++n) {
 			if (n % 12 == 0)
@@ -114,20 +107,8 @@ main(int argc, char **argv)
 			break;
 	}
 
-	if (!did) {
-		/*
-		 * if nothing was emitted, add a NUL byte.  This was
-		 * still produce an exact copy of the file because
-		 * `len' doesn't count this NUL byte.  It prevents the
-		 * "use of GNU empty initializer extension" warning
-		 * when bundling pages/about_empty.gmi
-		 */
-		printf("\t0x0\n");
-	}
-
+	printf("\t0x0\n");
 	printf("}; /* %s */\n", varname);
-
-	printf("size_t %s_len = %zu;\n", varname, len);
 
 	fclose(f);
 	return 0;
