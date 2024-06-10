@@ -35,6 +35,8 @@ telescope_SOURCES =	bufio.c			\
 			iri.h			\
 			keymap.c		\
 			keymap.h		\
+			mailcap.c		\
+			mailcap.h		\
 			mcache.c		\
 			mcache.h		\
 			mime.c			\
