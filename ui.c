@@ -1441,7 +1441,7 @@ ui_edit_externally(void)
 
 	if ((editor = getenv("VISUAL")) == NULL &&
 	    (editor = getenv("EDITOR")) == NULL)
-		editor = "ed";
+		editor = DEFAULT_EDITOR;
 
 	endwin();
 	fprintf(stderr, "%s: running %s %s\n", getprogname(), editor, sfn);

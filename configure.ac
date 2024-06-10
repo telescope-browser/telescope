@@ -34,6 +34,14 @@ AC_ARG_WITH([libbsd],
 	AS_HELP_STRING([--with-libbsd],
 		[Build with libbsd library (default: disabled)]))
 
+AC_ARG_WITH([default-editor],
+	AS_HELP_STRING([--with-default-editor],
+		[Set the default editor to use (default: ed)]),
+		[DEFAULT_EDITOR=$withval],
+		[DEFAULT_EDITOR=ed])
+AC_MSG_NOTICE([Using default-editor: $DEFAULT_EDITOR])
+AC_DEFINE_UNQUOTED([DEFAULT_EDITOR], ["$DEFAULT_EDITOR"], [The default editor])
+
 AS_IF([test "x$with_libbsd" = "xyes"], [
 	PKG_CHECK_MODULES([libbsd], [libbsd-overlay libbsd-ctor], [
 		CFLAGS="$libbsd_CFLAGS $CFLAGS"

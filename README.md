@@ -88,6 +88,16 @@ provided by your distribution instead of using the bundled versions:
  - `--with-libbsd`: link with [libbsd][libbsd]
  - `--with-libimsg`: link with the [imsg-compat][imsg-compat] library
 
+The default-editor can be changed at build-time with the following option:
+
+ - `--with-default-editor`: defaults to `ed(1)`
+
+This is useful for distributions such as Debian, which prefers
+`sensible-editor(1)` as a wrapper.
+
+This feature is mostly useful with the `mini-edit-external` command in
+`telescope`.
+
 [libbsd]:	https://libbsd.freedesktop.org
 [imsg-compat]:	https://github.com/bsd-ac/imsg-compat
 [libgrapheme]:	https://libs.suckless.org/libgrapheme/
