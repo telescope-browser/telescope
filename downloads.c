@@ -81,7 +81,7 @@ end:
 }
 
 struct download *
-enqueue_download(uint32_t id, const char *path)
+enqueue_download(uint32_t id, const char *path, const char *mime_type)
 {
 	struct download *d;
 
@@ -91,6 +91,7 @@ enqueue_download(uint32_t id, const char *path)
 	d->id = id;
 	d->fd = -1;
 	d->path = strdup(path);
+	d->mime_type = strdup(mime_type);
 
 	STAILQ_INSERT_HEAD(&downloads, d, entries);
 
@@ -120,5 +121,5 @@ download_finished(struct download *d)
 	d->fd = -1;
 
 	ui_on_download_refresh();
-	ui_prompt_download_cmd(d->path);
+	ui_prompt_download_cmd(d->path, d->mime_type);
 }

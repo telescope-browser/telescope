@@ -215,12 +215,13 @@ struct download {
 	uint32_t		 id;
 	int			 fd;
 	size_t			 bytes;
+	char 			*mime_type;
 	char			*path;
 	STAILQ_ENTRY(download)	 entries;
 };
 
 void		 recompute_downloads(void);
-struct download	*enqueue_download(uint32_t, const char *);
+struct download	*enqueue_download(uint32_t, const char *, const char *);
 struct download	*download_by_id(uint32_t);
 void 	 	 download_finished(struct download *);
 

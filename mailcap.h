@@ -17,8 +17,6 @@
 #ifndef MAILCAP_H
 #define MAILCAP_H
 
-#define DEFAULT_MIMETYPE "*/*"
-
 struct mailcap {
 	char 			*mime_type;
 	char 			*cmd;

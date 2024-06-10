@@ -50,6 +50,7 @@
 #include "ev.h"
 #include "hist.h"
 #include "keymap.h"
+#include "mailcap.h"
 #include "minibuffer.h"
 #include "session.h"
 #include "telescope.h"
@@ -82,7 +83,7 @@ static void		 place_cursor(int);
 static void		 redraw_tab(struct tab*);
 static void		 update_loading_anim(int, int, void*);
 static void		 stop_loading_anim(struct tab*);
-static void 		 exec_external_cmd(const char *, struct tab *);
+static void 		 exec_external_cmd(char **);
 
 static int		 should_rearrange_windows;
 static int		 show_tab_bar;
@@ -1239,13 +1240,15 @@ ui_on_download_refresh(void)
 }
 
 void
-ui_prompt_download_cmd(char *path)
+ui_prompt_download_cmd(char *path, char *mime_type)
 {
-	char cmd[8192];
+	struct mailcap 	*mc = NULL;
 
-	snprintf(cmd, sizeof(cmd), "%s %s", external_cmd, path);
+	if ((mc = mailcap_cmd_from_mimetype(mime_type, path)) == NULL)
+		return;
 
-	ui_read("Execute", exec_external_cmd, current_tab, cmd);
+	message("Loaded %s with %s", mime_type, mc->cmd_argv[0]);
+	exec_external_cmd(mc->cmd_argv);
 }
 
 void
@@ -1377,12 +1380,12 @@ ui_end(void)
 }
 
 static void
-exec_external_cmd(const char *cmd, struct tab *tab)
+exec_external_cmd(char **argv)
 {
-	int s;
-	pid_t p;
+	int 	 s;
+	pid_t 	 p;
 
-	if (cmd == NULL)
+	if (argv == NULL)
 		return;
 
 	endwin();
@@ -1392,8 +1395,8 @@ exec_external_cmd(const char *cmd, struct tab *tab)
 		message("failed to fork: %s", strerror(errno));
 		return;
 	case 0:
-		execl("/bin/sh", "sh", "-c", cmd, NULL);
-		warn("exec \"%s\" failed", cmd);
+		execvp(argv[0], argv);
+		warn("execve failed");
 		_exit(1);
 	}
 

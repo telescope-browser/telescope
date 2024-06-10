@@ -41,6 +41,7 @@
 #include "imsgev.h"
 #include "iri.h"
 #include "keymap.h"
+#include "mailcap.h"
 #include "mcache.h"
 #include "minibuffer.h"
 #include "parser.h"
@@ -426,7 +427,7 @@ handle_save_page_path(const char *path, struct tab *tab)
 	}
 
 	ui_show_downloads_pane();
-	d = enqueue_download(tab->id, path);
+	d = enqueue_download(tab->id, path, tab->meta);
 	d->fd = fd;
 	ui_send_net(IMSG_PROCEED, d->id, -1, NULL, 0);
 
@@ -1127,6 +1128,8 @@ main(int argc, char * const *argv)
 	TAILQ_INIT(&global_map.m);
 	global_map.unhandled_input = global_key_unbound;
 	TAILQ_INIT(&minibuffer_map.m);
+
+	init_mailcap();
 
 	if (fs_init() == -1)
 		err(1, "fs_init failed");
