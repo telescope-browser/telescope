@@ -1,8 +1,23 @@
 #!/bin/sh
 
-if [ "$CIRRUS_OS" = "linux" ]; then
-	apt-get update -qq && \
-	apt-get -y install bison autoconf \
+set -e
+
+case "$(uname)" in
+*Linux*)
+	set +e
+	ID="$(. /etc/os-release && echo $ID)"
+	set -e
+
+	case "$ID" in
+	alpine)
+		apk update
+		apk add alpine-sdk autoconf automake pkgconf make byacc \
+			libbsd-dev ncurses-dev libretls-dev
+		;;
+	*)
+		# assume debian-derived.
+		apt-get update -qq
+		apt-get -y install bison autoconf \
 				autotools-dev \
 				libncurses5-dev \
 				pkg-config \
@@ -11,17 +26,19 @@ if [ "$CIRRUS_OS" = "linux" ]; then
 				libbsd-dev \
 				git \
 				libtls-dev
-fi
+		;;
+	esac
+	;;
 
-if [ "$CIRRUS_OS" = "freebsd" ]; then
+*FreeBSD*)
 	pkg install -y \
 		automake \
 		pkgconf \
 		git \
 		libretls
-fi
+	;;
 
-if [ "$CIRRUS_OS" = "darwin" ]; then
+*Darwin*)
 	brew install autoconf \
 		automake \
 		bison \
@@ -30,4 +47,10 @@ if [ "$CIRRUS_OS" = "darwin" ]; then
 		git \
 		libressl \
 		libretls
-fi
+	;;
+
+*)
+	echo "unknown operating system $(uname)" >&2
+	exit 1
+	;;
+esac

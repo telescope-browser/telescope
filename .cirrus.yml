@@ -8,10 +8,9 @@ telescope_ubuntu_task:
 telescope_alpine_linux_task:
   container:
     image: alpine:latest
-  script:
-    - apk add git build-base bsd-compat-headers bison automake make autoconf libbsd-dev libressl-dev ncurses-dev
-    - .github/ci/build.sh
-    - make check
+  before_build_script: .github/ci/before-install.sh
+  build:script: .github/ci/build.sh
+  test_script: make check
 
 telescope_freebsd_task:
   freebsd_instance:

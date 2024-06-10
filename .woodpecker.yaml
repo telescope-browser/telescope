@@ -1,0 +1,17 @@
+matrix:
+  TELESCOPE_BASE_IMAGE:
+    - alpine:latest
+    - debian:latest
+
+when:
+  - event: [tag, push, pull_request]
+
+steps:
+  - name: build
+    image: ${TELESCOPE_BASE_IMAGE}
+    commands:
+      - ./.github/ci/before-install.sh
+      - ./autogen.sh
+      - ./configure
+      - make
+      - make check
