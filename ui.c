@@ -1445,6 +1445,7 @@ ui_edit_externally(void)
 
 	endwin();
 	fprintf(stderr, "%s: running %s %s\n", getprogname(), editor, sfn);
+	fflush(NULL);
 
 	switch (pid = fork()) {
 	case -1:
@@ -1454,6 +1455,9 @@ ui_edit_externally(void)
 	case 0:
 		execlp(editor, editor, sfn, NULL);
 		warn("exec \"%s\" failed", editor);
+		fprintf(stderr, "Press enter to continue");
+		fflush(stderr);
+		read(0, &s, 1);
 		_exit(1);
 	}
 
