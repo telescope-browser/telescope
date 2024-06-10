@@ -1439,7 +1439,7 @@ ui_edit_externally(void)
 	(void) write(fd, ministate.buf, strlen(ministate.buf));
 	close(fd);
 
-	if ((editor = getenv("VISUAL")) == NULL ||
+	if ((editor = getenv("VISUAL")) == NULL &&
 	    (editor = getenv("EDITOR")) == NULL)
 		editor = "ed";
 
