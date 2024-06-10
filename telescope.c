@@ -1073,7 +1073,6 @@ main(int argc, char * const *argv)
 
 	argv0 = argv[0];
 
-	signal(SIGCHLD, SIG_IGN);
 	signal(SIGPIPE, SIG_IGN);
 
 	if (getenv("NO_COLOR") != NULL)
