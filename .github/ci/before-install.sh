@@ -17,15 +17,17 @@ case "$(uname)" in
 	*)
 		# assume debian-derived.
 		apt-get update -qq
-		apt-get -y install bison autoconf \
-				autotools-dev \
-				libncurses5-dev \
-				pkg-config \
-				build-essential \
-				libssl-dev \
-				libbsd-dev \
-				git \
-				libtls-dev
+		apt-get --no-install-suggests --no-install-recommends -y install \
+			bison \
+			autoconf \
+			autotools-dev \
+			automake \
+			libncurses5-dev \
+			pkg-config \
+			build-essential \
+			libssl-dev \
+			libbsd-dev \
+			libtls-dev
 		;;
 	esac
 	;;
