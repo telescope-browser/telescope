@@ -98,8 +98,7 @@ send_dir(struct tab *tab, const char *path)
 	 */
 
 	if (!has_suffix(path, "/")) {
-		if (asprintf(&s, "%s/", path) == -1)
-			die();
+		xasprintf(&s, "%s/", path);
 		send_hdr(peerid, 30, s);
 		free(s);
 		return;

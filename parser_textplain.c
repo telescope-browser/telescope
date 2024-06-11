@@ -25,6 +25,7 @@
 
 #include "parser.h"
 #include "telescope.h"
+#include "xwrapper.h"
 
 static int	textplain_parse_line(struct buffer *, const char *, size_t);
 
@@ -38,16 +39,12 @@ emit_line(struct buffer *b, const char *line, size_t len)
 {
 	struct line *l;
 
-	if ((l = calloc(1, sizeof(*l))) == NULL)
-		return 0;
+	l = xcalloc(1, sizeof(*l));
 
 	l->type = LINE_TEXT;
 
 	if (len != 0) {
-		if ((l->line = calloc(1, len+1)) == NULL) {
-			free(l);
-			return 0;
-		}
+		l->line = xcalloc(1, len + 1);
 
 		memcpy(l->line, line, len);
 	}

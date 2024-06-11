@@ -24,6 +24,7 @@
 #include "parser.h"
 #include "telescope.h"
 #include "utils.h"
+#include "xwrapper.h"
 
 #ifndef LINE_MAX
 #define LINE_MAX 2048
@@ -94,11 +95,9 @@ emit_line(struct buffer *b, enum line_type type, struct gm_selector *s)
 	struct line *l;
 	char buf[LINE_MAX];
 
-	if ((l = calloc(1, sizeof(*l))) == NULL)
-		goto err;
+	l = xcalloc(1, sizeof(*l));
 
-	if ((l->line = strdup(s->ds)) == NULL)
-		goto err;
+	l->line = xstrdup(s->ds);
 
 	switch (l->type = type) {
 	case LINE_LINK:
@@ -107,8 +106,7 @@ emit_line(struct buffer *b, enum line_type type, struct gm_selector *s)
 		} else if (selector2uri(s, buf, sizeof(buf)) == -1)
 			goto err;
 
-		if ((l->alt = strdup(buf)) == NULL)
-			goto err;
+		l->alt = xstrdup(buf);
 		break;
 
 	default:

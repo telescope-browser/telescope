@@ -8,7 +8,9 @@ gmparser_SOURCES =	gmparser.c				\
 			$(top_srcdir)/iri.h			\
 			$(top_srcdir)/parser.c			\
 			$(top_srcdir)/parser.h			\
-			$(top_srcdir)/parser_gophermap.c
+			$(top_srcdir)/parser_gophermap.c 	\
+			$(top_srcdir)/xwrapper.c 		\
+			$(top_srcdir)/xwrapper.h
 
 gmiparser_SOURCES =	gmiparser.c				\
 			$(top_srcdir)/compat.h			\
@@ -16,7 +18,9 @@ gmiparser_SOURCES =	gmiparser.c				\
 			$(top_srcdir)/hist.h			\
 			$(top_srcdir)/parser.c			\
 			$(top_srcdir)/parser.h			\
-			$(top_srcdir)/parser_gemtext.c
+			$(top_srcdir)/parser_gemtext.c 		\
+			$(top_srcdir)/xwrapper.c 		\
+			$(top_srcdir)/xwrapper.h
 
 iritest_SOURCES =	iritest.c				\
 			$(top_srcdir)/iri.c			\
@@ -24,13 +28,17 @@ iritest_SOURCES =	iritest.c				\
 
 evtest_SOURCES =	evtest.c				\
 			$(top_srcdir)/ev.c			\
-			$(top_srcdir)/ev.h
+			$(top_srcdir)/ev.h			\
+			$(top_srcdir)/xwrapper.c 		\
+			$(top_srcdir)/xwrapper.h
 
 mailcap_SOURCES =	$(top_srcdir)/test/mailcap.c		\
 			$(top_srcdir)/mailcap.c			\
-			$(top_srcdir)/mailcap.h
+			$(top_srcdir)/mailcap.h			\
+			$(top_srcdir)/xwrapper.c 		\
+			$(top_srcdir)/xwrapper.h
 
-AM_CFLAGS =		-I$(top_srcdir)
+AM_CFLAGS =		-I$(top_srcdir) -I$(top_srcdir)/compat
 
 LDADD =			$(LIBOBJS)
 

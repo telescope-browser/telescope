@@ -22,6 +22,7 @@
 #include <string.h>
 
 #include "utils.h"
+#include "xwrapper.h"
 
 int
 mark_nonblock_cloexec(int fd)
@@ -54,16 +55,14 @@ has_suffix(const char *str, const char *sufx)
 void *
 hash_alloc(size_t len, void *d)
 {
-	if ((d = malloc(len)) == NULL)
-		abort();
+	d = xmalloc(len);
 	return d;
 }
 
 void *
 hash_calloc(size_t nmemb, size_t size, void *d)
 {
-	if ((d = calloc(nmemb, size)) == NULL)
-		abort();
+	d = xcalloc(nmemb, size);
 	return d;
 }
 

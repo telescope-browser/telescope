@@ -51,6 +51,7 @@
 #include "tofu.h"
 #include "ui.h"
 #include "utils.h"
+#include "xwrapper.h"
 
 static const struct option longopts[] = {
 	{"help",	no_argument,	NULL,	'h'},
@@ -207,8 +208,7 @@ handle_imsg_check_cert(struct imsg *imsg)
 			abort();
 
 		tofu_res = 1;	/* trust on first use */
-		if ((e = calloc(1, sizeof(*e))) == NULL)
-			abort();
+		e = xcalloc(1, sizeof(*e));
 		strlcpy(e->domain, host, sizeof(e->domain));
 		if (*port != '\0' && strcmp(port, "1965")) {
 			strlcat(e->domain, ":", sizeof(e->domain));
@@ -232,8 +232,7 @@ handle_imsg_check_cert(struct imsg *imsg)
 	} else {
 		tab->trust = TS_UNTRUSTED;
 		load_page_from_str(tab, "# Certificate mismatch\n");
-		if ((tab->cert = strdup(hash)) == NULL)
-			die();
+		tab->cert = xstrdup(hash);
 		ui_yornp("Certificate mismatch.  Proceed?",
 		    handle_check_cert_user_choice, tab);
 	}
@@ -289,8 +288,7 @@ handle_maybe_save_new_cert(int accept, struct tab *tab)
 	if (!accept)
 		goto end;
 
-	if ((e = calloc(1, sizeof(*e))) == NULL)
-		die();
+	e = xcalloc(1, sizeof(*e));
 
 	strlcpy(e->domain, host, sizeof(e->domain));
 	if (*port != '\0' && strcmp(port, "1965")) {
@@ -349,9 +347,7 @@ handle_request_response(struct tab *tab)
 		load_page_from_str(tab, err_pages[tab->code]);
 	} else if (tab->code < 20) {	/* 1x */
 		free(tab->last_input_url);
-		tab->last_input_url = strdup(hist_cur(tab->hist));
-		if (tab->last_input_url == NULL)
-			die();
+		tab->last_input_url = xstrdup(hist_cur(tab->hist));
 
 		load_page_from_str(tab, err_pages[tab->code]);
 		ui_require_input(tab, tab->code == 11, ir_select_gemini);
@@ -479,9 +475,8 @@ handle_dispatch_imsg(int fd, int event, void *data)
 			if (imsg_get_ibuf(&imsg, &ibuf) == -1 ||
 			    ibuf_borrow_str(&ibuf, &str) == -1)
 				die();
-			if (asprintf(&page, "# Error loading %s\n\n> %s\n",
-			    hist_cur(tab->hist), str) == -1)
-				die();
+			xasprintf(&page, "# Error loading %s\n\n> %s\n",
+				  hist_cur(tab->hist), str);
 			load_page_from_str(tab, page);
 			free(page);
 			break;
@@ -681,9 +676,7 @@ load_gopher_url(struct tab *tab, const char *url)
 		break;
 	case '7':
 		free(tab->last_input_url);
-		tab->last_input_url = strdup(url);
-		if (tab->last_input_url == NULL)
-			die();
+		tab->last_input_url = xstrdup(url);
 		ui_require_input(tab, 0, ir_select_gopher);
 		load_page_from_str(tab, err_pages[10]);
 		return;
@@ -803,9 +796,8 @@ do_load_url(struct tab *tab, const char *url, const char *base, int mode)
 	tab->trust = TS_UNKNOWN;
 
 	if (iri_parse(base, url, &tab->iri) == -1) {
-		if (asprintf(&t, "# error loading %s\n>%s\n",
-		    url, "Can't parse the IRI") == -1)
-			die();
+		xasprintf(&t, "# error loading %s\n>%s\n", url,
+			  "Can't parse the IRI");
 		hist_set_cur(tab->hist, url);
 		load_page_from_str(tab, t);
 		free(t);
@@ -1153,8 +1145,7 @@ main(int argc, char * const *argv)
 	if (argc != 0) {
 		char *base;
 
-		if (asprintf(&base, "file://%s/", cwd) == -1)
-			err(1, "asprintf");
+		xasprintf(&base, "file://%s/", cwd);
 
 		has_url = 1;
 		humanify_url(argv[0], base, url, sizeof(url));

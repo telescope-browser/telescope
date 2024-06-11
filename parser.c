@@ -22,6 +22,7 @@
 #include "hist.h"
 #include "parser.h"
 #include "telescope.h"
+#include "xwrapper.h"
 
 static int parser_foreach_line(struct buffer *, const char *, size_t);
 
@@ -137,8 +138,7 @@ parser_append(struct buffer *b, const char *buf, size_t len)
 	char *t;
 
 	newlen = len + b->len;
-	if ((t = calloc(1, newlen)) == NULL)
-		return 0;
+	t = xcalloc(1, newlen);
 	memcpy(t, b->buf, b->len);
 	memcpy(t + b->len, buf, len);
 	free(b->buf);
@@ -164,8 +164,7 @@ parser_set_buf(struct buffer *b, const char *buf, size_t len)
 	 * overlap!
 	 */
 
-	if ((tmp = calloc(1, len)) == NULL)
-		return 0;
+	tmp = xcalloc(1, len);
 	memcpy(tmp, buf, len);
 	free(b->buf);
 	b->buf = tmp;

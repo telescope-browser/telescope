@@ -9,3 +9,4 @@
    `~/.config/telescope/config`
  - `xdg-migrate.sh` aids the migration from a monolithic
    `~/.telescope` directory to a XDG.
+ - `coccinelle/` contains cocci scripts used for code transformation.

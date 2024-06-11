@@ -23,6 +23,7 @@
 
 #include "keymap.h"
 #include "utils.h"
+#include "xwrapper.h"
 
 #define CTRL(n)	((n)&0x1F)
 
@@ -178,8 +179,7 @@ again:
 		}
 	}
 
-	if ((entry = calloc(1, sizeof(*entry))) == NULL)
-		return 0;
+	entry = xcalloc(1, sizeof(*entry));
 
 	entry->meta = meta;
 	entry->key = k;

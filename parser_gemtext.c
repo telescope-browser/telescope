@@ -32,6 +32,7 @@
 #include "parser.h"
 #include "telescope.h"
 #include "utf8.h"
+#include "xwrapper.h"
 
 static int	gemtext_parse_line(struct buffer *, const char *, size_t);
 static int	gemtext_free(struct buffer *);
@@ -53,8 +54,7 @@ emit_line(struct buffer *b, enum line_type type, char *line, char *alt)
 {
 	struct line *l;
 
-	if ((l = calloc(1, sizeof(*l))) == NULL)
-		return 0;
+	l = xcalloc(1, sizeof(*l));
 
 	l->type = type;
 	l->line = line;
@@ -110,18 +110,15 @@ parse_link(struct buffer *b, const char *line, size_t len)
 	while (len > 0 && !isspace((unsigned char)line[0]))
 		line++, len--;
 
-	if ((url = strndup(start, line - start)) == NULL)
-		return 0;
+	url = xstrndup(start, line - start);
 
 	while (len > 0 && isspace(line[0]))
 		line++, len--;
 
 	if (len == 0) {
-		if ((label = strdup(url)) == NULL)
-			return 0;
+		label = xstrdup(url);
 	} else {
-		if ((label = strndup(line, len)) == NULL)
-			return 0;
+		label = xstrndup(line, len);
 	}
 
 	return emit_line(b, LINE_LINK, label, url);
@@ -150,8 +147,7 @@ parse_title(struct buffer *b, const char *line, size_t len)
 	if (t == LINE_TITLE_1 && *b->title == '\0')
 		strncpy(b->title, line, MIN(sizeof(b->title)-1, len));
 
-	if ((l = strndup(line, len)) == NULL)
-		return 0;
+	l = xstrndup(line, len);
 	return emit_line(b, t, l, NULL);
 }
 
@@ -168,8 +164,7 @@ gemtext_parse_line(struct buffer *b, const char *line, size_t len)
 
 		if (len == 0)
 			return emit_line(b, LINE_PRE_CONTENT, NULL, NULL);
-		if ((l = strndup(line, len)) == NULL)
-			return 0;
+		l = xstrndup(line, len);
 		return emit_line(b, LINE_PRE_CONTENT, l, NULL);
 	}
 
@@ -186,8 +181,7 @@ gemtext_parse_line(struct buffer *b, const char *line, size_t len)
 			line++, len--;
 		if (len == 0)
 			return emit_line(b, LINE_ITEM, NULL, NULL);
-		if ((l = strndup(line, len)) == NULL)
-			return 0;
+		l = xstrndup(line, len);
 		return emit_line(b, LINE_ITEM, l, NULL);
 
 	case '>':
@@ -196,8 +190,7 @@ gemtext_parse_line(struct buffer *b, const char *line, size_t len)
 			line++, len--;
 		if (len == 0)
 			return emit_line(b, LINE_QUOTE, NULL, NULL);
-		if ((l = strndup(line, len)) == NULL)
-			return 0;
+		l = xstrndup(line, len);
 		return emit_line(b, LINE_QUOTE, l, NULL);
 
 	case '=':
@@ -219,13 +212,11 @@ gemtext_parse_line(struct buffer *b, const char *line, size_t len)
 		if (len == 0)
 			return emit_line(b, LINE_PRE_START,
 			    NULL, NULL);
-		if ((l = strndup(line, len)) == NULL)
-			return 0;
+		l = xstrndup(line, len);
 		return emit_line(b, LINE_PRE_START, l, NULL);
 	}
 
-	if ((l = strndup(line, len)) == NULL)
-		return 0;
+	l = xstrndup(line, len);
 	return emit_line(b, LINE_TEXT, l, NULL);
 }
 

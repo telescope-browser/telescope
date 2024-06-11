@@ -36,6 +36,7 @@
 #include "telescope.h"
 #include "utils.h"
 #include "ui.h"
+#include "xwrapper.h"
 
 #define	CONTROL_BACKLOG	5
 
@@ -152,11 +153,7 @@ control_accept(int listenfd, int event, void *bula)
 		return;
 	}
 
-	if ((c = calloc(1, sizeof(struct ctl_conn))) == NULL) {
-		message("%s: calloc: %s", __func__, strerror(errno));
-		close(connfd);
-		return;
-	}
+	c = xcalloc(1, sizeof(struct ctl_conn));
 
 	imsg_init(&c->iev.ibuf, connfd);
 	c->iev.handler = control_dispatch_imsg;

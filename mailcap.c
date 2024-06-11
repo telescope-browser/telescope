@@ -30,6 +30,7 @@
 
 #include "compat.h"
 #include "mailcap.h"
+#include "xwrapper.h"
 
 #define DEFAULT_MAILCAP_ENTRY "*/*; xdg-open %s"
 
@@ -93,7 +94,7 @@ str_append(char **buf, size_t *len, char add)
 	if (al > SIZE_MAX - 1 || *len > SIZE_MAX - 1 - al)
 		errx(1, "buffer is too big");
 
-	*buf = realloc(*buf, (*len) + 1 + al);
+	*buf = xrealloc(*buf, (*len) + 1 + al);
 	memcpy((*buf) + *len, &add, al);
 	(*len) += al;
 }
@@ -222,8 +223,7 @@ str_to_argv(char *str, int *ret_argc, char ***ret_argv)
 		return -1;
 
 	free(sps.buf);
-	if ((sps.buf = strdup(str)) == NULL)
-		errx(1, "strdup");
+	sps.buf = xstrdup(str);
 	sps.len = strlen(sps.buf);
 
 	for (;;) {
@@ -253,9 +253,8 @@ str_to_argv(char *str, int *ret_argc, char ***ret_argv)
 		}
 
 		/* Add to argv. */
-		argv = reallocarray(argv, argc + 1, sizeof *argv);
-		if ((argv[argc++] = strdup(token)) == NULL)
-			errx(1, "strdup");
+		argv = xreallocarray(argv, argc + 1, sizeof *argv);
+		argv[argc++] = xstrdup(token);
 	}
 out:
 	*ret_argv = argv;
@@ -307,8 +306,7 @@ mailcap_new(void)
 {
 	struct mailcap	*mc = NULL;
 
-	if ((mc = calloc(1, sizeof *mc)) == NULL)
-		errx(1, "calloc failed");
+	mc = xcalloc(1, sizeof *mc);
 
 	return (mc);
 }
@@ -327,13 +325,11 @@ parse_mailcap_line(char *input)
 
 		switch (ms) {
 		case MAILCAP_MIME:
-			if ((mc->mime_type = strdup(line)) == NULL)
-				errx(1, "strdup");
+			mc->mime_type = xstrdup(line);
 			ms++;
 			break;
 		case MAILCAP_CMD:
-			if ((mc->cmd = strdup(line)) == NULL)
-				errx(1, "strdup");
+			mc->cmd = xstrdup(line);
 			ms++;
 			break;
 		case MAILCAP_FLAGS:
@@ -372,14 +368,12 @@ mailcap_expand_cmd(struct mailcap *mc, char *mt, char *file)
 	for (int z = 0; z < argc; z++) {
 		if (strcmp(argv[z], "%s") == 0) {
 			free(argv[z]);
-			if ((argv[z] = strdup(file)) == NULL)
-				errx(1, "strdup");
+			argv[z] = xstrdup(file);
 		}
 
 		if (strcmp(argv[z], "%t") == 0) {
 			free(argv[z]);
-			if ((argv[z] = strdup(mt)) == NULL)
-				errx(1, "strdup");
+			argv[z] = xstrdup(mt);
 		}
 	}
 	argv[argc++] = NULL;
@@ -413,8 +407,7 @@ init_mailcap(void)
 		fclose(f);
 	}
 
-	if ((copy = strdup(DEFAULT_MAILCAP_ENTRY)) == NULL)
-		errx(1, "strdup");
+	copy = xstrdup(DEFAULT_MAILCAP_ENTRY);
 
 	/* Our own entry won't error. */
 	(void)parse_mailcap_line(copy);

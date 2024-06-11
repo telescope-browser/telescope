@@ -42,6 +42,7 @@
 #include "imsgev.h"
 #include "telescope.h"
 #include "utils.h"
+#include "xwrapper.h"
 
 static struct imsgev		*iev_ui;
 
@@ -608,8 +609,7 @@ handle_dispatch_imsg(int fd, int event, void *d)
 			    r.proto != PROTO_GOPHER)
 				die();
 
-			if ((req = calloc(1, sizeof(*req))) == NULL)
-				die();
+			req = xcalloc(1, sizeof(*req));
 
 			req->fd = -1;
 #if HAVE_ASR_RUN
@@ -619,12 +619,9 @@ handle_dispatch_imsg(int fd, int event, void *d)
 			req->id = imsg_get_id(&imsg);
 			TAILQ_INSERT_HEAD(&reqhead, req, reqs);
 
-			if ((req->host = strdup(r.host)) == NULL)
-				die();
-			if ((req->port = strdup(r.port)) == NULL)
-				die();
-			if ((req->req = strdup(r.req)) == NULL)
-				die();
+			req->host = xstrdup(r.host);
+			req->port = xstrdup(r.port);
+			req->req = xstrdup(r.req);
 			if (load_cert(&imsg, req) == -1)
 				die();
 			if (bufio_init(&req->bio) == -1)
@@ -706,8 +703,7 @@ net_main(void)
 		exit(1);
 
 	/* Setup pipe and event handler to the main process */
-	if ((iev_ui = malloc(sizeof(*iev_ui))) == NULL)
-		die();
+	iev_ui = xmalloc(sizeof(*iev_ui));
 	imsg_init(&iev_ui->ibuf, 3);
 	iev_ui->handler = handle_dispatch_imsg;
 	iev_ui->events = EV_READ;

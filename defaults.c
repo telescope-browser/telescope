@@ -28,6 +28,7 @@
 #include "telescope.h"
 #include "ui.h"
 #include "utils.h"
+#include "xwrapper.h"
 
 char	*default_protocol = NULL;
 char	*download_path = NULL;
@@ -539,9 +540,7 @@ config_init(void)
 	struct line_face *f;
 	size_t i, len;
 
-	default_search_engine = strdup("gemini://kennedy.gemi.dev/search");
-	if (default_search_engine == NULL)
-		err(1, "strdup");
+	default_search_engine = xstrdup("gemini://kennedy.gemi.dev/search");
 
 	len = sizeof(line_faces)/sizeof(line_faces[0]);
 	for (i = 0; i < len; ++i) {
@@ -639,10 +638,7 @@ config_setvars(const char *var, char *val)
 			sufx = "/";
 
 		free(download_path);
-		if (asprintf(&download_path, "%s%s%s", prfx, v, sufx) == -1) {
-			download_path = NULL;
-			return 0;
-		}
+		xasprintf(&download_path, "%s%s%s", prfx, v, sufx);
 
 		free(val);
 		return 1;

@@ -37,6 +37,7 @@
 #include "keymap.h"
 #include "telescope.h"
 #include "utils.h"
+#include "xwrapper.h"
 
 typedef struct {
 	union {
@@ -318,8 +319,7 @@ eow:
 			yyerror("number is %s: %s", errstr, buf);
 		return NUMBER;
 	}
-	if ((str = strdup(buf)) == NULL)
-		err(1, "%s", __func__);
+	str = xstrdup(buf);
 	yylval.str = str;
 	return STRING;
 
@@ -453,8 +453,7 @@ attrname(const char *n)
 	int ret, found;
 	char *ap, *dup, *orig;
 
-	if ((dup = strdup(n)) == NULL)
-		err(1, "strdup");
+	dup = xstrdup(n);
 
 	orig = dup;
 
@@ -518,17 +517,14 @@ add_proxy(char *proto, char *proxy)
 		return;
 	}
 
-	if ((p = calloc(1, sizeof(*p))) == NULL)
-		err(1, "calloc");
+	p = xcalloc(1, sizeof(*p));
 
 	p->match_proto = proto;
 	p->proto = PROTO_GEMINI;
 
-	if ((p->host = strdup(iri.iri_host)) == NULL)
-		err(1, "strdup");
+	p->host = xstrdup(iri.iri_host);
 
-	if ((p->port = strdup(iri.iri_portstr)) == NULL)
-		err(1, "strdup");
+	p->port = xstrdup(iri.iri_portstr);
 
 	TAILQ_INSERT_HEAD(&proxies, p, proxies);
 }

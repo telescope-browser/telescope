@@ -36,6 +36,7 @@
 #include "session.h"
 #include "tofu.h"
 #include "ui.h"
+#include "xwrapper.h"
 
 struct history	history;
 
@@ -68,10 +69,7 @@ new_tab(const char *url, const char *base, struct tab *after)
 	ui_schedule_redraw();
 	autosave_hook();
 
-	if ((tab = calloc(1, sizeof(*tab))) == NULL) {
-		ev_break();
-		return NULL;
-	}
+	tab = xcalloc(1, sizeof(*tab));
 
 	if ((tab->hist = hist_new(HIST_LINEAR)) == NULL) {
 		free(tab);
@@ -316,8 +314,7 @@ history_push(struct histitem *hi)
 			return;
 	}
 
-	if ((uri = strdup(hi->uri)) == NULL)
-		abort();
+	uri = xstrdup(hi->uri);
 
 	/* don't grow too much; replace the oldest */
 	if (history.len == HISTORY_CAP) {
@@ -376,8 +373,7 @@ history_add(const char *uri)
 			insert = i;
 	}
 
-	if ((u = strdup(uri)) == NULL)
-		return;
+	u = xstrdup(uri);
 
 	/* if history is full, replace the oldest one */
 	if (history.len == HISTORY_CAP) {
@@ -464,10 +460,7 @@ load_certs(struct ohash *certs)
 	if ((f = fopen(known_hosts_file, "r")) == NULL)
 		return;
 
-	if ((e = calloc(1, sizeof(*e))) == NULL) {
-		fclose(f);
-		return;
-	}
+	e = xcalloc(1, sizeof(*e));
 
 	while ((linelen = getline(&line, &linesize, f)) != -1) {
 		lineno++;

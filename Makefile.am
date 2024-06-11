@@ -65,7 +65,9 @@ telescope_SOURCES =	bufio.c			\
 			utf8.h			\
 			utils.c			\
 			utils.h			\
-			wrap.c
+			wrap.c 			\
+			xwrapper.c 		\
+			xwrapper.h
 
 telescope_identity_SOURCES =			\
 			certs.c			\
@@ -76,10 +78,32 @@ telescope_identity_SOURCES =			\
 			hist.h			\
 			identity.c		\
 			parser.c		\
-			parser.h
+			parser.h 		\
+			xwrapper.c 		\
+			xwrapper.h
 
 noinst_PROGRAMS =	pagebundler
 pagebundler_SOURCES =	pagebundler.c
+
+EXCLUDE_FROM_COCCI=	bufio.c 		\
+			certs.c 		\
+			cmd-gen.c 		\
+			emoji-matcher.c 	\
+			ev.c 			\
+			hist.c 			\
+			pages.c			\
+			parse.c 		\
+			xwrapper.c
+EXTS= 			.c .y
+
+SPATCH_FILES = $(foreach ext,$(EXTS),$(filter %$(ext), 			\
+	       $(filter-out $(EXCLUDE_FROM_COCCI), 			\
+	       $(telescope_SOURCES), $(telescope_identity_SOURCES), 	\
+	       $(wilcard test/*.c))))
+.PHONY: cocci
+cocci:
+	spatch  --sp-file ./contrib/coccinelle/wrap.cocci \
+		--in-place $(SPATCH_FILES)
 
 # Override implicit rule since we have to use HOSTCC and not CC.
 pagebundler$(EXEEXT): pagebundler.c

@@ -29,6 +29,7 @@
 #include "parser.h"
 #include "telescope.h"
 #include "utils.h"
+#include "xwrapper.h"
 
 static struct timeval tv = { 5 * 60, 0 };
 static unsigned int timeout;
@@ -106,8 +107,7 @@ mcache_tab(struct tab *tab)
 	l = strlen(url);
 	len = sizeof(*e) + l + 1;
 
-	if ((e = calloc(1, len)) == NULL)
-		return -1;
+	e = xcalloc(1, len);
 	e->ts = time(NULL);
 	e->parser = tab->buffer.parser;
 	e->trust = tab->trust;

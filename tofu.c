@@ -25,6 +25,7 @@
 #include "fs.h"
 #include "tofu.h"
 #include "utils.h"
+#include "xwrapper.h"
 
 void
 tofu_init(struct ohash *h, unsigned int sz, ptrdiff_t ko)
@@ -150,8 +151,7 @@ tofu_temp_trust(struct ohash *h, const char *host, const char *port,
 {
 	struct tofu_entry *e;
 
-	if ((e = calloc(1, sizeof(*e))) == NULL)
-		abort();
+	e = xcalloc(1, sizeof(*e));
 
 	strlcpy(e->domain, host, sizeof(e->domain));
 	if (*port != '\0' && strcmp(port, "1965")) {

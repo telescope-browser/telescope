@@ -38,6 +38,7 @@
 #include "ui.h"
 #include "utf8.h"
 #include "utils.h"
+#include "xwrapper.h"
 
 #define nitems(x) (sizeof(x)/sizeof(x[0]))
 
@@ -545,14 +546,12 @@ populate_compl_buffer(complfn *fn, void *data)
 	linedata = NULL;
 	descr = NULL;
 	while ((s = fn(&data, &linedata, &descr)) != NULL) {
-		if ((l = calloc(1, sizeof(*l))) == NULL)
-			abort();
+		l = xcalloc(1, sizeof(*l));
 
 		l->type = LINE_COMPL;
 		l->data = linedata;
 		l->alt = (char*)descr;
-		if ((l->line = strdup(s)) == NULL)
-			abort();
+		l->line = xstrdup(s);
 
 		TAILQ_INSERT_TAIL(&b->head, l, lines);
 

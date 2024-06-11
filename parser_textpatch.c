@@ -26,6 +26,7 @@
 #include "parser.h"
 #include "telescope.h"
 #include "utils.h"
+#include "xwrapper.h"
 
 static int	tpatch_emit_line(struct buffer *, const char *, size_t);
 static int	tpatch_parse_line(struct buffer *, const char *, size_t);
@@ -41,8 +42,7 @@ tpatch_emit_line(struct buffer *b, const char *line, size_t linelen)
 {
 	struct line *l;
 
-	if ((l = calloc(1, sizeof(*l))) == NULL)
-		return 0;
+	l = xcalloc(1, sizeof(*l));
 
 	if (b->parser_flags & PARSER_IN_PATCH_HDR)
 		l->type = LINE_PATCH_HDR;
@@ -50,10 +50,7 @@ tpatch_emit_line(struct buffer *b, const char *line, size_t linelen)
 		l->type = LINE_PATCH;
 
 	if (linelen != 0) {
-		if ((l->line = calloc(1, linelen+1)) == NULL) {
-			free(l);
-			return 0;
-		}
+		l->line = xcalloc(1, linelen + 1);
 
 		memcpy(l->line, line, linelen);
 

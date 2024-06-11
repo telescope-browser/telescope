@@ -25,6 +25,7 @@
 #include "keymap.h"
 #include "telescope.h"
 #include "ui.h"
+#include "xwrapper.h"
 
 static void	emit_help_item(char *, interactivefn *);
 static void	rec_compute_help(struct kmap *, char *, size_t);
@@ -41,11 +42,10 @@ emit_help_item(char *prfx, interactivefn *fn)
 	}
 	assert(cmd != NULL);
 
-	if ((l = calloc(1, sizeof(*l))) == NULL)
-		abort();
+	l = xcalloc(1, sizeof(*l));
 
 	l->type = LINE_HELP;
-	l->line = strdup(prfx);
+	l->line = xstrdup(prfx);
 	l->alt = (char*)cmd->cmd;
 
 	TAILQ_INSERT_TAIL(&helpwin.head, l, lines);

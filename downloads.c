@@ -22,6 +22,7 @@
 
 #include "telescope.h"
 #include "ui.h"
+#include "xwrapper.h"
 
 struct downloads downloads = STAILQ_HEAD_INITIALIZER(downloads);
 
@@ -30,11 +31,10 @@ no_downloads(void)
 {
 	struct line	*l;
 
-	if ((l = calloc(1, sizeof(*l))) == NULL)
-		abort();
+	l = xcalloc(1, sizeof(*l));
 
 	l->type = LINE_DOWNLOAD_INFO;
-	l->line = strdup("No downloads");
+	l->line = xstrdup("No downloads");
 
 	TAILQ_INSERT_TAIL(&downloadwin.head, l, lines);
 }
@@ -55,8 +55,7 @@ recompute_downloads(void)
 	}
 
 	STAILQ_FOREACH(d, &downloads, entries) {
-		if ((l = calloc(1, sizeof(*l))) == NULL)
-			abort();
+		l = xcalloc(1, sizeof(*l));
 
 		fmt_scaled(d->bytes, buf);
 
@@ -64,8 +63,8 @@ recompute_downloads(void)
 		if (d->fd == -1)
 			l->type = LINE_DOWNLOAD_DONE;
 
-		l->line = strdup(buf);
-		l->alt = strdup(d->path);
+		l->line = xstrdup(buf);
+		l->alt = xstrdup(d->path);
 
 		TAILQ_INSERT_TAIL(&downloadwin.head, l, lines);
 	}
@@ -85,13 +84,12 @@ enqueue_download(uint32_t id, const char *path, const char *mime_type)
 {
 	struct download *d;
 
-	if ((d = calloc(1, sizeof(*d))) == NULL)
-		abort();
+	d = xcalloc(1, sizeof(*d));
 
 	d->id = id;
 	d->fd = -1;
-	d->path = strdup(path);
-	d->mime_type = strdup(mime_type);
+	d->path = xstrdup(path);
+	d->mime_type = xstrdup(mime_type);
 
 	STAILQ_INSERT_HEAD(&downloads, d, entries);
 
