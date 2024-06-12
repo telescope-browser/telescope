@@ -42,6 +42,10 @@ AC_ARG_WITH([default-editor],
 AC_MSG_NOTICE([Using default-editor: $DEFAULT_EDITOR])
 AC_DEFINE_UNQUOTED([DEFAULT_EDITOR], ["$DEFAULT_EDITOR"], [The default editor])
 
+AC_CHECK_HEADERS([ \
+	libutil.h \
+])
+
 AS_IF([test "x$with_libbsd" = "xyes"], [
 	PKG_CHECK_MODULES([libbsd], [libbsd-overlay libbsd-ctor], [
 		CFLAGS="$libbsd_CFLAGS $CFLAGS"
@@ -80,6 +84,8 @@ AC_REPLACE_FUNCS([
 	asprintf \
 	err \
 	explicit_bzero \
+	fgetln \
+	fparseln \
 	freezero \
 	getdtablecount \
 	getdtablesize \

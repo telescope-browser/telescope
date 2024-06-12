@@ -25,6 +25,7 @@
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #if HAVE_ENDIAN_H
 # include <endian.h>
@@ -104,8 +105,20 @@ int		 getdtablecount(void);
 int		 getdtablesize(void);
 #endif
 
+#ifndef HAVE_FGETLN
+char 		*fgetln(FILE *, size_t *);
+#endif
+
+#ifndef HAVE_FPARSELN
+char 		*fparseln(FILE *, size_t *, size_t *, const char [3], int);
+#endif
+
 #ifndef HAVE_GETPROGNAME
 const char	*getprogname(void);
+#endif
+
+#ifdef HAVE_LIBUTIL_H
+#include <libutil.h>
 #endif
 
 #ifndef HAVE_MEMMEM
