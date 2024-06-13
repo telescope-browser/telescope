@@ -1150,10 +1150,6 @@ main(int argc, char * const *argv)
 	    (download_path = strdup("/tmp/")) == NULL)
 		errx(1, "strdup");
 
-	if (external_cmd == NULL &&
-	    (external_cmd = strdup("xdg-open")) == NULL)
-		errx(1, "strdup");
-
 	if (argc != 0) {
 		char *base;
 
