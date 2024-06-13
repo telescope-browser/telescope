@@ -189,6 +189,41 @@ otherwise treat it like a hostname with protocol
 The setting
 .Ic load-url-use-heuristic
 can be used to disable the use of heuristics.
+.Sh MIME-TYPE HANDLING
+Beyond the supported protocols which
+.Nm
+already understands, mime-types which
+.Nm
+cannot display can be opened using a
+.Pa mailcap
+file.
+By default,
+.Nm
+will look for one of the following mailcap files in the following order:
+.Pp
+.Bl -tag -width Ds -compact
+.It Pa ~/.mailcap
+.It Pa /etc/mailcap
+.It Pa /usr/etc/mailcap
+.It Pa /usr/local/etc/mailcap
+.El
+.Pp
+A default mailcap entry is always defined by
+.Nm
+which uses
+.Xr xdg-open 1
+as a fallback for mime-types not defined through a mailcap file, or if no
+mailcap file was found.
+.Pp
+Refer to RFC 1524 for more information about the structure and format of this
+file.
+Note that
+.Nm
+currently only supports a small subset of this standard, honouring only the
+.Pa needsterminal
+and
+.Pa copiousouput
+flags.
 .Sh CONFIGURATION FILE
 During the startup,
 .Nm
@@ -1081,6 +1116,7 @@ $ telescope -c /dev/null
 .Ed
 .Sh SEE ALSO
 .Xr telescope-identity 1
+.Xr xdg-open 1
 .Sh STANDARDS
 .Rs
 .%B XDG Base Directory Specification
