@@ -23,6 +23,8 @@
 #include "parser.h"
 #include "telescope.h"
 
+static int parser_foreach_line(struct parser *, const char *, size_t);
+
 void
 parser_init(struct tab *tab, parserfn fn)
 {
@@ -38,7 +40,7 @@ parser_parse(struct tab *tab, const char *chunk, size_t len)
 
 	if (p->parse)
 		return p->parse(p, chunk, len);
-	return parser_foreach_line(p, chunk, len, p->parseline);
+	return parser_foreach_line(p, chunk, len);
 }
 
 int
@@ -73,8 +75,7 @@ parser_free(struct tab *tab)
 		if (p->parse)
 			r = p->parse(p, p->buf, p->len);
 		else
-			r = parser_foreach_line(p, p->buf, p->len,
-			    p->parseline);
+			r = parser_foreach_line(p, p->buf, p->len);
 	}
 
 	free(p->buf);
@@ -165,9 +166,8 @@ parser_set_buf(struct parser *p, const char *buf, size_t len)
 	return 1;
 }
 
-int
-parser_foreach_line(struct parser *p, const char *buf, size_t size,
-    parsechunkfn fn)
+static int
+parser_foreach_line(struct parser *p, const char *buf, size_t size)
 {
 	char		*b, *e;
 	unsigned int	 ch;
@@ -212,7 +212,7 @@ parser_foreach_line(struct parser *p, const char *buf, size_t size,
 			break;
 		l = e - b;
 
-		if (!fn(p, b, l))
+		if (!p->parseline(p, b, l))
 			return 0;
 
 		len -= l;

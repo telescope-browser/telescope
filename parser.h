@@ -29,7 +29,6 @@ int	 parser_serialize(struct tab *, FILE *);
 
 int	 parser_append(struct parser*, const char*, size_t);
 int	 parser_set_buf(struct parser*, const char*, size_t);
-int	 parser_foreach_line(struct parser*, const char*, size_t, parsechunkfn);
 
 /* parser_gemtext.c */
 void	 gemtext_initparser(struct parser*);
