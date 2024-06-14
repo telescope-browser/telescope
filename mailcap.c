@@ -40,24 +40,24 @@
 
 struct str_parse_state {
 	char		*buf;
-	size_t 		 len, off;
-	int 		 esc;
+	size_t		 len, off;
+	int		 esc;
 };
 static struct str_parse_state sps;
 
-static void	 	 str_append(char **, size_t *, char);
-static int 	 	 str_getc(void);
-static char 		*str_tokenise(void);
-static int 	 	 str_to_argv(char *, int *, char ***);
-static void 		 str_trim_whitespace(char *);
-static void 	 	 argv_free(int, char **);
+static void		 str_append(char **, size_t *, char);
+static int		 str_getc(void);
+static char		*str_tokenise(void);
+static int		 str_to_argv(char *, int *, char ***);
+static void		 str_trim_whitespace(char *);
+static void		 argv_free(int, char **);
 
 struct mailcaplist 	 mailcaps = TAILQ_HEAD_INITIALIZER(mailcaps);
 
 static FILE		*find_mailcap_file(void);
 static struct mailcap	*mailcap_new(void);
-static void 		 mailcap_expand_cmd(struct mailcap *, char *, char *);
-static int 		 parse_mailcap_line(char *);
+static void		 mailcap_expand_cmd(struct mailcap *, char *, char *);
+static int		 parse_mailcap_line(char *);
 static struct mailcap 	*mailcap_by_mimetype(const char *);
 
 /* FIXME: $MAILCAPS can override this, but we don't check for that. */
@@ -105,7 +105,7 @@ str_append(char **buf, size_t *len, char add)
 static int
 str_getc(void)
 {
-	int 	ch;
+	int	ch;
 
 	if (sps.esc != 0) {
 		sps.esc--;
@@ -137,13 +137,14 @@ str_getc(void)
 static char *
 str_tokenise(void)
 {
-	int 			 ch;
+	int			 ch;
 	char			*buf;
 	size_t			 len;
-	enum { APPEND,
-	       DOUBLE_QUOTES,
-	       SINGLE_QUOTES,
-	} 			 state = APPEND;
+	enum {
+		APPEND,
+		DOUBLE_QUOTES,
+		SINGLE_QUOTES,
+	}			 state = APPEND;
 
 	len = 0;
 	buf = calloc(1, sizeof *buf);
@@ -219,7 +220,7 @@ str_to_argv(char *str, int *ret_argc, char ***ret_argv)
 	char			*token;
 	int			 ch, next;
 	char			**argv = NULL;
-	int 			 argc = 0;
+	int			 argc = 0;
 
 	if (str == NULL)
 		return -1;
@@ -270,7 +271,7 @@ out:
 void
 argv_free(int argc, char **argv)
 {
-	int 	i;
+	int	i;
 
 	if (argc == 0)
 		return;
@@ -284,9 +285,9 @@ static FILE *
 find_mailcap_file(void)
 {
 	FILE	 *fp;
-	char 	**entry = (char **)default_mailcaps;
-	char 	 *home = NULL;
-	char 	 *expanded = NULL;
+	char	**entry = (char **)default_mailcaps;
+	char	 *home = NULL;
+	char	 *expanded = NULL;
 
 	for (; *entry != NULL; entry++) {
 		if (strncmp(*entry, "~/", 2) == 0) {
@@ -320,8 +321,8 @@ static int
 parse_mailcap_line(char *input)
 {
 	struct mailcap		*mc;
-	int 	 		 ms;
-	char 			*line = NULL;
+	int	 		 ms;
+	char			*line = NULL;
 
 	mc = mailcap_new();
 
@@ -363,8 +364,8 @@ parse_mailcap_line(char *input)
 void
 mailcap_expand_cmd(struct mailcap *mc, char *mt, char *file)
 {
-	char 		**argv;
-	int 	 	 argc = 0, ret;
+	char		**argv;
+	int		 argc = 0, ret;
 
 	if (mc->cmd == NULL)
 		return;
@@ -398,7 +399,7 @@ mailcap_expand_cmd(struct mailcap *mc, char *mt, char *file)
 static struct mailcap *
 mailcap_by_mimetype(const char *mt)
 {
-	struct mailcap 	*mc;
+	struct mailcap	*mc;
 
 	TAILQ_FOREACH(mc, &mailcaps, mailcaps) {
 		if (fnmatch(mc->mime_type, mt, 0) == 0)
@@ -412,7 +413,7 @@ init_mailcap(void)
 {
 	FILE 		*f = NULL;
 	const char	 delims[3] = {'\\', '\\', '\0'};
-	char 		*buf, *copy;
+	char		*buf, *copy;
 	size_t		 line = 0;
 
 	if ((f = find_mailcap_file()) == NULL)
@@ -449,7 +450,7 @@ add_default:
 struct mailcap *
 mailcap_cmd_from_mimetype(char *mime_type, char *filename)
 {
-	struct mailcap 	*mc = NULL;
+	struct mailcap	*mc = NULL;
 
 	if (mime_type == NULL || filename == NULL)
 		return (NULL);
