@@ -45,13 +45,16 @@ main(void)
 	if (hist_push(tab.hist, "dummy://address") == -1)
 		err(1, "hist_push");
 
-	parser_init(&tab, gophermap_initparser);
+	TAILQ_INIT(&tab.buffer.head);
+	TAILQ_INIT(&tab.buffer.vhead);
+
+	parser_init(&tab.buffer, &gophermap_parser);
 	for (;;) {
 		if ((r = read(0, buf, sizeof(buf))) == -1)
 			err(1, "read");
 		if (r == 0)
 			break;
-		if (!parser_parse(&tab, buf, r))
+		if (!parser_parse(&tab.buffer, buf, r))
 			err(1, "parser_parse");
 	}
 
@@ -61,7 +64,7 @@ main(void)
 	if ((fp = open_memstream(&b, &blen)) == NULL)
 		err(1, "open_memstream");
 
-	if (parser_serialize(&tab, fp) == -1)
+	if (parser_serialize(&tab.buffer, fp) == -1)
 		err(1, "parser_serialize");
 
 	fclose(fp);
