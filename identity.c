@@ -80,7 +80,7 @@ size_t		 about_new_len;
 const uint8_t	*bookmarks;
 size_t		 bookmarks_len;
 
-struct parser gemtext_parser, textplain_parser, textpatch_parser;
+const struct parser gemtext_parser, textplain_parser, textpatch_parser;
 
 void	 load_page_from_str(struct tab *tab, const char *page) { return; }
 void	 erase_buffer(struct buffer *buffer) { return; }

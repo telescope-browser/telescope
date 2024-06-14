@@ -41,7 +41,7 @@ static int	parse_link(struct buffer *, const char*, size_t);
 static int	parse_title(struct buffer *, const char*, size_t);
 static void	search_title(struct buffer *, enum line_type);
 
-struct parser gemtext_parser = {
+const struct parser gemtext_parser = {
 	.name = "text/gemini",
 	.parseline = &gemtext_parse_line,
 	.free = &gemtext_free,

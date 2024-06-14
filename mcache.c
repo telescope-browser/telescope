@@ -38,12 +38,12 @@ static size_t		npages;
 static size_t		tot;
 
 struct mcache_entry {
-	time_t		 ts;
-	struct parser	*parser;
-	int		 trust;
-	char		*buf;
-	size_t		 buflen;
-	char		 url[];
+	time_t			 ts;
+	const struct parser	*parser;
+	int			 trust;
+	char			*buf;
+	size_t			 buflen;
+	char			 url[];
 };
 
 static void

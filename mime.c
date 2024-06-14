@@ -27,8 +27,8 @@
 static int	check_for_utf8(char*);
 
 static const struct parser_table {
-	const char	*mediatype;
-	struct parser	*parser;
+	const char		*mediatype;
+	const struct parser	*parser;
 } ptable[] = {
 	{ "text/gemini",	&gemtext_parser },
 	{ "text/x-patch",	&textpatch_parser },

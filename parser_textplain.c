@@ -28,7 +28,7 @@
 
 static int	textplain_parse_line(struct buffer *, const char *, size_t);
 
-struct parser textplain_parser = {
+const struct parser textplain_parser = {
 	.name = "text/plain",
 	.parseline = &textplain_parse_line,
 };

@@ -114,7 +114,7 @@ struct buffer {
 #define PARSER_IN_PRE	2
 #define PARSER_IN_PATCH_HDR 4
 	int			 parser_flags;
-	struct parser		*parser;
+	const struct parser	*parser;
 
 	size_t			 last_line_off;
 	int			 force_redraw;

@@ -42,7 +42,7 @@ static void	gm_parse_selector(char *, struct gm_selector *);
 static int	gm_parse_line(struct buffer *, const char *, size_t);
 static int	gm_serialize(struct buffer *, FILE *);
 
-struct parser gophermap_parser = {
+const struct parser gophermap_parser = {
 	.name = "gophermap",
 	.parseline = &gm_parse_line,
 	.serialize = &gm_serialize,

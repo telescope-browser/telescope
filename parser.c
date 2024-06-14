@@ -26,7 +26,7 @@
 static int parser_foreach_line(struct buffer *, const char *, size_t);
 
 void
-parser_init(struct buffer *buffer, struct parser *p)
+parser_init(struct buffer *buffer, const struct parser *p)
 {
 	erase_buffer(buffer);
 
@@ -39,7 +39,7 @@ parser_init(struct buffer *buffer, struct parser *p)
 int
 parser_parse(struct buffer *buffer, const char *chunk, size_t len)
 {
-	struct parser *p = buffer->parser;
+	const struct parser *p = buffer->parser;
 
 	if (p->parse)
 		return p->parse(buffer, chunk, len);
@@ -69,7 +69,7 @@ int
 parser_free(struct tab *tab)
 {
 	struct buffer		*buffer = &tab->buffer;
-	struct parser		*p = buffer->parser;
+	const struct parser	*p = buffer->parser;
 	int			 r = 1;
 	char			*tilde, *slash;
 
@@ -109,10 +109,10 @@ parser_free(struct tab *tab)
 int
 parser_serialize(struct buffer *b, FILE *fp)
 {
-	struct parser	*p = b->parser;
-	struct line	*line;
-	const char	*text;
-	int		 r;
+	const struct parser	*p = b->parser;
+	struct line		*line;
+	const char		*text;
+	int			 r;
 
 	if (p->serialize != NULL)
 		return p->serialize(b, fp);
@@ -176,10 +176,10 @@ parser_set_buf(struct buffer *b, const char *buf, size_t len)
 static int
 parser_foreach_line(struct buffer *b, const char *buf, size_t size)
 {
-	struct parser	*p = b->parser;
-	char		*beg, *end;
-	unsigned int	 ch;
-	size_t		 i, l, len;
+	const struct parser	*p = b->parser;
+	char			*beg, *end;
+	unsigned int		 ch;
+	size_t			 i, l, len;
 
 	if (!parser_append(b, buf, size))
 		return 0;

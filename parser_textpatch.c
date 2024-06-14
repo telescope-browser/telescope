@@ -30,7 +30,7 @@
 static int	tpatch_emit_line(struct buffer *, const char *, size_t);
 static int	tpatch_parse_line(struct buffer *, const char *, size_t);
 
-struct parser textpatch_parser = {
+const struct parser textpatch_parser = {
 	.name = "text/x-patch",
 	.parseline = &tpatch_parse_line,
 	.initflags = PARSER_IN_PATCH_HDR,

@@ -141,12 +141,12 @@ is_dir(FILE *fp)
 	return S_ISDIR(sb.st_mode);
 }
 
-static struct parser *
+static const struct parser *
 file_type(const char *path)
 {
 	const struct mapping {
-		const char	*ext;
-		struct parser	*parser;
+		const char		*ext;
+		const struct parser	*parser;
 	} ms[] = {
 		{"diff",	&textpatch_parser},
 		{"gemini",	&gemtext_parser},
@@ -173,12 +173,12 @@ file_type(const char *path)
 void
 fs_load_url(struct tab *tab, const char *url)
 {
-	const char	*bpath = "bookmarks.gmi", *fallback = "# Not found\n";
-	struct parser	*parser = &gemtext_parser;
-	char		 path[PATH_MAX];
-	FILE		*fp = NULL;
-	size_t		 i;
-	char		 buf[BUFSIZ];
+	const char		*bpath = "bookmarks.gmi", *fallback = "# Not found\n";
+	const struct parser	*parser = &gemtext_parser;
+	char			 path[PATH_MAX];
+	FILE			*fp = NULL;
+	size_t			 i;
+	char			 buf[BUFSIZ];
 	struct page {
 		const char	*name;
 		const char	*path;

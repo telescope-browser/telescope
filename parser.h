@@ -30,7 +30,7 @@ struct parser {
 	int		(*serialize)(struct buffer *, FILE *);
 };
 
-void	 parser_init(struct buffer *, struct parser *);
+void	 parser_init(struct buffer *, const struct parser *);
 int	 parser_parse(struct buffer *, const char *, size_t);
 int	 parser_parsef(struct buffer *, const char *, ...);
 int	 parser_free(struct tab *);
@@ -39,9 +39,9 @@ int	 parser_serialize(struct buffer *, FILE *);
 int	 parser_append(struct buffer *, const char *, size_t);
 int	 parser_set_buf(struct buffer *, const char *, size_t);
 
-extern struct parser	 gemtext_parser;
-extern struct parser	 gophermap_parser;
-extern struct parser	 textpatch_parser;
-extern struct parser	 textplain_parser;
+extern const struct parser	 gemtext_parser;
+extern const struct parser	 gophermap_parser;
+extern const struct parser	 textpatch_parser;
+extern const struct parser	 textplain_parser;
 
 #endif
