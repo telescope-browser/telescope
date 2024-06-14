@@ -2,3 +2,4 @@
 video/x-youtube; mpv -quiet '%s'; needsterminal
 video/*; mpv -quiet '%s'; needsterminal
 image/*; xdg-open %s
+text/html; mutt-browser '%s'; copiousoutput; test=test -n "$DISPLAY"; needsterminal;

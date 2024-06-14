@@ -69,9 +69,7 @@ static const char *default_mailcaps[] = {
 enum mailcap_section {
 	MAILCAP_MIME = 0,
 	MAILCAP_CMD,
-	MAILCAP_FLAGS_1,
-	MAILCAP_FLAGS_2,
-	MAILCAP_END_OF_FIELDS,
+	MAILCAP_FLAGS,
 };
 
 static char *
@@ -319,28 +317,26 @@ static int
 parse_mailcap_line(char *input)
 {
 	struct mailcap		*mc;
-	int	 		 ms;
+	int	 		 ms = 0;
 	char			*line = NULL;
 
 	mc = mailcap_new();
 
-	for (ms = MAILCAP_MIME; ms < MAILCAP_END_OF_FIELDS; ms++) {
-		if ((line = strsep(&input, ";")) == NULL)
-			break;
-
+	while ((line = strsep(&input, ";")) != NULL) {
 		line = str_trim_whitespace(line);
 
 		switch (ms) {
 		case MAILCAP_MIME:
 			if ((mc->mime_type = strdup(line)) == NULL)
 				errx(1, "strdup");
+			ms++;
 			break;
 		case MAILCAP_CMD:
 			if ((mc->cmd = strdup(line)) == NULL)
 				errx(1, "strdup");
+			ms++;
 			break;
-		case MAILCAP_FLAGS_1:
-		case MAILCAP_FLAGS_2:
+		case MAILCAP_FLAGS:
 			if (strcmp(line, "needsterminal") == 0)
 				mc->flags |= MAILCAP_NEEDSTERMINAL;
 			if (strcmp(line, "copiousoutput") == 0)
