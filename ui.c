@@ -1395,7 +1395,7 @@ exec_external_cmd(char **argv)
 		return;
 	case 0:
 		execvp(argv[0], argv);
-		warn("execve failed");
+		warn("can't exec \"%s\"", argv[0]);
 		_exit(1);
 	}
 
