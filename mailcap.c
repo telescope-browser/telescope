@@ -46,7 +46,7 @@ static void		 str_append(char **, size_t *, char);
 static int		 str_getc(void);
 static char		*str_tokenise(void);
 static int		 str_to_argv(char *, int *, char ***);
-static void		 str_trim_whitespace(char *);
+static char		*str_trim_whitespace(char *);
 static void		 argv_free(int, char **);
 
 struct mailcaplist 	 mailcaps = TAILQ_HEAD_INITIALIZER(mailcaps);
@@ -74,7 +74,7 @@ enum mailcap_section {
 	MAILCAP_END_OF_FIELDS,
 };
 
-static void
+static char *
 str_trim_whitespace(char *s)
 {
 	char 	*t;
@@ -84,6 +84,7 @@ str_trim_whitespace(char *s)
 
 	while (t >= s && isspace((unsigned char)*t))
 		*t-- = '\0';
+	return s;
 }
 
 static void
@@ -327,7 +328,7 @@ parse_mailcap_line(char *input)
 		if ((line = strsep(&input, ";")) == NULL)
 			break;
 
-		str_trim_whitespace(line);
+		line = str_trim_whitespace(line);
 
 		switch (ms) {
 		case MAILCAP_MIME:
@@ -435,7 +436,7 @@ mailcap_parse(FILE *f)
 		memset(&sps, 0, sizeof sps);
 		copy = buf;
 
-		str_trim_whitespace(copy);
+		copy = str_trim_whitespace(copy);
 
 		if (*copy == '#' || *copy == '\0') {
 			free(buf);
@@ -446,7 +447,7 @@ mailcap_parse(FILE *f)
 			fprintf(stderr, "Error with entry: <<%s>>, line: %ld\n",
 			    copy, line);
 		}
-		free(copy);
+		free(buf);
 	}
 }
 
