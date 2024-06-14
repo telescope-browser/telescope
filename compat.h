@@ -157,6 +157,13 @@ long long	 strtonum(const char*, long long, long long, const char**);
 void		 setproctitle(const char*, ...);
 #endif
 
+/* Needed for Darwin (MacOS) to keep fparseln() happy -- but could also be
+ * used elsewhere in the future.
+ */
+#ifdef HAVE_UTIL_H
+#include <util.h>
+#endif
+
 #ifndef __dead
 #define __dead __attribute__((__noreturn__))
 #endif

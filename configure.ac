@@ -44,6 +44,7 @@ AC_DEFINE_UNQUOTED([DEFAULT_EDITOR], ["$DEFAULT_EDITOR"], [The default editor])
 
 AC_CHECK_HEADERS([ \
 	libutil.h \
+	util.h \
 ])
 
 AS_IF([test "x$with_libbsd" = "xyes"], [
