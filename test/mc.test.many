@@ -1,0 +1,4 @@
+# text/html; w3m -I %{charset} -T text/html; copiousoutput;
+video/x-youtube; mpv -quiet '%s'; needsterminal
+video/*; mpv -quiet '%s'; needsterminal
+image/*; xdg-open %s
