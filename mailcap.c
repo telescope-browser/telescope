@@ -437,7 +437,7 @@ mailcap_parse(FILE *f)
 
 		str_trim_whitespace(copy);
 
-		if (*copy == '\0') {
+		if (*copy == '#' || *copy == '\0') {
 			free(buf);
 			continue;
 		}
