@@ -28,13 +28,13 @@ static int	check_for_utf8(char*);
 
 static const struct parser_table {
 	const char	*mediatype;
-	void		(*parserinit)(struct parser*);
+	struct parser	*parser;
 } ptable[] = {
-	{ "text/gemini",	gemtext_initparser },
-	{ "text/x-patch",	textpatch_initparser },
-	{ "text/x-diff",	textpatch_initparser },
-	{ "application/x-patch",textpatch_initparser },
-	{ "text/*",		textplain_initparser },
+	{ "text/gemini",	&gemtext_parser },
+	{ "text/x-patch",	&textpatch_parser },
+	{ "text/x-diff",	&textpatch_parser },
+	{ "application/x-patch",&textpatch_parser },
+	{ "text/*",		&textplain_parser },
 	{ NULL, NULL}
 };
 
@@ -86,7 +86,7 @@ setup_parser_for(struct tab *tab)
 
 	for (t = ptable; t->mediatype != NULL; ++t) {
 		if (!fnmatch(t->mediatype, buf, 0)) {
-			parser_init(tab, t->parserinit);
+			parser_init(&tab->buffer, t->parser);
 			return 1;
 		}
 	}

@@ -36,7 +36,7 @@ no_downloads(void)
 	l->type = LINE_DOWNLOAD_INFO;
 	l->line = strdup("No downloads");
 
-	TAILQ_INSERT_TAIL(&downloadwin.page.head, l, lines);
+	TAILQ_INSERT_TAIL(&downloadwin.head, l, lines);
 }
 
 void
@@ -46,7 +46,7 @@ recompute_downloads(void)
 	struct line	*l;
 	char		 buf[FMT_SCALED_STRSIZE];
 
-	downloadwin.page.name = "*Downloads*";
+	downloadwin.mode = "*Downloads*";
 	erase_buffer(&downloadwin);
 
 	if (STAILQ_EMPTY(&downloads)) {
@@ -67,7 +67,7 @@ recompute_downloads(void)
 		l->line = strdup(buf);
 		l->alt = strdup(d->path);
 
-		TAILQ_INSERT_TAIL(&downloadwin.page.head, l, lines);
+		TAILQ_INSERT_TAIL(&downloadwin.head, l, lines);
 	}
 
 end:

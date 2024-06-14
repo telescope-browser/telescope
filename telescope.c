@@ -45,6 +45,7 @@
 #include "mcache.h"
 #include "minibuffer.h"
 #include "parser.h"
+#include "parser.h"
 #include "session.h"
 #include "telescope.h"
 #include "tofu.h"
@@ -506,7 +507,7 @@ handle_dispatch_imsg(int fd, int event, void *data)
 				return;
 
 			if (tab) {
-				if (!parser_parse(tab, imsg.data,
+				if (!parser_parse(&tab->buffer, imsg.data,
 				    imsg_get_len(&imsg)))
 					die();
 				ui_on_tab_refresh(tab);
@@ -614,7 +615,7 @@ load_finger_url(struct tab *tab, const char *url)
 	}
 	strlcat(req.req, "\r\n", sizeof(req.req));
 
-	parser_init(tab, textplain_initparser);
+	parser_init(&tab->buffer, &textplain_parser);
 	make_request(tab, &req, PROTO_FINGER, NULL);
 }
 
@@ -673,10 +674,10 @@ load_gopher_url(struct tab *tab, const char *url)
 	path = gopher_skip_selector(tab->iri.iri_path, &type);
 	switch (type) {
 	case '0':
-		parser_init(tab, textplain_initparser);
+		parser_init(&tab->buffer, &textplain_parser);
 		break;
 	case '1':
-		parser_init(tab, gophermap_initparser);
+		parser_init(&tab->buffer, &gophermap_parser);
 		break;
 	case '7':
 		free(tab->last_input_url);
@@ -769,7 +770,7 @@ gopher_send_search_req(struct tab *tab, const char *text)
 	strlcat(req.req, "\r\n", sizeof(req.req));
 
 	erase_buffer(&tab->buffer);
-	parser_init(tab, gophermap_initparser);
+	parser_init(&tab->buffer, &gophermap_parser);
 
 	make_request(tab, &req, PROTO_GOPHER, NULL);
 }
@@ -777,8 +778,8 @@ gopher_send_search_req(struct tab *tab, const char *text)
 void
 load_page_from_str(struct tab *tab, const char *page)
 {
-	parser_init(tab, gemtext_initparser);
-	if (!parser_parse(tab, page, strlen(page)))
+	parser_init(&tab->buffer, &gemtext_parser);
+	if (!parser_parse(&tab->buffer, page, strlen(page)))
 		abort();
 	if (!parser_free(tab))
 		abort();
@@ -867,8 +868,7 @@ load_url(struct tab *tab, const char *url, const char *base, int mode)
 			return;
 		}
 
-		strlcpy(tab->buffer.page.title, url,
-		    sizeof(tab->buffer.page.title));
+		strlcpy(tab->buffer.title, url, sizeof(tab->buffer.title));
 	}
 
 	if (!lazy)
@@ -921,7 +921,7 @@ write_buffer(const char *path, struct tab *tab)
 
 	if ((fp = fopen(path, "w")) == NULL)
 		return;
-	if (!parser_serialize(tab, fp))
+	if (!parser_serialize(&tab->buffer, fp))
 		message("Failed to save the page.");
 	fclose(fp);
 }

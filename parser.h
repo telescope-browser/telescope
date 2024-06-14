@@ -17,29 +17,31 @@
 #ifndef PARSER_H
 #define PARSER_H
 
-#include "telescope.h"
+struct buffer;
+struct tab;
 
-typedef void (*parserfn)(struct parser *);
+struct parser {
+	const char	 *name;
+	int		  initflags;
 
-void	 parser_init(struct tab *, parserfn);
-int	 parser_parse(struct tab *, const char *, size_t);
-int	 parser_parsef(struct tab *, const char *, ...);
+	int		(*parse)(struct buffer *, const char *, size_t);
+	int		(*parseline)(struct buffer *, const char *, size_t);
+	int		(*free)(struct buffer *);
+	int		(*serialize)(struct buffer *, FILE *);
+};
+
+void	 parser_init(struct buffer *, struct parser *);
+int	 parser_parse(struct buffer *, const char *, size_t);
+int	 parser_parsef(struct buffer *, const char *, ...);
 int	 parser_free(struct tab *);
-int	 parser_serialize(struct tab *, FILE *);
+int	 parser_serialize(struct buffer *, FILE *);
 
-int	 parser_append(struct parser*, const char*, size_t);
-int	 parser_set_buf(struct parser*, const char*, size_t);
+int	 parser_append(struct buffer *, const char *, size_t);
+int	 parser_set_buf(struct buffer *, const char *, size_t);
 
-/* parser_gemtext.c */
-void	 gemtext_initparser(struct parser*);
-
-/* parser_gophermap.c */
-void	 gophermap_initparser(struct parser *);
-
-/* parser_textpatch.c */
-void	 textpatch_initparser(struct parser *);
-
-/* parser_textplain.c */
-void	 textplain_initparser(struct parser*);
+extern struct parser	 gemtext_parser;
+extern struct parser	 gophermap_parser;
+extern struct parser	 textpatch_parser;
+extern struct parser	 textplain_parser;
 
 #endif

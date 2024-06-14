@@ -135,7 +135,7 @@ recompute_completions(int add)
 	}
 
 	b = &ministate.compl.buffer;
-	TAILQ_FOREACH(l, &b->page.head, lines) {
+	TAILQ_FOREACH(l, &b->head, lines) {
 		l->type = LINE_COMPL;
 		if (add && l->flags & L_HIDDEN)
 			continue;
@@ -151,7 +151,7 @@ recompute_completions(int add)
 	}
 
 	if (b->current_line == NULL)
-		b->current_line = TAILQ_FIRST(&b->head);
+		b->current_line = TAILQ_FIRST(&b->vhead);
 	b->current_line = adjust_line(b->current_line, b);
 	vl = b->current_line;
 	if (ministate.compl.must_select && vl != NULL)
@@ -403,7 +403,7 @@ jump_to_line(struct line *l)
 
 	buffer = current_buffer();
 
-	TAILQ_FOREACH(vl, &buffer->head, vlines) {
+	TAILQ_FOREACH(vl, &buffer->vhead, vlines) {
 		if (vl->parent == l)
 			break;
 	}
@@ -538,11 +538,9 @@ populate_compl_buffer(complfn *fn, void *data)
 	const char	*s, *descr;
 	struct line	*l;
 	struct buffer	*b;
-	struct parser	*p;
 	void		*linedata;
 
 	b = &ministate.compl.buffer;
-	p = &b->page;
 
 	linedata = NULL;
 	descr = NULL;
@@ -556,13 +554,13 @@ populate_compl_buffer(complfn *fn, void *data)
 		if ((l->line = strdup(s)) == NULL)
 			abort();
 
-		TAILQ_INSERT_TAIL(&p->head, l, lines);
+		TAILQ_INSERT_TAIL(&b->head, l, lines);
 
 		linedata = NULL;
 		descr = NULL;
 	}
 
-	if ((l = TAILQ_FIRST(&p->head)) != NULL &&
+	if ((l = TAILQ_FIRST(&b->head)) != NULL &&
 	    ministate.compl.must_select)
 		l->type = LINE_COMPL_CURRENT;
 }
@@ -700,10 +698,10 @@ minibuffer_init(void)
 		err(1, "hist_new");
 
 	TAILQ_INIT(&ministate.compl.buffer.head);
-	TAILQ_INIT(&ministate.compl.buffer.page.head);
+	TAILQ_INIT(&ministate.compl.buffer.vhead);
 
 	ministate.line.type = LINE_TEXT;
 	ministate.vline.parent = &ministate.line;
-	ministate.buffer.page.name = "*minibuffer*";
+	ministate.buffer.mode = "*minibuffer*";
 	ministate.buffer.current_line = &ministate.vline;
 }

@@ -20,8 +20,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "parser.h"
 #include "iri.h"
+#include "parser.h"
+#include "telescope.h"
 #include "utils.h"
 
 #ifndef LINE_MAX
@@ -38,20 +39,14 @@ struct gm_selector {
 
 static void	gm_parse_selector(char *, struct gm_selector *);
 
-static int	gm_parse_line(struct parser *, const char *, size_t);
-static int	gm_serialize(struct parser *, FILE *);
+static int	gm_parse_line(struct buffer *, const char *, size_t);
+static int	gm_serialize(struct buffer *, FILE *);
 
-void
-gophermap_initparser(struct parser *p)
-{
-	memset(p, 0, sizeof(*p));
-
-	p->name = "gophermap";
-	p->parseline = &gm_parse_line;
-	p->serialize = &gm_serialize;
-
-	TAILQ_INIT(&p->head);
-}
+struct parser gophermap_parser = {
+	.name = "gophermap",
+	.parseline = &gm_parse_line,
+	.serialize = &gm_serialize,
+};
 
 static void
 gm_parse_selector(char *line, struct gm_selector *s)
@@ -94,7 +89,7 @@ selector2uri(struct gm_selector *s, char *buf, size_t len)
 }
 
 static inline int
-emit_line(struct parser *p, enum line_type type, struct gm_selector *s)
+emit_line(struct buffer *b, enum line_type type, struct gm_selector *s)
 {
 	struct line *l;
 	char buf[LINE_MAX];
@@ -120,7 +115,7 @@ emit_line(struct parser *p, enum line_type type, struct gm_selector *s)
 		break;
 	}
 
-	TAILQ_INSERT_TAIL(&p->head, l, lines);
+	TAILQ_INSERT_TAIL(&b->head, l, lines);
 
 	return 1;
 
@@ -134,7 +129,7 @@ err:
 }
 
 static int
-gm_parse_line(struct parser *p, const char *line, size_t linelen)
+gm_parse_line(struct buffer *b, const char *line, size_t linelen)
 {
 	char buf[LINE_MAX] = {0};
 	struct gm_selector s = {0};
@@ -161,17 +156,17 @@ gm_parse_line(struct parser *p, const char *line, size_t linelen)
 	case 'd':	/* non-canonical: doc */
 	case 'h':	/* non-canonical: html file */
 	case 's':	/* non-canonical: sound file */
-		if (!emit_line(p, LINE_LINK, &s))
+		if (!emit_line(b, LINE_LINK, &s))
 			return 0;
 		break;
 
 	case 'i':	/* non-canonical: message */
-		if (!emit_line(p, LINE_TEXT, &s))
+		if (!emit_line(b, LINE_TEXT, &s))
 			return 0;
 		break;
 
 	case '3':	/* error code */
-		if (!emit_line(p, LINE_QUOTE, &s))
+		if (!emit_line(b, LINE_QUOTE, &s))
 			return 0;
 		break;
 	}
@@ -254,13 +249,13 @@ serialize_link(struct line *line, const char *text, FILE *fp)
 }
 
 static int
-gm_serialize(struct parser *p, FILE *fp)
+gm_serialize(struct buffer *b, FILE *fp)
 {
 	struct line	*line;
 	const char	*text;
 	int		 r;
 
-	TAILQ_FOREACH(line, &p->head, lines) {
+	TAILQ_FOREACH(line, &b->head, lines) {
 		if ((text = line->line) == NULL)
 			text = "";
 

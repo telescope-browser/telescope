@@ -24,11 +24,17 @@
 #include <string.h>
 
 #include "parser.h"
+#include "telescope.h"
 
-static int	textplain_parse_line(struct parser*, const char*, size_t);
+static int	textplain_parse_line(struct buffer *, const char *, size_t);
+
+struct parser textplain_parser = {
+	.name = "text/plain",
+	.parseline = &textplain_parse_line,
+};
 
 static inline int
-emit_line(struct parser *p, const char *line, size_t len)
+emit_line(struct buffer *b, const char *line, size_t len)
 {
 	struct line *l;
 
@@ -46,24 +52,13 @@ emit_line(struct parser *p, const char *line, size_t len)
 		memcpy(l->line, line, len);
 	}
 
-	TAILQ_INSERT_TAIL(&p->head, l, lines);
+	TAILQ_INSERT_TAIL(&b->head, l, lines);
 
 	return 1;
 }
 
-void
-textplain_initparser(struct parser *p)
-{
-	memset(p, 0, sizeof(*p));
-
-	p->name = "text/plain";
-	p->parseline = &textplain_parse_line;
-
-	TAILQ_INIT(&p->head);
-}
-
 static int
-textplain_parse_line(struct parser *p, const char *line, size_t linelen)
+textplain_parse_line(struct buffer *b, const char *line, size_t linelen)
 {
-	return emit_line(p, line, linelen);
+	return emit_line(b, line, linelen);
 }

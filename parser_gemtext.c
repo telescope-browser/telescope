@@ -30,31 +30,26 @@
 
 #include "defaults.h"
 #include "parser.h"
+#include "telescope.h"
 #include "utf8.h"
 
-static int	gemtext_parse_line(struct parser *, const char *, size_t);
-static int	gemtext_free(struct parser *);
-static int	gemtext_serialize(struct parser *, FILE *);
+static int	gemtext_parse_line(struct buffer *, const char *, size_t);
+static int	gemtext_free(struct buffer *);
+static int	gemtext_serialize(struct buffer *, FILE *);
 
-static int	parse_link(struct parser *, const char*, size_t);
-static int	parse_title(struct parser *, const char*, size_t);
-static void	search_title(struct parser *, enum line_type);
+static int	parse_link(struct buffer *, const char*, size_t);
+static int	parse_title(struct buffer *, const char*, size_t);
+static void	search_title(struct buffer *, enum line_type);
 
-void
-gemtext_initparser(struct parser *p)
-{
-	memset(p, 0, sizeof(*p));
-
-	p->name = "text/gemini";
-	p->parseline = &gemtext_parse_line;
-	p->free  = &gemtext_free;
-	p->serialize = &gemtext_serialize;
-
-	TAILQ_INIT(&p->head);
-}
+struct parser gemtext_parser = {
+	.name = "text/gemini",
+	.parseline = &gemtext_parse_line,
+	.free = &gemtext_free,
+	.serialize = &gemtext_serialize,
+};
 
 static inline int
-emit_line(struct parser *p, enum line_type type, char *line, char *alt)
+emit_line(struct buffer *b, enum line_type type, char *line, char *alt)
 {
 	struct line *l;
 
@@ -90,26 +85,26 @@ emit_line(struct parser *p, enum line_type type, char *line, char *alt)
 	if (dont_apply_styling)
 		l->flags &= ~L_HIDDEN;
 
-	TAILQ_INSERT_TAIL(&p->head, l, lines);
+	TAILQ_INSERT_TAIL(&b->head, l, lines);
 
 	return 1;
 }
 
 static int
-parse_link(struct parser *p, const char *line, size_t len)
+parse_link(struct buffer *b, const char *line, size_t len)
 {
 	char *label, *url;
 	const char *start;
 
 	if (len <= 2)
-		return emit_line(p, LINE_TEXT, NULL, NULL);
+		return emit_line(b, LINE_TEXT, NULL, NULL);
 
 	line += 2, len -= 2;
 	while (len > 0 && isspace((unsigned char)line[0]))
 		line++, len--;
 
 	if (len == 0)
-		return emit_line(p, LINE_TEXT, NULL, NULL);
+		return emit_line(b, LINE_TEXT, NULL, NULL);
 
 	start = line;
 	while (len > 0 && !isspace((unsigned char)line[0]))
@@ -129,11 +124,11 @@ parse_link(struct parser *p, const char *line, size_t len)
 			return 0;
 	}
 
-	return emit_line(p, LINE_LINK, label, url);
+	return emit_line(b, LINE_LINK, label, url);
 }
 
 static int
-parse_title(struct parser *p, const char *line, size_t len)
+parse_title(struct buffer *b, const char *line, size_t len)
 {
 	enum line_type t = LINE_TITLE_1;
 	char *l;
@@ -150,36 +145,36 @@ parse_title(struct parser *p, const char *line, size_t len)
 		line++, len--;
 
 	if (len == 0)
-		return emit_line(p, t, NULL, NULL);
+		return emit_line(b, t, NULL, NULL);
 
-	if (t == LINE_TITLE_1 && *p->title == '\0')
-		strncpy(p->title, line, MIN(sizeof(p->title)-1, len));
+	if (t == LINE_TITLE_1 && *b->title == '\0')
+		strncpy(b->title, line, MIN(sizeof(b->title)-1, len));
 
 	if ((l = strndup(line, len)) == NULL)
 		return 0;
-	return emit_line(p, t, l, NULL);
+	return emit_line(b, t, l, NULL);
 }
 
 static int
-gemtext_parse_line(struct parser *p, const char *line, size_t len)
+gemtext_parse_line(struct buffer *b, const char *line, size_t len)
 {
 	char *l;
 
-	if (p->flags & PARSER_IN_PRE) {
+	if (b->parser_flags & PARSER_IN_PRE) {
 		if (len >= 3 && !strncmp(line, "```", 3)) {
-			p->flags ^= PARSER_IN_PRE;
-			return emit_line(p, LINE_PRE_END, NULL, NULL);
+			b->parser_flags ^= PARSER_IN_PRE;
+			return emit_line(b, LINE_PRE_END, NULL, NULL);
 		}
 
 		if (len == 0)
-			return emit_line(p, LINE_PRE_CONTENT, NULL, NULL);
+			return emit_line(b, LINE_PRE_CONTENT, NULL, NULL);
 		if ((l = strndup(line, len)) == NULL)
 			return 0;
-		return emit_line(p, LINE_PRE_CONTENT, l, NULL);
+		return emit_line(b, LINE_PRE_CONTENT, l, NULL);
 	}
 
 	if (len == 0)
-		return emit_line(p, LINE_TEXT, NULL, NULL);
+		return emit_line(b, LINE_TEXT, NULL, NULL);
 
 	switch (*line) {
 	case '*':
@@ -190,59 +185,59 @@ gemtext_parse_line(struct parser *p, const char *line, size_t len)
 		while (len > 0 && isspace((unsigned char)*line))
 			line++, len--;
 		if (len == 0)
-			return emit_line(p, LINE_ITEM, NULL, NULL);
+			return emit_line(b, LINE_ITEM, NULL, NULL);
 		if ((l = strndup(line, len)) == NULL)
 			return 0;
-		return emit_line(p, LINE_ITEM, l, NULL);
+		return emit_line(b, LINE_ITEM, l, NULL);
 
 	case '>':
 		line++, len--;
 		while (len > 0 && isspace((unsigned char)*line))
 			line++, len--;
 		if (len == 0)
-			return emit_line(p, LINE_QUOTE, NULL, NULL);
+			return emit_line(b, LINE_QUOTE, NULL, NULL);
 		if ((l = strndup(line, len)) == NULL)
 			return 0;
-		return emit_line(p, LINE_QUOTE, l, NULL);
+		return emit_line(b, LINE_QUOTE, l, NULL);
 
 	case '=':
 		if (len > 1 && line[1] == '>')
-			return parse_link(p, line, len);
+			return parse_link(b, line, len);
 		break;
 
 	case '#':
-		return parse_title(p, line, len);
+		return parse_title(b, line, len);
 
 	case '`':
 		if (len < 3 || strncmp(line, "```", 3) != 0)
 			break;
 
-		p->flags |= PARSER_IN_PRE;
+		b->parser_flags |= PARSER_IN_PRE;
 		line += 3, len -= 3;
 		while (len > 0 && isspace((unsigned char)*line))
 			line++, len--;
 		if (len == 0)
-			return emit_line(p, LINE_PRE_START,
+			return emit_line(b, LINE_PRE_START,
 			    NULL, NULL);
 		if ((l = strndup(line, len)) == NULL)
 			return 0;
-		return emit_line(p, LINE_PRE_START, l, NULL);
+		return emit_line(b, LINE_PRE_START, l, NULL);
 	}
 
 	if ((l = strndup(line, len)) == NULL)
 		return 0;
-	return emit_line(p, LINE_TEXT, l, NULL);
+	return emit_line(b, LINE_TEXT, l, NULL);
 }
 
 static int
-gemtext_free(struct parser *p)
+gemtext_free(struct buffer *b)
 {
 	/* flush the buffer */
-	if (p->len != 0) {
-		if (!gemtext_parse_line(p, p->buf, p->len))
+	if (b->len != 0) {
+		if (!gemtext_parse_line(b, b->buf, b->len))
 			return 0;
-		if ((p->flags & PARSER_IN_PRE) &&
-		    !emit_line(p, LINE_PRE_END, NULL, NULL))
+		if ((b->parser_flags & PARSER_IN_PRE) &&
+		    !emit_line(b, LINE_PRE_END, NULL, NULL))
 			return 0;
 	}
 
@@ -250,24 +245,24 @@ gemtext_free(struct parser *p)
 	 * use the first level 2 or 3 header as page title if none
 	 * found yet.
 	 */
-	if (*p->title == '\0')
-		search_title(p, LINE_TITLE_2);
-	if (*p->title == '\0')
-		search_title(p, LINE_TITLE_3);
+	if (*b->title == '\0')
+		search_title(b, LINE_TITLE_2);
+	if (*b->title == '\0')
+		search_title(b, LINE_TITLE_3);
 
 	return 1;
 }
 
 static void
-search_title(struct parser *p, enum line_type level)
+search_title(struct buffer *b, enum line_type level)
 {
 	struct line *l;
 
-	TAILQ_FOREACH(l, &p->head, lines) {
+	TAILQ_FOREACH(l, &b->head, lines) {
 		if (l->type == level) {
 			if (l->line == NULL)
 				continue;
-			strlcpy(p->title, l->line, sizeof(p->title));
+			strlcpy(b->title, l->line, sizeof(b->title));
 			break;
 		}
 	}
@@ -286,14 +281,14 @@ static const char *gemtext_prefixes[] = {
 };
 
 static int
-gemtext_serialize(struct parser *p, FILE *fp)
+gemtext_serialize(struct buffer *b, FILE *fp)
 {
 	struct line	*line;
 	const char	*text;
 	const char	*alt;
 	int		 r;
 
-	TAILQ_FOREACH(line, &p->head, lines) {
+	TAILQ_FOREACH(line, &b->head, lines) {
 		if ((text = line->line) == NULL)
 			text = "";
 

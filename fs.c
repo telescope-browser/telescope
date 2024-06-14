@@ -34,6 +34,7 @@
 
 #include "pages.h"
 #include "parser.h"
+#include "telescope.h"
 #include "session.h"
 #include "utils.h"
 
@@ -86,6 +87,7 @@ select_non_dotdot(const struct dirent *d)
 static void
 send_dir(struct tab *tab, const char *path)
 {
+	struct buffer	*buffer = &tab->buffer;
 	struct dirent	**names;
 	int		(*selector)(const struct dirent *) = select_non_dot;
 	int		  i, len;
@@ -112,8 +114,8 @@ send_dir(struct tab *tab, const char *path)
 		return;
 	}
 
-	parser_init(tab, gemtext_initparser);
-	parser_parsef(tab, "# Index of %s\n\n", path);
+	parser_init(buffer, &gemtext_parser);
+	parser_parsef(buffer, "# Index of %s\n\n", path);
 
 	for (i = 0; i < len; ++i) {
 		const char *sufx = "";
@@ -121,7 +123,7 @@ send_dir(struct tab *tab, const char *path)
 		if (names[i]->d_type == DT_DIR)
 			sufx = "/";
 
-		parser_parsef(tab, "=> %s%s\n", names[i]->d_name, sufx);
+		parser_parsef(buffer, "=> %s%s\n", names[i]->d_name, sufx);
 	}
 
 	parser_free(tab);
@@ -139,40 +141,40 @@ is_dir(FILE *fp)
 	return S_ISDIR(sb.st_mode);
 }
 
-static parserinit
+static struct parser *
 file_type(const char *path)
 {
 	const struct mapping {
 		const char	*ext;
-		parserinit	 fn;
+		struct parser	*parser;
 	} ms[] = {
-		{"diff",	textpatch_initparser},
-		{"gemini",	gemtext_initparser},
-		{"gmi",		gemtext_initparser},
-		{"markdown",	textplain_initparser},
-		{"md",		textplain_initparser},
-		{"patch",	gemtext_initparser},
+		{"diff",	&textpatch_parser},
+		{"gemini",	&gemtext_parser},
+		{"gmi",		&gemtext_parser},
+		{"markdown",	&textplain_parser},
+		{"md",		&textplain_parser},
+		{"patch",	&gemtext_parser},
 		{NULL, NULL},
 	}, *m;
 	const char *dot;
 
 	if ((dot = strrchr(path, '.')) == NULL)
-		return textplain_initparser;
+		return &textplain_parser;
 
 	dot++;
 
 	for (m = ms; m->ext != NULL; ++m)
 		if (!strcmp(m->ext, dot))
-			return m->fn;
+			return m->parser;
 
-	return textplain_initparser;
+	return &textplain_parser;
 }
 
 void
 fs_load_url(struct tab *tab, const char *url)
 {
 	const char	*bpath = "bookmarks.gmi", *fallback = "# Not found\n";
-	parserinit	 initfn = gemtext_initparser;
+	struct parser	*parser = &gemtext_parser;
 	char		 path[PATH_MAX];
 	FILE		*fp = NULL;
 	size_t		 i;
@@ -216,7 +218,7 @@ fs_load_url(struct tab *tab, const char *url)
 	} else if (!strncmp(url, "file://", 7)) {
 		url += 7;
 		strlcpy(path, url, sizeof(path));
-		initfn = file_type(url);
+		parser = file_type(url);
 	} else
 		goto done;
 
@@ -228,12 +230,12 @@ fs_load_url(struct tab *tab, const char *url)
 		goto done;
 	}
 
-	parser_init(tab, initfn);
+	parser_init(&tab->buffer, parser);
 	for (;;) {
 		size_t r;
 
 		r = fread(buf, 1, sizeof(buf), fp);
-		if (!parser_parse(tab, buf, r))
+		if (!parser_parse(&tab->buffer, buf, r))
 			break;
 		if (r != sizeof(buf))
 			break;

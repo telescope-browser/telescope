@@ -39,8 +39,8 @@ empty_linelist(struct buffer *buffer)
 {
 	struct line *l, *lt;
 
-	TAILQ_FOREACH_SAFE(l, &buffer->page.head, lines, lt) {
-		TAILQ_REMOVE(&buffer->page.head, l, lines);
+	TAILQ_FOREACH_SAFE(l, &buffer->head, lines, lt) {
+		TAILQ_REMOVE(&buffer->head, l, lines);
 		free(l->line);
 
 		if (l->type != LINE_COMPL &&
@@ -62,8 +62,8 @@ empty_vlist(struct buffer *buffer)
 	buffer->current_line = NULL;
 	buffer->line_max = 0;
 
-	TAILQ_FOREACH_SAFE(vl, &buffer->head, vlines, t) {
-		TAILQ_REMOVE(&buffer->head, vl, vlines);
+	TAILQ_FOREACH_SAFE(vl, &buffer->vhead, vlines, t) {
+		TAILQ_REMOVE(&buffer->vhead, vl, vlines);
 		free(vl);
 	}
 }
@@ -96,7 +96,7 @@ push_line(struct buffer *buffer, struct line *l, const char *buf, size_t len, in
 	}
 	vl->flags = flags;
 
-	TAILQ_INSERT_TAIL(&buffer->head, vl, vlines);
+	TAILQ_INSERT_TAIL(&buffer->vhead, vl, vlines);
 	return 1;
 }
 
@@ -174,7 +174,7 @@ wrap_page(struct buffer *buffer, int width)
 
 	empty_vlist(buffer);
 
-	TAILQ_FOREACH(l, &buffer->page.head, lines) {
+	TAILQ_FOREACH(l, &buffer->head, lines) {
 		prfx = line_prefixes[l->type].prfx1;
 		switch (l->type) {
 		case LINE_TEXT:
@@ -210,7 +210,7 @@ wrap_page(struct buffer *buffer, int width)
 
 		if (top_orig == l && buffer->top_line == NULL) {
 			buffer->line_off = buffer->line_max-1;
-			buffer->top_line = TAILQ_LAST(&buffer->head, vhead);
+			buffer->top_line = TAILQ_LAST(&buffer->vhead, vhead);
 
 			while (1) {
 				vl = TAILQ_PREV(buffer->top_line, vhead, vlines);
@@ -222,7 +222,7 @@ wrap_page(struct buffer *buffer, int width)
 		}
 
 		if (orig == l && buffer->current_line == NULL) {
-			buffer->current_line = TAILQ_LAST(&buffer->head, vhead);
+			buffer->current_line = TAILQ_LAST(&buffer->vhead, vhead);
 
 			while (1) {
 				vl = TAILQ_PREV(buffer->current_line, vhead, vlines);
@@ -234,7 +234,7 @@ wrap_page(struct buffer *buffer, int width)
 	}
 
 	if (buffer->current_line == NULL)
-		buffer->current_line = TAILQ_FIRST(&buffer->head);
+		buffer->current_line = TAILQ_FIRST(&buffer->vhead);
 
 	if (buffer->top_line == NULL)
 		buffer->top_line = buffer->current_line;

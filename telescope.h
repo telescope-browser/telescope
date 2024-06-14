@@ -89,35 +89,6 @@ struct vline {
 	TAILQ_ENTRY(vline)	 vlines;
 };
 
-struct parser;
-
-typedef void	(*parserinit)(struct parser *);
-
-typedef int	(*parsechunkfn)(struct parser *, const char *, size_t);
-typedef int	(*parselinefn)(struct parser *, const char *, size_t);
-typedef int	(*parserfreefn)(struct parser *);
-typedef int	(*parserserial)(struct parser *, FILE *);
-
-struct parser {
-	const char	*name;
-	char		 title[128+1];
-	char		*buf;
-	size_t		 len;
-	size_t		 cap;
-
-#define PARSER_IN_BODY	1
-#define PARSER_IN_PRE	2
-#define PARSER_IN_PATCH_HDR 4
-	int		 flags;
-	parserinit	 init;
-	parsechunkfn	 parse;
-	parselinefn	 parseline;
-	parserfreefn	 free;
-	parserserial	 serialize;
-
-	TAILQ_HEAD(, line)	 head;
-};
-
 /*
  * different types of trust for a certificate.  Following
  * gemini://thfr.info/gemini/modified-trust-verify.gmi
@@ -130,8 +101,20 @@ enum trust_state {
 	TS_VERIFIED,
 };
 
+struct parser;
+
 struct buffer {
-	struct parser		 page;
+	char			 title[128 + 1];
+	const char		*mode;
+	char			*buf;
+	size_t			 len;
+	size_t			 cap;
+
+#define PARSER_IN_BODY	1
+#define PARSER_IN_PRE	2
+#define PARSER_IN_PATCH_HDR 4
+	int			 parser_flags;
+	struct parser		*parser;
 
 	size_t			 last_line_off;
 	int			 force_redraw;
@@ -143,7 +126,9 @@ struct buffer {
 	struct vline		*top_line;
 	struct vline		*current_line;
 	size_t			 cpoff;
-	TAILQ_HEAD(vhead, vline) head;
+
+	TAILQ_HEAD(, line)	 head;
+	TAILQ_HEAD(vhead, vline) vhead;
 };
 
 #define TAB_CURRENT	0x1	/* only for save_session */

@@ -253,7 +253,7 @@ cmd_scroll_down(struct buffer *buffer)
 void
 cmd_beginning_of_buffer(struct buffer *buffer)
 {
-	buffer->current_line = TAILQ_FIRST(&buffer->head);
+	buffer->current_line = TAILQ_FIRST(&buffer->vhead);
 	buffer->cpoff = 0;
 	buffer->top_line = buffer->current_line;
 	buffer->line_off = 0;
@@ -262,7 +262,7 @@ cmd_beginning_of_buffer(struct buffer *buffer)
 void
 cmd_end_of_buffer(struct buffer *buffer)
 {
-	buffer->current_line = TAILQ_LAST(&buffer->head, vhead);
+	buffer->current_line = TAILQ_LAST(&buffer->vhead, vhead);
 
 	if (buffer->current_line == NULL)
 		return;
@@ -620,7 +620,7 @@ cmd_link_select(struct buffer *buffer)
 
 	GUARD_RECURSIVE_MINIBUFFER();
 
-	l = TAILQ_FIRST(&buffer->page.head);
+	l = TAILQ_FIRST(&buffer->head);
 	while (l != NULL && l->type != LINE_LINK)
 		l = TAILQ_NEXT(l, lines);
 
@@ -640,7 +640,7 @@ cmd_swiper(struct buffer *buffer)
 	GUARD_RECURSIVE_MINIBUFFER();
 
 	enter_minibuffer(sensible_self_insert, swiper_select, exit_minibuffer,
-	    NULL, compl_swiper, TAILQ_FIRST(&buffer->page.head), 1);
+	    NULL, compl_swiper, TAILQ_FIRST(&buffer->head), 1);
 	strlcpy(ministate.prompt, "Select line: ", sizeof(ministate.prompt));
 }
 
@@ -651,7 +651,7 @@ cmd_toc(struct buffer *buffer)
 
 	GUARD_RECURSIVE_MINIBUFFER();
 
-	l = TAILQ_FIRST(&buffer->page.head);
+	l = TAILQ_FIRST(&buffer->head);
 	while (l != NULL &&
 	    l->type != LINE_TITLE_1 &&
 	    l->type != LINE_TITLE_2 &&
@@ -941,7 +941,7 @@ cmd_mini_goto_beginning(struct buffer *buffer)
 	if ((vl = buffer->current_line) != NULL)
 		vl->parent->type = LINE_COMPL;
 
-	vl = TAILQ_FIRST(&buffer->head);
+	vl = TAILQ_FIRST(&buffer->vhead);
 	while (vl != NULL && vl->parent->flags & L_HIDDEN)
 		vl = TAILQ_NEXT(vl, vlines);
 
@@ -966,7 +966,7 @@ cmd_mini_goto_end(struct buffer *buffer)
 	if ((vl = buffer->current_line) != NULL)
 		vl->parent->type = LINE_COMPL;
 
-	vl = TAILQ_LAST(&buffer->head, vhead);
+	vl = TAILQ_LAST(&buffer->vhead, vhead);
 	while (vl != NULL && vl->parent->flags & L_HIDDEN)
 		vl = TAILQ_PREV(vl, vhead, vlines);
 

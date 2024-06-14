@@ -48,7 +48,7 @@ emit_help_item(char *prfx, interactivefn *fn)
 	l->line = strdup(prfx);
 	l->alt = (char*)cmd->cmd;
 
-	TAILQ_INSERT_TAIL(&helpwin.page.head, l, lines);
+	TAILQ_INSERT_TAIL(&helpwin.head, l, lines);
 }
 
 static void
@@ -85,7 +85,7 @@ recompute_help(void)
 	if (last_active_map != current_map) {
 		last_active_map = current_map;
 
-		helpwin.page.name = "*Help*";
+		helpwin.mode = "*Help*";
 		erase_buffer(&helpwin);
 		rec_compute_help(current_map, p, sizeof(p));
 		wrap_page(&helpwin, help_cols);

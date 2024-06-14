@@ -78,10 +78,10 @@ compl_ts(void **data, void **ret, const char **descr)
 
 	*ret = *tab;
 
-	if (*(*tab)->buffer.page.title == '\0')
+	if (*(*tab)->buffer.title == '\0')
 		return hist_cur((*tab)->hist);
 	*descr = hist_cur((*tab)->hist);
-	return (*tab)->buffer.page.title;
+	return (*tab)->buffer.title;
 }
 
 /*

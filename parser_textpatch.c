@@ -24,33 +24,27 @@
 #include <string.h>
 
 #include "parser.h"
+#include "telescope.h"
 #include "utils.h"
 
-static int	tpatch_emit_line(struct parser *, const char *, size_t);
-static int	tpatch_parse_line(struct parser *, const char *, size_t);
+static int	tpatch_emit_line(struct buffer *, const char *, size_t);
+static int	tpatch_parse_line(struct buffer *, const char *, size_t);
 
-void
-textpatch_initparser(struct parser *p)
-{
-	memset(p, 0, sizeof(*p));
-
-	p->name = "text/x-patch";
-	p->parseline = &tpatch_parse_line;
-
-	p->flags = PARSER_IN_PATCH_HDR;
-
-	TAILQ_INIT(&p->head);
-}
+struct parser textpatch_parser = {
+	.name = "text/x-patch",
+	.parseline = &tpatch_parse_line,
+	.initflags = PARSER_IN_PATCH_HDR,
+};
 
 static int
-tpatch_emit_line(struct parser *p, const char *line, size_t linelen)
+tpatch_emit_line(struct buffer *b, const char *line, size_t linelen)
 {
 	struct line *l;
 
 	if ((l = calloc(1, sizeof(*l))) == NULL)
 		return 0;
 
-	if (p->flags & PARSER_IN_PATCH_HDR)
+	if (b->parser_flags & PARSER_IN_PATCH_HDR)
 		l->type = LINE_PATCH_HDR;
 	else
 		l->type = LINE_PATCH;
@@ -63,7 +57,7 @@ tpatch_emit_line(struct parser *p, const char *line, size_t linelen)
 
 		memcpy(l->line, line, linelen);
 
-		if (!(p->flags & PARSER_IN_PATCH_HDR))
+		if (!(b->parser_flags & PARSER_IN_PATCH_HDR))
 			switch (*l->line) {
 			case '+':
 				l->type = LINE_PATCH_ADD;
@@ -84,21 +78,21 @@ tpatch_emit_line(struct parser *p, const char *line, size_t linelen)
 				 * than one file.
 				 */
 				l->type = LINE_PATCH_HDR;
-				p->flags |= PARSER_IN_PATCH_HDR;
+				b->parser_flags |= PARSER_IN_PATCH_HDR;
 				break;
 			}
 
 		if (!strncmp(l->line, "+++", 3))
-			p->flags &= ~PARSER_IN_PATCH_HDR;
+			b->parser_flags &= ~PARSER_IN_PATCH_HDR;
 	}
 
-	TAILQ_INSERT_TAIL(&p->head, l, lines);
+	TAILQ_INSERT_TAIL(&b->head, l, lines);
 
 	return 1;
 }
 
 static int
-tpatch_parse_line(struct parser *p, const char *line, size_t linelen)
+tpatch_parse_line(struct buffer *b, const char *line, size_t linelen)
 {
-	return tpatch_emit_line(p, line, linelen);
+	return tpatch_emit_line(b, line, linelen);
 }

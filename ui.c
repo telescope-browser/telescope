@@ -35,7 +35,6 @@
 #include <sys/time.h>
 #include <sys/wait.h>
 
-#include <assert.h>
 #include <curses.h>
 #include <errno.h>
 #include <locale.h>
@@ -144,8 +143,8 @@ set_scroll_position(struct tab *tab, size_t top, size_t cur)
 	size_t i = 0;
 	int topfound = 0;
 
-	last = TAILQ_FIRST(&tab->buffer.page.head);
-	TAILQ_FOREACH(vl, &tab->buffer.head, vlines) {
+	last = TAILQ_FIRST(&tab->buffer.head);
+	TAILQ_FOREACH(vl, &tab->buffer.vhead, vlines) {
 		if (last != vl->parent) {
 			last = vl->parent;
 			i++;
@@ -163,7 +162,7 @@ set_scroll_position(struct tab *tab, size_t top, size_t cur)
 	}
 
 	if (!topfound)
-		tab->buffer.top_line = TAILQ_FIRST(&tab->buffer.head);
+		tab->buffer.top_line = TAILQ_FIRST(&tab->buffer.vhead);
 
 	tab->buffer.current_line = tab->buffer.top_line;
 }
@@ -181,7 +180,7 @@ get_scroll_position(struct tab *tab, size_t *top, size_t *cur)
 	    tab->buffer.current_line == NULL)
 		return;
 
-	TAILQ_FOREACH(l, &tab->buffer.page.head, lines) {
+	TAILQ_FOREACH(l, &tab->buffer.head, lines) {
 		if (tab->buffer.top_line->parent == l)
 			topfound = 1;
 		if (tab->buffer.current_line->parent == l)
@@ -226,7 +225,7 @@ restore_curs_x(struct buffer *buffer)
 		lp = raw_prefixes;
 
 	vl = buffer->current_line;
-	if (vl == NULL || vl->len == 0)
+	if (vl == NULL || vl->len == 0 || vl->parent == NULL)
 		buffer->curs_x = buffer->cpoff = 0;
 	else if (vl->parent->data != NULL) {
 		text = vl->parent->data;
@@ -661,7 +660,7 @@ redraw_tabline(void)
 
 		current = tab == current_tab;
 
-		if (*(title = tab->buffer.page.title) == '\0')
+		if (*(title = tab->buffer.title) == '\0')
 			title = hist_cur(tab->hist);
 
 		if (tab->flags & TAB_URGENT)
@@ -756,7 +755,7 @@ again:
 		goto end;
 
 	if (buffer->top_line == NULL)
-		buffer->top_line = TAILQ_FIRST(&buffer->head);
+		buffer->top_line = TAILQ_FIRST(&buffer->vhead);
 
 	buffer->top_line = adjust_line(buffer->top_line, buffer);
 	if (buffer->top_line == NULL)
@@ -852,7 +851,7 @@ redraw_modeline(struct tab *tab)
 	const char	*spin = "-\\|/";
 
 	buffer = current_buffer();
-	mode = buffer->page.name;
+	mode = buffer->mode;
 
 	werase(modeline);
 	wattr_on(modeline, modeline_face.background, NULL);
@@ -1057,7 +1056,7 @@ redraw_tab(struct tab *tab)
 
 	if (set_title)
 		dprintf(1, "\033]2;%s - Telescope\a",
-		    current_tab->buffer.page.title);
+		    current_tab->buffer.title);
 }
 
 void
@@ -1124,11 +1123,11 @@ ui_init(void)
 
 	/* initialize download window */
 	TAILQ_INIT(&downloadwin.head);
-	TAILQ_INIT(&downloadwin.page.head);
+	TAILQ_INIT(&downloadwin.vhead);
 
 	/* initialize help window */
 	TAILQ_INIT(&helpwin.head);
-	TAILQ_INIT(&helpwin.page.head);
+	TAILQ_INIT(&helpwin.vhead);
 
 	base_map = &global_map;
 	current_map = &global_map;
@@ -1206,7 +1205,7 @@ ui_on_tab_loaded(struct tab *tab)
 
 	hist_cur_offs(tab->hist, &line_off, &curr_off);
 	if (curr_off != 0 &&
-	    tab->buffer.current_line == TAILQ_FIRST(&tab->buffer.head)) {
+	    tab->buffer.current_line == TAILQ_FIRST(&tab->buffer.vhead)) {
 		set_scroll_position(tab, line_off, curr_off);
 		redraw_tab(tab);
 		return;

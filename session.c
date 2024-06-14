@@ -80,7 +80,7 @@ new_tab(const char *url, const char *base, struct tab *after)
 	}
 
 	TAILQ_INIT(&tab->buffer.head);
-	TAILQ_INIT(&tab->buffer.page.head);
+	TAILQ_INIT(&tab->buffer.vhead);
 
 	tab->id = tab_new_id();
 
@@ -187,7 +187,7 @@ savetab(FILE *fp, struct tab *tab, int killed)
 		fprintf(fp, "killed,");
 
 	fprintf(fp, "top=%zu,cur=%zu %s\n", top_line, current_line,
-	    tab->buffer.page.title);
+	    tab->buffer.title);
 
 	cur = hist_off(tab->hist);
 	size = hist_size(tab->hist);
@@ -598,7 +598,7 @@ parse_tab_line(char *line, struct tab **ct)
 	if ((tab = new_tab(uri, NULL, NULL)) == NULL)
 		err(1, "new_tab");
 	hist_set_offs(tab->hist, tline, cline);
-	strlcpy(tab->buffer.page.title, title, sizeof(tab->buffer.page.title));
+	strlcpy(tab->buffer.title, title, sizeof(tab->buffer.title));
 
 	if (current)
 		*ct = tab;

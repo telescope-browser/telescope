@@ -27,6 +27,7 @@
 #include "hist.h"
 #include "mcache.h"
 #include "parser.h"
+#include "telescope.h"
 #include "utils.h"
 
 static struct timeval tv = { 5 * 60, 0 };
@@ -38,7 +39,7 @@ static size_t		tot;
 
 struct mcache_entry {
 	time_t		 ts;
-	parserfn	 parser;
+	struct parser	*parser;
 	int		 trust;
 	char		*buf;
 	size_t		 buflen;
@@ -108,14 +109,14 @@ mcache_tab(struct tab *tab)
 	if ((e = calloc(1, len)) == NULL)
 		return -1;
 	e->ts = time(NULL);
-	e->parser = tab->buffer.page.init;
+	e->parser = tab->buffer.parser;
 	e->trust = tab->trust;
 	memcpy(e->url, url, l);
 
 	if ((fp = open_memstream(&e->buf, &e->buflen)) == NULL)
 		goto err;
 
-	if (!parser_serialize(tab, fp))
+	if (!parser_serialize(&tab->buffer, fp))
 		goto err;
 
 	fclose(fp);
@@ -153,8 +154,8 @@ mcache_lookup(const char *url, struct tab *tab)
 	if ((e = ohash_find(&h, slot)) == NULL)
 		return 0;
 
-	parser_init(tab, e->parser);
-	if (!parser_parse(tab, e->buf, e->buflen))
+	parser_init(&tab->buffer, e->parser);
+	if (!parser_parse(&tab->buffer, e->buf, e->buflen))
 		goto err;
 	if (!parser_free(tab))
 		goto err;
