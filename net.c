@@ -23,7 +23,6 @@
 
 #include <netinet/in.h>
 
-#include <assert.h>
 #include <ctype.h>
 #include <errno.h>
 #include <netdb.h>
