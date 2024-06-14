@@ -22,6 +22,9 @@ struct mailcap {
 	char 			*cmd;
 	char			**cmd_argv;
 	int 			 cmd_argc;
+
+#define MAILCAP_NEEDSTERMINAL 0x1
+#define MAILCAP_COPIOUSOUTPUT 0x2
 	int	 	 	 flags;
 
 	TAILQ_ENTRY(mailcap) 	 mailcaps;
@@ -32,6 +35,7 @@ extern TAILQ_HEAD(mailcaplist, mailcap) mailcaps;
 extern struct mailcaplist 	 mailcaps;
 
 void 	 	 init_mailcap(void);
+void		 mailcap_parse(FILE *);
 struct mailcap	*mailcap_cmd_from_mimetype(char *, char *);
 
 #endif

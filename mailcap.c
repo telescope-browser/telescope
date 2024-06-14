@@ -33,9 +33,6 @@
 
 #define DEFAULT_MAILCAP_ENTRY "*/*; xdg-open %s ; needsterminal"
 
-#define MAILCAP_NEEDSTERMINAL 0x1
-#define MAILCAP_COPIOUSOUTPUT 0x2
-
 #define str_unappend(ch) if (sps.off > 0 && (ch) != EOF) { sps.off--; }
 
 struct str_parse_state {
@@ -411,13 +408,28 @@ mailcap_by_mimetype(const char *mt)
 void
 init_mailcap(void)
 {
-	FILE 		*f = NULL;
+	FILE		*f;
+	char		*copy;
+
+	if ((f = find_mailcap_file()) != NULL) {
+		mailcap_parse(f);
+		fclose(f);
+	}
+
+	if ((copy = strdup(DEFAULT_MAILCAP_ENTRY)) == NULL)
+		errx(1, "strdup");
+
+	/* Our own entry won't error. */
+	(void)parse_mailcap_line(copy);
+	free(copy);
+}
+
+void
+mailcap_parse(FILE *f)
+{
 	const char	 delims[3] = {'\\', '\\', '\0'};
 	char		*buf, *copy;
 	size_t		 line = 0;
-
-	if ((f = find_mailcap_file()) == NULL)
-		goto add_default;
 
 	while ((buf = fparseln(f, NULL, &line, delims, 0)) != NULL) {
 		memset(&sps, 0, sizeof sps);
@@ -436,15 +448,6 @@ init_mailcap(void)
 		}
 		free(copy);
 	}
-	fclose(f);
-
-add_default:
-	if ((copy = strdup(DEFAULT_MAILCAP_ENTRY)) == NULL)
-		errx(1, "strdup");
-
-	/* Our own entry won't error. */
-	(void)parse_mailcap_line(copy);
-	free(copy);
 }
 
 struct mailcap *
