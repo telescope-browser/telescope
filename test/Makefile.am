@@ -26,10 +26,7 @@ evtest_SOURCES =	evtest.c				\
 			$(top_srcdir)/ev.c			\
 			$(top_srcdir)/ev.h
 
-gmparser_CFLAGS =	-I$(top_srcdir)
-gmiparser_CFLAGS =	-I$(top_srcdir)
-iritest_CFLAGS =	-I$(top_srcdir)
-evtest_CFLAGS =		-I$(top_srcdir)
+AM_CFLAGS =		-I$(top_srcdir)
 
 LDADD =			$(LIBOBJS)
 
