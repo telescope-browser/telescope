@@ -210,8 +210,10 @@ AC_SEARCH_LIBS([RAND_add], [crypto], [:], [
 	AC_MSG_ERROR([can't find libcrypto])
 ])
 
-AC_SEARCH_LIBS([SSL_CTX_new], [ssl], [:], [
-	AC_MSG_ERROR([can't find libssl])
+AS_IF([test "x$PLATFORM" != "xdarwin"], [
+	AC_SEARCH_LIBS([SSL_CTX_new], [ssl], [:], [
+		AC_MSG_ERROR([can't find libssl])
+	])
 ])
 
 # Sanity check for Libre/OpenSSL headers vs library mismatch
