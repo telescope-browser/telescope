@@ -37,6 +37,7 @@
 
 #include <curses.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <locale.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -56,13 +57,18 @@
 #include "ui.h"
 #include "utf8.h"
 
+enum exec_mode {
+	EXEC_FOREGROUND,
+	EXEC_BACKGROUND,
+};
+
 static void		 set_scroll_position(struct tab *, size_t, size_t);
 
 static void		 restore_curs_x(struct buffer *);
 
 static int		 readkey(void);
 static void		 dispatch_stdio(int, int, void*);
-static void		 handle_resize(int, int, void*);
+static void		 handle_signal(int, int, void*);
 static void		 handle_resize_nodelay(int, int, void*);
 static void		 handle_download_refresh(int, int, void *);
 static void		 rearrange_windows(void);
@@ -82,7 +88,7 @@ static void		 place_cursor(int);
 static void		 redraw_tab(struct tab*);
 static void		 update_loading_anim(int, int, void*);
 static void		 stop_loading_anim(struct tab*);
-static int 		 exec_external_cmd(char **);
+static int 		 exec_external_cmd(char **, enum exec_mode);
 
 static int		 should_rearrange_windows;
 static int		 show_tab_bar;
@@ -352,10 +358,22 @@ dispatch_stdio(int fd, int ev, void *d)
 }
 
 static void
-handle_resize(int sig, int ev, void *d)
+handle_signal(int sig, int ev, void *d)
 {
-	ev_timer_cancel(resize_timer);
-	resize_timer = ev_timer(&resize_tv, handle_resize_nodelay, NULL);
+	int	 ret;
+
+	switch (sig) {
+	case SIGWINCH:
+		ev_timer_cancel(resize_timer);
+		resize_timer = ev_timer(&resize_tv, handle_resize_nodelay,
+		    NULL);
+		break;
+	case SIGCHLD:
+		do {
+			ret = waitpid(-1, NULL, WNOHANG);
+		} while (ret == -1 && errno == EINTR);
+		break;
+	}
 }
 
 static void
@@ -1185,7 +1203,8 @@ ui_init(void)
 void
 ui_main_loop(void)
 {
-	if (ev_signal(SIGWINCH, handle_resize, NULL) == -1 ||
+	if (ev_signal(SIGWINCH, handle_signal, NULL) == -1 ||
+	    ev_signal(SIGCHLD, handle_signal, NULL) == -1 ||
 	    ev_add(0, EV_READ, dispatch_stdio, NULL) == -1)
 		err(1, "ev_signal or ev_add failed");
 
@@ -1242,12 +1261,16 @@ void
 ui_prompt_download_cmd(char *path, char *mime_type)
 {
 	struct mailcap 	*mc = NULL;
+	enum exec_mode	 mode = EXEC_BACKGROUND;
 
 	if ((mc = mailcap_cmd_from_mimetype(mime_type, path)) == NULL)
 		return;
 
+	if (mc->flags & MAILCAP_NEEDSTERMINAL)
+		mode = EXEC_FOREGROUND;
+
 	message("Loaded %s with %s", mime_type, mc->cmd_argv[0]);
-	exec_external_cmd(mc->cmd_argv);
+	exec_external_cmd(mc->cmd_argv, mode);
 }
 
 void
@@ -1379,35 +1402,53 @@ ui_end(void)
 }
 
 static int
-exec_external_cmd(char **argv)
+exec_external_cmd(char **argv, enum exec_mode mode)
 {
 	char	**t;
-	int 	 s, ret;
+	int 	 s, fd, ret;
 	pid_t 	 pid;
 
 	if (argv == NULL)
 		return (-1);
 
-	endwin();
+	if (mode == EXEC_FOREGROUND) {
+		endwin();
 
-	fprintf(stderr, "%s: running", getprogname());
-	for (t = argv; *t; ++t)
-		fprintf(stderr, " %s", *t);
-	fprintf(stderr, "\n");
-	fflush(NULL);
+		fprintf(stderr, "%s: running", getprogname());
+		for (t = argv; *t; ++t)
+			fprintf(stderr, " %s", *t);
+		fprintf(stderr, "\n");
+		fflush(NULL);
+	}
 
 	switch (pid = fork()) {
 	case -1:
 		message("failed to fork: %s", strerror(errno));
 		return (-1);
 	case 0:
+		if (mode == EXEC_BACKGROUND) {
+			if ((fd = open("/dev/null", O_RDWR)) == -1) {
+				warn("can't open /dev/null");
+				_exit(1);
+			}
+			(void)dup2(fd, 0);
+			(void)dup2(fd, 1);
+			(void)dup2(fd, 2);
+			if (fd > 2)
+				close(fd);
+		}
 		execvp(argv[0], argv);
-		warn("can't exec \"%s\"", argv[0]);
-		fprintf(stderr, "Press enter to continue");
-		fflush(stderr);
-		read(0, &s, 1);
+		if (mode == EXEC_FOREGROUND) {
+			warn("can't exec \"%s\"", argv[0]);
+			fprintf(stderr, "Press enter to continue");
+			fflush(stderr);
+			read(0, &s, 1);
+		}
 		_exit(1);
 	}
+
+	if (mode == EXEC_BACKGROUND)
+		return (0);
 
 	do {
 		ret = waitpid(pid, &s, 0);
@@ -1464,7 +1505,7 @@ ui_edit_externally(void)
 	argv[1] = sfn;
 	argv[2] = NULL;
 
-	if (exec_external_cmd(argv) == -1) {
+	if (exec_external_cmd(argv, EXEC_FOREGROUND) == -1) {
 		(void) unlink(sfn);
 		return;
 	}
