@@ -82,7 +82,7 @@ static void		 place_cursor(int);
 static void		 redraw_tab(struct tab*);
 static void		 update_loading_anim(int, int, void*);
 static void		 stop_loading_anim(struct tab*);
-static void 		 exec_external_cmd(char **);
+static int 		 exec_external_cmd(char **);
 
 static int		 should_rearrange_windows;
 static int		 show_tab_bar;
@@ -1378,36 +1378,51 @@ ui_end(void)
 	endwin();
 }
 
-static void
+static int
 exec_external_cmd(char **argv)
 {
-	int 	 s;
-	pid_t 	 p;
+	char	**t;
+	int 	 s, ret;
+	pid_t 	 pid;
 
 	if (argv == NULL)
-		return;
+		return (-1);
 
 	endwin();
 
-	switch (p = fork()) {
+	fprintf(stderr, "%s: running", getprogname());
+	for (t = argv; *t; ++t)
+		fprintf(stderr, " %s", *t);
+	fprintf(stderr, "\n");
+	fflush(NULL);
+
+	switch (pid = fork()) {
 	case -1:
 		message("failed to fork: %s", strerror(errno));
-		return;
+		return (-1);
 	case 0:
 		execvp(argv[0], argv);
 		warn("can't exec \"%s\"", argv[0]);
+		fprintf(stderr, "Press enter to continue");
+		fflush(stderr);
+		read(0, &s, 1);
 		_exit(1);
 	}
 
-again:
-	if (waitpid(p, &s, 0) == -1) {
-		if (errno == EINTR)
-			goto again;
-	}
+	do {
+		ret = waitpid(pid, &s, 0);
+	} while (ret == -1 && errno == EINTR);
 
 	refresh();
 	clear();
 	ui_schedule_redraw();
+
+	if (WIFSIGNALED(s) || WEXITSTATUS(s) != 0) {
+		message("%s failed", *argv);
+		return (-1);
+	}
+
+	return (0);
 }
 
 #define TMPFILE "/tmp/telescope.XXXXXXXXXX"
@@ -1418,10 +1433,10 @@ ui_edit_externally(void)
 	FILE		*fp;
 	char		 buf[1024 + 1];
 	size_t		 r, len = 0;
-	const char	*editor;
+	char		*editor;
 	char		 sfn[sizeof(TMPFILE)];
-	pid_t		 pid;
-	int		 fd, ret, s;
+	char		*argv[3];
+	int		 fd;
 
 	if (!in_minibuffer) {
 		message("Not in minibuffer!");
@@ -1443,36 +1458,13 @@ ui_edit_externally(void)
 
 	if ((editor = getenv("VISUAL")) == NULL &&
 	    (editor = getenv("EDITOR")) == NULL)
-		editor = DEFAULT_EDITOR;
+		editor = (char *)DEFAULT_EDITOR;
 
-	endwin();
-	fprintf(stderr, "%s: running %s %s\n", getprogname(), editor, sfn);
-	fflush(NULL);
+	argv[0] = editor;
+	argv[1] = sfn;
+	argv[2] = NULL;
 
-	switch (pid = fork()) {
-	case -1:
-		message("failed to fork: %s", strerror(errno));
-		(void) unlink(sfn);
-		return;
-	case 0:
-		execlp(editor, editor, sfn, NULL);
-		warn("exec \"%s\" failed", editor);
-		fprintf(stderr, "Press enter to continue");
-		fflush(stderr);
-		read(0, &s, 1);
-		_exit(1);
-	}
-
-	do {
-		ret = waitpid(pid, &s, 0);
-	} while (ret == -1 && errno == EINTR);
-
-	refresh();
-	clear();
-	ui_schedule_redraw();
-
-	if (WIFSIGNALED(s) || WEXITSTATUS(s) != 0) {
-		message("%s failed", editor);
+	if (exec_external_cmd(argv) == -1) {
 		(void) unlink(sfn);
 		return;
 	}
