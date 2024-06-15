@@ -31,7 +31,7 @@
 #include "compat.h"
 #include "mailcap.h"
 
-#define DEFAULT_MAILCAP_ENTRY "*/*; xdg-open %s ; needsterminal"
+#define DEFAULT_MAILCAP_ENTRY "*/*; xdg-open %s"
 
 #define str_unappend(ch) if (sps.off > 0 && (ch) != EOF) { sps.off--; }
 
