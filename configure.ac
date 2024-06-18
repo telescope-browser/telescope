@@ -22,6 +22,27 @@ AC_ARG_VAR(HOSTCFLAGS, [CFLAGS for the host compiler])
 test -z "${HOSTCC}"     && HOSTCC='$(CC)'
 test -z "${HOSTCFLAGS}" && HOSTCFLAGS='$(CFLAGS)'
 
+AC_MSG_CHECKING([platform])
+case "$host_os" in
+	*darwin*)
+		PLATFORM=darwin
+		;;
+	*linux*)
+		PLATFORM=linux
+		;;
+	*freebsd*)
+		PLATFORM=freebsd
+		;;
+	*openbsd*)
+		PLATFORM=openbsd
+		;;
+	*)
+		PLATFORM=unknown
+		;;
+esac
+AC_MSG_RESULT($PLATFORM)
+AC_SUBST(PLATFORM)
+
 AC_ARG_WITH([Werror],
 	AS_HELP_STRING([--with-Werror],
 		[Add the compiler flag -Werror]))
@@ -53,27 +74,6 @@ AS_IF([test "x$with_libbsd" = "xyes"], [
 		LIBS="$libbsd_LIBS $LIBS"
 	])
 ])
-
-AC_MSG_CHECKING([platform])
-case "$host_os" in
-	*darwin*)
-		PLATFORM=darwin
-		;;
-	*linux*)
-		PLATFORM=linux
-		;;
-	*freebsd*)
-		PLATFORM=freebsd
-		;;
-	*openbsd*)
-		PLATFORM=openbsd
-		;;
-	*)
-		PLATFORM=unknown
-		;;
-esac
-AC_MSG_RESULT($PLATFORM)
-AC_SUBST(PLATFORM)
 
 if test "x$PLATFORM" = "xdarwin"; then
 	export LDFLAGS="-L/opt/homebrew/opt/libressl/lib $LDFLAGS"
