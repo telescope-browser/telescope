@@ -63,6 +63,18 @@ AC_ARG_WITH([default-editor],
 AC_MSG_NOTICE([Using default-editor: $DEFAULT_EDITOR])
 AC_DEFINE_UNQUOTED([DEFAULT_EDITOR], ["$DEFAULT_EDITOR"], [The default editor])
 
+DEFAULT_OPENER=xdg-open
+AS_IF([test "x$platform" = "xdarwin"], [
+	DEFAULT_OPENER=open
+])
+
+AC_ARG_WITH([default-opener],
+	AS_HELP_STRING([--with-default-opener],
+		[Set the default program to use (default: $DEFAULT_OPENER)]),
+		[DEFAULT_OPENER=$withval])
+AC_MSG_NOTICE([Using default-opener: $DEFAULT_OPENER])
+AC_DEFINE_UNQUOTED([DEFAULT_OPENER], ["$DEFAULT_OPENER"], [The default opener])
+
 AC_CHECK_HEADERS([ \
 	libutil.h \
 	util.h \
