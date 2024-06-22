@@ -223,6 +223,7 @@ str_to_argv(char *str, int *ret_argc, char ***ret_argv)
 		return -1;
 
 	free(sps.buf);
+	memset(&sps, 0, sizeof(sps));
 	sps.buf = xstrdup(str);
 	sps.len = strlen(sps.buf);
 
