@@ -119,5 +119,5 @@ download_finished(struct download *d)
 	d->fd = -1;
 
 	ui_on_download_refresh();
-	ui_prompt_download_cmd(d->path, d->mime_type);
+	ui_prompt_download_cmd(d);
 }

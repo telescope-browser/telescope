@@ -1257,20 +1257,33 @@ ui_on_download_refresh(void)
 	    handle_download_refresh, NULL);
 }
 
-void
-ui_prompt_download_cmd(char *path, char *mime_type)
+static void
+open_download(int res, void *data)
 {
+	struct download	*d = data;
 	struct mailcap 	*mc = NULL;
 	enum exec_mode	 mode = EXEC_BACKGROUND;
 
-	if ((mc = mailcap_cmd_from_mimetype(mime_type, path)) == NULL)
+	if (!res)
+		return;
+
+	if ((mc = mailcap_cmd_from_mimetype(d->mime_type, d->path)) == NULL)
 		return;
 
 	if (mc->flags & MAILCAP_NEEDSTERMINAL)
 		mode = EXEC_FOREGROUND;
 
-	message("Loaded %s with %s", mime_type, mc->cmd_argv[0]);
+	message("Loaded %s with %s", d->mime_type, mc->cmd_argv[0]);
 	exec_external_cmd(mc->cmd_argv, mode);
+}
+
+void
+ui_prompt_download_cmd(struct download *d)
+{
+	char		 prompt[64];
+
+	snprintf(prompt, sizeof(prompt), "Open %s?", d->path);
+	ui_yornp(prompt, open_download, d);
 }
 
 void
