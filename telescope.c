@@ -121,9 +121,9 @@ const char *err_pages[70] = {
 static void		 die(void) __attribute__((__noreturn__));
 static struct tab	*tab_by_id(uint32_t);
 static void		 handle_imsg_check_cert(struct imsg *);
-static void		 handle_check_cert_user_choice(int, struct tab *);
-static void		 handle_maybe_save_new_cert(int, struct tab *);
-static void		 handle_maybe_save_page(int, struct tab *);
+static void		 handle_check_cert_user_choice(int, void *);
+static void		 handle_maybe_save_new_cert(int, void *);
+static void		 handle_maybe_save_page(int, void *);
 static void		 handle_save_page_path(const char *, struct tab *);
 static void		 handle_dispatch_imsg(int, int, void *);
 static void		 load_about_url(struct tab *, const char *);
@@ -239,8 +239,10 @@ handle_imsg_check_cert(struct imsg *imsg)
 }
 
 static void
-handle_check_cert_user_choice(int accept, struct tab *tab)
+handle_check_cert_user_choice(int accept, void *d)
 {
+	struct tab *tab = d;
+
 	ui_send_net(IMSG_CERT_STATUS, tab->id, -1, &accept,
 	    sizeof(accept));
 
@@ -272,8 +274,9 @@ handle_check_cert_user_choice(int accept, struct tab *tab)
 }
 
 static void
-handle_maybe_save_new_cert(int accept, struct tab *tab)
+handle_maybe_save_new_cert(int accept, void *data)
 {
+	struct tab *tab = data;
 	struct tofu_entry *e;
 	const char *host, *port;
 
@@ -382,8 +385,9 @@ handle_request_response(struct tab *tab)
 }
 
 static void
-handle_maybe_save_page(int dosave, struct tab *tab)
+handle_maybe_save_page(int dosave, void *data)
 {
+	struct tab	*tab = data;
 	const char	*f;
 	char		 input[PATH_MAX];
 

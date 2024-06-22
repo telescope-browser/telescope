@@ -92,7 +92,7 @@ void	 enter_minibuffer(void(*)(void), void(*)(const char *), void(*)(void),
     struct hist *, complfn *, void *, int);
 
 void	 exit_minibuffer(void);
-void	 yornp(const char *, void (*)(int, struct tab *), struct tab *);
+void	 yornp(const char *, void (*)(int, void *), void *);
 
 /*
  * minibuffer_read asks the user for something using the minibuffer.

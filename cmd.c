@@ -275,7 +275,7 @@ cmd_end_of_buffer(struct buffer *buffer)
 }
 
 static void
-kill_telescope_cb(int r, struct tab *tab)
+kill_telescope_cb(int r, void *data)
 {
 	if (r) {
 		save_session();
@@ -1134,8 +1134,10 @@ cmd_client_certificate_info(struct buffer *buffer)
 }
 
 static void
-unload_certificate_cb(int r, struct tab *tab)
+unload_certificate_cb(int r, void *data)
 {
+	struct tab	*tab = data;
+
 	message("Won't use %s for this site.", tab->client_cert);
 	cert_delete_for(tab->client_cert, &tab->iri, r);
 }

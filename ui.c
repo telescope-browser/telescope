@@ -1346,8 +1346,7 @@ ui_after_message_hook(void)
 }
 
 void
-ui_yornp(const char *prompt, void (*fn)(int, struct tab *),
-    struct tab *data)
+ui_yornp(const char *prompt, void (*fn)(int, void *), void *data)
 {
 	yornp(prompt, fn, data);
 	redraw_tab(current_tab);

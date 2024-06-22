@@ -55,8 +55,8 @@ static void		 handle_clear_echoarea(int, int, void *);
 static unsigned long	clechotimer;
 static struct timeval	clechotv = { 5, 0 };
 
-static void (*yornp_cb)(int, struct tab *);
-static struct tab *yornp_data;
+static void (*yornp_cb)(int, void *);
+static void *yornp_data;
 
 static void (*read_cb)(const char*, struct tab *);
 static struct tab *read_data;
@@ -447,8 +447,10 @@ toc_select(const char *text)
 }
 
 static void
-save_cert_for_site_cb(int r, struct tab *tab)
+save_cert_for_site_cb(int r, void *data)
 {
+	struct tab		*tab = data;
+
 	cert_save_for(tab->client_cert, &tab->iri, r);
 }
 
@@ -612,8 +614,7 @@ exit_minibuffer(void)
 }
 
 void
-yornp(const char *prompt, void (*fn)(int, struct tab*),
-    struct tab *data)
+yornp(const char *prompt, void (*fn)(int, void*), void *data)
 {
 	size_t len;
 
