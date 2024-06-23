@@ -429,23 +429,19 @@ cmd_clear_minibuf(struct buffer *buffer)
 void
 cmd_execute_extended_command(struct buffer *buffer)
 {
-	size_t	 len;
+	struct minibuffer	 m = {
+		.self_insert = sensible_self_insert,
+		.done = eecmd_select,
+		.abort = exit_minibuffer,
+		.history = eecmd_history,
+		.complfn = compl_eecmd,
+		.must_select = 1,
+	};
 
 	GUARD_RECURSIVE_MINIBUFFER();
 
-	enter_minibuffer(sensible_self_insert, eecmd_select, exit_minibuffer,
-	    eecmd_history, compl_eecmd, NULL, 1);
-
-	len = sizeof(ministate.prompt);
-	strlcpy(ministate.prompt, "", len);
-
-	if (thiskey.meta)
-		strlcat(ministate.prompt, "M-", len);
-
-	strlcat(ministate.prompt, ui_keyname(thiskey.key), len);
-
-	if (thiskey.meta)
-		strlcat(ministate.prompt, " ", len);
+	enter_minibuffer(&m, "%s%s%s", thiskey.meta ? "M-" : "",
+	    ui_keyname(thiskey.key), thiskey.meta ? " " : "");
 }
 
 void
@@ -552,33 +548,50 @@ cmd_tab_move_to(struct buffer *buffer)
 void
 cmd_tab_select(struct buffer *buffer)
 {
+	struct minibuffer m = {
+		.self_insert = sensible_self_insert,
+		.done = ts_select,
+		.abort = exit_minibuffer,
+		.complfn = compl_ts,
+		.must_select = 1,
+	};
+
 	GUARD_RECURSIVE_MINIBUFFER();
 
-	enter_minibuffer(sensible_self_insert, ts_select, exit_minibuffer,
-	    NULL, compl_ts, NULL, 1);
-	strlcpy(ministate.prompt, "Select tab: ", sizeof(ministate.prompt));
+	enter_minibuffer(&m, "Select tab: ");
 }
 
 void
 cmd_load_url(struct buffer *buffer)
 {
+	struct minibuffer m = {
+		.self_insert = sensible_self_insert,
+		.done = lu_select,
+		.abort = exit_minibuffer,
+		.history = lu_history,
+		.complfn = compl_lu,
+	};
+
 	GUARD_RECURSIVE_MINIBUFFER();
 
-	enter_minibuffer(sensible_self_insert, lu_select, exit_minibuffer,
-	    lu_history, compl_lu, NULL, 0);
-	strlcpy(ministate.prompt, "Load URL: ", sizeof(ministate.prompt));
+	enter_minibuffer(&m, "Load URL: ");
 }
 
 void
 cmd_load_current_url(struct buffer *buffer)
 {
+	struct minibuffer m = {
+		.self_insert = sensible_self_insert,
+		.done = lu_select,
+		.abort = exit_minibuffer,
+		.history = lu_history,
+		.complfn = compl_lu,
+		.input = hist_cur(current_tab->hist),
+	};
+
 	GUARD_RECURSIVE_MINIBUFFER();
 
-	enter_minibuffer(sensible_self_insert, lu_select, exit_minibuffer,
-	    lu_history, compl_lu, NULL, 0);
-	strlcpy(ministate.prompt, "Load URL: ", sizeof(ministate.prompt));
-	strlcpy(ministate.buf, hist_cur(current_tab->hist), sizeof(ministate.buf));
-	ministate.buffer.cpoff = utf8_cplen(ministate.buf);
+	enter_minibuffer(&m, "Load URL: ");
 }
 
 void
@@ -591,14 +604,16 @@ cmd_reload_page(struct buffer *buffer)
 void
 cmd_bookmark_page(struct buffer *buffer)
 {
+	struct minibuffer m = {
+		.self_insert = sensible_self_insert,
+		.done = bp_select,
+		.abort = exit_minibuffer,
+		.input = hist_cur(current_tab->hist),
+	};
+
 	GUARD_RECURSIVE_MINIBUFFER();
 
-	enter_minibuffer(sensible_self_insert, bp_select, exit_minibuffer, NULL,
-	    NULL, NULL, 0);
-	strlcpy(ministate.prompt, "Bookmark URL: ", sizeof(ministate.prompt));
-	strlcpy(ministate.buf, hist_cur(current_tab->hist),
-	    sizeof(ministate.buf));
-	ministate.buffer.cpoff = utf8_cplen(ministate.buf);
+	enter_minibuffer(&m, "Bookmark URL: ");
 }
 
 void
@@ -617,6 +632,14 @@ void
 cmd_link_select(struct buffer *buffer)
 {
 	struct line *l;
+	struct minibuffer m = {
+		.self_insert = sensible_self_insert,
+		.done = ls_select,
+		.abort = exit_minibuffer,
+		.complfn = compl_ls,
+		.compldata = NULL,
+		.must_select = 1,
+	};
 
 	GUARD_RECURSIVE_MINIBUFFER();
 
@@ -629,25 +652,39 @@ cmd_link_select(struct buffer *buffer)
 		return;
 	}
 
-	enter_minibuffer(sensible_self_insert, ls_select, exit_minibuffer,
-	    NULL, compl_ls, l, 1);
-	strlcpy(ministate.prompt, "Select link: ", sizeof(ministate.prompt));
+	m.compldata = l;
+	enter_minibuffer(&m, "Select link: ");
 }
 
 void
 cmd_swiper(struct buffer *buffer)
 {
+	struct minibuffer m = {
+		.self_insert = sensible_self_insert,
+		.done = swiper_select,
+		.abort = exit_minibuffer,
+		.complfn = compl_swiper,
+		.compldata = TAILQ_FIRST(&buffer->head),
+		.must_select = 1,
+	};
+
 	GUARD_RECURSIVE_MINIBUFFER();
 
-	enter_minibuffer(sensible_self_insert, swiper_select, exit_minibuffer,
-	    NULL, compl_swiper, TAILQ_FIRST(&buffer->head), 1);
-	strlcpy(ministate.prompt, "Select line: ", sizeof(ministate.prompt));
+	enter_minibuffer(&m, "Select line: ");
 }
 
 void
 cmd_toc(struct buffer *buffer)
 {
 	struct line *l;
+	struct minibuffer m = {
+		.self_insert = sensible_self_insert,
+		.done = toc_select,
+		.abort = exit_minibuffer,
+		.complfn = compl_toc,
+		.compldata = NULL,
+		.must_select = 1,
+	};
 
 	GUARD_RECURSIVE_MINIBUFFER();
 
@@ -663,10 +700,8 @@ cmd_toc(struct buffer *buffer)
 		return;
 	}
 
-	enter_minibuffer(sensible_self_insert, toc_select, exit_minibuffer,
-	    NULL, compl_toc, l, 1);
-	strlcpy(ministate.prompt, "Select heading: ",
-	    sizeof(ministate.prompt));
+	m.compldata = l;
+	enter_minibuffer(&m, "Select heading: ");
 }
 
 void
@@ -1116,12 +1151,17 @@ cmd_up(struct buffer *buffer)
 void
 cmd_use_certificate(struct buffer *buffer)
 {
+	struct minibuffer m = {
+		.self_insert = sensible_self_insert,
+		.done = uc_select,
+		.abort = exit_minibuffer,
+		.complfn = compl_uc,
+		.must_select = 1,
+	};
+
 	GUARD_RECURSIVE_MINIBUFFER();
 
-	enter_minibuffer(sensible_self_insert, uc_select, exit_minibuffer,
-	    NULL, compl_uc, NULL, 1);
-	strlcpy(ministate.prompt, "Select certificate: ",
-	    sizeof(ministate.prompt));
+	enter_minibuffer(&m, "Select certificate: ");
 }
 
 void
@@ -1167,6 +1207,12 @@ cmd_unload_certificate(struct buffer *buffer)
 void
 cmd_search(struct buffer *buffer)
 {
+	struct minibuffer m = {
+		.self_insert = sensible_self_insert,
+		.done = search_select,
+		.abort = exit_minibuffer,
+	};
+
 	GUARD_RECURSIVE_MINIBUFFER();
 
 	if (!strncmp(default_search_engine, "gopher://", 9)) {
@@ -1175,9 +1221,7 @@ cmd_search(struct buffer *buffer)
 		return;
 	}
 
-	enter_minibuffer(sensible_self_insert, search_select, exit_minibuffer, NULL,
-	    NULL, NULL, 0);
-	strlcpy(ministate.prompt, "Search: ", sizeof(ministate.prompt));
+	enter_minibuffer(&m, "Search: ");
 }
 
 void

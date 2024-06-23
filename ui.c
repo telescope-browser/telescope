@@ -1341,13 +1341,17 @@ ui_schedule_redraw(void)
 void
 ui_require_input(struct tab *tab, int hide, void (*fn)(const char *))
 {
+	struct minibuffer m = {
+		.self_insert = sensible_self_insert,
+		.done = fn,
+		.abort = exit_minibuffer,
+		.history = ir_history,
+	};
+
 	/* TODO: hard-switching to another tab is ugly */
 	switch_to_tab(tab);
 
-	enter_minibuffer(sensible_self_insert, fn, exit_minibuffer,
-	    ir_history, NULL, NULL, 0);
-	strlcpy(ministate.prompt, "Input required: ",
-	    sizeof(ministate.prompt));
+	enter_minibuffer(&m, "Input required: ");
 	redraw_tab(tab);
 }
 

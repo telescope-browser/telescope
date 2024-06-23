@@ -567,35 +567,49 @@ populate_compl_buffer(complfn *fn, void *data)
 }
 
 void
-enter_minibuffer(void (*self_insert_fn)(void), void (*donefn)(const char *),
-    void (*abortfn)(void), struct hist *hist,
-    complfn *complfn, void *compldata, int must_select)
+enter_minibuffer(struct minibuffer *minibuffer, const char *fmt, ...)
 {
-	ministate.compl.must_select = must_select;
-	ministate.compl.fn = complfn;
-	ministate.compl.data = compldata;
+	va_list	 ap;
 
-	in_minibuffer = complfn == NULL ? MB_READ : MB_COMPREAD;
+	va_start(ap, fmt);
+	vsnprintf(ministate.prompt, sizeof(ministate.prompt), fmt, ap);
+	va_end(ap);
+
+	ministate.compl.must_select = minibuffer->must_select;
+	ministate.compl.fn = minibuffer->complfn;
+	ministate.compl.data = minibuffer->compldata;
+
+	in_minibuffer = minibuffer->complfn == NULL ? MB_READ : MB_COMPREAD;
 	if (in_minibuffer == MB_COMPREAD) {
-		populate_compl_buffer(complfn, compldata);
+		populate_compl_buffer(minibuffer->complfn,
+		    minibuffer->compldata);
 		ui_schedule_redraw();
 	}
 
 	base_map = &minibuffer_map;
 	current_map = &minibuffer_map;
 
-	base_map->unhandled_input = self_insert_fn;
+	base_map->unhandled_input = minibuffer->self_insert;
 
-	ministate.donefn = donefn;
-	ministate.abortfn = abortfn;
-	memset(ministate.buf, 0, sizeof(ministate.buf));
+	ministate.donefn = minibuffer->done;
+	ministate.abortfn = minibuffer->abort;
+
+	ministate.buffer.cpoff = 0;
+	if (minibuffer->input) {
+		strlcpy(ministate.buf, minibuffer->input,
+		    sizeof(ministate.buf));
+		ministate.vline.cplen = utf8_cplen(ministate.buf);
+		ministate.buffer.cpoff = ministate.vline.cplen;
+	} else {
+		ministate.buf[0] = '\0';
+		ministate.vline.cplen = ministate.buffer.cpoff = 0;
+	}
+
 	ministate.buffer.current_line = &ministate.vline;
 	ministate.buffer.current_line->parent->line = ministate.buf;
-	ministate.buffer.cpoff = 0;
-	strlcpy(ministate.buf, "", sizeof(ministate.prompt));
 
 	ministate.editing = 1;
-	ministate.hist = hist;
+	ministate.hist = minibuffer->history;
 	if (ministate.hist)
 		hist_seek_start(ministate.hist);
 }
@@ -616,7 +630,10 @@ exit_minibuffer(void)
 void
 yornp(const char *prompt, void (*fn)(int, void*), void *data)
 {
-	size_t len;
+	struct minibuffer m = {
+		.self_insert = yornp_self_insert,
+		.abort = yornp_abort,
+	};
 
 	if (in_minibuffer) {
 		fn(0, data);
@@ -625,27 +642,26 @@ yornp(const char *prompt, void (*fn)(int, void*), void *data)
 
 	yornp_cb = fn;
 	yornp_data = data;
-	enter_minibuffer(yornp_self_insert, NULL,
-	    yornp_abort, NULL, NULL, NULL, 0);
-
-	len = sizeof(ministate.prompt);
-	strlcpy(ministate.prompt, prompt, len);
-	strlcat(ministate.prompt, " (y or n) ", len);
+	enter_minibuffer(&m, "%s (y or n)", prompt);
 }
 
 void
 minibuffer_read(const char *prompt, void (*fn)(const char *, struct tab *),
     struct tab *data)
 {
+	struct minibuffer m = {
+		.self_insert = read_self_insert,
+		.done = read_select,
+		.abort = read_abort,
+		.history = read_history,
+	};
+
 	if (in_minibuffer)
 		return;
 
 	read_cb = fn;
 	read_data = data;
-	enter_minibuffer(read_self_insert, read_select, read_abort,
-	    read_history, NULL, NULL, 0);
-
-	snprintf(ministate.prompt, sizeof(ministate.prompt), "%s: ", prompt);
+	enter_minibuffer(&m, "%s: ", prompt);
 }
 
 static void

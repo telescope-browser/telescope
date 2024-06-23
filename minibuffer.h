@@ -88,8 +88,18 @@ void	 toc_select(const char *);
 void	 uc_select(const char *);
 void	 search_select(const char *);
 
-void	 enter_minibuffer(void(*)(void), void(*)(const char *), void(*)(void),
-    struct hist *, complfn *, void *, int);
+struct minibuffer {
+	void		(*self_insert)(void);
+	void		(*done)(const char *);
+	void		(*abort)(void);
+	struct hist	*history;
+	complfn		*complfn;
+	void		*compldata;
+	int		 must_select;
+	const char	*input;
+};
+
+void	 enter_minibuffer(struct minibuffer *, const char *, ...);
 
 void	 exit_minibuffer(void);
 void	 yornp(const char *, void (*)(int, void *), void *);
