@@ -170,7 +170,7 @@ minibuffer_insert_current_candidate(void)
 
 	minibuffer_taint_hist();
 	strlcpy(ministate.buf, vl->parent->line, sizeof(ministate.buf));
-	ministate.buffer.cpoff = utf8_cplen(ministate.buf);
+	ministate.buffer.cpoff = ministate.vline.cplen = utf8_cplen(ministate.buf);
 
 	return 0;
 }
