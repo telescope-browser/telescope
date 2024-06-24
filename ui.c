@@ -1542,6 +1542,11 @@ ui_edit_externally(void)
 	while (len > 0 && buf[len-1] == '\n')
 		buf[--len] = '\0';
 
+	/*
+	 * XXX: do not use minibuffer_confirm() since the text could
+	 * have multiple lines and we are not prepared to render them
+	 * in the history navigation.
+	 */
 	ministate.donefn(buf);
 	exit_minibuffer();
 }
