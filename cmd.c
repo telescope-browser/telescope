@@ -432,7 +432,6 @@ cmd_execute_extended_command(struct buffer *buffer)
 	struct minibuffer	 m = {
 		.self_insert = sensible_self_insert,
 		.done = eecmd_select,
-		.abort = exit_minibuffer,
 		.history = eecmd_history,
 		.complfn = compl_eecmd,
 		.must_select = 1,
@@ -551,7 +550,6 @@ cmd_tab_select(struct buffer *buffer)
 	struct minibuffer m = {
 		.self_insert = sensible_self_insert,
 		.done = ts_select,
-		.abort = exit_minibuffer,
 		.complfn = compl_ts,
 		.must_select = 1,
 	};
@@ -567,7 +565,6 @@ cmd_load_url(struct buffer *buffer)
 	struct minibuffer m = {
 		.self_insert = sensible_self_insert,
 		.done = lu_select,
-		.abort = exit_minibuffer,
 		.history = lu_history,
 		.complfn = compl_lu,
 	};
@@ -583,7 +580,6 @@ cmd_load_current_url(struct buffer *buffer)
 	struct minibuffer m = {
 		.self_insert = sensible_self_insert,
 		.done = lu_select,
-		.abort = exit_minibuffer,
 		.history = lu_history,
 		.complfn = compl_lu,
 		.input = hist_cur(current_tab->hist),
@@ -607,7 +603,6 @@ cmd_bookmark_page(struct buffer *buffer)
 	struct minibuffer m = {
 		.self_insert = sensible_self_insert,
 		.done = bp_select,
-		.abort = exit_minibuffer,
 		.input = hist_cur(current_tab->hist),
 	};
 
@@ -635,7 +630,6 @@ cmd_link_select(struct buffer *buffer)
 	struct minibuffer m = {
 		.self_insert = sensible_self_insert,
 		.done = ls_select,
-		.abort = exit_minibuffer,
 		.complfn = compl_ls,
 		.compldata = NULL,
 		.must_select = 1,
@@ -662,7 +656,6 @@ cmd_swiper(struct buffer *buffer)
 	struct minibuffer m = {
 		.self_insert = sensible_self_insert,
 		.done = swiper_select,
-		.abort = exit_minibuffer,
 		.complfn = compl_swiper,
 		.compldata = TAILQ_FIRST(&buffer->head),
 		.must_select = 1,
@@ -680,7 +673,6 @@ cmd_toc(struct buffer *buffer)
 	struct minibuffer m = {
 		.self_insert = sensible_self_insert,
 		.done = toc_select,
-		.abort = exit_minibuffer,
 		.complfn = compl_toc,
 		.compldata = NULL,
 		.must_select = 1,
@@ -1154,7 +1146,6 @@ cmd_use_certificate(struct buffer *buffer)
 	struct minibuffer m = {
 		.self_insert = sensible_self_insert,
 		.done = uc_select,
-		.abort = exit_minibuffer,
 		.complfn = compl_uc,
 		.must_select = 1,
 	};
@@ -1210,7 +1201,6 @@ cmd_search(struct buffer *buffer)
 	struct minibuffer m = {
 		.self_insert = sensible_self_insert,
 		.done = search_select,
-		.abort = exit_minibuffer,
 	};
 
 	GUARD_RECURSIVE_MINIBUFFER();

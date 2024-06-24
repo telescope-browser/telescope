@@ -594,6 +594,8 @@ enter_minibuffer(struct minibuffer *minibuffer, const char *fmt, ...)
 
 	ministate.donefn = minibuffer->done;
 	ministate.abortfn = minibuffer->abort;
+	if (ministate.abortfn == NULL)
+		ministate.abortfn = exit_minibuffer;
 
 	ministate.buffer.cpoff = 0;
 	if (minibuffer->input) {

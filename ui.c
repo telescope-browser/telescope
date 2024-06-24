@@ -1344,7 +1344,6 @@ ui_require_input(struct tab *tab, int hide, void (*fn)(const char *))
 	struct minibuffer m = {
 		.self_insert = sensible_self_insert,
 		.done = fn,
-		.abort = exit_minibuffer,
 		.history = ir_history,
 	};
 
