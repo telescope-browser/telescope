@@ -227,6 +227,8 @@ minibuffer_taint_hist(void)
 	ministate.editing = 1;
 	strlcpy(ministate.buf, hist_cur(ministate.hist),
 	    sizeof(ministate.buf));
+	ministate.buffer.cpoff = 0;
+	ministate.vline.cplen = utf8_cplen(ministate.buf);
 	ministate.buffer.current_line->parent->line = ministate.buf;
 }
 
