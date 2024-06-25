@@ -111,7 +111,7 @@ void	 yornp(const char *, void (*)(int, void *), void *);
  * can't be NULL.
  */
 void	 minibuffer_read(const char *,
-    void (*)(const char *, struct tab *), struct tab *);
+    void (*)(const char *, struct tab *), struct tab *, const char *);
 
 void	 vmessage(const char *, va_list);
 void	 message(const char *, ...) __attribute__((format(printf, 1, 2)));

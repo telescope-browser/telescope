@@ -650,13 +650,14 @@ yornp(const char *prompt, void (*fn)(int, void*), void *data)
 
 void
 minibuffer_read(const char *prompt, void (*fn)(const char *, struct tab *),
-    struct tab *data)
+    struct tab *data, const char *input)
 {
 	struct minibuffer m = {
 		.self_insert = read_self_insert,
 		.done = read_select,
 		.abort = read_abort,
 		.history = read_history,
+		.input = input,
 	};
 
 	if (in_minibuffer)
