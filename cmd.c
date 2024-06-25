@@ -17,6 +17,7 @@
 #include "compat.h"
 
 #include <limits.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -25,6 +26,7 @@
 #include "compl.h"
 #include "defaults.h"
 #include "ev.h"
+#include "exec.h"
 #include "hist.h"
 #include "keymap.h"
 #include "mcache.h"
@@ -926,6 +928,8 @@ cmd_suspend_telescope(struct buffer *buffer)
 {
 	message("Zzz...");
 	ui_suspend();
+	kill(getpid(), SIGSTOP);
+	ui_resume();
 }
 
 void
@@ -1217,7 +1221,35 @@ cmd_search(struct buffer *buffer)
 void
 cmd_mini_edit_external(struct buffer *buffer)
 {
+	FILE		*fp;
+	char		 buf[1024 + 1];
+	size_t		 r, len = 0;
+
 	GUARD_READ_ONLY();
 
-	ui_edit_externally();
+	if (ministate.compl.must_select || ministate.donefn == NULL) {
+		message("Can't use an external editor to complete");
+		return;
+	}
+
+	if ((fp = exec_editor(ministate.buf, strlen(ministate.buf))) == NULL)
+		return;
+
+	while (len < sizeof(buf) - 1) {
+		r = fread(buf + len, 1, sizeof(buf) - 1 - len, fp);
+		len += r;
+		if (r == 0)
+			break;
+	}
+	buf[len] = '\0';
+	while (len > 0 && buf[len-1] == '\n')
+		buf[--len] = '\0';
+
+	/*
+	 * XXX: do not use minibuffer_confirm() since the text could
+	 * have multiple lines and we are not prepared to render them
+	 * in the history navigation.
+	 */
+	ministate.donefn(buf);
+	exit_minibuffer();
 }

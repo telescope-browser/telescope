@@ -157,7 +157,7 @@ void		 ui_yornp(const char *, void (*)(int, void *), void *);
 void		 ui_read(const char *, void (*)(const char *, struct tab *), struct tab *, const char *);
 void		 ui_other_window(void);
 void		 ui_suspend(void);
+void		 ui_resume(void);
 void		 ui_end(void);
-void		 ui_edit_externally(void);
 
 #endif

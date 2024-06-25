@@ -23,6 +23,8 @@ telescope_SOURCES =	bufio.c			\
 			emoji-matcher.c		\
 			ev.c			\
 			ev.h			\
+			exec.c			\
+			exec.h			\
 			fs.c			\
 			fs.h			\
 			gencmd.awk		\

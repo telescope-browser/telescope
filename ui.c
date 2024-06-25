@@ -37,7 +37,6 @@
 
 #include <curses.h>
 #include <errno.h>
-#include <fcntl.h>
 #include <locale.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -48,6 +47,7 @@
 #include "cmd.h"
 #include "defaults.h"
 #include "ev.h"
+#include "exec.h"
 #include "hist.h"
 #include "keymap.h"
 #include "mailcap.h"
@@ -56,11 +56,6 @@
 #include "telescope.h"
 #include "ui.h"
 #include "utf8.h"
-
-enum exec_mode {
-	EXEC_FOREGROUND,
-	EXEC_BACKGROUND,
-};
 
 static void		 set_scroll_position(struct tab *, size_t, size_t);
 
@@ -88,7 +83,6 @@ static void		 place_cursor(int);
 static void		 redraw_tab(struct tab*);
 static void		 update_loading_anim(int, int, void*);
 static void		 stop_loading_anim(struct tab*);
-static int 		 exec_external_cmd(char **, enum exec_mode);
 
 static int		 should_rearrange_windows;
 static int		 show_tab_bar;
@@ -1274,7 +1268,7 @@ open_download(int res, void *data)
 		mode = EXEC_FOREGROUND;
 
 	message("Loaded %s with %s", d->mime_type, mc->cmd_argv[0]);
-	exec_external_cmd(mc->cmd_argv, mode);
+	exec_cmd(mc->cmd_argv, mode);
 }
 
 void
@@ -1396,9 +1390,11 @@ void
 ui_suspend(void)
 {
 	endwin();
+}
 
-	kill(getpid(), SIGSTOP);
-
+void
+ui_resume(void)
+{
 	refresh();
 	clear();
 	rearrange_windows();
@@ -1408,139 +1404,4 @@ void
 ui_end(void)
 {
 	endwin();
-}
-
-static int
-exec_external_cmd(char **argv, enum exec_mode mode)
-{
-	char	**t;
-	int 	 s, fd, ret;
-	pid_t 	 pid;
-
-	if (argv == NULL)
-		return (-1);
-
-	if (mode == EXEC_FOREGROUND) {
-		endwin();
-
-		fprintf(stderr, "%s: running", getprogname());
-		for (t = argv; *t; ++t)
-			fprintf(stderr, " %s", *t);
-		fprintf(stderr, "\n");
-		fflush(NULL);
-	}
-
-	switch (pid = fork()) {
-	case -1:
-		message("failed to fork: %s", strerror(errno));
-		return (-1);
-	case 0:
-		if (mode == EXEC_BACKGROUND) {
-			if ((fd = open("/dev/null", O_RDWR)) == -1) {
-				warn("can't open /dev/null");
-				_exit(1);
-			}
-			(void)dup2(fd, 0);
-			(void)dup2(fd, 1);
-			(void)dup2(fd, 2);
-			if (fd > 2)
-				close(fd);
-		}
-		execvp(argv[0], argv);
-		if (mode == EXEC_FOREGROUND) {
-			warn("can't exec \"%s\"", argv[0]);
-			fprintf(stderr, "Press enter to continue");
-			fflush(stderr);
-			read(0, &s, 1);
-		}
-		_exit(1);
-	}
-
-	if (mode == EXEC_BACKGROUND)
-		return (0);
-
-	do {
-		ret = waitpid(pid, &s, 0);
-	} while (ret == -1 && errno == EINTR);
-
-	refresh();
-	clear();
-	ui_schedule_redraw();
-
-	if (WIFSIGNALED(s) || WEXITSTATUS(s) != 0) {
-		message("%s failed", *argv);
-		return (-1);
-	}
-
-	return (0);
-}
-
-#define TMPFILE "/tmp/telescope.XXXXXXXXXX"
-
-void
-ui_edit_externally(void)
-{
-	FILE		*fp;
-	char		 buf[1024 + 1];
-	size_t		 r, len = 0;
-	char		*editor;
-	char		 sfn[sizeof(TMPFILE)];
-	char		*argv[3];
-	int		 fd;
-
-	if (!in_minibuffer) {
-		message("Not in minibuffer!");
-		return;
-	}
-
-	if (ministate.compl.must_select || ministate.donefn == NULL) {
-		message("Can't use an external editor to complete");
-		return;
-	}
-
-	strlcpy(sfn, TMPFILE, sizeof(sfn));
-	if ((fd = mkstemp(sfn)) == -1) {
-		message("failed to create a temp file: %s", strerror(errno));
-		return;
-	}
-	(void) write(fd, ministate.buf, strlen(ministate.buf));
-	close(fd);
-
-	if ((editor = getenv("VISUAL")) == NULL &&
-	    (editor = getenv("EDITOR")) == NULL)
-		editor = (char *)DEFAULT_EDITOR;
-
-	argv[0] = editor;
-	argv[1] = sfn;
-	argv[2] = NULL;
-
-	if (exec_external_cmd(argv, EXEC_FOREGROUND) == -1) {
-		(void) unlink(sfn);
-		return;
-	}
-
-	if ((fp = fopen(sfn, "r")) == NULL) {
-		message("can't open temp file!");
-		(void) unlink(sfn);
-		return;
-	}
-	(void) unlink(sfn);
-
-	while (len < sizeof(buf) - 1) {
-		r = fread(buf + len, 1, sizeof(buf) - 1 - len, fp);
-		len += r;
-		if (r == 0)
-			break;
-	}
-	buf[len] = '\0';
-	while (len > 0 && buf[len-1] == '\n')
-		buf[--len] = '\0';
-
-	/*
-	 * XXX: do not use minibuffer_confirm() since the text could
-	 * have multiple lines and we are not prepared to render them
-	 * in the history navigation.
-	 */
-	ministate.donefn(buf);
-	exit_minibuffer();
 }
