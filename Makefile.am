@@ -127,7 +127,12 @@ CLEANFILES =		cmd.gen.c emoji-matcher.c pages.c parse.c
 LDADD =			$(LIBOBJS) $(LIBGRAPHEME)
 EXTRA_telescope_DEPENDENCIES = $(LIBGRAPHEME)
 
-EXTRA_DIST =		ChangeLog LICENSE README.md data/emoji.txt pages/*.gmi
+EXTRA_DIST =		ChangeLog	\
+			LICENSE		\
+			README.md	\
+			data/emoji.txt	\
+			libgrapheme	\
+			pages/*.gmi
 
 dist_man1_MANS =	telescope.1 telescope-identity.1
 
