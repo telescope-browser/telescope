@@ -1,3 +1,43 @@
+2024-06-26  Thomas Adam  <thomas.adam22@gmail.com>
+
+	* Makefile.am: include the bundled copy of libgrapheme in the distribution tarball.
+
+2024-06-26  Omar Polo  <op@omarpolo.com>
+
+	* telescope.c (do_load_url) open URLs with unknown protocol with the default opener.
+
+2024-06-23  Omar Polo  <op@omarpolo.com>
+
+	* minibuffer.c (minibuffer_insert_current_candidate) fix insertion of candidate.
+
+2024-06-18  Omar Polo  <op@omarpolo.com>
+
+	* configure: add a --with-default-opener option
+
+2024-06-13  Thomas Adam  <thomas.adam22@gmail.com>
+
+	* mailcap.c: use mailcap(5) to decide what program to run to open the downloads.  xdg-open (or open(1) on macos) are used as a fallback.
+
+2024-06-10  Thomas Adam  <thomas.adam22@gmail.com>
+
+	* configure: add a --with-default-editor option
+
+2024-06-05  Omar Polo  <op@omarpolo.com>
+
+	* cmd.c (cmd_mini_edit_external): add mini-edit-external bound to C-x in the minibuffer.  It allows to edit the text using an editor.
+
+2024-06-05  Omar Polo  <op@omarpolo.com>
+
+	* parser_gemtext.c: rework the gemtext parser
+
+2024-06-04  Thomas Adam  <thomas.adam22@gmail.com>
+
+	* ui.c (exec_external_cmd): open downloads with an external cmd
+
+2024-06-03  Omar Polo  <op@omarpolo.com>
+
+	* fs.c (fs_load_url): fix crash in listing directory contents.
+
 2024-05-31  Thomas Adam  <thomas.adam22@gmail.com>
 
 	* cmd.c (cmd_mini_kill_whole_line): recompute completions in mini-kill-whole-line (C-u)
