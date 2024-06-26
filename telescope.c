@@ -791,17 +791,17 @@ static void
 do_load_url(struct tab *tab, const char *url, const char *base, int mode)
 {
 	const struct proto	*p;
-	struct proxy	*proxy;
-	int		 nocache = mode & LU_MODE_NOCACHE;
-	char		*t;
-	char		 buf[1025];
+	struct proxy		*proxy;
+	int			 nocache = mode & LU_MODE_NOCACHE;
+	char			*t;
+	char			 buf[1025];
 
 	tab->proxy = NULL;
 	tab->trust = TS_UNKNOWN;
 
 	if (iri_parse(base, url, &tab->iri) == -1) {
 		xasprintf(&t, "# error loading %s\n>%s\n", url,
-			  "Can't parse the IRI");
+		    "Can't parse the IRI");
 		hist_set_cur(tab->hist, url);
 		load_page_from_str(tab, t);
 		free(t);
