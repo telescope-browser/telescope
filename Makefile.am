@@ -163,6 +163,12 @@ pages.c: pagebundler $(srcdir)/pages.h ${PAGES}
 PUBKEY =	missing
 PRIVKEY =	missing
 
+# Ensure that, before we release, that the files in libgrapheme don't include
+# any compiled files, etc.  We don't want these as part of a release tarball.
+dist-hook:
+	${MAKE} -C $(top_srcdir)/libgrapheme clean
+	rm $(distdir)/libgrapheme/libgrapheme.a
+
 release: dist
 	sha256 ${distdir}.tar.gz > ${distdir}.tar.gz.sha256
 	signify -S -e -m ${distdir}.tar.gz.sha256 -s ${PRIVKEY}
