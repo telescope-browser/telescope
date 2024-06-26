@@ -36,6 +36,7 @@
 #include "control.h"
 #include "defaults.h"
 #include "ev.h"
+#include "exec.h"
 #include "fs.h"
 #include "hist.h"
 #include "imsgev.h"
@@ -784,6 +785,22 @@ load_page_from_str(struct tab *tab, const char *page)
 	ui_on_tab_loaded(tab);
 }
 
+static void
+do_load_url_cmd(int res, void *d)
+{
+	struct tab		*tab = d;
+	const char		*argv[3];
+
+	if (!res)
+		return;
+
+	argv[0] = DEFAULT_OPENER;
+	argv[1] = hist_cur(tab->hist);
+	argv[2] = NULL;
+	exec_cmd((char **)argv, EXEC_BACKGROUND);
+	message("Link opened with %s", DEFAULT_OPENER);
+}
+
 /*
  * Effectively load the given url in the given tab.
  */
@@ -837,6 +854,8 @@ do_load_url(struct tab *tab, const char *url, const char *base, int mode)
 	}
 
 	load_page_from_str(tab, err_pages[UNKNOWN_PROTOCOL]);
+	ui_yornp("Open page with "DEFAULT_OPENER"?",
+	    do_load_url_cmd, tab);
 }
 
 /*
