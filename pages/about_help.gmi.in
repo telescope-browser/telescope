@@ -15,7 +15,7 @@ Telescope is a Gemini browser written for fun, as hobbystic project in my free t
 
 The UI is strongly inspired from Emacs and w3m, so it’s possible to notice various familiar concepts, such as the minibuffer or the tab line.  Care has been taken to make it as familiar as possible for vi and “CUA” users too.
 
-=> gemini://telescope.omarpolo.com Telescope Project Homepage
+=> gemini://telescope-browser.org Telescope Project Homepage
 
 > Tip: move the cursor over a link and press M-RET (alt + enter) to open it in another tab.  Then use [ and ] to switch between tabs.
 
