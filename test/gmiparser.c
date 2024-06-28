@@ -66,8 +66,15 @@ main(void)
 	for (;;) {
 		if ((r = read(0, buf, sizeof(buf))) == -1)
 			err(1, "read");
-		if (r == 0)
+		if (r == 0) {
+			/*
+			 * Force a zero-sized write to also test the
+			 * case of an empty document.
+			 */
+			if (!parser_parse(&tab.buffer, buf, 0))
+				err(1, "parser_parse");
 			break;
+		}
 		if (!parser_parse(&tab.buffer, buf, r))
 			err(1, "parser_parse");
 	}
