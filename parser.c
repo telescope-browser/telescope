@@ -137,6 +137,9 @@ parser_append(struct buffer *b, const char *buf, size_t len)
 	size_t newlen;
 	char *t;
 
+	if (len == 0)
+		return (1);
+
 	newlen = len + b->len;
 	t = xcalloc(1, newlen);
 	memcpy(t, b->buf, b->len);
