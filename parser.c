@@ -131,7 +131,7 @@ parser_serialize(struct buffer *b, FILE *fp)
 	return 1;
 }
 
-int
+static int
 parser_append(struct buffer *b, const char *buf, size_t len)
 {
 	size_t newlen;
