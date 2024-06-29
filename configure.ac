@@ -1,4 +1,4 @@
-AC_INIT([telescope], [0.10-current], [telescope@omarpolo.com],
+AC_INIT([telescope], [0.10.1], [telescope@omarpolo.com],
     [telescope], [gemini://telescope-browser.org])
 AC_CONFIG_AUX_DIR(etc)
 AC_CONFIG_LIBOBJ_DIR(compat)
