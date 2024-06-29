@@ -36,8 +36,6 @@ int	 parser_parsef(struct buffer *, const char *, ...);
 int	 parser_free(struct tab *);
 int	 parser_serialize(struct buffer *, FILE *);
 
-int	 parser_set_buf(struct buffer *, const char *, size_t);
-
 extern const struct parser	 gemtext_parser;
 extern const struct parser	 gophermap_parser;
 extern const struct parser	 textpatch_parser;

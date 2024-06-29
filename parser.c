@@ -150,7 +150,7 @@ parser_append(struct buffer *b, const char *buf, size_t len)
 	return 1;
 }
 
-int
+static int
 parser_set_buf(struct buffer *b, const char *buf, size_t len)
 {
 	char *tmp;
