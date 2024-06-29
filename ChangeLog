@@ -1,3 +1,19 @@
+2024-06-29  Omar Polo  <op@omarpolo.com>
+
+	* configure.ac: tag 0.10.1 "Spingere"
+
+2024-06-28  Omar Polo  <op@omarpolo.com>
+
+	* parser.c (parser_append): don't error on empty documets
+
+2024-06-27  Thomas Adam  <thomas.adam22@gmail.com>
+
+	* pages/about_help.gmi.in: update gemini url
+
+2024-06-27  Omar Polo  <op@omarpolo.com>
+
+	* configure.ac: tag 0.10 "Spingere"
+
 2024-06-26  Thomas Adam  <thomas.adam22@gmail.com>
 
 	* Makefile.am: include the bundled copy of libgrapheme in the distribution tarball.
