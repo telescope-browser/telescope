@@ -28,6 +28,9 @@ projects that I maintain (gmid) use song as a release name, so I just
 wanted to differentiate a bit (and maybe advertise some Italian indie
 music.)
 
+Minor releases (e.g. 0.10.1) are reserved for bug fixes and inherit the
+name of the previous release (e.g. 0.10).
+
 When everything is in place, remove `-current` from `configure.ac` and
 bump the version, then run
 
