@@ -101,7 +101,7 @@ EXTS= 			.c .y
 SPATCH_FILES = $(foreach ext,$(EXTS),$(filter %$(ext), 			\
 	       $(filter-out $(EXCLUDE_FROM_COCCI), 			\
 	       $(telescope_SOURCES), $(telescope_identity_SOURCES), 	\
-	       $(wilcard test/*.c))))
+	       $(wildcard test/*.c))))
 .PHONY: cocci
 cocci:
 	spatch  --sp-file ./contrib/coccinelle/wrap.cocci \
