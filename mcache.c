@@ -69,13 +69,13 @@ clean_old_entries(int fd, int ev, void *data)
 {
 	struct mcache_entry	*e;
 	unsigned int		 i;
-	time_t			 treshold;
+	time_t			 threshold;
 
 	/* delete pages older than an hour */
-	treshold = time(NULL) - 60 * 60;
+	threshold = time(NULL) - 60 * 60;
 
 	for (e = ohash_first(&h, &i); e != NULL; e = ohash_next(&h, &i))
-		if (e->ts < treshold)
+		if (e->ts < threshold)
 			mcache_free_entry(e->url);
 
 	timeout = ev_timer(&tv, clean_old_entries, NULL);

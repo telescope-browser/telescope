@@ -75,7 +75,7 @@ push_identity(const char *n)
 			return (0);
 	}
 
-	/* id_cap is initilized to 8 in certs_init() */
+	/* id_cap is initialized to 8 in certs_init() */
 	if (id_len >= id_cap - 1) {
 		newcap = id_cap + 8;
 		t = recallocarray(identities, id_cap, newcap,

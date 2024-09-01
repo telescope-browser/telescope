@@ -43,7 +43,7 @@ but I'd like to finish it into a complete Gemini browser.
    security risks of possible bugs.
  - Fast: it features a modern, fast, event-based asynchronous I/O
    model.
- - Cooperation: re-use existing conventions to allow inter-operations
+ - Cooperation: reuse existing conventions to allow inter-operations
    and easy migrations from/to other clients.
 
 
@@ -72,7 +72,7 @@ At the moment there is no UI for out-of-band verification though.
 
 Telescope depends on ncursesw, libtls or libretls, yacc/bison and
 pkg-config.  [libgrapheme][libgrapheme] is an optional dependency:
-there's a bundled copy but it's reccomended to install it with a package
+there's a bundled copy but it's recommended to install it with a package
 manager if available.
 
 To build execute:

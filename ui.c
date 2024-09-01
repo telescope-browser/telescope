@@ -629,7 +629,7 @@ redraw_tabline(void)
 
 	x = 0;
 
-	/* unused, but setted by a getyx */
+	/* unused, but set by a getyx */
 	(void)y;
 
 	tabwidth = sizeof(buf)+1;

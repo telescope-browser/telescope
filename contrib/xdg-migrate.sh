@@ -29,7 +29,7 @@ done
 printf "\
 WARNING: the old ~/.telescope directory will be removed.
 
-Every file/directory other than the followings has not been copyied:
+Every file/directory other than the following has not been copied:
     - config
     - bookmarks.gmi
     - known_hosts

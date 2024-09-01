@@ -4,7 +4,7 @@
 
 2024-06-28  Omar Polo  <op@omarpolo.com>
 
-	* parser.c (parser_append): don't error on empty documets
+	* parser.c (parser_append): don't error on empty documents
 
 2024-06-27  Thomas Adam  <thomas.adam22@gmail.com>
 
@@ -660,7 +660,7 @@
 
 	* cmd.c (cmd_previous_button): stay on the line in next-button if there is no next link, and the same for previous-button
 
-	* telescope.c (handle_imsg_buf): "humanize" byte progress (i.e. trasform XYZ bytes to something readable)
+	* telescope.c (handle_imsg_buf): "humanize" byte progress (i.e. transform XYZ bytes to something readable)
 
 2021-06-22  Omar Polo  <op@omarpolo.com>
 
