@@ -103,48 +103,6 @@ utf8_encode(uint32_t cp, char *s)
 	}
 }
 
-char *
-utf8_nth(char *s, size_t n)
-{
-	size_t i;
-	uint32_t cp = 0, state = 0;
-
-	for (i = 0; *s && i < n; ++s)
-		if (!decode(&state, &cp, *s))
-			++i;
-
-	if (state != UTF8_ACCEPT)
-		return NULL;
-	if (i == n)
-		return s;
-	return NULL;
-}
-
-size_t
-utf8_cplen(char *s)
-{
-	uint32_t cp = 0, state = 0;
-	size_t len;
-
-	len = 0;
-	for (; *s; ++s)
-		if (!decode(&state, &cp, *s))
-			len++;
-	return len;
-}
-
-size_t
-utf8_ncplen(const char *s, size_t slen)
-{
-	uint32_t cp = 0, state = 0;
-	size_t len = 0;
-
-	for (; slen > 0 && *s; ++s, --slen)
-		if (!decode(&state, &cp, *s))
-			len++;
-	return len;
-}
-
 /* returns only 0, 1, 2 or 8.  assumes sizeof(wchar_t) is 4 */
 size_t
 utf8_chwidth(uint32_t cp)
@@ -205,31 +163,6 @@ utf8_swidth_between(const char *str, const char *end)
 		if (!decode(&state, &cp, *str))
 			tot += utf8_chwidth(cp);
 	return tot;
-}
-
-char *
-utf8_next_cp(const char *s)
-{
-	uint32_t cp = 0, state = 0;
-
-	for (; *s; ++s)
-		if (!decode(&state, &cp, *s))
-			break;
-	return (char*)s+1;
-}
-
-char *
-utf8_prev_cp(const char *start, const char *base)
-{
-	uint8_t c;
-
-	for (; start > base; start--) {
-		c = *start;
-		if ((c & 0xC0) != 0x80)
-			return (char*)start;
-	}
-
-	return (char*)base;
 }
 
 /*
