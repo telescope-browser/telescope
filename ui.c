@@ -200,7 +200,7 @@ save_excursion(struct excursion *place, struct buffer *buffer)
 	place->line_off = buffer->line_off;
 	place->top_line = buffer->top_line;
 	place->current_line = buffer->current_line;
-	place->cpoff = buffer->cpoff;
+	place->point_offset = buffer->point_offset;
 }
 
 void
@@ -211,7 +211,7 @@ restore_excursion(struct excursion *place, struct buffer *buffer)
 	buffer->line_off = place->line_off;
 	buffer->top_line = place->top_line;
 	buffer->current_line = place->current_line;
-	buffer->cpoff = place->cpoff;
+	buffer->point_offset = place->point_offset;
 }
 
 static void
@@ -226,13 +226,13 @@ restore_curs_x(struct buffer *buffer)
 
 	vl = buffer->current_line;
 	if (vl == NULL || vl->len == 0 || vl->parent == NULL)
-		buffer->curs_x = buffer->cpoff = 0;
+		buffer->curs_x = buffer->point_offset = 0;
 	else if (vl->parent->data != NULL) {
 		text = vl->parent->data;
-		buffer->curs_x = utf8_snwidth(text + 1, buffer->cpoff) + 1;
+		buffer->curs_x = utf8_snwidth(text, buffer->point_offset);
 	} else {
 		text = vl->parent->line + vl->from;
-		buffer->curs_x = utf8_snwidth(text, buffer->cpoff);
+		buffer->curs_x = utf8_snwidth(text, buffer->point_offset);
 	}
 
 	/* small hack: don't olivetti-mode the download pane */
@@ -969,7 +969,7 @@ do_redraw_minibuffer(void)
 	if (!ministate.editing)
 		start = hist_cur(ministate.hist);
 	line = buffer->current_line->parent->line + buffer->current_line->from;
-	c = utf8_nth(line, buffer->cpoff);
+	c = line + buffer->point_offset;
 	while (utf8_swidth_between(start, c) > (size_t)COLS/2) {
 		start = utf8_next_cp(start);
 	}

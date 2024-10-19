@@ -27,7 +27,7 @@ struct excursion {
 	size_t		 line_off;
 	struct vline	*current_line;
 	struct vline	*top_line;
-	size_t		 cpoff;
+	size_t		 point_offset;
 };
 
 enum pairs {

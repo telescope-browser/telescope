@@ -26,6 +26,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <grapheme.h>
+
 #include "certs.h"
 #include "cmd.h"
 #include "defaults.h"
@@ -171,7 +173,8 @@ minibuffer_insert_current_candidate(void)
 
 	minibuffer_taint_hist();
 	strlcpy(ministate.buf, vl->parent->line, sizeof(ministate.buf));
-	ministate.buffer.cpoff = ministate.vline.cplen = utf8_cplen(ministate.buf);
+	ministate.buffer.point_offset = strlen(ministate.buf);
+	ministate.vline.len = strlen(ministate.buf);
 
 	return 0;
 }
@@ -227,8 +230,7 @@ minibuffer_taint_hist(void)
 	ministate.editing = 1;
 	strlcpy(ministate.buf, hist_cur(ministate.hist),
 	    sizeof(ministate.buf));
-	ministate.buffer.cpoff = 0;
-	ministate.vline.cplen = utf8_cplen(ministate.buf);
+	ministate.buffer.point_offset = 0;
 	ministate.buffer.current_line->parent->line = ministate.buf;
 }
 
@@ -253,15 +255,17 @@ minibuffer_self_insert(void)
 	if (thiskey.cp == 0)
 		return;
 
-	len = utf8_encode(thiskey.cp, tmp);
-	c = utf8_nth(ministate.buffer.current_line->parent->line,
-	    ministate.buffer.cpoff);
+	len = grapheme_encode_utf8(thiskey.cp, tmp, sizeof(tmp));
+
+	c = ministate.buffer.current_line->parent->line
+	    + ministate.buffer.current_line->from
+	    + ministate.buffer.point_offset;
 	if (c + len > ministate.buf + sizeof(ministate.buf) - 1)
 		return;
 
 	memmove(c + len, c, strlen(c)+1);
 	memcpy(c, tmp, len);
-	ministate.buffer.cpoff++;
+	ministate.buffer.point_offset += len;
 
 	recompute_completions(1);
 }
@@ -599,15 +603,15 @@ enter_minibuffer(struct minibuffer *minibuffer, const char *fmt, ...)
 	if (ministate.abortfn == NULL)
 		ministate.abortfn = exit_minibuffer;
 
-	ministate.buffer.cpoff = 0;
 	if (minibuffer->input) {
 		strlcpy(ministate.buf, minibuffer->input,
 		    sizeof(ministate.buf));
-		ministate.vline.cplen = utf8_cplen(ministate.buf);
-		ministate.buffer.cpoff = ministate.vline.cplen;
+		ministate.buffer.point_offset = strlen(ministate.buf);
+		ministate.vline.len = strlen(ministate.buf);
 	} else {
 		ministate.buf[0] = '\0';
-		ministate.vline.cplen = ministate.buffer.cpoff = 0;
+		ministate.buffer.point_offset = 0;
+		ministate.vline.len = 0;
 	}
 
 	ministate.buffer.current_line = &ministate.vline;

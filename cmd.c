@@ -22,6 +22,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <grapheme.h>
+
 #include "certs.h"
 #include "cmd.h"
 #include "compl.h"
@@ -111,17 +113,46 @@ cmd_next_line(struct buffer *buffer)
 void
 cmd_backward_char(struct buffer *buffer)
 {
-	if (buffer->cpoff != 0)
-		buffer->cpoff--;
+	struct vline	*vl;
+	char		*text;
+	size_t		 left, off, point = 0;
+
+	if ((vl = buffer->current_line) == NULL)
+		return;
+
+	text = vl->parent->line + vl->from;
+	left = vl->len;
+
+	for (;;) {
+		off = grapheme_next_character_break_utf8(text, left);
+		if (point + off >= buffer->point_offset)
+			break;
+		point += off;
+		text += off;
+		left -= off;
+	}
+
+	buffer->point_offset = point;
 }
 
 void
 cmd_forward_char(struct buffer *buffer)
 {
-	if (buffer->current_line == NULL)
+	struct vline	*vl;
+	char		*text;
+	size_t		 left, off;
+
+	if ((vl = buffer->current_line) == NULL)
 		return;
-	if (buffer->current_line->cplen > buffer->cpoff)
-		buffer->cpoff++;
+
+	text = vl->parent->line + vl->from;
+	left = vl->len;
+
+	text += buffer->point_offset;
+	left -= buffer->point_offset;
+
+	off = grapheme_next_character_break_utf8(text, left);
+	buffer->point_offset += off;
 }
 
 void
@@ -151,7 +182,7 @@ cmd_forward_paragraph(struct buffer *buffer)
 void
 cmd_move_beginning_of_line(struct buffer *buffer)
 {
-	buffer->cpoff = 0;
+	buffer->point_offset = 0;
 }
 
 void
@@ -162,7 +193,7 @@ cmd_move_end_of_line(struct buffer *buffer)
 	vl = buffer->current_line;
 	if (vl == NULL)
 		return;
-	buffer->cpoff = vl->cplen;
+	buffer->point_offset = vl->len;
 }
 
 void
@@ -257,7 +288,7 @@ void
 cmd_beginning_of_buffer(struct buffer *buffer)
 {
 	buffer->current_line = TAILQ_FIRST(&buffer->vhead);
-	buffer->cpoff = 0;
+	buffer->point_offset = 0;
 	buffer->top_line = buffer->current_line;
 	buffer->line_off = 0;
 }
@@ -738,19 +769,25 @@ cmd_olivetti_mode(struct buffer *buffer)
 void
 cmd_mini_delete_char(struct buffer *buffer)
 {
-	char *line, *c, *n;
+	struct vline	*vl;
+	char		*text;
+	size_t		 old_point, gap, rest;
 
 	GUARD_READ_ONLY();
 
+	vl = buffer->current_line;
+	old_point = buffer->point_offset;
+	cmd_forward_char(buffer);
+	gap = buffer->point_offset - old_point;
+	if (gap == 0)
+		return;
+
 	minibuffer_taint_hist();
 
-	line = buffer->current_line->parent->line + buffer->current_line->from;
-	c = utf8_nth(line, buffer->cpoff);
-	if (*c == '\0')
-		return;
-	n = utf8_next_cp(c);
-
-	memmove(c, n, strlen(n)+1);
+	text = vl->parent->line + vl->from + old_point;
+	rest = vl->len - buffer->point_offset;
+	memmove(text, text + gap, rest);
+	buffer->point_offset = old_point;
 
 	recompute_completions(0);
 }
@@ -758,20 +795,24 @@ cmd_mini_delete_char(struct buffer *buffer)
 void
 cmd_mini_delete_backward_char(struct buffer *buffer)
 {
-	char *line, *c, *p;
+	struct vline	*vl;
+	char		*text;
+	size_t		 old_point, gap, rest;
 
 	GUARD_READ_ONLY();
 
+	vl = buffer->current_line;
+	old_point = buffer->point_offset;
+	cmd_backward_char(buffer);
+	gap = old_point - buffer->point_offset;
+	if (gap == 0)
+		return;
+
 	minibuffer_taint_hist();
 
-	line = buffer->current_line->parent->line + buffer->current_line->from;
-	c = utf8_nth(line, buffer->cpoff);
-	if (c == line)
-		return;
-	p = utf8_prev_cp(c-1, line);
-
-	memmove(p, c, strlen(c)+1);
-	buffer->cpoff--;
+	text = vl->parent->line + vl->from + buffer->point_offset;
+	rest = vl->len - old_point;
+	memmove(text, text + gap, rest);
 
 	recompute_completions(0);
 }
@@ -786,7 +827,7 @@ cmd_mini_kill_line(struct buffer *buffer)
 	minibuffer_taint_hist();
 
 	line = buffer->current_line->parent->line + buffer->current_line->from;
-	c = utf8_nth(line, buffer->cpoff);
+	c = line + buffer->point_offset;
 	*c = '\0';
 
 	recompute_completions(0);
@@ -799,7 +840,7 @@ cmd_mini_kill_whole_line(struct buffer *buffer)
 
 	minibuffer_taint_hist();
 	*buffer->current_line->parent->line = '\0';
-	buffer->cpoff = 0;
+	buffer->point_offset = 0;
 
 	recompute_completions(0);
 }

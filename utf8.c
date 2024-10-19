@@ -166,20 +166,16 @@ utf8_chwidth(uint32_t cp)
 	return wcwidth((wchar_t)cp);
 }
 
-/* NOTE: n is the number of codepoints, NOT the byte length.  In
- * other words, s MUST be NUL-terminated. */
 size_t
-utf8_snwidth(const char *s, size_t n)
+utf8_snwidth(const char *s, size_t off)
 {
 	size_t i, tot;
 	uint32_t cp = 0, state = 0;
 
 	tot = 0;
-	for (i = 0; *s && i < n; ++s)
-		if (!decode(&state, &cp, *s)) {
-			i++;
+	for (i = 0; i < off; ++i)
+		if (!decode(&state, &cp, s[i]))
 			tot += utf8_chwidth(cp);
-		}
 
 	return tot;
 }

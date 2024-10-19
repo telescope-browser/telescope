@@ -92,7 +92,6 @@ push_line(struct buffer *buffer, struct line *l, const char *buf, size_t len, in
 	if (len != 0) {
 		vl->from = buf - l->line;
 		vl->len = len;
-		vl->cplen = utf8_ncplen(buf, vl->len);
 	}
 	vl->flags = flags;
 

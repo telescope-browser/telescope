@@ -82,7 +82,6 @@ struct vline {
 	struct line		*parent;
 	size_t			 from;
 	size_t			 len;
-	size_t			 cplen;
 
 #define L_CONTINUATION	0x2
 	int			 flags;
@@ -125,7 +124,7 @@ struct buffer {
 	size_t			 line_max;
 	struct vline		*top_line;
 	struct vline		*current_line;
-	size_t			 cpoff;
+	size_t			 point_offset;
 
 	TAILQ_HEAD(, line)	 head;
 	TAILQ_HEAD(vhead, vline) vhead;
