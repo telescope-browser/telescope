@@ -44,6 +44,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <grapheme.h>
+
 #include "cmd.h"
 #include "defaults.h"
 #include "ev.h"
@@ -970,8 +972,8 @@ do_redraw_minibuffer(void)
 		start = hist_cur(ministate.hist);
 	line = buffer->current_line->parent->line + buffer->current_line->from;
 	c = line + buffer->point_offset;
-	while (utf8_swidth_between(start, c) > (size_t)COLS/2) {
-		start = utf8_next_cp(start);
+	while (start < c && utf8_swidth_between(start, c) > (size_t)COLS/2) {
+		start += grapheme_next_character_break_utf8(start, SIZE_MAX);
 	}
 
 	waddstr(echoarea, start);
