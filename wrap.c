@@ -132,7 +132,8 @@ wrap_text(struct buffer *buffer, const char *prfx, struct line *l,
 		ret = grapheme_next_line_break_utf8(&line[off], SIZE_MAX);
 		t = utf8_swidth_between(&line[off], &line[off + ret]);
 
-		if (cur + t <= width) {
+		/* we can't reach the last column */
+		if (cur + t < width) {
 			cur += t;
 			continue;
 		}
