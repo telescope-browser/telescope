@@ -76,7 +76,7 @@ utf8_decode(uint32_t* restrict state, uint32_t* restrict codep, uint8_t byte)
 }
 
 /* returns only 0, 1, 2 or 8.  assumes sizeof(wchar_t) is 4 */
-size_t
+static size_t
 utf8_chwidth(uint32_t cp)
 {
 	/* XXX: if we're running on a platform where sizeof(wchar_t)
