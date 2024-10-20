@@ -265,6 +265,7 @@ minibuffer_self_insert(void)
 	memmove(c + len, c, strlen(c)+1);
 	memcpy(c, tmp, len);
 	ministate.buffer.point_offset += len;
+	ministate.vline.len += len;
 
 	recompute_completions(1);
 }

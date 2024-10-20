@@ -840,6 +840,7 @@ cmd_mini_kill_whole_line(struct buffer *buffer)
 	minibuffer_taint_hist();
 	*buffer->current_line->parent->line = '\0';
 	buffer->point_offset = 0;
+	buffer->current_line->len = 0;
 
 	recompute_completions(0);
 }
