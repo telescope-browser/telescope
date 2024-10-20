@@ -785,8 +785,9 @@ cmd_mini_delete_char(struct buffer *buffer)
 
 	text = vl->parent->line + vl->from + old_point;
 	rest = vl->len - buffer->point_offset;
-	memmove(text, text + gap, rest);
+	memmove(text, text + gap, rest + 1);
 	buffer->point_offset = old_point;
+	vl->len -= gap;
 
 	recompute_completions(0);
 }
@@ -811,7 +812,8 @@ cmd_mini_delete_backward_char(struct buffer *buffer)
 
 	text = vl->parent->line + vl->from + buffer->point_offset;
 	rest = vl->len - old_point;
-	memmove(text, text + gap, rest);
+	memmove(text, text + gap, rest + 1);
+	vl->len -= gap;
 
 	recompute_completions(0);
 }
