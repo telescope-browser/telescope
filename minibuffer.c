@@ -39,7 +39,6 @@
 #include "minibuffer.h"
 #include "session.h"
 #include "ui.h"
-#include "utf8.h"
 #include "utils.h"
 #include "xwrapper.h"
 
