@@ -63,7 +63,7 @@ sandbox_ui_process(void)
 		err(1, "unveil(xdg-open)");
 #endif
 
-	if (pledge("stdio rpath wpath cpath unix tty proc exec",
+	if (pledge("stdio rpath wpath cpath unix sendfd tty proc exec",
 	    NULL) == -1)
 		err(1, "pledge");
 }
