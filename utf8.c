@@ -75,34 +75,6 @@ utf8_decode(uint32_t* restrict state, uint32_t* restrict codep, uint8_t byte)
 	return decode(state, codep, byte);
 }
 
-/* encode cp in s.  s must be at least 4 bytes wide */
-size_t
-utf8_encode(uint32_t cp, char *s)
-{
-	if (cp <= 0x7F) {
-		*s = (uint8_t)cp;
-		return 1;
-	} else if (cp <= 0x7FF) {
-		s[1] = (uint8_t)(( cp        & 0x3F ) + 0x80);
-		s[0] = (uint8_t)(((cp >>  6) & 0x1F) + 0xC0);
-		return 2;
-	} else if (cp <= 0xFFFF) {
-		s[2] = (uint8_t)(( cp        & 0x3F) + 0x80);
-		s[1] = (uint8_t)(((cp >>  6) & 0x3F) + 0x80);
-		s[0] = (uint8_t)(((cp >> 12) & 0x0F) + 0xE0);
-		return 3;
-	} else if (cp <= 0x10FFFF) {
-		s[3] = (uint8_t)(( cp        & 0x3F) + 0x80);
-		s[2] = (uint8_t)(((cp >>  6) & 0x3F) + 0x80);
-		s[1] = (uint8_t)(((cp >> 12) & 0x3F) + 0x80);
-		s[0] = (uint8_t)(((cp >> 18) & 0x07) + 0xF0);
-		return 4;
-	} else {
-		s[0] = '\0';
-		return 0;
-	}
-}
-
 /* returns only 0, 1, 2 or 8.  assumes sizeof(wchar_t) is 4 */
 size_t
 utf8_chwidth(uint32_t cp)
