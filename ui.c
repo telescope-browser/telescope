@@ -324,7 +324,7 @@ dispatch_stdio(int fd, int ev, void *d)
 	if (thiskey.meta)
 		strlcat(keybuf, "M-", sizeof(keybuf));
 	if (thiskey.cp != 0) {
-		utf8_encode(thiskey.cp, tmp);
+		grapheme_encode_utf8(thiskey.cp, tmp, sizeof(tmp));
 		strlcat(keybuf, tmp, sizeof(keybuf));
 	} else if ((keyname = unkbd(thiskey.key)) != NULL) {
 		strlcat(keybuf, keyname, sizeof(keybuf));
