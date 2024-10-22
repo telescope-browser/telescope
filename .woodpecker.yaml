@@ -1,7 +1,7 @@
 matrix:
   TELESCOPE_BASE_IMAGE:
-    - alpine:latest
-    - debian:latest
+    - ghcr.io/telescope-browser/tbi-alpine:latest
+    - ghcr.io/telescope-browser/tbi-debian:latest
 
 when:
   - event: [tag, push, pull_request]
