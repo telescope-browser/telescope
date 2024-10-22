@@ -380,8 +380,10 @@ handle_request_response(struct tab *tab)
 			    LU_MODE_NOCACHE);
 	} else { /* 4x, 5x & 6x */
 		load_page_from_str(tab, err_pages[tab->code]);
-		if (tab->code >= 60)
+		if (tab->code >= 60) {
 			cmd_use_certificate(&tab->buffer);
+			ui_force_tab_refresh(tab);
+		}
 	}
 }
 

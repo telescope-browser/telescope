@@ -1248,6 +1248,14 @@ ui_on_tab_refresh(struct tab *tab)
 }
 
 void
+ui_force_tab_refresh(struct tab *tab)
+{
+	switch_to_tab(tab);
+	rearrange_windows();
+	redraw_tab(tab);
+}
+
+void
 ui_on_download_refresh(void)
 {
 	if (ev_timer_pending(download_timer))

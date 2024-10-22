@@ -144,6 +144,7 @@ int		 ui_init(void);
 void		 ui_main_loop(void);
 void		 ui_on_tab_loaded(struct tab *);
 void		 ui_on_tab_refresh(struct tab *);
+void		 ui_force_tab_refresh(struct tab *);
 void		 ui_on_download_refresh(void);
 void 		 ui_prompt_download_cmd(struct download *);
 void		 ui_remotely_open_link(const char *);
