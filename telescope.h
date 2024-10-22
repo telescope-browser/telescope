@@ -248,7 +248,7 @@ int		 ui_send_net(int, uint32_t, int, const void *, uint16_t);
 void		 erase_buffer(struct buffer *);
 void		 empty_linelist(struct buffer*);
 void		 empty_vlist(struct buffer*);
-int		 wrap_text(struct buffer*, const char*, struct line*, size_t, int);
-int		 wrap_page(struct buffer *, int width);
+int		 wrap_text(struct buffer*, const char*, struct line*, size_t, int, int);
+int		 wrap_page(struct buffer *, int, int);
 
 #endif /* TELESCOPE_H */

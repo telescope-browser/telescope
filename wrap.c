@@ -105,7 +105,7 @@ push_line(struct buffer *buffer, struct line *l, const char *buf, size_t len, in
  */
 int
 wrap_text(struct buffer *buffer, const char *prfx, struct line *l,
-    size_t width, int oneline)
+    size_t width, int base_offset, int oneline)
 {
 	const char	*line, *space;
 	size_t		 ret, off, start, cur, prfxwidth;
@@ -114,15 +114,15 @@ wrap_text(struct buffer *buffer, const char *prfx, struct line *l,
 	if ((line = l->line) == NULL || *line == '\0')
 		return push_line(buffer, l, NULL, 0, 0);
 
-	prfxwidth = utf8_swidth(prfx);
-	cur = prfxwidth;
+	prfxwidth = utf8_swidth(prfx, base_offset);
+	cur = base_offset + prfxwidth;
 	start = 0;
 	flags = 0;
 
 	if (l->type == LINE_LINK && emojify_link &&
 	    emojied_line(l->line, &space)) {
-	    	prfxwidth = utf8_swidth_between(l->line, space);
-		cur = prfxwidth;
+	    	prfxwidth = utf8_swidth_between(l->line, space, base_offset);
+		cur = base_offset + prfxwidth;
 		line = space + 1;
 	}
 
@@ -130,7 +130,8 @@ wrap_text(struct buffer *buffer, const char *prfx, struct line *l,
 		size_t t;
 
 		ret = grapheme_next_line_break_utf8(&line[off], SIZE_MAX);
-		t = utf8_swidth_between(&line[off], &line[off + ret]);
+		t = utf8_swidth_between(&line[off], &line[off + ret],
+		    base_offset);
 
 		/* we can't reach the last column */
 		if (cur + t < width) {
@@ -146,7 +147,7 @@ wrap_text(struct buffer *buffer, const char *prfx, struct line *l,
 
 		flags = L_CONTINUATION;
 		start = off;
-		cur = t + prfxwidth;
+		cur = base_offset + prfxwidth + t;
 	}
 
 	if (off != start)
@@ -155,7 +156,7 @@ wrap_text(struct buffer *buffer, const char *prfx, struct line *l,
 }
 
 int
-wrap_page(struct buffer *buffer, int width)
+wrap_page(struct buffer *buffer, int width, int x_offset)
 {
 	struct line		*l;
 	const struct line	*top_orig, *orig;
@@ -193,7 +194,7 @@ wrap_page(struct buffer *buffer, int width)
 		case LINE_PATCH_ADD:
 		case LINE_PATCH_DEL:
 			wrap_text(buffer, prfx, l, MIN(fill_column, width),
-			    0);
+			    x_offset, 0);
 			break;
 		case LINE_COMPL:
 		case LINE_COMPL_CURRENT:
@@ -201,7 +202,7 @@ wrap_page(struct buffer *buffer, int width)
 		case LINE_DOWNLOAD:
 		case LINE_DOWNLOAD_DONE:
 		case LINE_DOWNLOAD_INFO:
-			wrap_text(buffer, prfx, l, width, 1);
+			wrap_text(buffer, prfx, l, width, x_offset, 1);
 			break;
 		case LINE_FRINGE:
 			/* never, ever wrapped */

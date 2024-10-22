@@ -88,6 +88,6 @@ recompute_help(void)
 		helpwin.mode = "*Help*";
 		erase_buffer(&helpwin);
 		rec_compute_help(current_map, p, sizeof(p));
-		wrap_page(&helpwin, help_cols);
+		wrap_page(&helpwin, help_cols, 0);
 	}
 }

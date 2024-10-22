@@ -75,9 +75,12 @@ utf8_decode(uint32_t* restrict state, uint32_t* restrict codep, uint8_t byte)
 	return decode(state, codep, byte);
 }
 
-/* returns only 0, 1, 2 or 8.  assumes sizeof(wchar_t) is 4 */
+/*
+ * returns 0, 1, 2 or less than 8 for tabs.  assumes that
+ * sizeof(wchar_t) == 4
+ */
 static size_t
-utf8_chwidth(uint32_t cp)
+utf8_chwidth(uint32_t cp, int col)
 {
 	/* XXX: if we're running on a platform where sizeof(wchar_t)
 	 * == 2 what to do?  The manpage for wcwidth and wcs isn't
@@ -86,54 +89,64 @@ utf8_chwidth(uint32_t cp)
 	assert(sizeof(wchar_t) == 4);
 
 	/*
-	 * quick and dirty fix for the tabs.  In the future we may
-	 * want to expand tabs into N spaces, but for the time being
-	 * this seems to be good enough (tm).
+	 * Tabs are wide until the next multiple of eight.
 	 */
 	if (cp == '\t')
-		return 8;
+		return (((col + 8) / 8) * 8) - col;
 
 	return wcwidth((wchar_t)cp);
 }
 
 size_t
-utf8_snwidth(const char *s, size_t off)
+utf8_snwidth(const char *s, size_t off, int col)
 {
 	size_t i, tot;
 	uint32_t cp = 0, state = 0;
+	int width;
 
 	tot = 0;
 	for (i = 0; i < off; ++i)
-		if (!decode(&state, &cp, s[i]))
-			tot += utf8_chwidth(cp);
+		if (!decode(&state, &cp, s[i])) {
+			width = utf8_chwidth(cp, col);
+			tot += width;
+			col += width;
+		}
 
 	return tot;
 }
 
 size_t
-utf8_swidth(const char *s)
+utf8_swidth(const char *s, int col )
 {
 	size_t tot;
 	uint32_t cp = 0, state = 0;
+	int width;
 
 	tot = 0;
 	for (; *s; ++s)
-		if (!decode(&state, &cp, *s))
-			tot += utf8_chwidth(cp);
+		if (!decode(&state, &cp, *s)) {
+			width = utf8_chwidth(cp, col);
+			tot += width;
+			col += width;
+		}
 
 	return tot;
 }
 
 size_t
-utf8_swidth_between(const char *str, const char *end)
+utf8_swidth_between(const char *str, const char *end, int col)
 {
 	size_t tot;
 	uint32_t cp = 0, state = 0;
+	int width;
 
 	tot = 0;
 	for (; *str && str < end; ++str)
-		if (!decode(&state, &cp, *str))
-			tot += utf8_chwidth(cp);
+		if (!decode(&state, &cp, *str)) {
+			width = utf8_chwidth(cp, col);
+			tot += width;
+			col += width;
+		}
 	return tot;
 }
 

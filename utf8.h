@@ -22,9 +22,9 @@
 
 /* utf8.c */
 uint32_t	 utf8_decode(uint32_t*restrict, uint32_t*restrict, uint8_t);
-size_t		 utf8_snwidth(const char*, size_t);
-size_t		 utf8_swidth(const char*);
-size_t		 utf8_swidth_between(const char*, const char*);
+size_t		 utf8_snwidth(const char*, size_t, int);
+size_t		 utf8_swidth(const char*, int);
+size_t		 utf8_swidth_between(const char*, const char*, int);
 int		 emojied_line(const char *, const char **);
 
 /* emoji-matcher.c */

@@ -69,7 +69,7 @@ static void		 handle_signal(int, int, void*);
 static void		 handle_resize_nodelay(int, int, void*);
 static void		 handle_download_refresh(int, int, void *);
 static void		 rearrange_windows(void);
-static void		 line_prefix_and_text(struct vline *, char *, size_t, const char **, const char **, int *);
+static void		 line_prefix_and_text(int, struct vline *, char *, size_t, const char **, const char **, int *);
 static void		 print_vline(int, int, WINDOW*, struct vline*);
 static void		 redraw_tabline(void);
 static void		 redraw_window(WINDOW *, int, int, int, int, struct buffer *);
@@ -226,30 +226,34 @@ restore_curs_x(struct buffer *buffer)
 	if (dont_apply_styling)
 		lp = raw_prefixes;
 
-	vl = buffer->current_line;
-	if (vl == NULL || vl->len == 0 || vl->parent == NULL)
-		buffer->curs_x = buffer->point_offset = 0;
-	else if (vl->parent->data != NULL) {
-		text = vl->parent->data;
-		buffer->curs_x = utf8_snwidth(text, buffer->point_offset);
-	} else {
-		text = vl->parent->line + vl->from;
-		buffer->curs_x = utf8_snwidth(text, buffer->point_offset);
-	}
+	buffer->curs_x = 0;
 
 	/* small hack: don't olivetti-mode the download pane */
 	if (buffer != &downloadwin)
 		buffer->curs_x += x_offset;
+
+	vl = buffer->current_line;
+	if (vl == NULL || vl->len == 0 || vl->parent == NULL)
+		buffer->curs_x += buffer->point_offset = 0;
+	else if (vl->parent->data != NULL) {
+		text = vl->parent->data;
+		buffer->curs_x += utf8_snwidth(text, buffer->point_offset,
+		    buffer->curs_x);
+	} else {
+		text = vl->parent->line + vl->from;
+		buffer->curs_x += utf8_snwidth(text, buffer->point_offset,
+		    buffer->curs_x);
+	}
 
 	if (vl == NULL)
 		return;
 
 	if (vl->parent->data != NULL)
 		buffer->curs_x += utf8_swidth_between(vl->parent->line,
-		    vl->parent->data);
+		    vl->parent->data, buffer->curs_x);
 	else {
 		prfx = lp[vl->parent->type].prfx1;
-		buffer->curs_x += utf8_swidth(prfx);
+		buffer->curs_x += utf8_swidth(prfx, buffer->curs_x);
 	}
 }
 
@@ -429,7 +433,7 @@ rearrange_windows(void)
 		wresize(minibuffer, minibuffer_lines, COLS);
 		lines -= minibuffer_lines;
 
-		wrap_page(&ministate.compl.buffer, COLS);
+		wrap_page(&ministate.compl.buffer, COLS, 0);
 	}
 
 	mvwin(echoarea, --lines, 0);
@@ -445,7 +449,7 @@ rearrange_windows(void)
 		wresize(download, download_lines, download_cols);
 		lines -= download_lines;
 
-		wrap_page(&downloadwin, download_cols);
+		wrap_page(&downloadwin, download_cols, 0);
 	}
 
 	body_lines = show_tab_bar ? --lines : lines;
@@ -461,7 +465,7 @@ rearrange_windows(void)
 		mvwin(help, show_tab_bar, 0);
 		wresize(help, help_lines, help_cols);
 
-		wrap_page(&helpwin, help_cols);
+		wrap_page(&helpwin, help_cols, 0);
 
 		body_cols = COLS - help_cols - 1;
 		mvwin(body, show_tab_bar, help_cols);
@@ -474,12 +478,12 @@ rearrange_windows(void)
 	if (show_tab_bar)
 		wresize(tabline, 1, COLS);
 
-	wrap_page(&current_tab->buffer, body_cols);
+	wrap_page(&current_tab->buffer, body_cols, x_offset);
 	redraw_tab(current_tab);
 }
 
 static void
-line_prefix_and_text(struct vline *vl, char *buf, size_t len,
+line_prefix_and_text(int col, struct vline *vl, char *buf, size_t len,
     const char **prfx_ret, const char **text_ret, int *text_len)
 {
 	struct lineprefix *lp = line_prefixes;
@@ -511,7 +515,7 @@ line_prefix_and_text(struct vline *vl, char *buf, size_t len,
 
 	if (cont) {
 		memset(buf, 0, len);
-		width = utf8_swidth_between(vl->parent->line, space);
+		width = utf8_swidth_between(vl->parent->line, space, col);
 		for (i = 0; i < width + 1 && i < len - 1; ++i)
 			buf[i] = ' ';
 	} else {
@@ -587,7 +591,7 @@ print_vline(int off, int width, WINDOW *window, struct vline *vl)
 	if (vl->parent->type == LINE_FRINGE && fringe_ignore_offset)
 		off = 0;
 
-	line_prefix_and_text(vl, emojibuf, sizeof(emojibuf), &prfx,
+	line_prefix_and_text(off, vl, emojibuf, sizeof(emojibuf), &prfx,
 	    &text, &textlen);
 
 	wattr_on(window, body_face.left, NULL);
@@ -972,7 +976,7 @@ do_redraw_minibuffer(void)
 		start = hist_cur(ministate.hist);
 	line = buffer->current_line->parent->line + buffer->current_line->from;
 	c = line + buffer->point_offset;
-	while (start < c && utf8_swidth_between(start, c) > (size_t)COLS/2) {
+	while (start < c && utf8_swidth_between(start, c, off_x) > (size_t)COLS/2) {
 		start += grapheme_next_character_break_utf8(start, SIZE_MAX);
 	}
 
@@ -981,7 +985,7 @@ do_redraw_minibuffer(void)
 	if (ministate.curmesg != NULL)
 		wprintw(echoarea, " [%s]", ministate.curmesg);
 
-	wmove(echoarea, 0, off_x + utf8_swidth_between(start, c));
+	wmove(echoarea, 0, off_x + utf8_swidth_between(start, c, off_x));
 }
 
 static void
@@ -1236,7 +1240,7 @@ ui_on_tab_loaded(struct tab *tab)
 void
 ui_on_tab_refresh(struct tab *tab)
 {
-	wrap_page(&tab->buffer, body_cols);
+	wrap_page(&tab->buffer, body_cols, x_offset);
 	if (tab == current_tab)
 		redraw_tab(tab);
 	else

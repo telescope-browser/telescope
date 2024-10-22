@@ -76,7 +76,7 @@ end:
 	 * counter, and we know for sure is < FMT_SCALED_STRSIZE so it
 	 * fits.
 	 */
-	wrap_page(&downloadwin, download_cols);
+	wrap_page(&downloadwin, download_cols, 0);
 }
 
 struct download *
