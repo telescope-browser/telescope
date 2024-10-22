@@ -37,6 +37,7 @@
 #include "session.h"
 #include "telescope.h"
 #include "ui.h"
+#include "utf8.h"
 #include "utils.h"
 
 #define GUARD_RECURSIVE_MINIBUFFER()				\
@@ -61,18 +62,24 @@ static inline int
 forward_line(struct buffer *buffer, int n)
 {
 	struct vline *vl;
-	int did;
+	char *text;
+	size_t left, off;
+	int did, target, col = 0; /* XXX breaks with tabs! */
 
 	if (buffer->current_line == NULL)
 		return 0;
 	vl = buffer->current_line;
+
+	text = vl->parent->line + vl->from;
+	left = MIN(vl->len, buffer->point_offset);
+	target = utf8_snwidth(text, left, 0); /* XXX breaks with tabs! */
 
 	did = 0;
 	while (n != 0) {
 		if (n > 0) {
 			vl = TAILQ_NEXT(vl, vlines);
 			if (vl == NULL)
-				return did;
+				break;
 			if (vl->parent->flags & L_HIDDEN)
 				continue;
 			buffer->current_line = vl;
@@ -80,7 +87,7 @@ forward_line(struct buffer *buffer, int n)
 		} else {
 			vl = TAILQ_PREV(vl, vhead, vlines);
 			if (vl == NULL)
-				return did;
+				break;
 			if (vl->parent->flags & L_HIDDEN)
 				continue;
 			if (buffer->current_line == buffer->top_line) {
@@ -92,6 +99,21 @@ forward_line(struct buffer *buffer, int n)
 		}
 
 		did = 1;
+	}
+
+	/* keep the cursor in the same column */
+	if (did) {
+		vl = buffer->current_line;
+		text = vl->parent->line + vl->from;
+		left = vl->len;
+		buffer->point_offset = 0;
+		while (left > 0 && col < target) {
+			off = grapheme_next_character_break_utf8(text, left);
+			col += utf8_snwidth(text, off, col);
+			text += off;
+			left -= off;
+			buffer->point_offset += off;
+		}
 	}
 
 	return did;
