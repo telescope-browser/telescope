@@ -43,7 +43,8 @@ key, as a safety measure.
 Note to op: on OpenBSD I'm using an `obj` directory for the build, and
 `make release` needs to be run after cd'ing there.
 
-Then upload the tarballs, make the tag (and sign it!), and add
-`-current` to the version in `configure.ac`.  Finally, make the
-release on Codeberg and GitHub, and remember to upload the generated
-tarballs there as well.
+Then upload the tarballs, make the tag (and sign it!), add `-current`
+to the version in `configure.ac`, make the release on Codeberg and
+GitHub, and remember to upload the generated tarballs there as well.
+
+Finally, update and publish the website too.
