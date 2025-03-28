@@ -580,16 +580,16 @@ handle_dispatch_imsg(int fd, int event, void *d)
 	int		 certok;
 
 	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
-			err(1, "imsg_read");
-		if (n == 0)
-			err(1, "connection closed");
+		if (imsgbuf_read(ibuf) == -1) {
+			if (errno == EPIPE)
+				errx(1, "connection closed");
+			else
+				err(1, "imsg_read failure");
+		}
 	}
 	if (event & EV_WRITE) {
-		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
+		if (imsgbuf_write(ibuf) == -1 && errno != EAGAIN)
 			err(1, "msgbuf_write");
-		if (n == 0)
-			err(1, "connection closed");
 	}
 
 	for (;;) {
@@ -704,7 +704,8 @@ net_main(void)
 
 	/* Setup pipe and event handler to the main process */
 	iev_ui = xmalloc(sizeof(*iev_ui));
-	imsg_init(&iev_ui->ibuf, 3);
+	if (imsgbuf_init(&iev_ui->ibuf, 3) == -1)
+		err(1, "imsgbuf_init failed");
 	iev_ui->handler = handle_dispatch_imsg;
 	iev_ui->events = EV_READ;
 	ev_add(iev_ui->ibuf.fd, iev_ui->events, iev_ui->handler, iev_ui);
@@ -713,7 +714,7 @@ net_main(void)
 
 	ev_loop();
 
-	msgbuf_clear(&iev_ui->ibuf.w);
+	imsgbuf_clear(&iev_ui->ibuf);
 	close(iev_ui->ibuf.fd);
 	free(iev_ui);
 

@@ -23,7 +23,7 @@ void
 imsg_event_add(struct imsgev *iev)
 {
 	iev->events = EV_READ;
-	if (iev->ibuf.w.queued)
+	if (imsgbuf_queuelen(&iev->ibuf))
 		iev->events |= EV_WRITE;
 
 	ev_add(iev->ibuf.fd, iev->events, iev->handler, iev);

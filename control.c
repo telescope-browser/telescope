@@ -155,7 +155,13 @@ control_accept(int listenfd, int event, void *bula)
 
 	c = xcalloc(1, sizeof(struct ctl_conn));
 
-	imsg_init(&c->iev.ibuf, connfd);
+	if (imsgbuf_init(&c->iev.ibuf, connfd) == -1) {
+		message("%s: ev_add: %s", __func__, strerror(errno));
+		close(connfd);
+		free(c);
+		return;
+	}
+
 	c->iev.handler = control_dispatch_imsg;
 	c->iev.events = EV_READ;
 	if (ev_add(connfd, c->iev.events, c->iev.handler, &c->iev) == -1) {
@@ -204,11 +210,13 @@ control_close(int fd)
 		return;
 	}
 
-	msgbuf_clear(&c->iev.ibuf.w);
-	TAILQ_REMOVE(&ctl_conns, c, entry);
-
 	ev_del(c->iev.ibuf.fd);
 	close(c->iev.ibuf.fd);
+
+	imsgbuf_clear(&c->iev.ibuf);
+	TAILQ_REMOVE(&ctl_conns, c, entry);
+
+	free(c);
 
 	/* Some file descriptors are available again. */
 	if (ev_timer_pending(control_state.timeout)) {
@@ -216,8 +224,6 @@ control_close(int fd)
 		control_state.timeout = 0;
 		ev_add(control_state.fd, EV_READ, control_accept, NULL);
 	}
-
-	free(c);
 }
 
 void
@@ -233,14 +239,13 @@ control_dispatch_imsg(int fd, int event, void *bula)
 	}
 
 	if (event & EV_READ) {
-		if (((n = imsg_read(&c->iev.ibuf)) == -1 && errno != EAGAIN) ||
-		    n == 0) {
+		if (imsgbuf_read(&c->iev.ibuf) == -1) {
 			control_close(fd);
 			return;
 		}
 	}
 	if (event & EV_WRITE) {
-		if (msgbuf_write(&c->iev.ibuf.w) <= 0 && errno != EAGAIN) {
+		if (imsgbuf_write(&c->iev.ibuf) == -1) {
 			control_close(fd);
 			return;
 		}

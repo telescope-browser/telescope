@@ -202,7 +202,7 @@ AS_IF([test "x$with_libimsg" = "xyes"], [
 	])
 ])
 
-AC_SEARCH_LIBS([imsg_init], [util], [
+AC_SEARCH_LIBS([imsgbuf_init], [util], [
 		AC_DEFINE([HAVE_IMSG], 1,
 			[Define to 1 if you have imsg functions (-lutil or -limsg).])
 	], [

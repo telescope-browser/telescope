@@ -457,16 +457,12 @@ handle_dispatch_imsg(int fd, int event, void *data)
 	int		 code;
 
 	if (event & EV_READ) {
-		if ((n = imsg_read(imsgbuf)) == -1 && errno != EAGAIN)
+		if (imsgbuf_read(imsgbuf) == -1)
 			err(1, "imsg_read");
-		if (n == 0)
-			err(1, "connection closed");
 	}
 	if (event & EV_WRITE) {
-		if ((n = msgbuf_write(&imsgbuf->w)) == -1 && errno != EAGAIN)
+		if (imsgbuf_write(imsgbuf) == -1)
 			err(1, "msgbuf_write");
-		if (n == 0)
-			err(1, "connection closed");
 	}
 
 	for (;;) {
@@ -1052,10 +1048,11 @@ send_url(const char *url)
 	if (connect(ctl_sock, (struct sockaddr *)&sun, sizeof(sun)) == -1)
 		err(1, "connect: %s", ctlsock_path);
 
-	imsg_init(&ibuf, ctl_sock);
+	if (imsgbuf_init(&ibuf, ctl_sock) == -1)
+		err(1, "imsgbuf_init");
 	imsg_compose(&ibuf, IMSG_CTL_OPEN_URL, 0, 0, -1, url,
 	    strlen(url) + 1);
-	imsg_flush(&ibuf);
+	imsgbuf_flush(&ibuf);
 	close(ctl_sock);
 }
 
@@ -1192,7 +1189,8 @@ main(int argc, char * const *argv)
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe2net) == -1)
 		err(1, "socketpair");
 	start_child(PROC_NET, argv0, pipe2net[1]);
-	imsg_init(&net_ibuf.ibuf, pipe2net[0]);
+	if (imsgbuf_init(&net_ibuf.ibuf, pipe2net[0]) == -1)
+		err(1, "imsgbuf_init");
 	iev_net = &net_ibuf;
 	iev_net->handler = handle_dispatch_imsg;
 
@@ -1232,7 +1230,7 @@ main(int argc, char * const *argv)
 	}
 
 	ui_send_net(IMSG_QUIT, 0, -1, NULL, 0);
-	imsg_flush(&iev_net->ibuf);
+	imsgbuf_flush(&iev_net->ibuf);
 
 	/* wait for children to terminate */
 	do {
