@@ -14,7 +14,7 @@ telescope_alpine_linux_task:
 
 telescope_freebsd_task:
   freebsd_instance:
-    image_family: freebsd-14-0
+    image_family: freebsd-14-2
   before_build_script: .github/ci/before-install.sh
   build:script: .github/ci/build.sh
   test_script: make check
