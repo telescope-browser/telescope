@@ -1191,6 +1191,7 @@ main(int argc, char * const *argv)
 	start_child(PROC_NET, argv0, pipe2net[1]);
 	if (imsgbuf_init(&net_ibuf.ibuf, pipe2net[0]) == -1)
 		err(1, "imsgbuf_init");
+	imsgbuf_allow_fdpass(&net_ibuf.ibuf);
 	iev_net = &net_ibuf;
 	iev_net->handler = handle_dispatch_imsg;
 

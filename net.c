@@ -706,6 +706,7 @@ net_main(void)
 	iev_ui = xmalloc(sizeof(*iev_ui));
 	if (imsgbuf_init(&iev_ui->ibuf, 3) == -1)
 		err(1, "imsgbuf_init failed");
+	imsgbuf_allow_fdpass(&iev_ui->ibuf);
 	iev_ui->handler = handle_dispatch_imsg;
 	iev_ui->events = EV_READ;
 	ev_add(iev_ui->ibuf.fd, iev_ui->events, iev_ui->handler, iev_ui);
