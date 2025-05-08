@@ -64,7 +64,7 @@ AC_MSG_NOTICE([Using default-editor: $DEFAULT_EDITOR])
 AC_DEFINE_UNQUOTED([DEFAULT_EDITOR], ["$DEFAULT_EDITOR"], [The default editor])
 
 DEFAULT_OPENER=xdg-open
-AS_IF([test "x$platform" = "xdarwin"], [
+AS_IF([test "x$PLATFORM" = "xdarwin"], [
 	DEFAULT_OPENER=open
 ])
 
