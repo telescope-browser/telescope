@@ -32,7 +32,7 @@
 #include "mailcap.h"
 #include "xwrapper.h"
 
-#define DEFAULT_MAILCAP_ENTRY "*/*; "DEFAULT_OPENER" %s"
+#define DEFAULT_MAILCAP_ENTRY "*/*; "DEFAULT_OPENER" %s; needsterminal"
 
 #define str_unappend(ch) if (sps.off > 0 && (ch) != EOF) { sps.off--; }
 
