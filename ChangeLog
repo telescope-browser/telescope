@@ -1,3 +1,24 @@
+2025-05-09  Thomas Adam  <thomas.adam22@gmail.com>
+
+	* mailcap.c: add `needsterminal' to the default opener.
+	* configure.ac: fix default opener and PKG_PATH_CONFIG on darwin (macos).
+
+2025-03-28  Omar Polo  <op@omarpolo.com>
+
+	* compat/imsg.c: update imsg.
+
+2024-10-22  Omar Polo  <op@omarpolo.com>
+
+	* ui.c: fix display of certificate selection prompt.
+	* wrap.c: improve handling of the tab characters.
+
+2024-10-20  Omar Polo  <op@omarpolo.com>
+
+	* sandbox.c: add `sendfd' pledge to the UI process, needed to send the client certificates to the network process.
+	* wrap.c: wrapping shouldn't reach the last column.
+	* utf8.c: remove several unused functions since the switch to libgrapheme.
+	* cmd.c: navigate in a line by means of grapheme clusters instead of codepoints.
+
 2024-06-29  Omar Polo  <op@omarpolo.com>
 
 	* configure.ac: tag 0.10.1 "Spingere"
