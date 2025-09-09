@@ -1072,9 +1072,11 @@ redraw_tab(struct tab *tab)
 
 	doupdate();
 
-	if (set_title)
-		dprintf(1, "\033]2;%s - Telescope\a",
+	if (set_title) {
+		printf("\033]2;%s - Telescope\a",
 		    current_tab->buffer.title);
+		fflush(stdout);
+	}
 }
 
 void
