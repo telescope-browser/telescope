@@ -127,6 +127,7 @@ parser_serialize(struct buffer *b, FILE *fp)
 		if (r == -1)
 			return 0;
 	}
+	fflush(fp);
 
 	return 1;
 }
