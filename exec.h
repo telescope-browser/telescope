@@ -14,6 +14,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+
+#include "telescope.h" 
+
 enum exec_mode {
 	EXEC_FOREGROUND,
 	EXEC_BACKGROUND,
@@ -21,3 +24,6 @@ enum exec_mode {
 
 int	 exec_cmd(char **argv, enum exec_mode);
 FILE	*exec_editor(void *, size_t);
+
+
+int exec_pipe(const char *shell_command, struct buffer *b);

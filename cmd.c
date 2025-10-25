@@ -40,6 +40,11 @@
 #include "utf8.h"
 #include "utils.h"
 
+#ifndef INPUT_BUFFER_SIZE
+#define INPUT_BUFFER_SIZE 4096
+#endif
+
+
 #define GUARD_RECURSIVE_MINIBUFFER()				\
 	do {							\
 		if (in_minibuffer) {				\
@@ -1179,6 +1184,27 @@ cmd_write_buffer(struct buffer *buffer)
 	strlcat(path, f, sizeof(path));
 
 	ui_read("Write file", write_buffer, current_tab, path);
+}
+
+static void pipe_select(const char *command) {
+	exec_pipe(command, &current_tab->buffer);
+	exit_minibuffer();
+}
+void cmd_pipe_buffer(struct buffer *buffer)
+{
+	if (safe_mode) {
+		message("Can't execute command in safe-mode.");
+		return;
+	}
+	struct minibuffer m = {
+		.self_insert = sensible_self_insert,
+		.done = pipe_select,
+		.history = NULL,
+		.complfn = NULL
+	};
+	GUARD_RECURSIVE_MINIBUFFER();
+	enter_minibuffer(&m, "Command: ");
+
 }
 
 void

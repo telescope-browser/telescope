@@ -29,6 +29,8 @@
 #include "exec.h"
 #include "minibuffer.h"
 #include "ui.h"
+#include "parser.h"
+
 
 #define TMPFILE "/tmp/telescope.XXXXXXXXXX"
 
@@ -94,6 +96,21 @@ exec_cmd(char **argv, enum exec_mode mode)
 
 	return (0);
 }
+
+
+int exec_pipe(const char *command, struct buffer *buffer) {
+	FILE *p = popen(command, "w");
+	if(p == NULL){
+		warn("popen: \"%s\" failed", command);
+		return(-1);
+	}
+	ui_suspend();
+	parser_serialize(buffer, p);
+	pclose(p);
+	ui_resume();
+	return(0);
+}
+
 
 FILE *
 exec_editor(void *data, size_t len)

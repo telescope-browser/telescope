@@ -17,6 +17,7 @@
 #ifndef TELESCOPE_H
 #define TELESCOPE_H
 
+
 #include <limits.h>
 #include <stdio.h>		/* XXX: for parsers.h */
 

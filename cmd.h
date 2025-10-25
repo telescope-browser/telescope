@@ -96,3 +96,4 @@ CMD(cmd_unload_certificate,	"Forget the certificate on this page.");
 CMD(cmd_up,			"Go up one level.");
 CMD(cmd_use_certificate,	"Use a certificate for the current page.");
 CMD(cmd_write_buffer,		"Save the current page to the disk.");
+CMD(cmd_pipe_buffer,		"Pipe the current page to command."); 
