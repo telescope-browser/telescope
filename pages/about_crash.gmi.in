@@ -2,7 +2,7 @@
 
 It seems that Telescope crashed last time!  Please consider reporting this bug so it can be fixed.
 
-=> mailto:@PACKAGE_BUGREPORT@	@PACKAGE_BUGREPORT@
+=> @PACKAGE_BUGREPORT@	@PACKAGE_NAME@ issue tracker
 
 When reporting a bug, please include the following information, otherwise it won’t be very helpful:
 
