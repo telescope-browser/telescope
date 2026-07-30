@@ -13,3 +13,12 @@ for f in "$srcdir"/gmi-*; do
 	./gmiparser < "$f" > "$name"
 	diff -u "$f" "$name"
 done
+
+set +e
+
+out=$(mktemp -p .)
+printf '\xEF\xBB\xBF# hello' | ./gmiparser >"$out"
+echo "# hello" | diff -u "$out" -
+ret=$?
+rm $out
+exit $ret

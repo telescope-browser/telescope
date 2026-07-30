@@ -201,7 +201,7 @@ parser_foreach_line(struct buffer *b, const char *buf, size_t size)
 		 * though.
 		 */
 		if (memmem(beg, len, "\xEF\xBB\xBF", 3) == beg) {
-			b += 3;
+			beg += 3;
 			len -= 3;
 		}
 	}
