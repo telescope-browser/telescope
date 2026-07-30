@@ -124,7 +124,7 @@ tofu_update_persist(struct ohash *h, struct tofu_entry *e)
 	while ((linelen = getline(&line, &linesize, fp)) != -1) {
 		if (!strncmp(line, e->domain, l))
 			continue;
-		if (linesize > 0 && line[linesize-1] == '\n')
+		if (linelen > 0 && line[linelen-1] == '\n')
 			line[linesize-1] = '\0';
 		fprintf(tmp, "%s\n", line);
 	}
