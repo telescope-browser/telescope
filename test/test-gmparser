@@ -17,7 +17,7 @@ done
 set +e
 
 out=$(mktemp -p .)
-printf '\xEF\xBB\xBF# hello' | ./gmiparser >"$out"
+printf '\357\273\277# hello' | ./gmiparser >"$out"
 echo "# hello" | diff -u "$out" -
 ret=$?
 rm $out
