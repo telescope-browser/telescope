@@ -266,7 +266,7 @@ control_dispatch_imsg(int fd, int event, void *bula)
 			if (IMSG_DATA_SIZE(imsg) >= sizeof(uri))
 				break;
 			memset(uri, 0, sizeof(uri));
-			memcpy(uri, imsg.data, sizeof(uri));
+			memcpy(uri, imsg.data, IMSG_DATA_SIZE(imsg));
 			if (uri[IMSG_DATA_SIZE(imsg)-1] != '\0')
 				break;
 
