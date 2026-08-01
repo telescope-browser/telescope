@@ -144,6 +144,7 @@ certs_store_add(struct cstore *cstore, const char *host, const char *port,
 		free(c->path);
 		free(c->cert);
 		memset(c, 0, sizeof(*c));
+		return (-1);
 	}
 	cstore->len++;
 
