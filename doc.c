@@ -93,6 +93,19 @@ doc_append(struct doc *d, enum nodetype type)
 }
 
 int
+doc_append_text(struct doc *d, size_t off, size_t len)
+{
+	int	 id;
+
+	if ((id = push_node(d, NODE_TEXT)) == -1)
+		return (-1);
+
+	d->nodes[id].text = (struct splice){off, len};
+
+	return (id);
+}
+
+int
 doc_open(struct doc *d, enum nodetype type)
 {
 	int	 id;
@@ -105,6 +118,42 @@ doc_open(struct doc *d, enum nodetype type)
 	else
 		d->stack[d->depth++] = id;
 
+	return (id);
+}
+
+int
+doc_open_heading(struct doc *d, int level)
+{
+	int	 id;
+
+	if ((id = doc_open(d, NODE_HEADING)) == -1)
+		return (-1);
+
+	d->nodes[id].level = level;
+	return (id);
+}
+
+int
+doc_open_pre(struct doc *d, size_t off, size_t len)
+{
+	int	 id;
+
+	if ((id = doc_open(d, NODE_PRE)) == -1)
+		return (-1);
+
+	d->nodes[id].text = (struct splice){off, len};
+	return (id);
+}
+
+int
+doc_open_link(struct doc *d, size_t off, size_t len)
+{
+	int	 id;
+
+	if ((id = doc_open(d, NODE_LINK)) == -1)
+		return (-1);
+
+	d->nodes[id].href = (struct splice){off, len};
 	return (id);
 }
 

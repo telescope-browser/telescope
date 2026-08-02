@@ -75,8 +75,15 @@ struct doc {
 };
 
 int		 doc_push(struct doc *, const char *, size_t);
+
 int		 doc_append(struct doc *, enum nodetype);
+int		 doc_append_text(struct doc *, size_t, size_t);
+
 int		 doc_open(struct doc *, enum nodetype);
+int		 doc_open_heading(struct doc *, int);
+int		 doc_open_pre(struct doc *, size_t, size_t);
+int		 doc_open_link(struct doc *, size_t, size_t);
+
 int		 doc_close(struct doc *);
 void		 doc_close_all(struct doc *);
 void		 doc_free(struct doc *);
