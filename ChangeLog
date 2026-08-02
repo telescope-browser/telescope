@@ -1,3 +1,15 @@
+2026-08-01  Omar Polo  <op@omarpolo.com>
+
+	* minor correctness fixes to tofu, control and certs.
+
+2026-07-30  Omar Polo  <op@omarpolo.com>
+
+	* parser: fix BOM stripping
+
+2025-05-10  Omar Polo  <op@omarpolo.com>
+
+	* configure.ac: tag 0.11 "Un'altra Vita"
+
 2025-05-09  Thomas Adam  <thomas.adam22@gmail.com>
 
 	* mailcap.c: add `needsterminal' to the default opener.
