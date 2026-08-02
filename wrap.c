@@ -33,6 +33,8 @@ erase_buffer(struct buffer *buffer)
 {
 	empty_vlist(buffer);
 	empty_linelist(buffer);
+
+	doc_free(&buffer->doc);
 }
 
 void

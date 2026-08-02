@@ -74,6 +74,8 @@ parser_free(struct tab *tab)
 	int			 r = 1;
 	char			*tilde, *slash;
 
+	if (p->newfree)
+		r = p->newfree(buffer, &buffer->doc) == -1 ? 0 : 1;
 	if (p->free) {
 		r = p->free(buffer);
 	} else if (buffer->len != 0) {
@@ -223,7 +225,10 @@ parser_foreach_line(struct buffer *b, const char *buf, size_t size)
 			break;
 		l = end - beg;
 
-		if (!p->parseline(b, beg, l))
+		if (p->newparseline != NULL) {
+			if (p->newparseline(b, &b->doc, beg, l) == -1)
+				return 0;
+		} else if (!p->parseline(b, beg, l))
 			return 0;
 
 		len -= l;

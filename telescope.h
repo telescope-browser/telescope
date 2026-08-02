@@ -20,6 +20,7 @@
 #include <limits.h>
 #include <stdio.h>		/* XXX: for parsers.h */
 
+#include "doc.h"
 #include "iri.h"
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -114,6 +115,8 @@ struct buffer {
 #define PARSER_IN_PATCH_HDR 4
 	int			 parser_flags;
 	const struct parser	*parser;
+
+	struct doc		 doc;
 
 	size_t			 last_line_off;
 	int			 force_redraw;

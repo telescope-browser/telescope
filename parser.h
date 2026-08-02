@@ -19,6 +19,7 @@
 
 struct buffer;
 struct tab;
+struct doc;
 
 struct parser {
 	const char	 *name;
@@ -28,6 +29,9 @@ struct parser {
 	int		(*parseline)(struct buffer *, const char *, size_t);
 	int		(*free)(struct buffer *);
 	int		(*serialize)(struct buffer *, FILE *);
+
+	int		(*newparseline)(struct buffer *, struct doc *, const char *, size_t);
+	int		(*newfree)(struct buffer *, struct doc *);
 };
 
 void	 parser_init(struct buffer *, const struct parser *);
@@ -37,6 +41,7 @@ int	 parser_free(struct tab *);
 int	 parser_serialize(struct buffer *, FILE *);
 
 extern const struct parser	 gemtext_parser;
+extern const struct parser	 newgemtext_parser;
 extern const struct parser	 gophermap_parser;
 extern const struct parser	 textpatch_parser;
 extern const struct parser	 textplain_parser;

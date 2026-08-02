@@ -7,8 +7,8 @@ EXTRA_telescope_SOURCES = compat/ohash.h compat/queue.h compat/imsg.h contrib \
 
 telescope_SOURCES =	bufio.c bufio.h certs.c certs.h cmd.c cmd.gen.c cmd.h \
 			compat.h compl.c compl.h control.c control.h \
-			defaults.c defaults.h downloads.c emoji-matcher.c \
-			ev.c ev.h exec.c exec.h fs.c fs.h \
+			defaults.c defaults.h doc.c doc.h downloads.c \
+			emoji-matcher.c ev.c ev.h exec.c exec.h fs.c fs.h \
 			gencmd.awk genemoji.sh help.c hist.c imsgev.c imsgev.h \
 			iri.c iri.h keymap.c keymap.h mailcap.c mailcap.h \
 			mcache.c mcache.h mime.c minibuffer.c minibuffer.h \

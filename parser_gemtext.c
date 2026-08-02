@@ -26,6 +26,7 @@
 
 #include <ctype.h>
 #include <string.h>
+#include <stdint.h>
 #include <stdlib.h>
 
 #include "defaults.h"
@@ -35,7 +36,10 @@
 #include "xwrapper.h"
 
 static int	gemtext_parse_line(struct buffer *, const char *, size_t);
+static int	gemtext_newparseline(struct buffer *, struct doc *, const char *, size_t);
+
 static int	gemtext_free(struct buffer *);
+static int	gemtext_newfree(struct buffer *, struct doc *);
 static int	gemtext_serialize(struct buffer *, FILE *);
 
 static int	parse_link(struct buffer *, const char*, size_t);
@@ -47,6 +51,12 @@ const struct parser gemtext_parser = {
 	.parseline = &gemtext_parse_line,
 	.free = &gemtext_free,
 	.serialize = &gemtext_serialize,
+};
+
+const struct parser newgemtext_parser = {
+	.name = "text/gemini",
+	.newparseline = &gemtext_newparseline,
+	.newfree = &gemtext_newfree,
 };
 
 static inline int
@@ -221,6 +231,111 @@ gemtext_parse_line(struct buffer *b, const char *line, size_t len)
 }
 
 static int
+gemtext_newparseline(struct buffer *b, struct doc *d, const char *line, size_t len)
+{
+	struct docsplice s = {0, 0};
+	int off, level;
+
+	if ((off = doc_push(d, line, len)) == -1)
+		return (-1);
+
+	if (b->parser_flags & PARSER_IN_PRE) {
+		if (len >= 3 && !strncmp(line, "```", 3)) {
+			b->parser_flags ^= PARSER_IN_PRE;
+			return doc_close(d);
+		}
+		return (doc_append_text(d, off, len));
+	}
+
+	if (len == 0)
+		goto end;
+
+	switch (*line) {
+	case '*':
+		if (len < 1 || line[1] != ' ')
+			break;
+		if (doc_open(d, NODE_ITEM) == -1)
+			return (-1);
+		off++, line++, len--;
+		while (len > 0 && isspace((unsigned char)*line))
+			off++, line++, len--;
+		if (doc_append_text(d, off, len) == -1)
+			return (-1);
+		return (doc_close(d));
+
+	case '>':
+		if (doc_open(d, NODE_QUOTE) == -1)
+			return (-1);
+		while (len > 0 && isspace((unsigned char)*line))
+			off++, line++, len--;
+		if (doc_append_text(d, off, len) == -1)
+			return (-1);
+		return (doc_close(d));
+
+	case '=':
+		if (len == 1 || line[1] != '>')
+			break;
+
+		off += 2;
+		line += 2;
+		len -= 2;
+
+		while (len > 0 && isspace((unsigned char)*line))
+			off++, line++, len--;
+
+		/* at the start of a URL */
+		s.off = off;
+		while (len > 0 && !isspace((unsigned char)*line))
+			s.len++, off++, line++, len--;
+		if (doc_open_link(d, s.off, s.len) == -1)
+			return (-1);
+
+		/* skipping the spacing before the optional text */
+		while (len > 0 && isspace((unsigned char)*line))
+			off++, line++, len--;
+
+		if (len == 0)
+			return (doc_append_text(d, s.off, s.len));
+
+		if (doc_append_text(d, off, len) == -1)
+			return (-1);
+
+		return (doc_close(d));
+
+	case '#':
+		off++, line++, len--;
+		level = 1;
+		while (len > 0 && *line == '#' && level < 4)
+			off++, line++, len--, level++;
+		while (len > 0 && isspace((unsigned char)*line))
+			off++, line++, len--;
+		if (doc_open_heading(d, level) == -1)
+			return (-1);
+		if (doc_append_text(d, off, len) == -1)
+			return (-1);
+		return (doc_close(d));
+
+	case '`':
+		if (len < 3 || strncmp(line, "```", 3) != 0)
+			break;
+
+		b->parser_flags |= PARSER_IN_PRE;
+
+		off += 3; line += 3; len -= 3;
+		while (len > 0 && isspace((unsigned char)*line))
+			off++, line++, len--;
+		return (doc_open_pre(d, off, len));
+	}
+
+ end:
+	if (doc_open(d, NODE_PARAGRAPH) == -1)
+		return (-1);
+	if (doc_append_text(d, off, len) == -1)
+		return (-1);
+	return (doc_close(d));
+}
+
+static int
 gemtext_free(struct buffer *b)
 {
 	/* flush the buffer */
@@ -242,6 +357,19 @@ gemtext_free(struct buffer *b)
 		search_title(b, LINE_TITLE_3);
 
 	return 1;
+}
+
+static int
+gemtext_newfree(struct buffer *b, struct doc *d)
+{
+	/* flush the buffer */
+	if (b->len != 0) {
+		if (gemtext_newparseline(b, d, b->buf, b->len) == -1)
+			return (-1);
+	}
+
+	doc_close_all(d);
+	return (0);
 }
 
 static void

@@ -1,4 +1,4 @@
-check_PROGRAMS =	gmparser gmiparser iritest evtest mailcap doctest
+check_PROGRAMS =	gmparser gmiparser iritest evtest mailcap doctest newgmiparser
 
 gmparser_SOURCES =	gmparser.c				\
 			$(top_srcdir)/compat.h			\
@@ -14,6 +14,8 @@ gmparser_SOURCES =	gmparser.c				\
 
 gmiparser_SOURCES =	gmiparser.c				\
 			$(top_srcdir)/compat.h			\
+			$(top_srcdir)/doc.c			\
+			$(top_srcdir)/doc.h			\
 			$(top_srcdir)/hist.c			\
 			$(top_srcdir)/hist.h			\
 			$(top_srcdir)/parser.c			\
@@ -41,6 +43,18 @@ mailcap_SOURCES =	$(top_srcdir)/test/mailcap.c		\
 doctest_SOURCES =	$(top_srcdir)/test/doctest.c		\
 			$(top_srcdir)/doc.c			\
 			$(top_srcdir)/doc.h
+
+newgmiparser_SOURCES =	newgmiparser.c				\
+			$(top_srcdir)/compat.h			\
+			$(top_srcdir)/doc.c			\
+			$(top_srcdir)/doc.h			\
+			$(top_srcdir)/hist.c			\
+			$(top_srcdir)/hist.h			\
+			$(top_srcdir)/parser.c			\
+			$(top_srcdir)/parser.h			\
+			$(top_srcdir)/parser_gemtext.c 		\
+			$(top_srcdir)/xwrapper.c 		\
+			$(top_srcdir)/xwrapper.h
 
 AM_CFLAGS =		-I$(top_srcdir) -I$(top_srcdir)/compat
 

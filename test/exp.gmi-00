@@ -1,0 +1,26 @@
+ 0 type=document parent=-1 last_descendant=25 text=(0, 0) href=(0, 0) level=0
+ 1 type=item parent=0 last_descendant=2 text=(0, 0) href=(0, 0) level=0
+ 2 type=text parent=1 last_descendant=2 text=(2, 7) href=(0, 0) level=0
+ 3 type=paragraph parent=0 last_descendant=4 text=(0, 0) href=(0, 0) level=0
+ 4 type=text parent=3 last_descendant=4 text=(9, 12) href=(0, 0) level=0
+ 5 type=paragraph parent=0 last_descendant=6 text=(0, 0) href=(0, 0) level=0
+ 6 type=text parent=5 last_descendant=6 text=(21, 0) href=(0, 0) level=0
+ 7 type=heading parent=0 last_descendant=8 text=(0, 0) href=(0, 0) level=1
+ 8 type=text parent=7 last_descendant=8 text=(23, 7) href=(0, 0) level=0
+ 9 type=paragraph parent=0 last_descendant=10 text=(0, 0) href=(0, 0) level=0
+10 type=text parent=9 last_descendant=10 text=(30, 0) href=(0, 0) level=0
+11 type=paragraph parent=0 last_descendant=12 text=(0, 0) href=(0, 0) level=0
+12 type=text parent=11 last_descendant=12 text=(30, 9) href=(0, 0) level=0
+13 type=paragraph parent=0 last_descendant=14 text=(0, 0) href=(0, 0) level=0
+14 type=text parent=13 last_descendant=14 text=(39, 0) href=(0, 0) level=0
+15 type=pre parent=0 last_descendant=16 text=(43, 17) href=(0, 0) level=0
+16 type=text parent=15 last_descendant=16 text=(60, 3) href=(0, 0) level=0
+17 type=paragraph parent=0 last_descendant=18 text=(0, 0) href=(0, 0) level=0
+18 type=text parent=17 last_descendant=18 text=(66, 0) href=(0, 0) level=0
+19 type=pre parent=0 last_descendant=21 text=(70, 0) href=(0, 0) level=0
+20 type=text parent=19 last_descendant=20 text=(70, 32) href=(0, 0) level=0
+21 type=text parent=19 last_descendant=21 text=(102, 54) href=(0, 0) level=0
+22 type=paragraph parent=0 last_descendant=23 text=(0, 0) href=(0, 0) level=0
+23 type=text parent=22 last_descendant=23 text=(159, 0) href=(0, 0) level=0
+24 type=quote parent=0 last_descendant=25 text=(0, 0) href=(0, 0) level=0
+25 type=text parent=24 last_descendant=25 text=(159, 9) href=(0, 0) level=0
