@@ -561,7 +561,8 @@ mergepath(char *buf, size_t bufsize, int abs, const char *base, const char *r)
 	}
 
 	if ((s = strrchr(base, '/')) != NULL) {
-		cpstr(base, s + 1, buf, bufsize);
+		if (cpstr(base, s + 1, buf, bufsize) == -1)
+			return (-1);
 		if (*r == '/')
 			r++;
 	}
