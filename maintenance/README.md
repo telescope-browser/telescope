@@ -15,7 +15,7 @@ to create the release notes.  Release notes should be useful both for
 the end users and for packagers: breaking changes, new or changed
 dependencies, bug fixes and new features needs to be clearly stated.
 
-It goes without sayng that before making a release all known bugs must
+It goes without saying that before making a release all known bugs must
 be fixed.
 
 Every release so far was named after an Italian song.  It started by

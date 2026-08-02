@@ -94,7 +94,7 @@ if test "x$PLATFORM" = "xdarwin"; then
 	# This is not neat at all -- but if homebrew is used, it's often up to
 	# the user to define PKG_CONFIG_PATH in the environment.
 	# Some CI systems don't do this, so we'll have to.
-	AC_MSG_NOTICE([Setting PKG_CONFIG_PATH programatically])
+	AC_MSG_NOTICE([Setting PKG_CONFIG_PATH programmatically])
 	export PKG_CONFIG_PATH="$(find ${HOMEBREW_PREFIX}/Cellar \
 				 -name 'pkgconfig' -type d | \
 				 tr '\n' ':' | sed s/.$//):$PKG_CONFIG_PATH"
