@@ -90,7 +90,7 @@ test_builddoc(void)
 	assert(d.nodes[ht_id].parent == head_id);
 	assert(d.nodes[ht_id].last_descendant == ht_id);
 	assert(head_id < ht_id);
-	d.nodes[ht_id].text = (struct splice){0, 5};
+	d.nodes[ht_id].text = (struct docsplice){0, 5};
 
 	assert(d.depth);
 	assert(d.stack[d.depth-1] == head_id);
@@ -105,18 +105,18 @@ test_builddoc(void)
 	assert(d.nodes[text1_id].parent == p_id);
 	assert(d.nodes[text1_id].last_descendant == text1_id);
 	assert(p_id < text1_id);
-	d.nodes[text1_id].text = (struct splice){6, 17};
+	d.nodes[text1_id].text = (struct docsplice){6, 17};
 
 	MUST(l_id = doc_open(&d, NODE_LINK));
 	assert(d.nodes[l_id].parent == p_id);
 	assert(text1_id < l_id);
-	d.nodes[l_id].href = (struct splice){23, 11};
+	d.nodes[l_id].href = (struct docsplice){23, 11};
 
 	MUST(lt_id = doc_append(&d, NODE_TEXT));
 	assert(d.nodes[lt_id].parent == l_id);
 	assert(d.nodes[lt_id].last_descendant == lt_id);
 	assert(l_id < lt_id);
-	d.nodes[lt_id].text = (struct splice){35, 18};
+	d.nodes[lt_id].text = (struct docsplice){35, 18};
 
 	assert(d.depth);
 	assert(d.stack[d.depth-1] == l_id);
@@ -127,7 +127,7 @@ test_builddoc(void)
 	assert(d.nodes[dot_id].parent == p_id);
 	assert(d.nodes[dot_id].last_descendant == dot_id);
 	assert(lt_id < dot_id);
-	d.nodes[dot_id].text = (struct splice){53, 1};
+	d.nodes[dot_id].text = (struct docsplice){53, 1};
 
 	assert(d.depth);
 	assert(d.stack[d.depth-1] == p_id);

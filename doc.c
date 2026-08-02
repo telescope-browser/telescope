@@ -100,7 +100,7 @@ doc_append_text(struct doc *d, size_t off, size_t len)
 	if ((id = push_node(d, NODE_TEXT)) == -1)
 		return (-1);
 
-	d->nodes[id].text = (struct splice){off, len};
+	d->nodes[id].text = (struct docsplice){off, len};
 
 	return (id);
 }
@@ -141,7 +141,7 @@ doc_open_pre(struct doc *d, size_t off, size_t len)
 	if ((id = doc_open(d, NODE_PRE)) == -1)
 		return (-1);
 
-	d->nodes[id].text = (struct splice){off, len};
+	d->nodes[id].text = (struct docsplice){off, len};
 	return (id);
 }
 
@@ -153,7 +153,7 @@ doc_open_link(struct doc *d, size_t off, size_t len)
 	if ((id = doc_open(d, NODE_LINK)) == -1)
 		return (-1);
 
-	d->nodes[id].href = (struct splice){off, len};
+	d->nodes[id].href = (struct docsplice){off, len};
 	return (id);
 }
 

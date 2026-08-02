@@ -26,7 +26,7 @@
 /* should be plenty */
 #define DOC_MAXDEPTH	128
 
-struct splice {
+struct docsplice {
 	size_t	off;
 	size_t	len;
 };
@@ -55,8 +55,8 @@ struct node {
 	uint32_t	 flags;
 	int		 parent;
 	int		 last_descendant;
-	struct splice	 text;
-	struct splice	 href;
+	struct docsplice text;
+	struct docsplice href;
 	int		 level;	/* heading */
 };
 
