@@ -1,4 +1,4 @@
-check_PROGRAMS =	gmparser gmiparser iritest evtest mailcap
+check_PROGRAMS =	gmparser gmiparser iritest evtest mailcap doctest
 
 gmparser_SOURCES =	gmparser.c				\
 			$(top_srcdir)/compat.h			\
@@ -38,6 +38,10 @@ mailcap_SOURCES =	$(top_srcdir)/test/mailcap.c		\
 			$(top_srcdir)/xwrapper.c 		\
 			$(top_srcdir)/xwrapper.h
 
+doctest_SOURCES =	$(top_srcdir)/test/doctest.c		\
+			$(top_srcdir)/doc.c			\
+			$(top_srcdir)/doc.h
+
 AM_CFLAGS =		-I$(top_srcdir) -I$(top_srcdir)/compat
 
 LDADD =			$(LIBOBJS)
@@ -55,4 +59,4 @@ EXTRA_DIST =		test-gmparser	\
 
 CLEANFILES =		serialized.*
 
-TESTS =	test-gmparser test-mailcap iritest evtest
+TESTS =	test-gmparser test-mailcap iritest evtest doctest
