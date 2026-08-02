@@ -30,6 +30,21 @@
 
 #include "doc.h"
 
+const char *
+doc_node_type(enum nodetype t)
+{
+	switch (t) {
+	case NODE_DOCUMENT: return "document";
+	case NODE_PARAGRAPH: return "paragraph";
+	case NODE_HEADING: return "heading";
+	case NODE_ITEM: return "item";
+	case NODE_QUOTE: return "quote";
+	case NODE_PRE: return "pre";
+	case NODE_LINK: return "link";
+	case NODE_TEXT: return "text";
+	}
+}
+
 int
 doc_push(struct doc *d, const char *text, size_t len)
 {

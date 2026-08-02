@@ -74,6 +74,8 @@ struct doc {
 	int		 overflow;
 };
 
+const char	*doc_node_type(enum nodetype);
+
 int		 doc_push(struct doc *, const char *, size_t);
 
 int		 doc_append(struct doc *, enum nodetype);
