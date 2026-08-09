@@ -117,6 +117,11 @@ parser_serialize(struct buffer *b, FILE *fp)
 	const char		*text;
 	int			 r;
 
+	if (p->newparseline != NULL) {
+		fwrite(&b->doc.arena, b->doc.alen, 1, fp);
+		return 1;
+	}
+
 	if (p->serialize != NULL)
 		return p->serialize(b, fp);
 

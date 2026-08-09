@@ -239,6 +239,10 @@ gemtext_newparseline(struct buffer *b, struct doc *d, const char *line, size_t l
 	if ((off = doc_push(d, line, len)) == -1)
 		return (-1);
 
+	/* XXX small interface break, for now it's tolerable */
+	if (doc_push(d, "\n", 1) == -1)
+		return (-1);
+
 	if (b->parser_flags & PARSER_IN_PRE) {
 		if (len >= 3 && !strncmp(line, "```", 3)) {
 			b->parser_flags ^= PARSER_IN_PRE;
