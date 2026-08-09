@@ -413,7 +413,7 @@ poll2ev(int ev)
 {
 	int r = 0;
 
-	if (ev & (POLLIN|POLLHUP))
+	if (ev & (POLLIN|POLLHUP|POLLERR|POLLNVAL))
 		r |= EV_READ;
 	if (ev & (POLLOUT|POLLWRNORM|POLLWRBAND))
 		r |= EV_WRITE;
@@ -422,68 +422,82 @@ poll2ev(int ev)
 }
 
 int
-ev_loop(void)
+ev_step(void)
 {
 	struct timespec	 elapsed, beg, end;
 	struct timeval	 tv, sub, *min;
 	struct evcb	 cb;
-	int		 n, msec;
+	int		 n, msec, mask;
 	size_t		 i;
 
+	timerheapify();
+	base->reserve_from = base->ntimers;
+	base->reserve_till = base->ntimers;
+
+	min = NULL;
+	msec = -1;
+	if (base->ntimers) {
+		min = &base->timers[0].tv;
+		msec = min->tv_sec * 1000 + (min->tv_usec + 999) / 1000;
+	}
+
+	clock_gettime(CLOCK_MONOTONIC, &beg);
+	if ((n = poll(base->pfds, base->len, msec)) == -1) {
+		if (errno != EINTR)
+			return -1;
+	}
+
+	if (n == 0 && min)
+		memcpy(&tv, min, sizeof(tv));
+	else {
+		clock_gettime(CLOCK_MONOTONIC, &end);
+		timespecsub(&end, &beg, &elapsed);
+		TIMESPEC_TO_TIMEVAL(&tv, &elapsed);
+	}
+
+	for (i = 0; i < base->ntimers && !ev_stop; /* nop */) {
+		timersub(&base->timers[i].tv, &tv, &sub);
+		/*
+		 * tv_sec always carries the sign, while tv_usec is
+		 * pure magnitude.
+		 */
+		if (sub.tv_sec < 0 || !timerisset(&sub)) {
+			/*
+			 * delete the timer before calling its
+			 * callback; protects from timer that
+			 * attempt to delete themselves.
+			 */
+			memcpy(&cb, &base->timers[i].cb, sizeof(cb));
+			cancel_timer(i);
+			cb.cb(-1, EV_TIMEOUT, cb.udata);
+			continue;
+		}
+
+		memcpy(&base->timers[i].tv, &sub, sizeof(sub));
+		i++;
+	}
+
+	for (i = 0; i < base->len && n > 0 && !ev_stop; ++i) {
+		if (base->pfds[i].fd == -1)
+			continue;
+		mask = POLLIN|POLLOUT|POLLHUP|POLLERR|POLLNVAL;
+		if (base->pfds[i].revents & mask) {
+			n--;
+			base->cbs[i].cb(base->pfds[i].fd,
+			    poll2ev(base->pfds[i].revents),
+			    base->cbs[i].udata);
+		}
+	}
+
+	return (0);
+}
+
+int
+ev_loop(void)
+{
 	while (!ev_stop) {
-		timerheapify();
-		base->reserve_from = base->ntimers;
-		base->reserve_till = base->ntimers;
-
-		min = NULL;
-		msec = -1;
-		if (base->ntimers) {
-			min = &base->timers[0].tv;
-			msec = min->tv_sec * 1000 + (min->tv_usec + 999) / 1000;
-		}
-
-		clock_gettime(CLOCK_MONOTONIC, &beg);
-		if ((n = poll(base->pfds, base->len, msec)) == -1) {
-			if (errno != EINTR)
-				return -1;
-		}
-
-		if (n == 0 && min)
-			memcpy(&tv, min, sizeof(tv));
-		else {
-			clock_gettime(CLOCK_MONOTONIC, &end);
-			timespecsub(&end, &beg, &elapsed);
-			TIMESPEC_TO_TIMEVAL(&tv, &elapsed);
-		}
-
-		for (i = 0; i < base->ntimers && !ev_stop; /* nop */) {
-			timersub(&base->timers[i].tv, &tv, &sub);
-			if (sub.tv_sec <= 0) {
-				/*
-				 * delete the timer before calling its
-				 * callback; protects from timer that
-				 * attempt to delete themselves.
-				 */
-				memcpy(&cb, &base->timers[i].cb, sizeof(cb));
-				cancel_timer(i);
-				cb.cb(-1, EV_TIMEOUT, cb.udata);
-				continue;
-			}
-
-			memcpy(&base->timers[i].tv, &sub, sizeof(sub));
-			i++;
-		}
-
-		for (i = 0; i < base->len && n > 0 && !ev_stop; ++i) {
-			if (base->pfds[i].fd == -1)
-				continue;
-			if (base->pfds[i].revents & (POLLIN|POLLOUT|POLLHUP)) {
-				n--;
-				base->cbs[i].cb(base->pfds[i].fd,
-				    poll2ev(base->pfds[i].revents),
-				    base->cbs[i].udata);
-			}
-		}
+		if (ev_step() == -1)
+			return (-1);
 	}
 
 	return 0;
