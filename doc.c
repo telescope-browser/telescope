@@ -51,6 +51,9 @@ doc_push(struct doc *d, const char *text, size_t len)
 	void	*t;
 	size_t	 newc;
 
+	if (d->nlen == INT_MAX - 1)	/* ETOOMANY */
+		return (-1);
+
 	if (d->acap - d->alen < len) {
 		do {
 			if ((newc = d->acap * 2) == 0)
