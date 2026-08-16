@@ -131,12 +131,12 @@ styleopt	: PRFX STRING		{ setprfx($2, $2); }
 		| ATTR attr
 		;
 
-colorspec	: STRING			{ setcolor($1, $1, $1); free($1); }
+colorspec	: STRING		{ setcolor($1, $1, $1); free($1); }
 		| STRING STRING		{ setcolor($1, $2, $1); free($1); free($2); }
 		| STRING STRING STRING	{ setcolor($1, $2, $3); free($1); free($2); free($3); }
 		;
 
-attr		: STRING			{ setattr($1, $1, $1); free($1); }
+attr		: STRING		{ setattr($1, $1, $1); free($1); }
 		| STRING STRING		{ setattr($1, $2, $1); free($1); free($2); }
 		| STRING STRING STRING	{ setattr($1, $2, $3); free($1); free($2); free($3); }
 		;

@@ -23,72 +23,24 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* should be plenty */
-#define DOC_MAXDEPTH	128
+/* TODO: styling */
 
-#define N_NONE		0x0
-#define N_HIDDEN	0x1
-
-struct docsplice {
-	size_t	off;
-	size_t	len;
+struct run {
+	int		 node;
+	struct docsplice splice;
+	int		 action; /* followable ancestor, or -1 */
 };
 
-struct pos {
-	int	nodeid;
-	size_t	off;
+struct runs {
+	struct run	*runs;
+	size_t		 len;
+	size_t		 cap;
 };
 
-enum nodetype {
-	/* block */
-	NODE_DOCUMENT,
-	NODE_PARAGRAPH,
-	NODE_HEADING,
-	NODE_ITEM,
-	NODE_QUOTE,
-	NODE_PRE,
-
-	/* inline */
-	NODE_LINK,
-	NODE_TEXT,
+struct rowlist {
+	struct runs	*rows;
+	size_t		 cur;
+	size_t		 cap;
 };
 
-struct node {
-	int		 type;
-	uint32_t	 flags;
-	int		 parent;
-	int		 last_descendant;
-	struct docsplice text;
-	struct docsplice href;
-	int		 level;	/* heading */
-};
-
-struct doc {
-	char		*arena;
-	size_t		 alen;
-	size_t		 acap;
-
-	struct node	*nodes;
-	size_t		 nlen;
-	size_t		 ncap;
-
-	int		 stack[DOC_MAXDEPTH];
-	int		 depth;
-	int		 overflow;
-};
-
-const char	*doc_node_type(enum nodetype);
-
-int		 doc_push(struct doc *, const char *, size_t);
-
-int		 doc_append(struct doc *, enum nodetype);
-int		 doc_append_text(struct doc *, size_t, size_t);
-
-int		 doc_open(struct doc *, enum nodetype);
-int		 doc_open_heading(struct doc *, int);
-int		 doc_open_pre(struct doc *, size_t, size_t);
-int		 doc_open_link(struct doc *, size_t, size_t);
-
-int		 doc_close(struct doc *);
-void		 doc_close_all(struct doc *);
-void		 doc_free(struct doc *);
+int	 term_layout(struct doc *, struct rowlist *, int width, int x_offset);

@@ -22,8 +22,12 @@ telescope_SOURCES =	bufio.c bufio.h certs.c certs.h cmd.c cmd.gen.c cmd.h \
 telescope_identity_SOURCES = certs.c certs.h fs.c fs.h hist.c hist.h \
 			identity.c parser.c parser.h xwrapper.c xwrapper.h
 
-noinst_PROGRAMS =	pagebundler
+noinst_PROGRAMS =	pagebundler docwrap
 pagebundler_SOURCES =	pagebundler.c
+
+docwrap_SOURCES =	docwrap.c doc.c doc.h term_layout.c term_layout.h utf8.c utf8.h \
+			parser_gemtext.c parser.c xwrapper.c xwrapper.h hist.c hist.h \
+			emoji-matcher.c
 
 EXCLUDE_FROM_COCCI =	bufio.c certs.c cmd-gen.c emoji-matcher.c ev.c hist.c \
 			pages.c parse.c xwrapper.c
@@ -57,6 +61,7 @@ CLEANFILES =		cmd.gen.c emoji-matcher.c pages.c parse.c
 
 LDADD =			$(LIBOBJS) $(LIBGRAPHEME)
 EXTRA_telescope_DEPENDENCIES = $(LIBGRAPHEME)
+EXTRA_docwrap_DEPENDENCIES = $(LIBGRAPHEME)
 
 EXTRA_DIST =		ChangeLog LICENSE README.md data/emoji.txt \
 			libgrapheme pages/*.gmi
