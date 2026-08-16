@@ -43,8 +43,12 @@ key, as a safety measure.
 Note to op: on OpenBSD I'm using an `obj` directory for the build, and
 `make release` needs to be run after cd'ing there.
 
-Then upload the tarballs, make the tag (and sign it!), add `-current`
-to the version in `configure.ac`, make the release on Codeberg and
-GitHub, and remember to upload the generated tarballs there as well.
+Then upload the tarballs to telescope-browser.org:/var/www/ftp, make the
+tag (and sign it!), add `-current` to the version in `configure.ac`,
+make the release on Codeberg and GitHub, and remember to upload the
+generated tarballs there as well.
 
-Finally, update and publish the website too.
+Finally, update and publish the website[1] too.  The actual publishing
+*should* be done automagically by woodpecker on codeberg.
+
+[1]: https://codeberg.org/telescope-browser/site
