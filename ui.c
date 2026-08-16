@@ -246,7 +246,7 @@ restore_curs_x(struct buffer *buffer)
 
 	if (vl->parent->data != NULL)
 		buffer->curs_x += utf8_swidth_between(vl->parent->line,
-		    vl->parent->data, buffer->curs_x);
+		    (char *)vl->parent->data + 1, buffer->curs_x);
 	else {
 		prfx = lp[vl->parent->type].prfx1;
 		buffer->curs_x += utf8_swidth(prfx, buffer->curs_x);
