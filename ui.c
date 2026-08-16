@@ -235,11 +235,7 @@ restore_curs_x(struct buffer *buffer)
 	vl = buffer->current_line;
 	if (vl == NULL || vl->len == 0 || vl->parent == NULL)
 		buffer->curs_x += buffer->point_offset = 0;
-	else if (vl->parent->data != NULL) {
-		text = vl->parent->data;
-		buffer->curs_x += utf8_snwidth(text, buffer->point_offset,
-		    buffer->curs_x);
-	} else {
+	else {
 		text = vl->parent->line + vl->from;
 		buffer->curs_x += utf8_snwidth(text, buffer->point_offset,
 		    buffer->curs_x);
