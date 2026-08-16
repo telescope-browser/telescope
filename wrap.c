@@ -107,7 +107,7 @@ int
 wrap_text(struct buffer *buffer, const char *prfx, struct line *l,
     size_t width, int base_offset, int oneline)
 {
-	const char	*line, *space;
+	const char	*line;
 	size_t		 ret, off, start, cur, prfxwidth;
 	int		 flags;
 
@@ -119,11 +119,11 @@ wrap_text(struct buffer *buffer, const char *prfx, struct line *l,
 	start = 0;
 	flags = 0;
 
-	if (l->type == LINE_LINK && emojify_link &&
-	    emojied_line(l->line, &space)) {
-	    	prfxwidth = utf8_swidth_between(l->line, space, base_offset);
+	/* emojified links have l->data pointing at the space after the emoji */
+	if (l->type == LINE_LINK && l->data != NULL) {
+	    	prfxwidth = utf8_swidth_between(l->line, l->data, base_offset);
 		cur = base_offset + prfxwidth;
-		line = space + 1;
+		line = (char *)l->data + 1;
 	}
 
 	for (off = 0; line[off] != '\0'; off += ret) {
