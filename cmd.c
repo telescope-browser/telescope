@@ -662,6 +662,11 @@ cmd_bookmark_page(struct buffer *buffer)
 
 	GUARD_RECURSIVE_MINIBUFFER();
 
+	if (safe_mode) {
+		message("Can't add bookmark in safe-mode.");
+		return;
+	}
+
 	enter_minibuffer(&m, "Bookmark URL: ");
 }
 
