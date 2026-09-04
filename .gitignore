@@ -2,6 +2,7 @@ TAGS
 pages/*.gmi
 
 **/*.o
+**/*.a
 **/.deps
 **/.dirstamp
 **/Makefile
@@ -22,13 +23,25 @@ stamp-h1
 ylwrap
 test-driver
 
+libgrapheme/gen/case
+libgrapheme/gen/case.h
+libgrapheme/gen/character
+libgrapheme/gen/character.h
+libgrapheme/gen/line
+libgrapheme/gen/line.h
+libgrapheme/gen/sentence
+libgrapheme/gen/sentence.h
+libgrapheme/gen/word
+libgrapheme/gen/word.h
+
 cmd.gen.c
 parse.c
 pages.c
 telescope
+telescope-identity
 pagebundler
 telescope-*.tar.gz
-u/emoji-matcher.c
+emoji-matcher.c
 
 site/gemini
 site/www
