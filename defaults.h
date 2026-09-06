@@ -35,6 +35,7 @@ extern int	 hide_pre_context;
 extern int	 load_url_use_heuristic;
 extern int	 max_killed_tabs;
 extern int	 olivetti_mode;
+extern int	 save_on_quit;
 extern int	 set_title;
 extern int	 tab_bar_show;
 

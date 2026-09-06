@@ -48,6 +48,7 @@ int hide_pre_context = 0;
 int load_url_use_heuristic = 1;
 int max_killed_tabs = 10;
 int olivetti_mode = 1;
+int save_on_quit = 1;
 int set_title = 1;
 int tab_bar_show = 1;
 
@@ -699,6 +700,11 @@ config_setvarb(const char *var, int val) {
 
 	if (!strcmp(var, "olivetti-mode")) {
 		olivetti_mode = val;
+		return 1;
+	}
+
+	if (!strcmp(var, "save-on-quit")) {
+		save_on_quit = val;
 		return 1;
 	}
 
