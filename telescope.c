@@ -121,6 +121,7 @@ const char *err_pages[70] = {
 
 static void		 die(void) __attribute__((__noreturn__));
 static struct tab	*tab_by_id(uint32_t);
+static void		 handle_signal_quit(int signo);
 static void		 handle_imsg_check_cert(struct imsg *);
 static void		 handle_check_cert_user_choice(int, void *);
 static void		 handle_maybe_save_new_cert(int, void *);
@@ -172,6 +173,12 @@ tab_by_id(uint32_t id)
 	}
 
 	return NULL;
+}
+
+static void
+handle_signal_quit(int signo)
+{
+	ev_break();
 }
 
 static void
@@ -559,6 +566,9 @@ handle_dispatch_imsg(int fd, int event, void *data)
 				ui_on_tab_refresh(tab);
 				ui_on_tab_loaded(tab);
 			}
+			break;
+		case IMSG_QUIT:
+			handle_signal_quit(SIGQUIT);
 			break;
 		default:
 			errx(1, "got unknown imsg %d", imsg_get_type(&imsg));
@@ -1138,6 +1148,8 @@ main(int argc, char * const *argv)
 			usage(1);
 	}
 
+	signal(SIGQUIT, handle_signal_quit);
+
 	/* setup keys before reading the config */
 	TAILQ_INIT(&global_map.m);
 	global_map.unhandled_input = global_key_unbound;
@@ -1230,6 +1242,8 @@ main(int argc, char * const *argv)
 		ui_end();
 	}
 
+	if (save_on_quit)
+		save_session();
 	ui_send_net(IMSG_QUIT, 0, -1, NULL, 0);
 	imsgbuf_flush(&iev_net->ibuf);
 

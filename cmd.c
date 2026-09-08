@@ -333,8 +333,6 @@ static void
 kill_telescope_cb(int r, void *data)
 {
 	if (r) {
-		if (save_on_quit)
-			save_session();
 		ev_break();
 	}
 }

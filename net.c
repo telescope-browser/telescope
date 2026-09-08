@@ -27,6 +27,7 @@
 #include <errno.h>
 #include <netdb.h>
 #include <stdarg.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -96,6 +97,7 @@ static void	 close_with_errf(struct req*, const char*, ...)
 static int	 try_to_connect(struct req *);
 static int	 gemini_parse_reply(struct req *, const char *);
 static void	 net_ev(int, int, void *);
+static void	 handle_signal_quit(int signo);
 static void	 handle_dispatch_imsg(int, int, void*);
 
 static int	 net_send_ui(int, uint32_t, const void *, uint16_t);
@@ -569,6 +571,12 @@ load_cert(struct imsg *imsg, struct req *req)
 }
 
 static void
+handle_signal_quit(int signo)
+{
+	net_send_ui(IMSG_QUIT, 0, NULL, 0);
+}
+
+static void
 handle_dispatch_imsg(int fd, int event, void *d)
 {
 	struct imsgev	*iev = d;
@@ -710,6 +718,8 @@ net_main(void)
 	iev_ui->handler = handle_dispatch_imsg;
 	iev_ui->events = EV_READ;
 	ev_add(iev_ui->ibuf.fd, iev_ui->events, iev_ui->handler, iev_ui);
+
+	signal(SIGQUIT, handle_signal_quit);
 
 	sandbox_net_process();
 
