@@ -1295,7 +1295,7 @@ ui_prompt_download_cmd(struct download *d)
 void
 ui_remotely_open_link(const char *uri)
 {
-	new_tab(uri, NULL, NULL);
+	new_tab(uri, NULL, NULL, 1);
 	ui_on_tab_refresh(current_tab);
 
 	/* ring the bell */

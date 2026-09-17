@@ -62,7 +62,7 @@ tab_new_id(void)
 }
 
 struct tab *
-new_tab(const char *url, const char *base, struct tab *after)
+new_tab(const char *url, const char *base, struct tab *after, int focus)
 {
 	struct tab	*tab;
 
@@ -90,7 +90,8 @@ new_tab(const char *url, const char *base, struct tab *after)
 	if (!operating)
 		tab->flags |= TAB_LAZY;
 	load_url_in_tab(tab, url, base, 0);
-	switch_to_tab(tab);
+	if (focus)
+		switch_to_tab(tab);
 	return tab;
 }
 
@@ -588,7 +589,7 @@ parse_tab_line(char *line, struct tab **ct)
 		cline = 0;
 	}
 
-	if ((tab = new_tab(uri, NULL, NULL)) == NULL)
+	if ((tab = new_tab(uri, NULL, NULL, 1)) == NULL)
 		err(1, "new_tab");
 	hist_set_offs(tab->hist, tline, cline);
 	strlcpy(tab->buffer.title, title, sizeof(tab->buffer.title));
@@ -611,8 +612,8 @@ load_tabs(void)
 	char		*uri, *line = NULL;
 
 	if ((session = fopen(session_file, "r")) == NULL) {
-		new_tab("about:new", NULL, NULL);
-		new_tab("about:help", NULL, NULL);
+		new_tab("about:new", NULL, NULL, 1);
+		new_tab("about:help", NULL, NULL, 1);
 		return;
 	}
 
@@ -643,12 +644,12 @@ load_tabs(void)
 	free(line);
 
 	if (ct == NULL || TAILQ_EMPTY(&tabshead))
-		ct = new_tab("about:new", NULL, NULL);
+		ct = new_tab("about:new", NULL, NULL, 1);
 
 	switch_to_tab(ct);
 
 	if (last_time_crashed())
-		new_tab("about:crash", NULL, NULL);
+		new_tab("about:crash", NULL, NULL, 1);
 }
 
 int

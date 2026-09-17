@@ -385,7 +385,19 @@ cmd_push_button_new_tab(struct buffer *buffer)
 	if (vl == NULL || vl->parent->type != LINE_LINK)
 		return;
 
-	new_tab(vl->parent->alt, hist_cur(current_tab->hist), current_tab);
+	new_tab(vl->parent->alt, hist_cur(current_tab->hist), current_tab, 1);
+}
+
+void
+cmd_push_button_new_tab_background(struct buffer *buffer)
+{
+	struct vline	*vl;
+
+	vl = buffer->current_line;
+	if (vl == NULL || vl->parent->type != LINE_LINK)
+		return;
+
+	new_tab(vl->parent->alt, hist_cur(current_tab->hist), current_tab, 0);
 }
 
 void
@@ -547,7 +559,18 @@ cmd_tab_new(struct buffer *buffer)
 	if ((url = new_tab_url) == NULL)
 		url = NEW_TAB_URL;
 
-	new_tab(url, NULL, NULL);
+	new_tab(url, NULL, NULL, 1);
+}
+
+void
+cmd_tab_new_background(struct buffer *buffer)
+{
+	const char *url;
+
+	if ((url = new_tab_url) == NULL)
+		url = NEW_TAB_URL;
+
+	new_tab(url, NULL, NULL, 0);
 }
 
 void
