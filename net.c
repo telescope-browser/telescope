@@ -584,8 +584,7 @@ handle_dispatch_imsg(int fd, int event, void *d)
 	struct imsg	 imsg;
 	struct req	*req;
 	struct get_req	 r;
-	ssize_t		 n;
-	int		 certok;
+	int		 n, certok;
 
 	if (event & EV_READ) {
 		if (imsgbuf_read(ibuf) == -1) {
@@ -601,7 +600,7 @@ handle_dispatch_imsg(int fd, int event, void *d)
 	}
 
 	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
+		if ((n = imsgbuf_get(ibuf, &imsg)) == -1)
 			err(1, "imsg_get");
 		if (n == 0)
 			break;

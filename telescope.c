@@ -460,8 +460,7 @@ handle_dispatch_imsg(int fd, int event, void *data)
 	struct download	*d;
 	const char	*h;
 	char		*str, *page;
-	ssize_t		 n;
-	int		 code;
+	int		 n, code;
 
 	if (event & EV_READ) {
 		if (imsgbuf_read(imsgbuf) == -1)
@@ -473,7 +472,7 @@ handle_dispatch_imsg(int fd, int event, void *data)
 	}
 
 	for (;;) {
-		if ((n = imsg_get(imsgbuf, &imsg)) == -1)
+		if ((n = imsgbuf_get(imsgbuf, &imsg)) == -1)
 			err(1, "imsg_get");
 		if (n == 0)
 			break;
