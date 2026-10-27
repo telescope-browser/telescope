@@ -82,6 +82,12 @@ To build execute:
 	$ make
 	$ sudo make install	# eventually
 
+On macOS, configure searches Homebrew's standard and keg-only pkg-config
+directories automatically, using `HOMEBREW_PREFIX` or `brew --prefix`.
+Existing `PKG_CONFIG_PATH` entries take precedence; set this variable when
+you need to select a particular library provider (for example, when both
+LibreSSL and OpenSSL are installed).
+
 The configure script has optional support for building with libraries
 provided by your distribution instead of using the bundled versions:
 

@@ -80,25 +80,33 @@ AC_CHECK_HEADERS([ \
 	util.h \
 ])
 
+# Include keg-only formulae without recursively searching every Cellar version.
+# Keep explicit user paths first so they can select a dependency provider.
+AS_IF([test "x$PLATFORM" = "xdarwin"], [
+	brew_prefix=${HOMEBREW_PREFIX:-}
+	AS_IF([test -z "$brew_prefix" && command -v brew >/dev/null 2>&1], [
+		brew_prefix=$(brew --prefix)
+	])
+	AS_IF([test -n "$brew_prefix"], [
+		for pcdir in \
+		    "$brew_prefix"/lib/pkgconfig \
+		    "$brew_prefix"/share/pkgconfig \
+		    "$brew_prefix"/opt/*/lib/pkgconfig \
+		    "$brew_prefix"/opt/*/share/pkgconfig
+		do
+			test -d "$pcdir" || continue
+			PKG_CONFIG_PATH="${PKG_CONFIG_PATH:+$PKG_CONFIG_PATH:}$pcdir"
+		done
+		export PKG_CONFIG_PATH
+	])
+])
+
 AS_IF([test "x$with_libbsd" = "xyes"], [
 	PKG_CHECK_MODULES([libbsd], [libbsd-overlay libbsd-ctor], [
 		CFLAGS="$libbsd_CFLAGS $CFLAGS"
 		LIBS="$libbsd_LIBS $LIBS"
 	])
 ])
-
-if test "x$PLATFORM" = "xdarwin"; then
-	export LDFLAGS="-L/opt/homebrew/opt/libressl/lib $LDFLAGS"
-	export CPPFLAGS="-I/opt/homebrew/opt/libressl/include $CPPFLAGS"
-
-	# This is not neat at all -- but if homebrew is used, it's often up to
-	# the user to define PKG_CONFIG_PATH in the environment.
-	# Some CI systems don't do this, so we'll have to.
-	AC_MSG_NOTICE([Setting PKG_CONFIG_PATH programmatically])
-	export PKG_CONFIG_PATH="$(find ${HOMEBREW_PREFIX}/Cellar \
-				 -name 'pkgconfig' -type d | \
-				 tr '\n' ':' | sed s/.$//):$PKG_CONFIG_PATH"
-fi
 
 AC_REPLACE_FUNCS([
 	asprintf \
@@ -183,13 +191,13 @@ AC_SEARCH_LIBS([keyname], [ncursesw ncurses tinfow tinfo], [], [
 	AC_MSG_ERROR([requires either ncursesw or ncurses library with terminfo support])
 ])
 
-AC_SEARCH_LIBS([tls_init], [tls], [found_tls=yes], [found_tls=no])
-
-AS_IF([test "x$found_tls" = "xno"], [
-	PKG_CHECK_MODULES([libtls], [libtls], [
-		CFLAGS="$libtls_CFLAGS $CFLAGS"
-		LIBS="$libtls_LIBS $LIBS"
-	], [AC_MSG_ERROR([libtls not found.])])
+PKG_CHECK_MODULES([libtls], [libtls], [
+	CFLAGS="$libtls_CFLAGS $CFLAGS"
+	LIBS="$libtls_LIBS $LIBS"
+], [
+	AC_SEARCH_LIBS([tls_init], [tls], [], [
+		AC_MSG_ERROR([libtls not found.])
+	])
 ])
 
 PKG_CHECK_MODULES([libgrapheme], [libgrapheme], [
@@ -225,13 +233,23 @@ AC_SEARCH_LIBS([ohash_init], [util], [], [
 
 AC_CHECK_FUNCS([asr_run])
 
-AC_SEARCH_LIBS([RAND_add], [crypto], [:], [
-	AC_MSG_ERROR([can't find libcrypto])
+PKG_CHECK_MODULES([libcrypto], [libcrypto], [
+	CFLAGS="$libcrypto_CFLAGS $CFLAGS"
+	LIBS="$libcrypto_LIBS $LIBS"
+], [
+	AC_SEARCH_LIBS([RAND_add], [crypto], [:], [
+		AC_MSG_ERROR([can't find libcrypto])
+	])
 ])
 
 AS_IF([test "x$PLATFORM" != "xdarwin"], [
-	AC_SEARCH_LIBS([SSL_CTX_new], [ssl], [:], [
-		AC_MSG_ERROR([can't find libssl])
+	PKG_CHECK_MODULES([libssl], [libssl], [
+		CFLAGS="$libssl_CFLAGS $CFLAGS"
+		LIBS="$libssl_LIBS $LIBS"
+	], [
+		AC_SEARCH_LIBS([SSL_CTX_new], [ssl], [:], [
+			AC_MSG_ERROR([can't find libssl])
+		])
 	])
 ])
 
